@@ -52,12 +52,12 @@ export const resetClaimIdGen = () => {
 
 const claim = (
   app: ServerApp,
-  logger: Logger = mockLogger,
   workloop: Workloop,
-  options?: ClaimOptions
+  logger: Logger = mockLogger,
+  options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const { demand = 1 } = options ?? {};
+    const { demand = 1 } = options;
     const podName = NAME ? `[${NAME}] ` : '';
 
     const activeInWorkloop = workloop.activeRuns.size;
@@ -69,19 +69,14 @@ const claim = (
     );
 
     if (activeInWorkloop >= capacity) {
-      // Important: stop the workloop so that we don't try and claim any more
-      app.workloopHandles
-        ?.get(workloop)
-        ?.stop(
-          `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`
-        );
+      workloop.stop(
+        `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`
+      );
       return reject(new ClaimError('Workloop at capacity'));
     } else if (activeInWorkloop + pendingWorkloopClaims >= capacity) {
-      app.workloopHandles
-        ?.get(workloop)
-        ?.stop(
-          `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
-        );
+      workloop.stop(
+        `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
+      );
       return reject(new ClaimError('Workloop at capacity'));
     }
 
@@ -100,10 +95,7 @@ const claim = (
 
     const claimId = ++claimIdGen;
 
-    // Track in both workloop-level and app-level openClaims for backward compat
     workloop.openClaims[claimId] = demand;
-    app.openClaims ??= {};
-    app.openClaims[claimId] = demand;
 
     const { used_heap_size, heap_size_limit } = v8.getHeapStatistics();
     const usedHeapMb = Math.round(used_heap_size / 1024 / 1024);
@@ -123,7 +115,6 @@ const claim = (
       })
       .receive('ok', async ({ runs }: ClaimReply) => {
         delete workloop.openClaims[claimId];
-        delete app.openClaims[claimId];
         const duration = Date.now() - start;
         logger.debug(
           `${podName}claimed ${runs.length} runs in ${duration}ms (${
@@ -169,13 +160,11 @@ const claim = (
       // What do we do if we fail to join the worker channel?
       .receive('error', (e) => {
         delete workloop.openClaims[claimId];
-        delete app.openClaims[claimId];
         logger.error('Error on claim', e);
         reject(new Error('claim error'));
       })
       .receive('timeout', () => {
         delete workloop.openClaims[claimId];
-        delete app.openClaims[claimId];
         logger.error('TIMEOUT on claim. Runs may be lost.');
         reject(new Error('timeout'));
       });

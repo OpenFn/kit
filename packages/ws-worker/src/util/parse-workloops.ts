@@ -1,7 +1,4 @@
-export interface WorkloopConfig {
-  queues: string[];
-  capacity: number;
-}
+import { Workloop } from '../api/workloop';
 
 export class WorkloopValidationError extends Error {
   constructor(message: string) {
@@ -12,7 +9,7 @@ export class WorkloopValidationError extends Error {
 
 const VALID_NAME = /^[a-zA-Z0-9_]+$/;
 
-export default function parseWorkloops(input: string): WorkloopConfig[] {
+export default function parseWorkloops(input: string): Workloop[] {
   const trimmed = input.trim();
   if (!trimmed) {
     throw new WorkloopValidationError('Workloop configuration cannot be empty');
@@ -38,7 +35,7 @@ export default function parseWorkloops(input: string): WorkloopConfig[] {
   return configs;
 }
 
-function parseToken(token: string): WorkloopConfig {
+function parseToken(token: string): Workloop {
   const lastColon = token.lastIndexOf(':');
   if (lastColon === -1) {
     throw new WorkloopValidationError(
@@ -92,5 +89,5 @@ function parseToken(token: string): WorkloopConfig {
     );
   }
 
-  return { queues: names, capacity: count };
+  return new Workloop({ id: token, queues: names, capacity: count });
 }

@@ -17,10 +17,7 @@ import {
   WORK_AVAILABLE,
 } from './events';
 import destroy from './api/destroy';
-import startWorkloop, {
-  createWorkloop,
-  workloopHasCapacity,
-} from './api/workloop';
+import { Workloop } from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
@@ -31,8 +28,8 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
-import type { Workloop, WorkloopHandle } from './api/workloop';
-import type { WorkloopConfig } from './util/parse-workloops';
+import parseWorkloops from './util/parse-workloops';
+import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const exec = promisify(_exec);
 
@@ -41,7 +38,7 @@ export type ServerOptions = {
   batchInterval?: number;
   batchLimit?: number;
   maxWorkflows?: number;
-  workloopConfigs?: WorkloopConfig[];
+  workloopConfigs?: string;
   port?: number;
   lightning?: string; // url to lightning instance
   logger?: Logger;
@@ -77,7 +74,6 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
-  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
@@ -85,12 +81,12 @@ export interface ServerApp extends Koa {
   options: ServerOptions;
 
   workloops: Workloop[];
-  workloopHandles: Map<Workloop, WorkloopHandle>;
   runWorkloopMap: Record<string, Workloop>;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
   resumeWorkloop: (workloop?: Workloop) => void;
+  pendingClaims: () => number;
 
   // debug API
   claim: () => Promise<any>;
@@ -142,9 +138,8 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   // We were disconnected from the queue
   const onDisconnect = () => {
     for (const w of app.workloops) {
-      const handle = app.workloopHandles.get(w);
-      if (handle && !handle.isStopped()) {
-        handle.stop('Socket disconnected unexpectedly');
+      if (!w.isStopped()) {
+        w.stop('Socket disconnected unexpectedly');
       }
     }
     if (!app.destroyed) {
@@ -176,8 +171,8 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     if (event === WORK_AVAILABLE) {
       if (!app.destroyed) {
         for (const w of app.workloops) {
-          if (workloopHasCapacity(w)) {
-            claim(app, logger, w).catch(() => {
+          if (w.hasCapacity()) {
+            claim(app, w, logger).catch(() => {
               // do nothing - it's fine if claim throws here
             });
           }
@@ -263,16 +258,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
-  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
 
-  // Initialize workloops: use provided workloopConfigs, or create a single default
-  const workloopDefs: WorkloopConfig[] = options.workloopConfigs ?? [
-    { queues: ['manual', '*'], capacity: options.maxWorkflows ?? 5 },
-  ];
-  app.workloops = workloopDefs.map(createWorkloop);
-  app.workloopHandles = new Map();
+  app.workloops = parseWorkloops(
+    options.workloopConfigs ?? getDefaultWorkloopConfig(options.maxWorkflows)
+  );
   app.runWorkloopMap = {};
 
   app.server = app.listen(port);
@@ -286,7 +277,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.options = options;
 
-  // Start the workloop for a specific workloop (or all if none specified)
+  // Start a specific workloop (or all if none specified)
   // When called with a specific workloop (e.g. after a run completes), we restart
   // the workloop fresh so it claims immediately rather than waiting in backoff.
   app.resumeWorkloop = (workloop?: Workloop) => {
@@ -296,23 +287,19 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
     const targets = workloop ? [workloop] : app.workloops;
     for (const w of targets) {
-      if (!workloopHasCapacity(w)) {
+      if (!w.hasCapacity()) {
         continue;
       }
-      // Stop any existing workloop so we can start fresh with immediate claim
-      const existingHandle = app.workloopHandles.get(w);
-      if (existingHandle && !existingHandle.isStopped()) {
-        existingHandle.stop('restarting');
+      if (!w.isStopped()) {
+        w.stop('restarting');
       }
       logger.info(`Starting workloop for ${w.id}`);
-      const handle = startWorkloop(
+      w.start(
         app,
         logger,
         options.backoff?.min || MIN_BACKOFF,
-        options.backoff?.max || MAX_BACKOFF,
-        w
+        options.backoff?.max || MAX_BACKOFF
       );
-      app.workloopHandles.set(w, handle);
     }
   };
 
@@ -423,8 +410,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
     const promises = app.workloops.map((w) => {
-      if (workloopHasCapacity(w)) {
-        return claim(app, logger, w);
+      if (w.hasCapacity()) {
+        return claim(app, w, logger);
       }
       return Promise.reject(new Error('Workloop at capacity'));
     });
@@ -443,13 +430,16 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.claim = () => {
     const promises = app.workloops.map((w) => {
-      if (workloopHasCapacity(w)) {
-        return claim(app, logger, w);
+      if (w.hasCapacity()) {
+        return claim(app, w, logger);
       }
       return Promise.reject(new Error('Workloop at capacity'));
     });
     return Promise.any(promises);
   };
+
+  app.pendingClaims = () =>
+    app.workloops.reduce((sum, w) => sum + Object.keys(w.openClaims).length, 0);
 
   app.destroy = () => destroy(app, logger);
 

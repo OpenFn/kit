@@ -3,30 +3,28 @@ import { createMockLogger } from '@openfn/logger';
 
 import { sleep } from '../util';
 import { mockChannel } from '../../src/mock/sockets';
-import startWorkloop, {
-  createWorkloop,
-  Workloop,
-  WorkloopHandle,
-  workloopHasCapacity,
-} from '../../src/api/workloop';
+import { Workloop } from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
 import EventEmitter from 'node:events';
 
-let currentHandle: WorkloopHandle | undefined;
+let workloop: Workloop | undefined;
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  currentHandle?.stop(); // cancel any workloops
-  currentHandle = undefined;
+  workloop?.stop();
+  workloop = undefined;
 });
 
-const createMockWorkloop = (capacity = 5): Workloop =>
-  createWorkloop({ queues: ['manual', '*'], capacity });
+const createWorkloop = (capacity = 5) =>
+  new Workloop({
+    id: `manual>*:${capacity}`,
+    queues: ['manual', '*'],
+    capacity,
+  });
 
 const createMockApp = (props: any) => ({
   workflows: {},
-  openClaims: {},
   queueChannel: mockChannel({
     [CLAIM]: () => {
       return { runs: [] };
@@ -39,34 +37,32 @@ const createMockApp = (props: any) => ({
   ...props,
 });
 
-test('workloop can be cancelled', async (t) => {
+test.serial('workloop can be cancelled', async (t) => {
   let count = 0;
-  const workloop = createMockWorkloop();
-  let handle: WorkloopHandle;
+  workloop = createWorkloop();
 
   const app = createMockApp({
     queueChannel: mockChannel({
       [CLAIM]: () => {
         count++;
-        handle.stop();
+        workloop?.stop();
         return { runs: [] };
       },
     }),
   });
 
-  handle = startWorkloop(app as any, logger, 1, 1, workloop);
-  currentHandle = handle;
-  t.false(handle.isStopped());
+  workloop.start(app as any, logger, 1, 1);
+  t.false(workloop.isStopped());
 
   await sleep(100);
   // A quirk of how cancel works is that the loop will be called a few times
   t.true(count <= 5);
-  t.true(handle.isStopped());
+  t.true(workloop.isStopped());
 });
 
-test('workloop sends the runs:claim event', (t) => {
+test.serial('workloop sends the runs:claim event', (t) => {
   return new Promise((done) => {
-    const workloop = createMockWorkloop();
+    workloop = createWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
@@ -76,14 +72,14 @@ test('workloop sends the runs:claim event', (t) => {
         },
       }),
     });
-    currentHandle = startWorkloop(app as any, logger, 1, 1, workloop);
+    workloop.start(app as any, logger, 1, 1);
   });
 });
 
-test('workloop sends the runs:claim event several times ', (t) => {
+test.serial('workloop sends the runs:claim event several times ', (t) => {
   return new Promise((done) => {
     let count = 0;
-    const workloop = createMockWorkloop();
+    workloop = createWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
@@ -96,13 +92,13 @@ test('workloop sends the runs:claim event several times ', (t) => {
         },
       }),
     });
-    currentHandle = startWorkloop(app as any, logger, 1, 1, workloop);
+    workloop.start(app as any, logger, 1, 1);
   });
 });
 
-test('workloop calls execute if runs:claim returns runs', (t) => {
+test.serial('workloop calls execute if runs:claim returns runs', (t) => {
   return new Promise((done) => {
-    const workloop = createMockWorkloop();
+    workloop = createWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => ({
@@ -116,45 +112,40 @@ test('workloop calls execute if runs:claim returns runs', (t) => {
       },
     });
 
-    currentHandle = startWorkloop(app as any, logger, 1, 1, workloop);
+    workloop.start(app as any, logger, 1, 1);
   });
 });
 
-test('startWorkloop returns a handle with stop and isStopped', (t) => {
+test.serial('workloop has stop and isStopped methods', (t) => {
   return new Promise((done) => {
-    const workloop = createMockWorkloop();
+    workloop = createWorkloop();
 
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
-          // After starting, isStopped returns false
-          t.false(handle.isStopped());
+          t.false(workloop?.isStopped());
           t.pass();
           done();
           return { runs: [] };
         },
       }),
     });
-    const handle = startWorkloop(app as any, logger, 1, 1, workloop);
-    currentHandle = handle;
+    workloop.start(app as any, logger, 1, 1);
 
-    // Handle has the right shape
-    t.is(typeof handle.stop, 'function');
-    t.is(typeof handle.isStopped, 'function');
+    t.is(typeof workloop.stop, 'function');
+    t.is(typeof workloop.isStopped, 'function');
   });
 });
 
-test('stopping one workloop does not affect another', async (t) => {
-  const wlA = createMockWorkloop(1);
-  const wlB = createMockWorkloop(1);
+test.serial('stopping one workloop does not affect another', async (t) => {
+  const wlA = createWorkloop(1);
+  const wlB = createWorkloop(1);
 
   let countB = 0;
 
   const appA = createMockApp({
     queueChannel: mockChannel({
-      [CLAIM]: () => {
-        return { runs: [] };
-      },
+      [CLAIM]: () => ({ runs: [] }),
     }),
   });
 
@@ -167,81 +158,55 @@ test('stopping one workloop does not affect another', async (t) => {
     }),
   });
 
-  const handleA = startWorkloop(appA as any, logger, 1, 1, wlA);
-  const handleB = startWorkloop(appB as any, logger, 1, 1, wlB);
+  wlA.start(appA as any, logger, 1, 1);
+  wlB.start(appB as any, logger, 1, 1);
 
   await sleep(50);
-  handleA.stop();
+  wlA.stop();
   const countBAtAStop = countB;
   await sleep(50);
 
-  // Workloop A should be stopped
-  t.true(handleA.isStopped());
-  // Workloop B should still be running and claiming
-  t.false(handleB.isStopped());
+  t.true(wlA.isStopped());
+  t.false(wlB.isStopped());
   t.true(countB > countBAtAStop);
 
-  handleB.stop();
+  wlB.stop();
 });
 
-// createWorkloop tests
-
-test('createWorkloop: generates correct id', (t) => {
-  const workloop = createWorkloop({ queues: ['fast_lane'], capacity: 1 });
-  t.is(workloop.id, 'fast_lane:1');
+test.serial('hasCapacity: has capacity when empty', (t) => {
+  workloop = createWorkloop(3);
+  t.true(workloop.hasCapacity());
 });
 
-test('createWorkloop: generates id with multiple queues', (t) => {
-  const workloop = createWorkloop({ queues: ['manual', '*'], capacity: 4 });
-  t.is(workloop.id, 'manual>*:4');
-});
-
-test('createWorkloop: initializes empty activeRuns', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 5 });
-  t.is(workloop.activeRuns.size, 0);
-});
-
-test('createWorkloop: initializes empty openClaims', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 5 });
-  t.deepEqual(workloop.openClaims, {});
-});
-
-test('createWorkloop: preserves queues and capacity', (t) => {
-  const workloop = createWorkloop({ queues: ['a', 'b', '*'], capacity: 3 });
-  t.deepEqual(workloop.queues, ['a', 'b', '*']);
-  t.is(workloop.capacity, 3);
-});
-
-// workloopHasCapacity tests
-
-test('workloopHasCapacity: has capacity when empty', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 3 });
-  t.true(workloopHasCapacity(workloop));
-});
-
-test('workloopHasCapacity: has capacity when partially filled', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 3 });
+test.serial('hasCapacity: has capacity when partially filled', (t) => {
+  workloop = createWorkloop(3);
   workloop.activeRuns.add('run-1');
-  t.true(workloopHasCapacity(workloop));
+  t.true(workloop.hasCapacity());
 });
 
-test('workloopHasCapacity: no capacity when activeRuns fills capacity', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 2 });
+test.serial('hasCapacity: no capacity when activeRuns fills capacity', (t) => {
+  workloop = createWorkloop(2);
   workloop.activeRuns.add('run-1');
   workloop.activeRuns.add('run-2');
-  t.false(workloopHasCapacity(workloop));
+  t.false(workloop.hasCapacity());
 });
 
-test('workloopHasCapacity: no capacity when pendingClaims fills capacity', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 2 });
-  workloop.openClaims['claim-a'] = 2;
-  t.false(workloopHasCapacity(workloop));
-});
+test.serial(
+  'hasCapacity: no capacity when pendingClaims fills capacity',
+  (t) => {
+    workloop = createWorkloop(2);
+    workloop.openClaims['claim-a'] = 2;
+    t.false(workloop.hasCapacity());
+  }
+);
 
-test('workloopHasCapacity: no capacity when activeRuns + pendingClaims fills capacity', (t) => {
-  const workloop = createWorkloop({ queues: ['*'], capacity: 3 });
-  workloop.activeRuns.add('run-1');
-  workloop.openClaims['claim-a'] = 1;
-  workloop.openClaims['claim-b'] = 1;
-  t.false(workloopHasCapacity(workloop));
-});
+test.serial(
+  'hasCapacity: no capacity when activeRuns + pendingClaims fills capacity',
+  (t) => {
+    workloop = createWorkloop(3);
+    workloop.activeRuns.add('run-1');
+    workloop.openClaims['claim-a'] = 1;
+    workloop.openClaims['claim-b'] = 1;
+    t.false(workloop.hasCapacity());
+  }
+);

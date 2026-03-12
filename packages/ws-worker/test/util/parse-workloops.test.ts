@@ -1,50 +1,50 @@
 import test from 'ava';
+import { Workloop } from '../../src/api/workloop';
 import parseWorkloops, {
   WorkloopValidationError,
 } from '../../src/util/parse-workloops';
 
-// Happy paths
+// Extract just the parsed fields for comparison
+const parsed = (w: Workloop) => ({ id: w.id, queues: w.queues, capacity: w.capacity });
 
 test('parse "*:5" into a single wildcard workloop', (t) => {
-  const result = parseWorkloops('*:5');
-  t.deepEqual(result, [{ queues: ['*'], capacity: 5 }]);
+  const result = parseWorkloops('*:5').map(parsed);
+  t.deepEqual(result, [{ id: '*:5', queues: ['*'], capacity: 5 }]);
 });
 
 test('parse "manual>*:3" into a single workloop with preference chain', (t) => {
-  const result = parseWorkloops('manual>*:3');
-  t.deepEqual(result, [{ queues: ['manual', '*'], capacity: 3 }]);
+  const result = parseWorkloops('manual>*:3').map(parsed);
+  t.deepEqual(result, [{ id: 'manual>*:3', queues: ['manual', '*'], capacity: 3 }]);
 });
 
 test('parse "fast_lane:1 manual>*:4" into two workloops', (t) => {
-  const result = parseWorkloops('fast_lane:1 manual>*:4');
+  const result = parseWorkloops('fast_lane:1 manual>*:4').map(parsed);
   t.deepEqual(result, [
-    { queues: ['fast_lane'], capacity: 1 },
-    { queues: ['manual', '*'], capacity: 4 },
+    { id: 'fast_lane:1', queues: ['fast_lane'], capacity: 1 },
+    { id: 'manual>*:4', queues: ['manual', '*'], capacity: 4 },
   ]);
 });
 
 test('parse multi-preference chain "fast_lane>manual>*:1 *:4"', (t) => {
-  const result = parseWorkloops('fast_lane>manual>*:1 *:4');
+  const result = parseWorkloops('fast_lane>manual>*:1 *:4').map(parsed);
   t.deepEqual(result, [
-    { queues: ['fast_lane', 'manual', '*'], capacity: 1 },
-    { queues: ['*'], capacity: 4 },
+    { id: 'fast_lane>manual>*:1', queues: ['fast_lane', 'manual', '*'], capacity: 1 },
+    { id: '*:4', queues: ['*'], capacity: 4 },
   ]);
 });
 
 test('parse single non-wildcard workloop "my_queue:10"', (t) => {
-  const result = parseWorkloops('my_queue:10');
-  t.deepEqual(result, [{ queues: ['my_queue'], capacity: 10 }]);
+  const result = parseWorkloops('my_queue:10').map(parsed);
+  t.deepEqual(result, [{ id: 'my_queue:10', queues: ['my_queue'], capacity: 10 }]);
 });
 
 test('tolerate extra whitespace', (t) => {
-  const result = parseWorkloops('  a:1   b:2  ');
+  const result = parseWorkloops('  a:1   b:2  ').map(parsed);
   t.deepEqual(result, [
-    { queues: ['a'], capacity: 1 },
-    { queues: ['b'], capacity: 2 },
+    { id: 'a:1', queues: ['a'], capacity: 1 },
+    { id: 'b:2', queues: ['b'], capacity: 2 },
   ]);
 });
-
-// Validation errors
 
 test('throw on empty string', (t) => {
   const err = t.throws(() => parseWorkloops(''), {
@@ -118,4 +118,3 @@ test('throw on empty name from double separator "a>>b:1"', (t) => {
     instanceOf: WorkloopValidationError,
   });
 });
-
