@@ -1,4 +1,4 @@
-import { ServerApp, pendingClaims } from '../server';
+import { ServerApp } from '../server';
 import { INTERNAL_CLAIM_COMPLETE, INTERNAL_RUN_COMPLETE } from '../events';
 
 import type { Logger } from '@openfn/logger';
