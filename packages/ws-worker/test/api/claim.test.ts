@@ -128,13 +128,8 @@ test('verifyToken should accept a token with NBF exactly 2 seconds in future (us
   );
 });
 
-const createMockWorkloop = (capacity = 5): Workloop => ({
-  id: `manual>*:${capacity}`,
-  queues: ['manual', '*'],
-  capacity,
-  activeRuns: new Set(),
-  openClaims: {},
-});
+const createMockWorkloop = (capacity = 5): Workloop =>
+  new Workloop({ id: `manual>*:${capacity}`, queues: ['manual', '*'], capacity });
 
 const createMockApp = (opts: any) => {
   const {
@@ -150,7 +145,6 @@ const createMockApp = (opts: any) => {
   });
 
   return {
-    workloopHandles: new Map(),
     openClaims: {},
     workflows,
     queueChannel: channel,
@@ -288,15 +282,7 @@ test('should mark a claim when in flight with demand: 2', async (t) => {
 });
 
 test('should not claim if open claims exceeds workloop capacity', async (t) => {
-  let didStopWorkloop = false;
-
   const workloop = createMockWorkloop(1);
-  const mockHandle = {
-    stop: () => {
-      didStopWorkloop = true;
-    },
-    isStopped: () => false,
-  };
 
   const app = createMockApp({
     workflows: {},
@@ -307,7 +293,6 @@ test('should not claim if open claims exceeds workloop capacity', async (t) => {
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
-  app.workloopHandles = new Map([[workloop, mockHandle]]);
   app.runWorkloopMap = {};
 
   // @ts-ignore
@@ -322,7 +307,7 @@ test('should not claim if open claims exceeds workloop capacity', async (t) => {
   await t.throwsAsync(() => claim(app, workloop, logger), {
     message: 'Workloop at capacity',
   });
-  t.true(didStopWorkloop);
+  t.true(workloop.isStopped());
 
   // The prior claim should not have counted for anything
   t.is(Object.keys(app.workflows).length, 0);

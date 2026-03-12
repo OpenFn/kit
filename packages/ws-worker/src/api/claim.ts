@@ -69,19 +69,10 @@ const claim = (
     );
 
     if (activeInWorkloop >= capacity) {
-      // Important: stop the workloop so that we don't try and claim any more
-      app.workloopHandles
-        ?.get(workloop)
-        ?.stop(
-          `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`
-        );
+      workloop.stop(`workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`);
       return reject(new ClaimError('Workloop at capacity'));
     } else if (activeInWorkloop + pendingWorkloopClaims >= capacity) {
-      app.workloopHandles
-        .get(workloop)
-        ?.stop(
-          `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
-        );
+      workloop.stop(`workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`);
       return reject(new ClaimError('Workloop at capacity'));
     }
 

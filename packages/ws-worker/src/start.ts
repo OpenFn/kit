@@ -4,19 +4,17 @@ import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
-import parseWorkloops from './util/parse-workloops';
 import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const args = cli(process.argv);
 
-const workloopConfigs = parseWorkloops(
-  args.workloops ?? getDefaultWorkloopConfig(args.capacity)
-);
+const workloopConfigs = args.workloops ?? getDefaultWorkloopConfig(args.capacity);
 
-const effectiveCapacity = workloopConfigs.reduce(
-  (sum, c) => sum + c.capacity,
-  0
-);
+// Sum the capacity from each "<queues>:<n>" token in the workloop string
+const effectiveCapacity = workloopConfigs
+  .trim()
+  .split(/\s+/)
+  .reduce((sum, token) => sum + (parseInt(token.split(':').pop()!) || 0), 0);
 
 const logger = createLogger('SRV', { level: args.log });
 

@@ -1,4 +1,4 @@
-import type { Workloop } from '../api/workloop';
+import { Workloop } from '../api/workloop';
 
 export class WorkloopValidationError extends Error {
   constructor(message: string) {
@@ -89,11 +89,5 @@ function parseToken(token: string): Workloop {
     );
   }
 
-  return {
-    id: token,
-    queues: names,
-    capacity: count,
-    activeRuns: new Set(),
-    openClaims: {},
-  };
+  return new Workloop({ id: token, queues: names, capacity: count });
 }
