@@ -167,7 +167,7 @@ const syncProjects = async (
     ws,
     localProject
   );
-  console.log({ locallyChangedWorkflows });
+
   // TODO: what if remote diff and the version checked disagree for some reason?
   let diffs = [];
   if (locallyChangedWorkflows.length) {
