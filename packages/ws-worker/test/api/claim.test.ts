@@ -9,7 +9,7 @@ import { ServerApp } from '../../src/server';
 import { mockChannel } from '../../src/mock/sockets';
 import { CLAIM } from '../../src';
 import EventEmitter from 'node:events';
-import { createWorkloop, Workloop } from '../../src/api/workloop';
+import { Workloop } from '../../src/api/workloop';
 
 let keys = { public: '.', private: '.' };
 
@@ -128,8 +128,13 @@ test('verifyToken should accept a token with NBF exactly 2 seconds in future (us
   );
 });
 
-const createMockWorkloop = (capacity = 5): Workloop =>
-  createWorkloop({ queues: ['manual', '*'], capacity });
+const createMockWorkloop = (capacity = 5): Workloop => ({
+  id: `manual>*:${capacity}`,
+  queues: ['manual', '*'],
+  capacity,
+  activeRuns: new Set(),
+  openClaims: {},
+});
 
 const createMockApp = (opts: any) => {
   const {
@@ -145,6 +150,7 @@ const createMockApp = (opts: any) => {
   });
 
   return {
+    workloopHandles: new Map(),
     openClaims: {},
     workflows,
     queueChannel: channel,

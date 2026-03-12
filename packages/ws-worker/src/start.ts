@@ -4,16 +4,24 @@ import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
-import parseWorkloops, { WorkloopConfig } from './util/parse-workloops';
+import parseWorkloops from './util/parse-workloops';
 
 const args = cli(process.argv);
 
-let workloopConfigs: WorkloopConfig[];
-if (args.workloops) {
-  workloopConfigs = parseWorkloops(args.workloops);
-} else {
-  workloopConfigs = [{ queues: ['manual', '*'], capacity: args.capacity ?? 5 }];
-}
+const defaultCapacity = args.capacity ?? 5;
+
+const workloopConfigs = args.workloops
+  ? parseWorkloops(args.workloops)
+  : [
+      {
+        id: `manual>*:${defaultCapacity}`,
+        queues: ['manual', '*'],
+        capacity: defaultCapacity,
+        activeRuns: new Set<string>(),
+        openClaims: {} as Record<string, number>,
+      },
+    ];
+
 const effectiveCapacity = workloopConfigs.reduce(
   (sum, c) => sum + c.capacity,
   0
@@ -21,7 +29,7 @@ const effectiveCapacity = workloopConfigs.reduce(
 
 const logger = createLogger('SRV', { level: args.log });
 
-logger.info('Starting worker server...');
+logger.info('Starting worker...');
 logger.info(
   'Workloops:',
   workloopConfigs,

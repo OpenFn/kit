@@ -78,7 +78,7 @@ const claim = (
       return reject(new ClaimError('Workloop at capacity'));
     } else if (activeInWorkloop + pendingWorkloopClaims >= capacity) {
       app.workloopHandles
-        ?.get(workloop)
+        .get(workloop)
         ?.stop(
           `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
         );

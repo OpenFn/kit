@@ -17,10 +17,7 @@ import {
   WORK_AVAILABLE,
 } from './events';
 import destroy from './api/destroy';
-import startWorkloop, {
-  createWorkloop,
-  workloopHasCapacity,
-} from './api/workloop';
+import startWorkloop, { workloopHasCapacity } from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
@@ -32,7 +29,6 @@ import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import type { Workloop, WorkloopHandle } from './api/workloop';
-import type { WorkloopConfig } from './util/parse-workloops';
 
 const exec = promisify(_exec);
 
@@ -41,7 +37,7 @@ export type ServerOptions = {
   batchInterval?: number;
   batchLimit?: number;
   maxWorkflows?: number;
-  workloopConfigs?: WorkloopConfig[];
+  workloopConfigs?: Workloop[];
   port?: number;
   lightning?: string; // url to lightning instance
   logger?: Logger;
@@ -267,11 +263,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.workflows = {};
   app.destroyed = false;
 
-  // Initialize workloops: use provided workloopConfigs, or create a single default
-  const workloopDefs: WorkloopConfig[] = options.workloopConfigs ?? [
-    { queues: ['manual', '*'], capacity: options.maxWorkflows ?? 5 },
-  ];
-  app.workloops = workloopDefs.map(createWorkloop);
+  app.workloops = options.workloopConfigs ?? [];
   app.workloopHandles = new Map();
   app.runWorkloopMap = {};
 

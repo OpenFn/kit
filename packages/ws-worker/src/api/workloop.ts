@@ -4,9 +4,10 @@ import claim from './claim';
 import type { ServerApp } from '../server';
 import type { CancelablePromise } from '../types';
 import type { Logger } from '@openfn/logger';
-import type { WorkloopConfig } from '../util/parse-workloops';
 
-export interface Workloop extends WorkloopConfig {
+export interface Workloop {
+  queues: string[];
+  capacity: number;
   id: string;
   activeRuns: Set<string>;
   openClaims: Record<string, number>;
@@ -15,15 +16,6 @@ export interface Workloop extends WorkloopConfig {
 export interface WorkloopHandle {
   stop: (reason?: string) => void;
   isStopped: () => boolean;
-}
-
-export function createWorkloop(config: WorkloopConfig): Workloop {
-  return {
-    ...config,
-    id: `${config.queues.join('>')}:${config.capacity}`,
-    activeRuns: new Set(),
-    openClaims: {},
-  };
 }
 
 export function workloopHasCapacity(workloop: Workloop): boolean {
