@@ -45,7 +45,7 @@ export const myProject_v1: Provisioner.Project = {
       lock_version: 1,
       deleted_at: null,
       version_history: [
-        'cli:ba19e179317f', // alterstate
+        'cli:7126e08da251', // alterstate
       ],
     },
   },
