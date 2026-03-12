@@ -4,7 +4,7 @@
   "description": "Read, serialize, replicate and sync OpenFn projects",
   "scripts": {
     "test": "pnpm ava",
-    "test:ci": "pnpm ava --tap | npx tap-xunit > ../../test-results/project.xml",
+    "test:ci": "pnpm ava --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/project.xml",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts && cp src/gen/workflow.ohm dist/workflow.ohm",

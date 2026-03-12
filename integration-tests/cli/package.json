@@ -12,7 +12,7 @@
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
     "test": "node prelude.js && npx ava -s --timeout 2m && pnpm clean",
-    "test:ci": "node prelude.js && npx ava -s --timeout 2m --tap | npx tap-xunit > ../../test-results/integration-cli.xml; EXIT=$?; pnpm clean; exit $EXIT",
+    "test:ci": "node prelude.js && npx ava -s --timeout 2m --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/integration-cli.xml; EXIT=$?; pnpm clean; exit $EXIT",
     "test:dev": "node prelude.js && pnpm ava -s && pnpm clean"
   },
   "dependencies": {

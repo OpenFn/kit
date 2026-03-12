@@ -12,7 +12,7 @@
     "build": "pnpm build:pack && docker build --tag worker-integration-tests .",
     "start": "docker run worker-integration-tests",
     "test": "pnpm clean && npx ava -s --timeout 2m",
-    "test:ci": "pnpm clean && npx ava -s --timeout 2m --tap | npx tap-xunit > ../../test-results/integration-worker.xml",
+    "test:ci": "pnpm clean && npx ava -s --timeout 2m --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/integration-worker.xml",
     "test:cache": "npx ava -s --timeout 2m"
   },
   "dependencies": {

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm ava --serial",
-    "test:ci": "pnpm ava --serial --tap | npx tap-xunit > ../../test-results/ws-worker.xml",
+    "test:ci": "pnpm ava --serial --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/ws-worker.xml",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config tsup.config.js",
     "build:watch": "pnpm build --watch",

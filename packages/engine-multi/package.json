@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm ava --serial",
-    "test:ci": "pnpm ava --serial --tap | npx tap-xunit > ../../test-results/engine-multi.xml",
+    "test:ci": "pnpm ava --serial --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/engine-multi.xml",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:mem": "NODE_OPTIONS=\"--max-old-space-size=90 --experimental-vm-modules\" pnpm exec tsx test/memtest.ts",
     "build": "tsup --config ./tsup.config.js",
