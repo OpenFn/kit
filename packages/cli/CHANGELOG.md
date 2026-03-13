@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.30.2
+
+### Patch Changes
+
+- Fix an issue where new credentials are not properly merged into sandboxes or projects
+- Updated dependencies
+  - @openfn/project@0.14.3
+
 ## 1.30.1
 
 ### Patch Changes

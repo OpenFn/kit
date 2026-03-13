@@ -39,7 +39,7 @@ const assignUUIDs = (workflow, generator = randomUUID) => ({
   }),
 });
 
-const createProject = (workflow, id = 'a') =>
+const createProject = (workflow, id = 'a', extra = {}) =>
   new Project({
     id,
     name: id,
@@ -47,6 +47,7 @@ const createProject = (workflow, id = 'a') =>
     openfn: {
       uuid: randomUUID(),
     },
+    ...extra,
   });
 
 const createStep = (id, props) => ({
@@ -85,6 +86,69 @@ test('Preserve the name and UUID of the target project', (t) => {
   // Ensure that the result has the name and UUID of main
   t.is(result.name, 'a');
   t.is(result.openfn.uuid, main.openfn.uuid);
+});
+
+// In this test,two projects with the same credential "id"
+// but different UUIDs are merged
+// This is less like a sandbox merge and more like a project-project merge
+// It's important that existing credentials are preserved, but new ones are added
+test('Merge new credentials into the target', (t) => {
+  // create a base workflow
+  const wf = {
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+      },
+    ],
+  };
+
+  // step up two copies with UUIDS
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const main = createProject(wf_a, 'a', {
+    credentials: [
+      {
+        name: 'a',
+        owner: 'admin@openfn.org',
+        uuid: '1234',
+      },
+    ],
+  });
+  const staging = createProject(wf_b, 'b', {
+    credentials: [
+      {
+        name: 'a',
+        owner: 'admin@openfn.org',
+        uuid: '5678',
+      },
+      {
+        name: 'b',
+        owner: 'admin@openfn.org',
+        uuid: '1111',
+      },
+    ],
+  });
+
+  // merge staging into main
+  const result = merge(staging, main);
+
+  t.deepEqual(result.credentials, [
+    // Keep the original credential
+    {
+      name: 'a',
+      owner: 'admin@openfn.org',
+      uuid: '1234',
+    },
+    // Add the new credential BUT without a UUID
+    {
+      name: 'b',
+      owner: 'admin@openfn.org',
+    },
+  ]);
 });
 
 test('replace mode: replace the name and UUID of the target project', (t) => {
@@ -445,11 +509,11 @@ test('merge a new workflow', (t) => {
 
   const main = createProject([wf1], 'a');
   const staging = createProject([wf1, wf2], 'b');
-  t.is(main.workflows.length, 1)
-  t.is(staging.workflows.length, 2)
+  t.is(main.workflows.length, 1);
+  t.is(staging.workflows.length, 2);
 
   const result = merge(staging, main);
-  t.is(result.workflows.length, 2)
+  t.is(result.workflows.length, 2);
 });
 
 test('merge a new workflow with onlyUpdated: true', (t) => {
@@ -465,11 +529,11 @@ test('merge a new workflow with onlyUpdated: true', (t) => {
 
   const main = createProject([wf1], 'a');
   const staging = createProject([wf1, wf2], 'b');
-  t.is(main.workflows.length, 1)
-  t.is(staging.workflows.length, 2)
+  t.is(main.workflows.length, 1);
+  t.is(staging.workflows.length, 2);
 
   const result = merge(staging, main, { onlyUpdated: true });
-  t.is(result.workflows.length, 2)
+  t.is(result.workflows.length, 2);
 });
 
 test('remove a workflow', (t) => {
@@ -484,12 +548,12 @@ test('remove a workflow', (t) => {
 
   const main = createProject([wf1, wf2], 'a');
   const staging = createProject([wf1], 'b');
-  
-  t.is(main.workflows.length, 2)
-  t.is(staging.workflows.length, 1)
+
+  t.is(main.workflows.length, 2);
+  t.is(staging.workflows.length, 1);
 
   const result = merge(staging, main);
-  t.is(result.workflows.length, 1)
+  t.is(result.workflows.length, 1);
 });
 
 test('remove a workflow with onlyUpdated: true', (t) => {
@@ -504,12 +568,12 @@ test('remove a workflow with onlyUpdated: true', (t) => {
 
   const main = createProject([wf1, wf2], 'a');
   const staging = createProject([wf1], 'b');
-  
-  t.is(main.workflows.length, 2)
-  t.is(staging.workflows.length, 1)
+
+  t.is(main.workflows.length, 2);
+  t.is(staging.workflows.length, 1);
 
   const result = merge(staging, main, { onlyUpdated: true });
-  t.is(result.workflows.length, 1)
+  t.is(result.workflows.length, 1);
 });
 
 test('id match: same workflow in source and target project', (t) => {
