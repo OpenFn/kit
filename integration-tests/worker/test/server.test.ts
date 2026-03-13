@@ -48,10 +48,8 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
 test.afterEach(async () => {
   workerLogs = [];
   lightning?.destroy();
-  if (workerProcess && workerProcess.exitCode === null) {
-    workerProcess.kill();
-    await waitForWorkerExit(workerProcess).catch(() => {});
-  }
+  workerProcess.kill();
+  await waitForWorkerExit(workerProcess).catch(() => {});
 });
 
 let portgen = 3000;
