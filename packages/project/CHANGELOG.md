@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.14.3
+
+### Patch Changes
+
+- Fix an issue where new credentials are not properly merged into sandboxes or projects
+
 ## 0.14.2
 
 ### Patch Changes
