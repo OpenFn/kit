@@ -458,7 +458,7 @@ test.serial(
             lock_version: 1,
           },
           id: 'my-workflow',
-          history: ['cli:ba19e179317f'],
+          history: ['cli:7126e08da251'],
         },
       ],
     };

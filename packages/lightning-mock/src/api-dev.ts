@@ -2,6 +2,8 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
+import crypto from 'node:crypto';
+import Koa from 'koa';
 import Router from '@koa/router';
 import type {
   LightningPlan,
@@ -9,12 +11,10 @@ import type {
   RunCompletePayload,
 } from '@openfn/lexicon/lightning';
 import { Logger } from '@openfn/logger';
-import { generateVersionHash, mapWorkflow } from '@openfn/project';
-import Koa from 'koa';
-import crypto from 'node:crypto';
+import Project, { generateVersionHash, mapWorkflow } from '@openfn/project';
 
-import { RUN_COMPLETE } from './events';
 import { ServerState } from './server';
+import { RUN_COMPLETE } from './events';
 import { PhoenixEvent } from './socket-server';
 import type { DevServer, LightningEvents } from './types';
 
@@ -66,7 +66,13 @@ const setupDevAPI = (
 
   app.getState = () => state;
 
-  app.addProject = (project: Provisioner.Project_v1) => {
+  app.addProject = async (project: Provisioner.Project_v1 | string) => {
+    if (typeof project === 'string') {
+      const proj = await Project.from('project', project);
+      project = proj.serialize('state', {
+        format: 'json',
+      }) as Provisioner.Project_v1;
+    }
     state.projects[project.id] = project;
   };
 

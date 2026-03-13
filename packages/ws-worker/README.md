@@ -80,6 +80,85 @@ To use the monorepo adaptor version:
 pnpm start --collections-version local --collections-url http://localhost:4000/collections
 ```
 
+## Workloops
+
+By default, the worker runs a single workloop that claims runs from any
+queue, preferring the `manual` queue (used for manually-triggered and
+webhook runs). This is equivalent to `--workloops "manual>*:5"`.
+
+The `--workloops` option lets you split the worker's capacity into
+independent groups, each with its own queue preference chain and slot
+count. This is useful for dedicating capacity to latency-sensitive
+workloads (e.g., sync webhooks on a `fast_lane` queue) while letting
+remaining capacity serve general work.
+
+```
+--workloops "<queues>:<capacity> <queues>:<capacity> ..."
+```
+
+### Syntax
+
+| Element | Meaning |
+|---------|---------|
+| `>` | Queue preference separator (left = highest priority) |
+| `*` | Wildcard: accept runs from any queue (must be last) |
+| `:N` | Number of slots for this group |
+| ` ` (space) | Group separator |
+
+### Examples
+
+```bash
+# 1 slot pinned to fast_lane (strict), 4 slots preferring manual then anything
+--workloops "fast_lane:1 manual>*:4"
+
+# 5 generic slots (pure FIFO across all queues) — equivalent to --capacity 5
+--workloops "*:5"
+
+# 2 fast lane (strict), 3 with manual preference
+--workloops "fast_lane:2 manual>*:3"
+
+# 1 slot preferring fast_lane > manual > rest, 4 generic
+--workloops "fast_lane>manual>*:1 *:4"
+```
+
+A group **without** `*` in its queue list is strict — it will only
+claim runs from the named queues. A group **with** `*` will accept any
+run, but prefers queues listed before the wildcard.
+
+### Environment variable
+
+```
+WORKER_WORKLOOPS="fast_lane:1 manual>*:4"
+```
+
+### Relationship to --capacity
+
+`--workloops` and `--capacity` are mutually exclusive. If neither is
+provided, the default is `--capacity 5`, which internally creates a
+single `manual>*:5` group. The total capacity of the worker is always
+the sum of all group slot counts.
+
+### How it works
+
+Each group runs its own independent claim loop with its own backoff
+timer. When a run completes, only the owning group's workloop resumes.
+A `work-available` push from Lightning triggers a claim attempt on
+every group that has free slots.
+
+```
+  Main Process (ws-worker)
+ ├── Workloop 1 (manual>*:2)  ─┐
+ ├── Workloop 2 (fast_lane:1) ─┼── all run in the main process as async loops
+ ├── Workloop 3 (*:5)         ─┘
+ │
+ └── Engine (single instance, shared by all lanes)
+     └── Child Process Pool (capacity = sum of all lanes/slots)
+         ├── Child 1 (forked) → Worker Thread (per task)
+         ├── Child 2 (forked) → Worker Thread (per task)
+         ├── ...on demand, reused after each task
+         └── Child N
+```
+
 ## Architecture
 
 Lightning is expected to maintain a queue of runs. The Worker pulls those runs from the queue, via websocket, and sends them off to the Engine for execution.

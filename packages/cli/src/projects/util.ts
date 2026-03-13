@@ -174,7 +174,7 @@ export async function deployProject(
 
       const contentType = response.headers.get('content-type') ?? '';
 
-      if (contentType.match('application/json ')) {
+      if (contentType.match('application/json')) {
         const body = await response.json();
         logger?.error(JSON.stringify(body, null, 2));
       } else {

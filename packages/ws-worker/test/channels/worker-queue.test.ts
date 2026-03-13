@@ -133,5 +133,32 @@ test('should pass capacity in join payload when not provided', (t) => {
   });
 });
 
+test('should pass queues in join payload when provided', (t) => {
+  return new Promise((done) => {
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      queues: { 'fast_lane': 1, 'manual,*': 4 },
+      SocketConstructor: MockSocket as any,
+    }).on('connect', ({ socket }) => {
+      const channel = socket.allChannels['worker:queue'];
+      // @ts-ignore - accessing test property
+      t.deepEqual(channel._joinParams.queues, { 'fast_lane': 1, 'manual,*': 4 });
+      done();
+    });
+  });
+});
+
+test('should omit queues in join payload when not provided', (t) => {
+  return new Promise((done) => {
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      SocketConstructor: MockSocket as any,
+    }).on('connect', ({ socket }) => {
+      const channel = socket.allChannels['worker:queue'];
+      // @ts-ignore - accessing test property
+      t.is(channel._joinParams.queues, undefined);
+      done();
+    });
+  });
+});
+
 // TODO maybe?
 test.todo('should reconnect with backoff when connection is dropped');

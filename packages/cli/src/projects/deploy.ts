@@ -131,7 +131,7 @@ const syncProjects = async (
   localProject: Project,
   trackedProject: Project, // the project we want to update
   logger: Logger
-): Promise<Project> => {
+): Promise<Project | null> => {
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -169,15 +169,18 @@ const syncProjects = async (
   );
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = reportDiff(
-    localProject,
-    remoteProject,
-    locallyChangedWorkflows,
-    logger
-  );
+  let diffs = [];
+  if (locallyChangedWorkflows.length) {
+    diffs = reportDiff(
+      localProject,
+      remoteProject,
+      locallyChangedWorkflows,
+      logger
+    );
+  }
   if (!diffs.length) {
     logger.success('Nothing to deploy');
-    process.exit(0);
+    return null;
   }
 
   // Ensure there's no divergence
@@ -210,7 +213,9 @@ const syncProjects = async (
   The remote project has been edited since the local project was branched. Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
-        process.exit(1);
+        const e: any = new Error('PROJECTS_DIVERGED');
+        e.workflows = divergentWorkflows;
+        throw e;
       } else {
         logger.warn(
           'Remote project has diverged from local project! Pushing anyway as -f passed'
@@ -256,7 +261,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
   });
 
   // Track the remote we want to target
-  // If the used passed a project alias, we need to use that
+  // If the user passed a project alias, we need to use that
   // Otherwise just sync with the local project
   const tracker = ws.get(options.project ?? localProject.uuid!);
 
@@ -277,17 +282,23 @@ export async function handler(options: DeployOptions, logger: Logger) {
     throw new Error('Failed to find remote project locally');
   }
 
-  let endpoint: string = tracker.openfn?.endpoint ?? '';
+  // Choose the target endpoint we want to deploy to
+  // If the user explicity passed --endpoint, use that
+  // If the local project is tracking an endpoint, use that (90% of cases)
+  // Otherwise fallback to to the auto-loaded config (probably coming from env)
+  let endpoint: string =
+    options.endpoint ??
+    tracker.openfn?.endpoint ??
+    config.endpoint ??
+    DEFAULT_ENDPOINT;
 
   if (options.new) {
-    endpoint =
-      config.endpoint ?? localProject.openfn?.endpoint ?? DEFAULT_ENDPOINT;
-
     // reset all metadata
     localProject.openfn = {
       endpoint: config.endpoint,
     };
   }
+
   // generate a credential map
   localProject.credentials = localProject.buildCredentialMap();
 
@@ -295,9 +306,22 @@ export async function handler(options: DeployOptions, logger: Logger) {
     `Loaded checked-out project ${printProjectName(localProject)}`
   );
 
-  const merged: Project = options.new
-    ? localProject
-    : await syncProjects(options, config, ws, localProject, tracker, logger);
+  let merged;
+  if (options.new) {
+    merged = localProject;
+  } else {
+    merged = await syncProjects(
+      options,
+      config,
+      ws,
+      localProject,
+      tracker,
+      logger
+    );
+    if (!merged) {
+      return;
+    }
+  }
 
   const state = merged.serialize('state', {
     format: 'json',
@@ -321,7 +345,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
     // The following workflows will be updated
 
     if (options.confirm) {
-      if (!(await logger.confirm(`Ready to deploy changes to ${endpoint}?`))) {
+      if (
+        !(await logger.confirm(
+          // Stick a noisy and explicit NULL in here if endpoint somehow isn't set
+          `Ready to deploy changes to ${endpoint ?? 'NULL'}?`
+        ))
+      ) {
         logger.always('Cancelled deployment');
         return false;
       }
@@ -367,7 +396,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 
-    logger.success('Updated project  at', endpoint);
+    if (options.new) {
+      logger.success('Created new project at', endpoint);
+    } else {
+      logger.success('Updated project at', endpoint);
+    }
   }
 }
 

@@ -17,7 +17,7 @@ import {
   WORK_AVAILABLE,
 } from './events';
 import destroy from './api/destroy';
-import startWorkloop, { Workloop } from './api/workloop';
+import { Workloop } from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
@@ -28,6 +28,8 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
+import parseWorkloops from './util/parse-workloops';
+import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const exec = promisify(_exec);
 
@@ -36,6 +38,7 @@ export type ServerOptions = {
   batchInterval?: number;
   batchLimit?: number;
   maxWorkflows?: number;
+  workloopConfigs?: string;
   port?: number;
   lightning?: string; // url to lightning instance
   logger?: Logger;
@@ -71,17 +74,19 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
-  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
   engine: RuntimeEngine;
   options: ServerOptions;
-  workloop?: Workloop;
+
+  workloops: Workloop[];
+  runWorkloopMap: Record<string, Workloop>;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
-  resumeWorkloop: () => void;
+  resumeWorkloop: (workloop?: Workloop) => void;
+  pendingClaims: () => number;
 
   // debug API
   claim: () => Promise<any>;
@@ -132,8 +137,10 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // We were disconnected from the queue
   const onDisconnect = () => {
-    if (!app.workloop?.isStopped()) {
-      app.workloop?.stop('Socket disconnected unexpectedly');
+    for (const w of app.workloops) {
+      if (!w.isStopped()) {
+        w.stop('Socket disconnected unexpectedly');
+      }
     }
     if (!app.destroyed) {
       logger.info('Connection to lightning lost');
@@ -163,12 +170,22 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   const onMessage = (event: string) => {
     if (event === WORK_AVAILABLE) {
       if (!app.destroyed) {
-        claim(app, logger, { maxWorkers: options.maxWorkflows }).catch(() => {
-          // do nothing - it's fine if  claim throws here
-        });
+        for (const w of app.workloops) {
+          if (w.hasCapacity()) {
+            claim(app, w, logger).catch(() => {
+              // do nothing - it's fine if claim throws here
+            });
+          }
+        }
       }
     }
   };
+
+  // Build queues map from workloops: key = queues joined by >, value = capacity
+  const queuesMap: Record<string, number> = {};
+  for (const w of app.workloops) {
+    queuesMap[w.queues.join('>')] = w.capacity;
+  }
 
   connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger, {
     // TODO: options.socketTimeoutSeconds wins because this is what USED to be used
@@ -177,6 +194,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       options.socketTimeoutSeconds ?? options.messageTimeoutSeconds,
     claimTimeout: options.claimTimeoutSeconds,
     capacity: options.maxWorkflows,
+    queues: queuesMap,
   })
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
@@ -240,9 +258,13 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
-  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
+
+  app.workloops = parseWorkloops(
+    options.workloopConfigs ?? getDefaultWorkloopConfig(options.maxWorkflows)
+  );
+  app.runWorkloopMap = {};
 
   app.server = app.listen(port);
   logger.success(`Worker ${app.id} listening on ${port}`);
@@ -255,21 +277,28 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.options = options;
 
-  // Start the workloop (if not already started)
-  app.resumeWorkloop = () => {
+  // Start a specific workloop (or all if none specified)
+  // When called with a specific workloop (e.g. after a run completes), we restart
+  // the workloop fresh so it claims immediately rather than waiting in backoff.
+  app.resumeWorkloop = (workloop?: Workloop) => {
     if (options.noLoop || app.destroyed) {
       return;
     }
 
-    if (!app.workloop || app.workloop?.isStopped()) {
-      logger.info('Starting workloop');
-      // TODO maybe namespace the workloop logger differently? It's a bit annoying
-      app.workloop = startWorkloop(
+    const targets = workloop ? [workloop] : app.workloops;
+    for (const w of targets) {
+      if (!w.hasCapacity()) {
+        continue;
+      }
+      if (!w.isStopped()) {
+        w.stop('restarting');
+      }
+      logger.info(`Starting workloop for ${w.id}`);
+      w.start(
         app,
         logger,
         options.backoff?.min || MIN_BACKOFF,
-        options.backoff?.max || MAX_BACKOFF,
-        options.maxWorkflows
+        options.backoff?.max || MAX_BACKOFF
       );
     }
   };
@@ -330,9 +359,17 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           delete app.workflows[id];
           runChannel.leave();
 
-          app.events.emit(INTERNAL_RUN_COMPLETE);
-
-          app.resumeWorkloop();
+          // Remove from owning workloop and resume it
+          const owningWorkloop = app.runWorkloopMap[id];
+          if (owningWorkloop) {
+            owningWorkloop.activeRuns.delete(id);
+            delete app.runWorkloopMap[id];
+            app.events.emit(INTERNAL_RUN_COMPLETE);
+            app.resumeWorkloop(owningWorkloop);
+          } else {
+            app.events.emit(INTERNAL_RUN_COMPLETE);
+            app.resumeWorkloop();
+          }
         };
         const context = execute(
           runChannel,
@@ -348,9 +385,15 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       } catch (e) {
         delete app.workflows[id];
 
-        // TODO should we try and send a workflow complete message here?
-
-        app.resumeWorkloop();
+        // Clean up from owning workloop
+        const owningWorkloop = app.runWorkloopMap[id];
+        if (owningWorkloop) {
+          owningWorkloop.activeRuns.delete(id);
+          delete app.runWorkloopMap[id];
+          app.resumeWorkloop(owningWorkloop);
+        } else {
+          app.resumeWorkloop();
+        }
 
         // Trap errors coming out of the socket
         // These are likely to be comms errors with Lightning
@@ -363,12 +406,16 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     }
   };
 
-  // Debug API to manually trigger a claim
+  // Debug API to manually trigger a claim on all workloops with capacity
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app, logger, {
-      maxWorkers: options.maxWorkflows,
-    })
+    const promises = app.workloops.map((w) => {
+      if (w.hasCapacity()) {
+        return claim(app, w, logger);
+      }
+      return Promise.reject(new Error('Workloop at capacity'));
+    });
+    return Promise.any(promises)
       .then(() => {
         logger.info('claim complete: 1 run claimed');
         ctx.body = 'complete';
@@ -382,10 +429,17 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   });
 
   app.claim = () => {
-    return claim(app, logger, {
-      maxWorkers: options.maxWorkflows,
+    const promises = app.workloops.map((w) => {
+      if (w.hasCapacity()) {
+        return claim(app, w, logger);
+      }
+      return Promise.reject(new Error('Workloop at capacity'));
     });
+    return Promise.any(promises);
   };
+
+  app.pendingClaims = () =>
+    app.workloops.reduce((sum, w) => sum + Object.keys(w.openClaims).length, 0);
 
   app.destroy = () => destroy(app, logger);
 
