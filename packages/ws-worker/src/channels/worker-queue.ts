@@ -21,6 +21,7 @@ const connectToWorkerQueue = (
     messageTimeout?: number;
     claimTimeout?: number;
     capacity?: number;
+    queues?: Record<string, number>;
     SocketConstructor?: any;
   }
 ) => {
@@ -30,6 +31,7 @@ const connectToWorkerQueue = (
     messageTimeout = DEFAULT_MESSAGE_TIMEOUT_SECONDS,
     claimTimeout = DEFAULT_CLAIM_TIMEOUT_SECONDS,
     capacity,
+    queues,
     SocketConstructor = PhxSocket,
   } = options;
 
@@ -74,7 +76,10 @@ const connectToWorkerQueue = (
       didOpen = true;
       shouldReportConnectionError = true;
 
-      const joinPayload = { capacity };
+      const joinPayload: Record<string, any> = { capacity };
+      if (queues) {
+        joinPayload.queues = queues;
+      }
       const channel = socket.channel('worker:queue', joinPayload) as Channel;
 
       channel.onMessage = (ev, load) => {

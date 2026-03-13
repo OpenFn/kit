@@ -3,6 +3,7 @@
   "include": ["src/**/*.ts", "test/**/*.ts", "src/channels/runs"],
   "compilerOptions": {
     "module": "ESNext",
+    "lib": ["ES2021"],
     "sourceMap": true
   }
 }

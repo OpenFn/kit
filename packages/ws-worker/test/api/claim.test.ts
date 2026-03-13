@@ -9,6 +9,7 @@ import { ServerApp } from '../../src/server';
 import { mockChannel } from '../../src/mock/sockets';
 import { CLAIM } from '../../src';
 import EventEmitter from 'node:events';
+import { Workloop } from '../../src/api/workloop';
 
 let keys = { public: '.', private: '.' };
 
@@ -127,6 +128,9 @@ test('verifyToken should accept a token with NBF exactly 2 seconds in future (us
   );
 });
 
+const createMockWorkloop = (capacity = 5): Workloop =>
+  new Workloop({ id: `manual>*:${capacity}`, queues: ['manual', '*'], capacity });
+
 const createMockApp = (opts: any) => {
   const {
     onClaim = () => ({ runs: [] }),
@@ -141,10 +145,10 @@ const createMockApp = (opts: any) => {
   });
 
   return {
-    workloop: undefined, // should be safe
-    openClaims: {},
     workflows,
     queueChannel: channel,
+    workloops: [],
+    runWorkloopMap: {},
     execute: (...args: any) => {
       onExecute(...args);
     },
@@ -162,41 +166,42 @@ test('claim: should call execute for a single run', async (t) => {
     executeArgs = args;
   };
 
-  const options = { maxWorkers: 1 };
+  const workloop = createMockWorkloop(1);
   const app = createMockApp({
     onClaim,
     onExecute,
   });
+  app.runWorkloopMap = {};
 
-  await claim(app, logger, options);
+  await claim(app, workloop, logger);
   t.deepEqual(executeArgs[0], { id: 'abc' });
+  t.true(workloop.activeRuns.has('abc'));
+  t.is(app.runWorkloopMap['abc'], workloop);
 });
 
-test('should not claim if worker is at capacity', async (t) => {
-  const options = { maxWorkers: 1 };
+test('should not claim if workloop is at capacity', async (t) => {
+  const workloop = createMockWorkloop(1);
+  workloop.activeRuns.add('a');
 
   const app = createMockApp({
-    workflows: {
-      a: true,
-    },
+    workflows: { a: true },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
-    message: 'Server at capacity',
+  await t.throwsAsync(() => claim(app, workloop, logger), {
+    message: 'Workloop at capacity',
   });
 });
 
 test('should mark a claim when in flight', async (t) => {
-  const options = {};
+  const workloop = createMockWorkloop(5);
 
   const app = createMockApp({
     workflows: {},
   });
 
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, workloop, logger);
 
-  t.is(app.openClaims['1'], 1);
-  t.is(Object.keys(app.openClaims).length, 1);
+  t.is(workloop.openClaims['1'], 1);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
@@ -204,22 +209,21 @@ test('should mark a claim when in flight', async (t) => {
 });
 
 test('should remove an open claim when completed', async (t) => {
-  const options = {};
+  const workloop = createMockWorkloop(5);
 
   const app = createMockApp({
     workflows: {},
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, workloop, logger), {
     message: 'No runs returned',
   });
 
-  t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
+  t.falsy(workloop.openClaims['1']);
 });
 
 test('should remove an open claim on error', async (t) => {
-  const options = {};
+  const workloop = createMockWorkloop(5);
 
   const app = createMockApp({
     workflows: {},
@@ -228,17 +232,16 @@ test('should remove an open claim on error', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, workloop, logger), {
     message: 'claim error',
   });
 
-  t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
+  t.falsy(workloop.openClaims['1']);
 });
 
 // TODO not really sure how to check this
 test.skip('should remove an open claim on timeout', async (t) => {
-  const options = {};
+  const workloop = createMockWorkloop(5);
 
   const app = createMockApp({
     workflows: {},
@@ -247,18 +250,15 @@ test.skip('should remove an open claim on timeout', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, workloop, logger), {
     message: 'timeout',
   });
 
-  t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
+  t.falsy(workloop.openClaims['1']);
 });
 
 test('should mark a claim when in flight with demand: 2', async (t) => {
-  const options = {
-    demand: 2,
-  };
+  const workloop = createMockWorkloop(5);
 
   const app = createMockApp({
     workflows: {
@@ -266,23 +266,17 @@ test('should mark a claim when in flight with demand: 2', async (t) => {
     },
   });
 
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, workloop, logger, { demand: 2 });
 
-  t.is(app.openClaims['1'], 2);
-  t.is(Object.keys(app.openClaims).length, 1);
+  t.is(workloop.openClaims['1'], 2);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
   });
 });
 
-test('should not claim if open claims exceeds capacity', async (t) => {
-  let didStopWorkloop = false;
-
-  const options = {
-    maxWorkers: 1,
-    demand: 1,
-  };
+test('should not claim if open claims exceeds workloop capacity', async (t) => {
+  const workloop = createMockWorkloop(1);
 
   const app = createMockApp({
     workflows: {},
@@ -293,12 +287,7 @@ test('should not claim if open claims exceeds capacity', async (t) => {
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
-
-  app.workloop = {
-    stop: () => {
-      didStopWorkloop = true;
-    },
-  } as any;
+  app.runWorkloopMap = {};
 
   // @ts-ignore
   app.execute = ({ id }) => {
@@ -306,13 +295,13 @@ test('should not claim if open claims exceeds capacity', async (t) => {
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, workloop, logger);
 
   // second claim should error and stop the loop actually
-  await t.throwsAsync(() => claim(app, logger, options), {
-    message: 'Server at capacity',
+  await t.throwsAsync(() => claim(app, workloop, logger), {
+    message: 'Workloop at capacity',
   });
-  t.true(didStopWorkloop);
+  t.true(workloop.isStopped());
 
   // The prior claim should not have counted for anything
   t.is(Object.keys(app.workflows).length, 0);
@@ -323,11 +312,9 @@ test('should not claim if open claims exceeds capacity', async (t) => {
   });
 });
 
-test('should not claim if open claims + active runs exceeds capacity', async (t) => {
-  const options = {
-    maxWorkers: 2,
-    demand: 1,
-  };
+test('should not claim if open claims + active runs exceeds workloop capacity', async (t) => {
+  const workloop = createMockWorkloop(2);
+  workloop.activeRuns.add('a');
 
   const app = createMockApp({
     workflows: {
@@ -341,6 +328,7 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
+  app.runWorkloopMap = {};
 
   // @ts-ignore
   app.execute = ({ id }) => {
@@ -348,11 +336,11 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, workloop, logger);
 
   // second claim should error
-  await t.throwsAsync(() => claim(app, logger, options), {
-    message: 'Server at capacity',
+  await t.throwsAsync(() => claim(app, workloop, logger), {
+    message: 'Workloop at capacity',
   });
 
   // The prior claim should not have counted for anything
@@ -364,9 +352,53 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
   });
 });
 
+test('claim: should send queues in payload', async (t) => {
+  let sentPayload: any;
+  const workloop = createMockWorkloop(5);
+
+  const channel = mockChannel({
+    [CLAIM]: (payload: any) => {
+      sentPayload = payload;
+      return { runs: [] };
+    },
+  });
+
+  const app = {
+    workflows: {},
+    queueChannel: channel,
+    runWorkloopMap: {},
+    execute: () => {},
+    events: new EventEmitter(),
+  } as unknown as ServerApp;
+
+  await t.throwsAsync(() => claim(app, workloop, logger), {
+    message: 'No runs returned',
+  });
+
+  t.deepEqual(sentPayload.queues, ['manual', '*']);
+});
+
+test('claim: should check per-workloop capacity, not global', async (t) => {
+  // Workloop has capacity 2 with 1 active run
+  const workloop = createMockWorkloop(2);
+  workloop.activeRuns.add('existing-run');
+
+  const app = createMockApp({
+    onClaim: () => ({ runs: [{ id: 'run-2' }] }),
+    // Global workflows has 10 entries - should not matter
+    workflows: Object.fromEntries(
+      Array.from({ length: 10 }, (_, i) => [`w${i}`, true])
+    ),
+  });
+  app.runWorkloopMap = {};
+
+  // Should succeed because workloop has capacity (1/2), regardless of global count
+  await claim(app, workloop, logger);
+  t.true(workloop.activeRuns.has('run-2'));
+});
+
 test.todo('should handle multiple runs');
 test.todo('claim payload should have a demand');
 test.todo('claim payload should include a worker name');
-test.todo('should stop the workloop if at capacity');
 // TODO I'd rather return true/false really and let the backoff itself decide whether to throw or not
 test.todo('should throw if there are no runs available (to trigger backoff)');

@@ -15,6 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm ava",
+    "test:ci": "pnpm ava --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/runtime.xml",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --project tsconfig.test.json",
     "test:memory": "pnpm ava --config memtest.ava.config.cjs",

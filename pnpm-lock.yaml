@@ -41,6 +41,9 @@ importers:
       semver:
         specifier: ^7.7.2
         version: 7.7.4
+      tap-xunit:
+        specifier: ^2.4.1
+        version: 2.4.1
       tar-stream:
         specifier: ^3.1.7
         version: 3.1.8
@@ -481,6 +484,8 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
+
+  packages/engine-multi/tmp/repo: {}
 
   packages/lexicon:
     dependencies:
@@ -3073,6 +3078,9 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
+  duplexer@0.1.2:
+    resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
+
   duplexify@3.7.1:
     resolution: {integrity: sha512-07z8uv2wMyS51kKhD1KsdXJg5WQ6t93RneqRxUHnskXVtlYYkLqM0gqStQZ3pj073g687jPCHrqNfCzawLYh5g==}
 
@@ -3350,6 +3358,9 @@ packages:
 
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
+
+  events-to-array@1.1.2:
+    resolution: {integrity: sha512-inRWzRY7nG+aXZxBzEqYKB3HPgwflZRopAjDCHv0whhRx+MTUr1ei0ICZUypdyE0HRm4L2d5VEcIqLD6yl+BFA==}
 
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
@@ -4045,6 +4056,9 @@ packages:
   minimatch@9.0.9:
     resolution: {integrity: sha512-OBwBN9AL4dqmETlpS2zasx+vTeWclWzkblfZk7KTA5j3jeOONz/tRCnZomUyvNg83wL5Zv9Ss6HMJXAgL8R2Yg==}
     engines: {node: '>=16 || 14 >=14.17'}
+
+  minimist@1.2.8:
+    resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
   minipass-collect@2.0.1:
     resolution: {integrity: sha512-D7V8PO9oaz7PWGLbCACuI1qEOsq7UKfLotx/C0Aet43fCUB/wfQ7DYeq2oR/svFJGYDHPr38SHATeaj/ZoKHKw==}
@@ -4884,6 +4898,14 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
 
+  tap-parser@1.2.2:
+    resolution: {integrity: sha512-uXKcosa0qoSjeh73dhmX+OpJvpigDxUciOhBcbGUKtmwzEFJjUT1Ql5dpg4M9I1UjXT9b+6n1W05FB8QmKossA==}
+    hasBin: true
+
+  tap-xunit@2.4.1:
+    resolution: {integrity: sha512-qcZStDtjjYjMKAo7QNiCtOW256g3tuSyCSe5kNJniG1Q2oeOExJq4vm8CwboHZURpkXAHvtqMl4TVL7mcbMVVA==}
+    hasBin: true
+
   tar-stream@3.1.8:
     resolution: {integrity: sha512-U6QpVRyCGHva435KoNWy9PRoi2IFYCgtEhq9nmrPPpbRacPs9IH4aJ3gbrFC8dPcXvdSZ4XXfXT5Fshbp2MtlQ==}
 
@@ -5173,6 +5195,10 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xmlbuilder@4.2.1:
+    resolution: {integrity: sha512-oEePiEefhQhAeUnwRnIBLBWmk/fsWWbQ53EEWsRuzECbQ3m5o/Esmq6H47CYYwSLW+Ynt0rS9hd0pd2ogMAWjg==}
+    engines: {node: '>=0.8.0'}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -7434,6 +7460,8 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
+  duplexer@0.1.2: {}
+
   duplexify@3.7.1:
     dependencies:
       end-of-stream: 1.4.5
@@ -7728,6 +7756,8 @@ snapshots:
   eventemitter3@3.1.2: {}
 
   eventemitter3@4.0.7: {}
+
+  events-to-array@1.1.2: {}
 
   events-universal@1.0.1:
     dependencies:
@@ -8472,6 +8502,8 @@ snapshots:
   minimatch@9.0.9:
     dependencies:
       brace-expansion: 2.0.2
+
+  minimist@1.2.8: {}
 
   minipass-collect@2.0.1:
     dependencies:
@@ -9377,6 +9409,23 @@ snapshots:
       - tsx
       - yaml
 
+  tap-parser@1.2.2:
+    dependencies:
+      events-to-array: 1.1.2
+      inherits: 2.0.4
+      js-yaml: 3.14.2
+    optionalDependencies:
+      readable-stream: 2.3.8
+
+  tap-xunit@2.4.1:
+    dependencies:
+      duplexer: 0.1.2
+      minimist: 1.2.8
+      tap-parser: 1.2.2
+      through2: 2.0.5
+      xmlbuilder: 4.2.1
+      xtend: 4.0.2
+
   tar-stream@3.1.8:
     dependencies:
       b4a: 1.8.0
@@ -9744,6 +9793,10 @@ snapshots:
       signal-exit: 4.1.0
 
   ws@8.19.0: {}
+
+  xmlbuilder@4.2.1:
+    dependencies:
+      lodash: 4.17.23
 
   xtend@4.0.2: {}
 

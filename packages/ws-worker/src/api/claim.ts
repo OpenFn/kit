@@ -12,6 +12,7 @@ import {
 } from '../events';
 
 import type { ServerApp } from '../server';
+import type { Workloop } from './workloop';
 
 const mockLogger = createMockLogger();
 
@@ -28,7 +29,6 @@ export const verifyToken = async (token: string, publicKey: string) => {
 };
 
 type ClaimOptions = {
-  maxWorkers?: number;
   demand?: number;
 };
 
@@ -52,33 +52,32 @@ export const resetClaimIdGen = () => {
 
 const claim = (
   app: ServerApp,
+  workloop: Workloop,
   logger: Logger = mockLogger,
   options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
-    app.openClaims ??= {};
-
-    const { maxWorkers = 5, demand = 1 } = options;
+    const { demand = 1 } = options;
     const podName = NAME ? `[${NAME}] ` : '';
 
-    const activeWorkers = Object.keys(app.workflows).length;
+    const activeInWorkloop = workloop.activeRuns.size;
+    const capacity = workloop.capacity;
 
-    const pendingClaims = Object.values(app.openClaims).reduce(
+    const pendingWorkloopClaims = Object.values(workloop.openClaims).reduce(
       (a, b) => a + b,
       0
     );
 
-    if (activeWorkers >= maxWorkers) {
-      // Important: stop the workloop so that we don't try and claim any more
-      app.workloop?.stop(`server at capacity (${activeWorkers}/${maxWorkers})`);
-      return reject(new ClaimError('Server at capacity'));
-    } else if (activeWorkers + pendingClaims >= maxWorkers) {
-      // There are active claims which haven't yet been fulfilled
-      // This can happen in response to the work-available event
-      app.workloop?.stop(
-        `server at capacity (${activeWorkers}/${maxWorkers}, ${pendingClaims} pending)`
+    if (activeInWorkloop >= capacity) {
+      workloop.stop(
+        `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`
       );
-      return reject(new ClaimError('Server at capacity'));
+      return reject(new ClaimError('Workloop at capacity'));
+    } else if (activeInWorkloop + pendingWorkloopClaims >= capacity) {
+      workloop.stop(
+        `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
+      );
+      return reject(new ClaimError('Workloop at capacity'));
     }
 
     if (!app.queueChannel) {
@@ -96,14 +95,14 @@ const claim = (
 
     const claimId = ++claimIdGen;
 
-    app.openClaims[claimId] = demand;
+    workloop.openClaims[claimId] = demand;
 
     const { used_heap_size, heap_size_limit } = v8.getHeapStatistics();
     const usedHeapMb = Math.round(used_heap_size / 1024 / 1024);
     const totalHeapMb = Math.round(heap_size_limit / 1024 / 1024);
     const memPercent = Math.round((usedHeapMb / totalHeapMb) * 100);
     logger.debug(
-      `Claiming runs :: demand ${demand} | capacity ${activeWorkers}/${maxWorkers} | memory ${memPercent}% (${usedHeapMb}/${totalHeapMb}mb)`
+      `Claiming runs [${workloop.id}] :: demand ${demand} | capacity ${activeInWorkloop}/${capacity} | memory ${memPercent}% (${usedHeapMb}/${totalHeapMb}mb)`
     );
 
     app.events.emit(INTERNAL_CLAIM_START);
@@ -112,9 +111,10 @@ const claim = (
       .push<ClaimPayload>(CLAIM, {
         demand,
         worker_name: NAME || null,
+        queues: workloop.queues,
       })
       .receive('ok', async ({ runs }: ClaimReply) => {
-        delete app.openClaims[claimId];
+        delete workloop.openClaims[claimId];
         const duration = Date.now() - start;
         logger.debug(
           `${podName}claimed ${runs.length} runs in ${duration}ms (${
@@ -144,6 +144,10 @@ const claim = (
             logger.debug('skipping run token validation for', run.id);
           }
 
+          // Track run in workloop
+          workloop.activeRuns.add(run.id);
+          app.runWorkloopMap[run.id] = workloop;
+
           logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
         }
@@ -155,12 +159,12 @@ const claim = (
       // TODO need implementations for both of these really
       // What do we do if we fail to join the worker channel?
       .receive('error', (e) => {
-        delete app.openClaims[claimId];
+        delete workloop.openClaims[claimId];
         logger.error('Error on claim', e);
         reject(new Error('claim error'));
       })
       .receive('timeout', () => {
-        delete app.openClaims[claimId];
+        delete workloop.openClaims[claimId];
         logger.error('TIMEOUT on claim. Runs may be lost.');
         reject(new Error('timeout'));
       });
