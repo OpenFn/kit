@@ -131,7 +131,7 @@ const syncProjects = async (
   localProject: Project,
   trackedProject: Project, // the project we want to update
   logger: Logger
-): Promise<Project> => {
+): Promise<Project | null> => {
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -169,15 +169,18 @@ const syncProjects = async (
   );
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = reportDiff(
-    localProject,
-    remoteProject,
-    locallyChangedWorkflows,
-    logger
-  );
+  let diffs = [];
+  if (locallyChangedWorkflows.length) {
+    diffs = reportDiff(
+      localProject,
+      remoteProject,
+      locallyChangedWorkflows,
+      logger
+    );
+  }
   if (!diffs.length) {
     logger.success('Nothing to deploy');
-    process.exit(0);
+    return null;
   }
 
   // Ensure there's no divergence
@@ -210,7 +213,9 @@ const syncProjects = async (
   The remote project has been edited since the local project was branched. Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
-        process.exit(1);
+        const e: any = new Error('PROJECTS_DIVERGED');
+        e.workflows = divergentWorkflows;
+        throw e;
       } else {
         logger.warn(
           'Remote project has diverged from local project! Pushing anyway as -f passed'
@@ -301,9 +306,22 @@ export async function handler(options: DeployOptions, logger: Logger) {
     `Loaded checked-out project ${printProjectName(localProject)}`
   );
 
-  const merged: Project = options.new
-    ? localProject
-    : await syncProjects(options, config, ws, localProject, tracker, logger);
+  let merged;
+  if (options.new) {
+    merged = localProject;
+  } else {
+    merged = await syncProjects(
+      options,
+      config,
+      ws,
+      localProject,
+      tracker,
+      logger
+    );
+    if (!merged) {
+      return;
+    }
+  }
 
   const state = merged.serialize('state', {
     format: 'json',
@@ -378,7 +396,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 
-    logger.success('Updated project  at', endpoint);
+    if (options.new) {
+      logger.success('Created new project at', endpoint);
+    } else {
+      logger.success('Updated project at', endpoint);
+    }
   }
 }
 

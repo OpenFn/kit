@@ -9,3 +9,8 @@ packages:
   - '!**/test/**'
 
 minimumReleaseAge: 1440
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - oxc-resolver

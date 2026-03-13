@@ -84,11 +84,10 @@ export class Project {
   sandbox?: SandboxMeta;
 
   // project v2. Default.
-  // doens't take any options
   static async from(
     type: 'project',
     data: any,
-    options: never
+    config?: Partial<l.WorkspaceConfig>
   ): Promise<Project>;
   static async from(
     type: 'state',

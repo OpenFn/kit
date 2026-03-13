@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
@@ -7,29 +7,20 @@ import { createMockLogger } from '@openfn/logger';
 import createLightningServer from '@openfn/lightning-mock';
 
 import {
-  handler as deployHandler,
+  handler as deploy,
   hasRemoteDiverged,
   reportDiff,
 } from '../../src/projects/deploy';
-import { myProject_yaml, myProject_v1 } from './fixtures';
+import { myProject_yaml, myProject_v1, UUID } from './fixtures';
 import { checkout } from '../../src/projects';
 
+let server: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
-
 const port = 9876;
 const ENDPOINT = `http://localhost:${port}`;
 
-let server: any;
-
-test.before(async () => {
-  server = await createLightningServer({ port });
-});
-
-test.beforeEach(() => {
-  server.addProject(myProject_v1);
-  logger._reset();
-  mock.restore();
-});
+// quick fix to the fixture yaml, otherwise the deploy code kicks off
+const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
 
 const mockFs = (paths: Record<string, string>) => {
   const pnpm = path.resolve('../../node_modules/.pnpm');
@@ -39,21 +30,169 @@ const mockFs = (paths: Record<string, string>) => {
   });
 };
 
-// what will deploy tests look like?
+// Take a project yaml and expand it
+// This uses checkout to do the heavy lifting
+const setup = async (yaml: string = projectYaml) => {
+  mockFs({
+    '/ws/.projects/main@localhost.yaml': yaml,
+    '/ws/openfn.yaml': '',
+  });
 
-// deploy a project for the first time (this doesn't work though?)
+  await checkout({
+    project: 'main',
+    workspace: '/ws',
+  });
+};
 
-// deploy a change to a project
+test.before(async () => {
+  server = await createLightningServer({ port });
+});
 
-// deploy a change to a project but fetch latest first
+test.beforeEach(() => {
+  server.reset();
+  server.addProject(myProject_v1);
+  logger._reset();
+  mock.restore();
+});
 
-// throw when trying to deploy to a diverged remote project
+test.serial('deploy a new project', async (t) => {
+  // the server should have 1 registered project by default - that's fine
+  t.is(Object.keys(server.state.projects).length, 1);
 
-// force deploy an incompatible project
+  await setup();
 
-// don't post the final version if dry-run is set
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      new: true,
+    } as any,
+    logger
+  );
 
-// TODO diff + confirm
+  // We should now have a new project with a new UUID
+  t.is(Object.keys(server.state.projects).length, 2);
+
+  const success = logger._find('success', /Created new project at/);
+  t.truthy(success);
+});
+
+test.serial('deploy a change to a project', async (t) => {
+  t.truthy(server.state.projects[UUID]);
+  t.is(Object.keys(server.state.projects).length, 1);
+
+  await setup(projectYaml);
+
+  // change the expression
+  await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      log: 'debug',
+      confirm: false,
+    } as any,
+    logger
+  );
+  const success = logger._find('success', /Updated project at/);
+  t.truthy(success);
+
+  // ensure that the project is now synced with lightning
+  const transformData =
+    server.state.projects[UUID].workflows['my-workflow'].jobs['transform-data'];
+
+  t.is(transformData.body, 'log()');
+
+  // Ensure no sneaky duplication
+  t.truthy(server.state.projects[UUID]);
+  t.is(Object.keys(server.state.projects).length, 1);
+});
+
+test.serial(
+  'Error if the remote and local workflows have diverged',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    t.is(Object.keys(server.state.projects).length, 1);
+
+    await setup(projectYaml);
+
+    // change the local expression
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+    // change the server expression
+    // (this will update the version hash in the mock)
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            log: 'debug',
+            confirm: false,
+          } as any,
+          logger
+        ),
+      {
+        message: /PROJECTS_DIVERGED/,
+      }
+    );
+    const warn = logger._find('warn', /workflows have diverged/i);
+    t.truthy(warn);
+
+    // the workflow should not have been edited (still has server state)
+    const transformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
+
+    t.is(transformData.body, 'each()');
+  }
+);
+
+// TODO in this case, should we warn the user of any workflows that have changed remotely?
+// Offer to update locally?
+test.serial(
+  'When running deploy with no changes locally, but changes remotely, do not warn diffs',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    t.is(Object.keys(server.state.projects).length, 1);
+
+    await setup(projectYaml);
+
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    // Run deploy, even though nothing changed locally
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    const warn = logger._find('warn', /workflows have diverged/i);
+    t.falsy(warn);
+
+    const noop = logger._find('success', /Nothing to deploy/i);
+    t.truthy(noop);
+  }
+);
 
 test('reportDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
@@ -182,101 +321,6 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
   t.truthy(logger._find('always', /workflows removed/i));
   t.truthy(logger._find('always', /- c/i));
 });
-
-// This doesn't work until local history is tracked properly
-test.serial.skip(
-  'deploy a change to a project and write the yaml back (compatible histories)',
-  async (t) => {
-    mockFs({
-      '/ws/.projects/main@app.openfn.org.yaml': myProject_yaml,
-      '/ws/openfn.yaml': '',
-    });
-
-    // first checkout the project
-    await checkout(
-      {
-        project: 'main',
-        workspace: '/ws',
-      },
-      logger
-    );
-
-    // Now change the expression
-    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
-
-    await deployHandler(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-        log: 'debug',
-      } as any,
-      logger
-    );
-
-    // Check what was uploaded to Lightning - the internal app state
-    // should be the exact state object that was uploaded
-    const uploadedState =
-      server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00'];
-    t.truthy(uploadedState);
-
-    const projectYaml = await readFile(
-      '/ws/.projects/main@app.openfn.org.yaml',
-      'utf8'
-    );
-    t.regex(projectYaml, /fn()/);
-
-    const success = logger._find('success', /Updated project at/);
-    t.truthy(success);
-  }
-);
-
-// TODO skipping while history checking is messed up
-test.serial.skip(
-  'Exit early if the remote is not compatible with local',
-  async (t) => {
-    mockFs({
-      '/ws/.projects/main@app.openfn.org.yaml': myProject_yaml,
-      '/ws/openfn.yaml': '',
-    });
-
-    // Update the server-side project
-    const changed = JSON.parse(JSON.stringify(myProject_v1));
-    changed.workflows['my-workflow'].version_history.push('app:abc');
-
-    server.addProject('e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00', changed);
-
-    // checkout the project locally
-    await checkout(
-      {
-        project: 'main',
-        workspace: '/ws',
-      },
-      logger
-    );
-
-    // Now change the expression
-    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
-
-    await deployHandler(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-      } as any,
-      logger
-    );
-
-    // The remote project should not have changed
-    const appState =
-      server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00'];
-    t.deepEqual(appState, myProject_v1);
-
-    // We should log what's going on to the user
-    const expectedLog = logger._find('error', /projects have diverged/i);
-    t.truthy(expectedLog);
-  }
-);
 
 test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
   const local = {
