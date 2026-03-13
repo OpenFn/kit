@@ -2,4 +2,8 @@
 '@openfn/ws-worker': minor
 ---
 
-Implement per-group workloops and queue-aware claiming. Each slot group now gets its own independent workloop, tracks its own active runs and capacity, and sends queue-scoped claims to Lightning. The join payload now includes a queues map so Lightning knows the slot distribution. Default behavior (no `--workloops`) is preserved with a single `manual>*` group.
+Fastlane support: multiple concurrent workloops, each with its own isolated capacity and backoff.
+
+Claims also include a `queues` key, which specifies a prioritised list of Lightning work queues to claim from.
+
+Configure workloops with the `--workloops` CLI option or env. By default the worker users `manual>*5`, which provides parity behaviour to prior production.
