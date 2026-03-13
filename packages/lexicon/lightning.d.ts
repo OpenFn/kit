@@ -129,7 +129,7 @@ export type CHANNEL_LEAVE = 'socket:channel-leave';
 export type CLAIM = 'claim';
 
 // This is the payload in the message sent to lightning
-export type ClaimPayload = { demand?: number; worker_name: string | null };
+export type ClaimPayload = { demand?: number; worker_name: string | null; queues?: string[] };
 
 // This is the response from lightning
 export type ClaimReply = { runs: Array<ClaimRun> };

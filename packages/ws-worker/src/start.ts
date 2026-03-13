@@ -4,12 +4,28 @@ import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
+import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const args = cli(process.argv);
 
+const workloopConfigs =
+  args.workloops ?? getDefaultWorkloopConfig(args.capacity);
+
+// Sum the capacity from each "<queues>:<n>" token in the workloop string
+const effectiveCapacity = workloopConfigs
+  .trim()
+  .split(/\s+/)
+  .reduce((sum, token) => sum + (parseInt(token.split(':').pop()!) || 0), 0);
+
 const logger = createLogger('SRV', { level: args.log });
 
-logger.info('Starting worker server...');
+logger.info('Starting worker...');
+logger.info(
+  'Workloops:',
+  workloopConfigs,
+  'effective capacity:',
+  effectiveCapacity
+);
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
@@ -40,7 +56,8 @@ function engineReady(engine: any) {
       min: minBackoff,
       max: maxBackoff,
     },
-    maxWorkflows: args.capacity,
+    maxWorkflows: effectiveCapacity,
+    workloopConfigs,
     payloadLimitMb: args.payloadMemory,
     logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,
@@ -94,7 +111,7 @@ if (args.mock) {
   const engineOptions = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
-    maxWorkers: args.capacity,
+    maxWorkers: effectiveCapacity,
     statePropsToRemove: args.statePropsToRemove,
     runTimeoutMs: args.maxRunDurationSeconds * 1000,
     workerValidationTimeout: args.engineValidationTimeoutMs,

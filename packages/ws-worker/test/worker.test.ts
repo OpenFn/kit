@@ -61,39 +61,36 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
   });
 
 // Repro for https://github.com/OpenFn/kit/issues/616
-// This will not run in CI unless the env is set
-if (process.env.OPENFN_TEST_SF_TOKEN && process.env.OPENFN_TEST_SF_PASSWORD) {
-  // hard skipping the test because the insert actually fails (permissions)
-  test.skip('salesforce issue', async (t) => {
-    const plan = createPlan({
-      id: 'x',
-      expression: `bulk(
-          'Contact',
-          'insert',
-          {
-            failOnError: true,
-            allowNoOp: true,
-          },
-          state => ([{
-            "name": "testy mctestface",
-            "email": "test@test.com"
-          }])
-        )`,
-      adaptors: ['@openfn/language-salesforce@4.5.0'],
-      configuration: {
-        username: 'demo@openfn.org',
-        securityToken: process.env.OPENFN_TEST_SF_TOKEN,
-        password: process.env.OPENFN_TEST_SF_PASSWORD,
-        loginUrl: 'https://login.salesforce.com',
-      },
-    });
-
-    const input = { data: { result: 42 } };
-
-    const result = await execute(plan, input);
-    t.log(result);
-
-    // Actually this fails right but it's a permissions thing on the sandbox
-    t.is(result.reason.reason, 'success');
+// Hard skipping: the insert actually fails due to permissions on the sandbox
+test.skip('salesforce issue', async (t) => {
+  const plan = createPlan({
+    id: 'x',
+    expression: `bulk(
+        'Contact',
+        'insert',
+        {
+          failOnError: true,
+          allowNoOp: true,
+        },
+        state => ([{
+          "name": "testy mctestface",
+          "email": "test@test.com"
+        }])
+      )`,
+    adaptors: ['@openfn/language-salesforce@4.5.0'],
+    configuration: {
+      username: 'demo@openfn.org',
+      securityToken: process.env.OPENFN_TEST_SF_TOKEN!,
+      password: process.env.OPENFN_TEST_SF_PASSWORD!,
+      loginUrl: 'https://login.salesforce.com',
+    },
   });
-}
+
+  const input = { data: { result: 42 } };
+
+  const result = await execute(plan, input);
+  t.log(result);
+
+  // Actually this fails right but it's a permissions thing on the sandbox
+  t.is(result.reason.reason, 'success');
+});

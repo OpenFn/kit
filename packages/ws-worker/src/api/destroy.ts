@@ -13,8 +13,10 @@ const destroy = async (app: ServerApp, logger: Logger) => {
     new Promise<void>((resolve) => {
       app.destroyed = true;
 
-      // Immediately stop asking for more work
-      app.workloop?.stop('server closed');
+      // Immediately stop asking for more work on all workloops
+      for (const w of app.workloops) {
+        w.stop('server closed');
+      }
 
       // Shut down the HTTP server
       app.server.close(async () => {
@@ -41,18 +43,14 @@ const waitForRunsAndClaims = (app: ServerApp, logger: Logger) =>
   new Promise<void>((resolve) => {
     const log = () => {
       logger.debug(
-        `Waiting for ${Object.keys(app.workflows).length} runs and ${
-          Object.keys(app.openClaims).length
-        } claims to complete...`
+        `Waiting for ${
+          Object.keys(app.workflows).length
+        } runs and ${app.pendingClaims()} claims to complete...`
       );
     };
 
     const checkAllClear = () => {
-      if (
-        Object.keys(app.workflows).length +
-          Object.keys(app.openClaims).length ===
-        0
-      ) {
+      if (Object.keys(app.workflows).length + app.pendingClaims() === 0) {
         logger.debug('All runs completed!');
         app.events.off(INTERNAL_RUN_COMPLETE, checkAllClear);
         app.events.off(INTERNAL_CLAIM_COMPLETE, checkAllClear);
@@ -62,10 +60,7 @@ const waitForRunsAndClaims = (app: ServerApp, logger: Logger) =>
       }
     };
 
-    if (
-      Object.keys(app.workflows).length ||
-      Object.keys(app.openClaims).length
-    ) {
+    if (Object.keys(app.workflows).length || app.pendingClaims()) {
       log();
       app.events.on(INTERNAL_RUN_COMPLETE, checkAllClear);
       app.events.on(INTERNAL_CLAIM_COMPLETE, checkAllClear);

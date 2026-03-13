@@ -5,57 +5,77 @@ import type { ServerApp } from '../server';
 import type { CancelablePromise } from '../types';
 import type { Logger } from '@openfn/logger';
 
-export type Workloop = {
-  stop: (reason?: string) => void;
-  isStopped: () => boolean;
-};
+export class Workloop {
+  id: string;
+  queues: string[];
+  capacity: number;
+  activeRuns = new Set<string>();
+  openClaims: Record<string, number> = {};
 
-const startWorkloop = (
-  app: ServerApp,
-  logger: Logger,
-  minBackoff: number,
-  maxBackoff: number,
-  maxWorkers?: number
-): Workloop => {
-  let promise: CancelablePromise;
-  let cancelled = false;
+  private cancelled = true;
+  private promise?: CancelablePromise;
+  private logger?: Logger;
 
-  const workLoop = () => {
-    if (!cancelled) {
-      promise = tryWithBackoff(
-        () =>
-          claim(app, logger, {
-            maxWorkers,
-          }),
-        {
+  constructor({
+    id,
+    queues,
+    capacity,
+  }: {
+    id: string;
+    queues: string[];
+    capacity: number;
+  }) {
+    this.id = id;
+    this.queues = queues;
+    this.capacity = capacity;
+  }
+
+  hasCapacity(): boolean {
+    const pendingClaims = Object.values(this.openClaims).reduce(
+      (a, b) => a + b,
+      0
+    );
+    return this.activeRuns.size + pendingClaims < this.capacity;
+  }
+
+  start(
+    app: ServerApp,
+    logger: Logger,
+    minBackoff: number,
+    maxBackoff: number
+  ): void {
+    this.logger = logger;
+    this.cancelled = false;
+
+    const loop = () => {
+      if (!this.cancelled) {
+        this.promise = tryWithBackoff(() => claim(app, this, logger), {
           min: minBackoff,
           max: maxBackoff,
-        }
-      );
-      // TODO this needs more unit tests I think
-      promise
-        .then(() => {
-          if (!cancelled) {
-            setTimeout(workLoop, minBackoff);
-          }
-        })
-        .catch(() => {
-          // do nothing
         });
-    }
-  };
-  workLoop();
-
-  return {
-    stop: (reason = 'reason unknown') => {
-      if (!cancelled) {
-        logger.info(`cancelling workloop: ${reason}`);
-        cancelled = true;
-        promise.cancel();
+        this.promise
+          .then(() => {
+            if (!this.cancelled) {
+              setTimeout(loop, minBackoff);
+            }
+          })
+          .catch(() => {
+            // do nothing
+          });
       }
-    },
-    isStopped: () => cancelled,
-  };
-};
+    };
+    loop();
+  }
 
-export default startWorkloop;
+  stop(reason = 'reason unknown'): void {
+    if (!this.cancelled) {
+      this.logger?.info(`cancelling workloop: ${reason}`);
+      this.cancelled = true;
+      this.promise?.cancel();
+    }
+  }
+
+  isStopped(): boolean {
+    return this.cancelled;
+  }
+}

@@ -15,7 +15,8 @@ type Args = {
   batchInterval?: number;
   batchLimit?: number;
   batchLogs: boolean;
-  capacity?: number;
+  capacity: number;
+  workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;
@@ -102,6 +103,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_STATE_PROPS_TO_REMOVE,
     WORKER_TIMEOUT_RETRY_COUNT,
     WORKER_TIMEOUT_RETRY_DELAY_MS,
+    WORKER_WORKLOOPS,
     WORKER_VALIDATION_RETRIES,
     WORKER_VALIDATION_TIMEOUT_MS,
   } = process.env;
@@ -198,8 +200,14 @@ export default function parseArgs(argv: string[]): Args {
         'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     })
     .option('capacity', {
-      description: `max concurrent workers. Default ${DEFAULT_WORKER_CAPACITY}. Env: WORKER_CAPACITY`,
+      description: `Sets the maximum concurrent workers - but only if workloops is not set. Default ${DEFAULT_WORKER_CAPACITY}. Env: WORKER_CAPACITY`,
       type: 'number',
+    })
+    .option('workloops', {
+      description:
+        'Configure workloops with a priorised queue list and a max capacity. Syntax: "<queues>:<capacity> ...". Mutually exclusive with --capacity. Env: WORKER_WORKLOOPS',
+      type: 'string',
+      example: 'fast_lane:1 manual>*:4',
     })
     .option('state-props-to-remove', {
       description:
@@ -262,11 +270,35 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'When a websocket event receives a timeout, this option sets how log to wait before retrying Default 30000. Env: WORKER_TIMEOUT_RETRY_DELAY_MS',
       type: 'number',
-    });
+    })
+    .example(
+      'start --queues *:5',
+      'Default start configuration: a single workloop with capacity 5, claiming from all queues'
+    )
+    .example(
+      'start --queues manual>*:5',
+      'A single workloop, capacity 5, which claims across two queues. Runs in the manual queue will be picked first, else any other queue will be picked.'
+    )
+    .example(
+      'start --queues fast_lane:1 manual>*:4',
+      'production start configuration with 1 fast lane workloop (capacity 1) and a second workloop with capacity 4'
+    );
 
   const args = parser.parse() as Args;
+
+  const resolvedWorkloops = setArg(args.workloops, WORKER_WORKLOOPS) as
+    | string
+    | undefined;
+  const capacityExplicit =
+    args.capacity !== undefined || WORKER_CAPACITY !== undefined;
+
+  if (resolvedWorkloops !== undefined && capacityExplicit) {
+    throw new Error('--workloops and --capacity are mutually exclusive');
+  }
+
   return {
     ...args,
+    workloops: resolvedWorkloops,
     port: setArg(args.port, WORKER_PORT, DEFAULT_PORT),
     lightning: setArg(
       args.lightning,
