@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.30.1
+
+### Patch Changes
+
+- 8ac76fe: Fix an issue where `--endpoint` is ignore in `project deploy`
+
 ## 1.30.0
 
 ### Minor Changes
