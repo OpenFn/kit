@@ -13,7 +13,7 @@ type Options = { format?: 'json' | 'yaml' };
 
 const defaultJobProps = {
   // TODO why does the provisioner throw if these keys are not set?
-  // Ok, 90% of jobs will have a credenial, but it's still optional right?
+  // Ok, 90% of jobs will have a credential, but it's still optional right?
   keychain_credential_id: null,
   project_credential_id: null,
 };

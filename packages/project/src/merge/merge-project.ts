@@ -144,6 +144,10 @@ export function merge(
     options.mode === SANDBOX_MERGE
       ? {
           workflows: finalWorkflows,
+          credentials: replaceCredentials(
+            source.credentials,
+            target.credentials
+          ),
         }
       : {
           workflows: finalWorkflows,
