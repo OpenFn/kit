@@ -108,12 +108,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_VALIDATION_TIMEOUT_MS,
   } = process.env;
 
-  // pnpm v7+ passes '--' through to process.argv; npm strips it.
-  // Strip a leading '--' so yargs parses what follows as named options.
-  const raw = hideBin(argv);
-  const args_ = raw[0] === '--' ? raw.slice(1) : raw;
-
-  const parser = yargs(args_)
+  const parser = yargs(hideBin(argv))
     .command('server', 'Start a ws-worker server')
     .option('debug', {
       hidden: true,

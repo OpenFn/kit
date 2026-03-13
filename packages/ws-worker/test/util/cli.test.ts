@@ -207,19 +207,3 @@ test('cli should work with only --capacity (no workloops)', (t) => {
   t.is(args.capacity, 3);
   t.is(args.workloops, undefined);
 });
-
-// pnpm v7+ passes '--' through to process.argv
-test('cli should strip leading -- from pnpm passthrough', (t) => {
-  const argv = [
-    'node',
-    'start.ts',
-    '--',
-    '--workloops',
-    'fast_lane:2 *:3',
-    '--log',
-    'info',
-  ];
-  const args = cli(argv);
-  t.is(args.workloops, 'fast_lane:2 *:3');
-  t.is(args.log, 'info');
-});
