@@ -14,19 +14,28 @@ export default async function onWorkflowComplete(
 ) {
   const { state, onFinish, logger } = context;
 
-  // Use the aggregated final state from the runtime
-  // This handles branching workflows correctly by returning all leaf states
   const result = event.state;
 
   const reason = calculateRunExitReason(state);
   await logFinalReason(context, reason);
 
+  const isSingleLeaf =
+    state.leafDataclipIds.length === 1 &&
+    !state.withheldDataclips[state.leafDataclipIds[0]];
+
+  const payload: RunCompletePayload = {
+    timestamp: timeInMicroseconds(event.time),
+    ...reason,
+  };
+
+  if (isSingleLeaf) {
+    payload.final_dataclip_id = state.leafDataclipIds[0];
+  } else {
+    payload.final_state = result;
+  }
+
   try {
-    await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
-      final_state: result,
-      timestamp: timeInMicroseconds(event.time),
-      ...reason,
-    });
+    await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, payload);
   } catch (e) {
     logger.error(
       `${state.plan.id} failed to send ${RUN_COMPLETE} event. This run will be lost!`

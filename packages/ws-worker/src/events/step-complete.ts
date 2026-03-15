@@ -32,13 +32,10 @@ export default async function onStepComplete(
   delete state.activeStep;
   delete state.activeJob;
 
-  // TODO right now, the last job to run will be the result for the run
-  // this may not stand up in the future
-  // I'd feel happer if the runtime could judge what the final result is
-  // (taking into account branches and stuff)
-  // The problem is that the runtime will return the object, not an id,
-  // so we have a bit of a mapping problem
-  state.lastDataclipId = dataclipId;
+  // Track leaf dataclips (steps with no downstream jobs)
+  if (!event.next?.length) {
+    state.leafDataclipIds.push(dataclipId);
+  }
 
   // Set the input dataclip id for downstream jobs
   event.next?.forEach((nextJobId) => {

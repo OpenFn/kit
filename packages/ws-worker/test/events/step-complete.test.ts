@@ -283,3 +283,37 @@ test('should include a timestamp', async (t) => {
   const context: any = { channel, state, onFinish: () => {} };
   await handleStepComplete(context, event);
 });
+
+test('track leaf dataclip when step has no downstream jobs', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.activeJob = 'job-1';
+  state.activeStep = 'b';
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  const event = { state: { x: 10 }, next: [] } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.is(state.leafDataclipIds.length, 1);
+});
+
+test('do not track leaf dataclip when step has downstream jobs', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.activeJob = 'job-1';
+  state.activeStep = 'b';
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  const event = { state: { x: 10 }, next: ['job-2'] } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.is(state.leafDataclipIds.length, 0);
+});
