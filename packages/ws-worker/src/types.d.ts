@@ -18,8 +18,8 @@ export type RunState = {
   withheldDataclips: Record<string, true>;
   reasons: Record<string, ExitReason>;
 
-  // final dataclip id
-  lastDataclipId?: string;
+  // dataclip ids for leaf nodes (steps with no downstream)
+  leafDataclipIds: string[];
 };
 
 export type CancelablePromise = Promise<void> & {

@@ -18,7 +18,7 @@ test('create run', (t) => {
   const run = createRunState(plan, input);
 
   t.deepEqual(run.plan, plan);
-  t.deepEqual(run.lastDataclipId, '');
+  t.deepEqual(run.leafDataclipIds, []);
   t.deepEqual(run.dataclips, {});
   t.deepEqual(run.inputDataclips, {});
   t.deepEqual(run.reasons, {});

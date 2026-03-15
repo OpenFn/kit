@@ -3,7 +3,7 @@ import type { RunState } from '../types';
 
 export default (plan: ExecutionPlan, input?: Lazy<State>): RunState => {
   const state = {
-    lastDataclipId: '',
+    leafDataclipIds: [],
     dataclips: {},
     inputDataclips: {},
     withheldDataclips: {},

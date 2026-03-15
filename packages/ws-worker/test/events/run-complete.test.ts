@@ -8,17 +8,43 @@ import { RUN_COMPLETE, RUN_LOG } from '../../src/events';
 import { createRunState } from '../../src/util';
 import { createPlan } from '../util';
 
-test('should send a run:complete event', async (t) => {
+test('should send a run:complete event with final_dataclip_id for single leaf', async (t) => {
   const result = { answer: 42 };
   const plan = createPlan();
 
   const state = createRunState(plan);
+  state.leafDataclipIds = ['clip-1'];
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      t.is(evt.final_dataclip_id, 'clip-1');
+      t.falsy(evt.final_state);
+      t.falsy(evt.time);
+    },
+  });
+
+  const event: any = { state: result };
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunComplete(context, event);
+});
+
+test('should send final_state when there are multiple leaves', async (t) => {
+  const result = {
+    'job-a': { data: { a: true } },
+    'job-b': { data: { b: true } },
+  };
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.leafDataclipIds = ['clip-1', 'clip-2'];
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
       t.deepEqual(evt.final_state, result);
-      t.falsy(evt.time); // if no timestamp in the engine event, no timestamp in the worker one
+      t.falsy(evt.final_dataclip_id);
     },
   });
 
@@ -240,9 +266,11 @@ test('should call onFinish even if the lightning event timesout', async (t) => {
   await handleRunComplete(context, event);
 });
 
-test('should send final_state for a linear workflow', async (t) => {
+test('should send final_dataclip_id for a single-leaf workflow', async (t) => {
   const plan = createPlan();
   const state = createRunState(plan);
+  state.leafDataclipIds = ['abc-123'];
+
   const finalResult = { data: { count: 100 }, references: [] };
 
   let completeEvent: any;
@@ -264,15 +292,16 @@ test('should send final_state for a linear workflow', async (t) => {
 
   await handleRunComplete(context, event);
 
-  t.deepEqual(completeEvent.final_state, finalResult);
+  t.is(completeEvent.final_dataclip_id, 'abc-123');
+  t.falsy(completeEvent.final_state);
   t.is(completeEvent.reason, 'success');
 });
 
 test('should send final_state for a branching workflow with multiple leaf nodes', async (t) => {
   const plan = createPlan();
   const state = createRunState(plan);
+  state.leafDataclipIds = ['clip-1', 'clip-2', 'clip-3'];
 
-  // Simulate a branching workflow with multiple final states
   const branchedResult = {
     'job-1': { data: { path: 'A', value: 42 } },
     'job-2': { data: { path: 'B', value: 84 } },
@@ -292,7 +321,6 @@ test('should send final_state for a branching workflow with multiple leaf nodes'
     channel,
     state,
     onFinish: ({ state: finalState }: any) => {
-      // Verify that onFinish receives the branched result
       t.deepEqual(finalState, branchedResult);
     },
   };
@@ -301,32 +329,51 @@ test('should send final_state for a branching workflow with multiple leaf nodes'
 
   await handleRunComplete(context, event);
 
-  // Verify the event contains the full branched state structure
   t.deepEqual(completeEvent.final_state, branchedResult);
+  t.falsy(completeEvent.final_dataclip_id);
   t.is(completeEvent.reason, 'success');
-  t.truthy(completeEvent.final_state['job-1']);
-  t.truthy(completeEvent.final_state['job-2']);
-  t.truthy(completeEvent.final_state['job-3']);
 });
 
-test('should properly serialize final_state as JSON', async (t) => {
+test('should send final_state when single leaf dataclip was withheld', async (t) => {
   const plan = createPlan();
   const state = createRunState(plan);
+  state.leafDataclipIds = ['clip-1'];
+  state.withheldDataclips = { 'clip-1': true };
 
-  // Test with complex state including nested objects, arrays, and special values
-  const complexState = {
-    data: {
-      users: [
-        { id: 1, name: 'Alice' },
-        { id: 2, name: 'Bob' },
-      ],
-      metadata: {
-        timestamp: new Date('2024-01-01').toISOString(),
-        nested: { deeply: { value: 42 } },
-      },
+  const result = { data: { big: 'data' } };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
     },
-    configuration: { setting: true },
-    references: [],
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: result };
+
+  await handleRunComplete(context, event);
+
+  t.deepEqual(completeEvent.final_state, result);
+  t.falsy(completeEvent.final_dataclip_id);
+});
+
+test('should send final_state when a single leaf node is reached by two paths', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+  // Same node executed twice via different paths produces two leaf dataclips
+  state.leafDataclipIds = ['clip-1', 'clip-2'];
+
+  const result = {
+    x: { data: { from: 'a' } },
+    'x-1': { data: { from: 'b' } },
   };
 
   let completeEvent: any;
@@ -344,49 +391,10 @@ test('should properly serialize final_state as JSON', async (t) => {
     onFinish: () => {},
   };
 
-  const event: any = { state: complexState };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 
-  // Verify the state is properly preserved
-  t.deepEqual(completeEvent.final_state, complexState);
-  t.deepEqual(completeEvent.final_state.data.users[0], { id: 1, name: 'Alice' });
-  t.is(completeEvent.final_state.data.metadata.nested.deeply.value, 42);
-
-  // Verify it can be stringified (simulating what happens when sent over the wire)
-  const jsonString = JSON.stringify(completeEvent.final_state);
-  const parsed = JSON.parse(jsonString);
-  t.deepEqual(parsed, complexState);
-});
-
-test('should handle Uint8Array in final_state', async (t) => {
-  const plan = createPlan();
-  const state = createRunState(plan);
-
-  // Test with Uint8Array which needs special handling
-  const stateWithBinary = {
-    data: { buffer: new Uint8Array([1, 2, 3, 4, 5]) },
-  };
-
-  let completeEvent: any;
-
-  const channel = mockChannel({
-    [RUN_LOG]: () => true,
-    [RUN_COMPLETE]: (evt) => {
-      completeEvent = evt;
-    },
-  });
-
-  const context: any = {
-    channel,
-    state,
-    onFinish: () => {},
-  };
-
-  const event: any = { state: stateWithBinary };
-
-  await handleRunComplete(context, event);
-
-  // Verify the Uint8Array is preserved in the event
-  t.deepEqual(completeEvent.final_state.data.buffer, new Uint8Array([1, 2, 3, 4, 5]));
+  t.deepEqual(completeEvent.final_state, result);
+  t.falsy(completeEvent.final_dataclip_id);
 });

@@ -11,7 +11,7 @@ test('runError should trigger runComplete with a reason', async (t) => {
   const jobId = 'job-1';
 
   const state = createRunState(plan);
-  state.lastDataclipId = 'x';
+
   state.activeStep = 'b';
   state.activeJob = jobId;
 
@@ -40,7 +40,7 @@ test('workflow error should send reason to onFinish', async (t) => {
   const jobId = 'job-1';
 
   const state = createRunState(plan);
-  state.lastDataclipId = 'x';
+
   state.activeStep = 'b';
   state.activeJob = jobId;
 
@@ -72,7 +72,7 @@ test('workflow error should send reason to onFinish', async (t) => {
 
 test('runError should not call job complete if the job is not active', async (t) => {
   const state = createRunState(plan);
-  state.lastDataclipId = 'x';
+
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
@@ -113,7 +113,7 @@ test('runError should log the reason', async (t) => {
     },
     options: {},
   });
-  state.lastDataclipId = 'x';
+
   state.activeStep = 'b';
   state.activeJob = jobId;
 
