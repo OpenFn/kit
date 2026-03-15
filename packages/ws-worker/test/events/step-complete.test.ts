@@ -301,6 +301,23 @@ test('track leaf dataclip when step has no downstream jobs', async (t) => {
   t.is(state.leafDataclipIds.length, 1);
 });
 
+test('track leaf dataclip when step has undefined next', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.activeJob = 'job-1';
+  state.activeStep = 'b';
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  const event = { state: { x: 10 } } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.is(state.leafDataclipIds.length, 1);
+});
+
 test('do not track leaf dataclip when step has downstream jobs', async (t) => {
   const plan = createPlan();
 
@@ -316,4 +333,64 @@ test('do not track leaf dataclip when step has downstream jobs', async (t) => {
   await handleStepComplete({ channel, state } as any, event);
 
   t.is(state.leafDataclipIds.length, 0);
+});
+
+// Multiple leaf nodes: start → job-a (leaf), start → job-b (leaf)
+test('accumulate multiple leaf dataclips for branching workflow', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  // First leaf completes
+  state.activeJob = 'job-a';
+  state.activeStep = 'step-a';
+  await handleStepComplete(
+    { channel, state } as any,
+    { state: { a: true }, next: [] } as any
+  );
+
+  // Second leaf completes
+  state.activeJob = 'job-b';
+  state.activeStep = 'step-b';
+  await handleStepComplete(
+    { channel, state } as any,
+    { state: { b: true }, next: [] } as any
+  );
+
+  t.is(state.leafDataclipIds.length, 2);
+  // Each leaf gets a distinct dataclip id
+  t.not(state.leafDataclipIds[0], state.leafDataclipIds[1]);
+});
+
+// Single leaf reached by two paths: start → a → x, start → b → x
+// x executes twice, both times with no downstream
+test('accumulate two leaf dataclips when same node reached by two paths', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  // x completes first time (via path a)
+  state.activeJob = 'job-x';
+  state.activeStep = 'step-x';
+  await handleStepComplete(
+    { channel, state } as any,
+    { state: { from: 'a' }, next: [] } as any
+  );
+
+  // x completes second time (via path b)
+  state.activeJob = 'job-x';
+  state.activeStep = 'step-x-1';
+  await handleStepComplete(
+    { channel, state } as any,
+    { state: { from: 'b' }, next: [] } as any
+  );
+
+  t.is(state.leafDataclipIds.length, 2);
+  t.not(state.leafDataclipIds[0], state.leafDataclipIds[1]);
 });
