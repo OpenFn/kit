@@ -398,3 +398,80 @@ test('should send final_state when a single leaf node is reached by two paths', 
   t.deepEqual(completeEvent.final_state, result);
   t.falsy(completeEvent.final_dataclip_id);
 });
+
+test('should properly serialize final_state as JSON', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  const complexState = {
+    data: {
+      users: [
+        { id: 1, name: 'Alice' },
+        { id: 2, name: 'Bob' },
+      ],
+      metadata: {
+        timestamp: new Date('2024-01-01').toISOString(),
+        nested: { deeply: { value: 42 } },
+      },
+    },
+    configuration: { setting: true },
+    references: [],
+  };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: complexState };
+
+  await handleRunComplete(context, event);
+
+  t.deepEqual(completeEvent.final_state, complexState);
+  t.deepEqual(completeEvent.final_state.data.users[0], { id: 1, name: 'Alice' });
+  t.is(completeEvent.final_state.data.metadata.nested.deeply.value, 42);
+
+  const jsonString = JSON.stringify(completeEvent.final_state);
+  const parsed = JSON.parse(jsonString);
+  t.deepEqual(parsed, complexState);
+});
+
+test('should handle Uint8Array in final_state', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  const stateWithBinary = {
+    data: { buffer: new Uint8Array([1, 2, 3, 4, 5]) },
+  };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: stateWithBinary };
+
+  await handleRunComplete(context, event);
+
+  t.deepEqual(completeEvent.final_state.data.buffer, new Uint8Array([1, 2, 3, 4, 5]));
+});
