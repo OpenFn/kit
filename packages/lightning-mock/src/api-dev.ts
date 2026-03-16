@@ -201,7 +201,12 @@ const setupDevAPI = (
       }) => {
         if (evt.runId === runId) {
           state.events.removeListener(RUN_COMPLETE, handler);
-          resolve(evt.payload.final_state);
+          const { final_dataclip_id, final_state } = evt.payload;
+          if (final_dataclip_id) {
+            resolve(state.dataclips?.[final_dataclip_id] ?? null);
+          } else {
+            resolve(final_state);
+          }
         }
       };
       state.events.addListener(RUN_COMPLETE, handler);

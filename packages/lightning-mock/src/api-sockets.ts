@@ -393,6 +393,7 @@ const createSocketAPI = (
   ) {
     const { ref, join_ref, topic } = evt;
     const {
+      final_dataclip_id,
       final_state,
       reason,
       error_type,
@@ -410,7 +411,9 @@ const createSocketAPI = (
     if (!state.results[runId]) {
       state.results[runId] = { state: null, workerId: 'mock' };
     }
-    if (final_state) {
+    if (final_dataclip_id) {
+      state.results[runId].state = state.dataclips?.[final_dataclip_id] ?? null;
+    } else if (final_state) {
       state.results[runId].state = final_state;
     }
 
