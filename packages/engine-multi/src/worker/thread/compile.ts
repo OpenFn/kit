@@ -25,7 +25,7 @@ export default async (
           job.sourceMap = result.map;
           job.expression = result.code;
         } catch (e) {
-          throw new CompileError(e, job.id!);
+          throw new CompileError(e, job.name ?? job.id!);
         }
       }
     }
