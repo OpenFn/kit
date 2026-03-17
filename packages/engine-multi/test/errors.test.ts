@@ -68,7 +68,6 @@ test.serial('syntax error: missing bracket', (t) => {
     };
 
     engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
-      console.log(evt);
       t.is(evt.type, 'CompileError');
 
       // t.is(evt.name, 'SyntaxError'); // TODO fix in #1004
