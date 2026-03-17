@@ -322,6 +322,52 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
   await execute(context);
 });
 
+test.serial(
+  'compilation failure: log should arrive before workflow-error',
+  async (t) => {
+    const state = {
+      id: 'compile-order',
+      plan: {
+        workflow: {
+          steps: [{ id: 'j', expression: 'la la la' }],
+        },
+      },
+    } as WorkflowState;
+
+    const context = createContext({ state, options: {} });
+
+    const eventOrder: string[] = [];
+
+    context.on(WORKFLOW_LOG, (evt) => {
+      if (
+        evt.message &&
+        typeof evt.message === 'string' &&
+        /compilation/i.test(evt.message)
+      ) {
+        eventOrder.push('log');
+      } else if (Array.isArray(evt.message)) {
+        const msg = evt.message.join(' ');
+        if (/compilation/i.test(msg)) {
+          eventOrder.push('log');
+        }
+      }
+    });
+
+    context.on(WORKFLOW_ERROR, () => {
+      eventOrder.push('error');
+    });
+
+    await execute(context);
+
+    const logIdx = eventOrder.indexOf('log');
+    const errorIdx = eventOrder.indexOf('error');
+
+    t.not(logIdx, -1, 'should have received a compilation log');
+    t.not(errorIdx, -1, 'should have received an error');
+    t.true(logIdx < errorIdx, `log (${logIdx}) should come before error (${errorIdx})`);
+  }
+);
+
 test.serial('should stringify the whitelist array', async (t) => {
   let passedOptions: any;
 

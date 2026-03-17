@@ -131,6 +131,19 @@ const execute = async (context: ExecutionContext) => {
       },
       [workerEvents.ERROR]: (evt: workerEvents.ErrorEvent) => {
         didError = true;
+        if (compileStatus === 'started') {
+          log(context, {
+            type: workerEvents.LOG,
+            workflowId: state.plan.id!,
+            threadId: evt.threadId || '-',
+            log: {
+              level: 'info',
+              message: ['Error occurred during compilation'],
+              name: 'RTE',
+              time: timestamp().toString(),
+            },
+          });
+        }
         error(context, {
           workflowId: state.plan.id,
           error: evt.error,
@@ -155,7 +168,7 @@ const execute = async (context: ExecutionContext) => {
       events,
       workerOptions
     ).catch(async (e: any) => {
-      if (compileStatus === 'started') {
+      if (compileStatus === 'started' && !didError) {
         // Try and alert users that the error occurred at compile-time
         // Not super keen on adding this down in the engine but it may help app users
         await log(context, {
