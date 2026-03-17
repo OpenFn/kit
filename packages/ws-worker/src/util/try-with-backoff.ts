@@ -25,54 +25,51 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
   let cancelled = false;
 
   if (!opts.isCancelled) {
-    // Keep the top-level cancel flag in scope
-    // This way nested promises will still use the same flag and let
-    // themselves be cancelled
     opts.isCancelled = () => cancelled;
   }
 
-  const promise = new Promise<void>(async (resolve, reject) => {
+  const run = async (): Promise<void> => {
     try {
       await fn();
-      resolve();
     } catch (e: any) {
       if (e?.abort) {
         cancelled = true;
-        return reject();
+        throw e;
       }
 
       if (opts.isCancelled!()) {
-        return resolve();
+        return;
       }
 
       if (!isNaN(maxRuns as any) && runs >= (maxRuns as number)) {
-        return reject(new Error('max runs exceeded'));
+        throw new Error('max runs exceeded');
       }
-      // failed? No problem, we'll back off and try again
-      setTimeout(() => {
-        if (opts.isCancelled!()) {
-          return resolve();
-        }
-        const nextOpts = {
-          maxRuns,
-          runs: runs + 1,
-          min: Math.min(max, min * BACKOFF_MULTIPLIER),
-          max: max,
-          isCancelled: opts.isCancelled,
-        };
-        //console.log('trying again in ', nextOpts.min);
-        tryWithBackoff(fn, nextOpts).then(resolve).catch(reject);
-      }, min);
-    }
-  });
 
-  // allow the try to be cancelled
-  // We can't cancel the active in-flight promise but we can prevent the callback
-  (promise as CancelablePromise).cancel = () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, min));
+
+      if (opts.isCancelled!()) {
+        return;
+      }
+
+      const nextOpts = {
+        maxRuns,
+        runs: runs + 1,
+        min: Math.min(max, min * BACKOFF_MULTIPLIER),
+        max: max,
+        isCancelled: opts.isCancelled,
+      };
+
+      return tryWithBackoff(fn, nextOpts);
+    }
+  };
+
+  const promise = run() as CancelablePromise;
+
+  promise.cancel = () => {
     cancelled = true;
   };
 
-  return promise as CancelablePromise;
+  return promise;
 };
 
 export default tryWithBackoff;
