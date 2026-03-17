@@ -3,4 +3,4 @@
 '@openfn/cli': patch
 ---
 
-Improve messaging in lazy state compilation errors
+Improve messaging and position reporting in lazy state compilation errors
