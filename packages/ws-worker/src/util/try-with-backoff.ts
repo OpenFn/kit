@@ -28,7 +28,7 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
     opts.isCancelled = () => cancelled;
   }
 
-  const run = async (): Promise<void> => {
+  const run = async () => {
     try {
       await fn();
     } catch (e: any) {
@@ -45,7 +45,7 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
         throw new Error('max runs exceeded');
       }
 
-      await new Promise<void>((resolve) => setTimeout(resolve, min));
+      await new Promise((resolve) => setTimeout(resolve, min));
 
       if (opts.isCancelled!()) {
         return;
