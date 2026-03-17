@@ -57,15 +57,12 @@ export default async function onRunLog(
     };
     return sendEvent<RunLogPayload>(context, RUN_LOG_BATCH, payload);
   } else {
-    return new Promise<void>(async (resolve) => {
-      for (const log of logs) {
-        const payload = {
-          run_id: `${state.plan.id}`,
-          ...log,
-        } as LegacyRunLogPayload;
-        await sendEvent<LegacyRunLogPayload>(context, RUN_LOG, payload);
-      }
-      resolve();
-    });
+    for (const log of logs) {
+      const payload = {
+        run_id: `${state.plan.id}`,
+        ...log,
+      } as LegacyRunLogPayload;
+      await sendEvent<LegacyRunLogPayload>(context, RUN_LOG, payload);
+    }
   }
 }

@@ -93,4 +93,19 @@ test('cancel nested promise', async (t) => {
   });
 });
 
+test('should reject when isCancelled throws', async (t) => {
+  const fn = async () => {
+    throw new Error('fn error');
+  };
+
+  const isCancelled = () => {
+    throw new Error('isCancelled error');
+  };
+
+  await t.throwsAsync(
+    () => tryWithBackoff(fn, { isCancelled, maxRuns: 1 }),
+    { message: 'isCancelled error' }
+  );
+});
+
 // TODO test increasing backoffs

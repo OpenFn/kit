@@ -286,6 +286,23 @@ test.serial(
   }
 );
 
+test('should reject when engine.destroy() throws', async (t) => {
+  initLightning();
+  await initWorker();
+
+  worker.engine.destroy = async () => {
+    // We have to manually disconnect the websocket or else mock lightning won't
+    // shut down down after the test
+    worker.socket.disconnect();
+
+    throw new Error('engine destroy failed');
+  };
+
+  await t.throwsAsync(() => destroy(worker, logger), {
+    message: 'engine destroy failed',
+  });
+});
+
 test("don't claim after destroy", async (t) => {
   initLightning();
   await initWorker();
