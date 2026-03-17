@@ -86,7 +86,8 @@ test('throw if a $ is already inside a non-compatible arrow (state name)', (t) =
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: `invalid state operator: parameter "s" should be called "state"`,
+    instanceOf: LazyStateError,
+    message: /parameter "s" should be called "state" \(1:4\)/i,
   });
 });
 
@@ -96,7 +97,8 @@ test('throw if a $ is already inside a non-compatible arrow (arity)', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid state operator: parent has wrong arity',
+    instanceOf: LazyStateError,
+    message: /parent has wrong arity \(1:4\)/i,
   });
 });
 

@@ -76,9 +76,9 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
     }
   } else {
     // Actually I don't think we'll ever get here
-    throw new Error(
-      `invalid state operator: must be be passed as an argument to an operator`
-    );
+    throw new LazyStateError('must be passed as an argument to an operator', {
+      pos: path.node.loc,
+    });
   }
 };
 
@@ -95,11 +95,11 @@ const isOpenFunction = (path: NodePath) => {
         // We already have a valid open function here
         return true;
       }
-      throw new Error(
-        `invalid state operator: parameter "${name}" should be called "state"`
-      );
+      throw new LazyStateError(`parameter "${name}" should be called "state"`, {
+        pos: path.node.loc,
+      });
     }
-    throw new Error('invalid state operator: parent has wrong arity');
+    throw new LazyStateError('parent has wrong arity', { pos: path.node.loc });
   }
 
   // if we get here, then path is:
