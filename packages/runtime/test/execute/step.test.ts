@@ -280,8 +280,8 @@ test.serial('log memory usage', async (t) => {
 
   const memory = logger._find('debug', /step memory usage/i);
 
-  // All we're looking for here is two strings of numbers in mb
-  t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
+  // All we're looking for here is a number in mb
+  t.regex(memory?.message, /\d+mb/i);
 });
 
 test.serial('log memory usage with profiler and peak', async (t) => {
