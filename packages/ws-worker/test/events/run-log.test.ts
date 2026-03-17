@@ -154,3 +154,41 @@ test('should work with non-batch logging', async (t) => {
 
   await handleRunLog({ channel, state, options } as any, log);
 });
+
+test('non-batch mode: should reject when sendEvent fails', async (t) => {
+  const plan = { id: 'run-1' };
+
+  const log: JSONLog = {
+    name: 'R/T',
+    level: 'info',
+    time: getBigIntTimestamp(),
+    message: JSON.stringify(['ping']),
+  };
+
+  const state = {
+    plan,
+  } as RunState;
+
+  const options = {
+    batchLogs: false,
+  };
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => {
+      throw new Error('channel error');
+    },
+  });
+
+  const logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {},
+    log: () => {},
+  };
+
+  await t.throwsAsync(
+    () => handleRunLog({ channel, state, options, logger } as any, log),
+    { message: /\[run:log\] timeout|channel error/ }
+  );
+});

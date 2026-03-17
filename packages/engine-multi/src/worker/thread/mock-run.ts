@@ -44,11 +44,13 @@ function mockRun(plan: MockExecutionPlan, input: State, _options = {}) {
   const workflowId = plan.id;
 
   // simulate compilation
+  publish(workerEvents.COMPILE_START, { workflowId });
   try {
     eval(job.expression!);
   } catch (e: any) {
     throw new CompileError(e, job.id!);
   }
+  publish(workerEvents.COMPILE_COMPLETE, { workflowId, duration: 0 });
 
   return new Promise((resolve) => {
     const jobId = job.id || '<job>';

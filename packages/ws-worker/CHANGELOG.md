@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.22.1
+
+### Patch Changes
+
+- 6fd3942: Fix an issue where unhandled errors could trigger a worker crash after a compilation error.
+- 32b43cb: When reporting compilation errors, prefer the step name to the id
+- Updated dependencies [6fd3942]
+- Updated dependencies [32b43cb]
+  - @openfn/engine-multi@1.10.5
+
 ## 1.22.0
 
 ### Minor Changes

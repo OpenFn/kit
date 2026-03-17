@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 1.2.3
+
+### Patch Changes
+
+- c687ef5: Improve messaging and position reporting in lazy state compilation errors
+
 ## 1.2.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.30.3
+
+### Patch Changes
+
+- c687ef5: Improve messaging and position reporting in lazy state compilation errors
+- Updated dependencies [c687ef5]
+  - @openfn/compiler@1.2.3
+
 ## 1.30.2
 
 ### Patch Changes

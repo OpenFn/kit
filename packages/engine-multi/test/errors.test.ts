@@ -27,6 +27,29 @@ test.before(async () => {
   engine = await createEngine(options);
 });
 
+test.serial('reporting: prefer step name to step id', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      workflow: {
+        steps: [
+          {
+            id: 'x',
+            name: 'My Step',
+            expression: 'a a a',
+          },
+        ],
+      },
+      options: {},
+    };
+
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.message, 'My Step: Unexpected token (1:2)');
+      done();
+    });
+  });
+});
+
 // This should exit gracefully with a compile error
 test.serial('syntax error: missing bracket', (t) => {
   return new Promise((done) => {
