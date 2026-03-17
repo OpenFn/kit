@@ -3,6 +3,7 @@ packages:
   - '!integration-tests/worker/tmp/**'
   - '!integration-tests/cli/tmp/**'
   - '!integration-tests/cli/repo/**'
+  - '!packages/engine-multi/tmp/**'
   - packages/**
   - examples/**
   - integration-tests/**
