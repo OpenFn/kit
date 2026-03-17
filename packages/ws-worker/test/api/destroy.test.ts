@@ -286,6 +286,29 @@ test.serial(
   }
 );
 
+test('should reject when engine.destroy() throws', async (t) => {
+  const app = {
+    destroyed: false,
+    workloops: [],
+    workflows: {},
+    pendingClaims: () => 0,
+    events: new (await import('node:events')).EventEmitter(),
+    server: { close: (cb: () => void) => cb() },
+    engine: {
+      destroy: async () => {
+        throw new Error('engine destroy failed');
+      },
+    },
+    queueChannel: { leave: () => {} },
+    socket: { disconnect: () => {} },
+  };
+
+  await t.throwsAsync(
+    () => destroy(app as any, logger),
+    { message: 'engine destroy failed' }
+  );
+});
+
 test("don't claim after destroy", async (t) => {
   initLightning();
   await initWorker();
