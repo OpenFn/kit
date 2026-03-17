@@ -7,11 +7,16 @@ class AbortError extends Error {
   handled = true;
 }
 
+interface CLIFriendlyError extends Error {
+  fix?: string;
+  details?: string;
+}
+
 // This is always the CLI logger, can I trap it?
 export default (
   logger: Logger,
   reason: string,
-  error?: Error,
+  error?: CLIFriendlyError,
   help?: string
 ) => {
   const e = new AbortError(reason);
@@ -19,6 +24,18 @@ export default (
   logger.error(reason);
   if (error) {
     logger.error(error.message);
+    logger.break();
+
+    if (error.details) {
+      logger.error('ERROR DETAILS:');
+      logger.error(error.details);
+      logger.break();
+    }
+    if (error.fix) {
+      logger.error('FIX HINT:');
+      logger.error(error.fix);
+      logger.break();
+    }
   }
   if (help) {
     logger.always(help);
