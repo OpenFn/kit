@@ -11,18 +11,29 @@ import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 import IgnoreRules from '../transform-ignore';
 
+type LazyStateErrorOptions = {
+  details?: string;
+  fix?: string;
+  pos?: any;
+};
+
 export class LazyStateError extends Error {
   fix?: string;
   details?: string;
+  pos?: any;
 
   constructor(
     message: string,
-    { details, fix }: { details?: string; fix?: string } = {}
+    { details, fix, pos }: LazyStateErrorOptions = {}
   ) {
-    super(`Lazy State Error: ${message}`);
+    const posStr = (pos && `(${pos.start.line}:${pos.start.column})`) ?? '';
+    super(`Lazy State Error: ${message} ${posStr}`);
 
     this.fix = fix;
     this.details = details;
+    const { start, end, ..._rest } = pos;
+    this.pos = { start, end };
+    delete this.stack;
   }
 }
 
@@ -40,6 +51,7 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
     // if this is any kind of statement, we should throw
     if (n.Statement.check(root.node) || n.Declaration.check(root.node)) {
       throw new LazyStateError('Must be inside an operation', {
+        pos: path.node.loc,
         details:
           'The Lazy State operation must be used inside a top-level operation, like fn(). It cannot be used inside a regular JavaScript statement because no valid state reference is available.',
       });

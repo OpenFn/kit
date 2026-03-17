@@ -107,7 +107,7 @@ test('throw if $ is not inside an operation', (t) => {
 
   t.throws(() => transform(ast, [visitors]), {
     instanceOf: LazyStateError,
-    message: /must be inside an operation/i,
+    message: /must be inside an operation \(1:10\)/i,
   });
 });
 
@@ -118,7 +118,7 @@ test('throw if $ is on the left hand side of an assignment', (t) => {
 
   t.throws(() => transform(ast, [visitors]), {
     instanceOf: LazyStateError,
-    message: /must be inside an operation/i,
+    message: /must be inside an operation \(1:0\)/i,
   });
 });
 
@@ -129,7 +129,7 @@ test('throw if $ is on the left hand side of a nested assignment', (t) => {
 
   t.throws(() => transform(ast, [visitors]), {
     instanceOf: LazyStateError,
-    message: /must be inside an operation/i,
+    message: /must be inside an operation \(1:11\)/i,
   });
 });
 
@@ -140,7 +140,7 @@ test('throw if $ is on the left hand side of a multi assignment', (t) => {
 
   t.throws(() => transform(ast, [visitors]), {
     instanceOf: LazyStateError,
-    message: /must be inside an operation/i,
+    message: /must be inside an operation \(1:10\)/i,
   });
 });
 
