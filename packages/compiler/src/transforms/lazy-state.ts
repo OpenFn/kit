@@ -31,7 +31,7 @@ export class LazyStateError extends Error {
 
     this.fix = fix;
     this.details = details;
-    const { start, end, ..._rest } = pos;
+    const { start, end } = pos;
     this.pos = { start, end };
     delete this.stack;
   }
