@@ -287,26 +287,20 @@ test.serial(
 );
 
 test('should reject when engine.destroy() throws', async (t) => {
-  const app = {
-    destroyed: false,
-    workloops: [],
-    workflows: {},
-    pendingClaims: () => 0,
-    events: new (await import('node:events')).EventEmitter(),
-    server: { close: (cb: () => void) => cb() },
-    engine: {
-      destroy: async () => {
-        throw new Error('engine destroy failed');
-      },
-    },
-    queueChannel: { leave: () => {} },
-    socket: { disconnect: () => {} },
+  initLightning();
+  await initWorker();
+
+  worker.engine.destroy = async () => {
+    // We have to manually disconnect the websocket or else mock lightning won't
+    // shut down down after the test
+    worker.socket.disconnect();
+
+    throw new Error('engine destroy failed');
   };
 
-  await t.throwsAsync(
-    () => destroy(app as any, logger),
-    { message: 'engine destroy failed' }
-  );
+  await t.throwsAsync(() => destroy(worker, logger), {
+    message: 'engine destroy failed',
+  });
 });
 
 test("don't claim after destroy", async (t) => {
