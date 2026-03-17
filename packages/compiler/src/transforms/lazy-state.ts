@@ -11,6 +11,21 @@ import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 import IgnoreRules from '../transform-ignore';
 
+export class LazyStateError extends Error {
+  fix?: string;
+  details?: string;
+
+  constructor(
+    message: string,
+    { details, fix }: { details?: string; fix?: string } = {}
+  ) {
+    super(`Lazy State Error: ${message}`);
+
+    this.fix = fix;
+    this.details = details;
+  }
+}
+
 // Walk up the AST and work out where the parent arrow function should go
 const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
   let root = path;
@@ -23,9 +38,11 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
     root = root.parent;
 
     // if this is any kind of statement, we should throw
-    // TODO we may relax this, see https://github.com/OpenFn/kit/issues/660
     if (n.Statement.check(root.node) || n.Declaration.check(root.node)) {
-      throw new Error(`invalid state operator: must be inside an expression`);
+      throw new LazyStateError('Must be inside an operation', {
+        details:
+          'The Lazy State operation must be used inside a top-level operation, like fn(). It cannot be used inside a regular JavaScript statement because no valid state reference is available.',
+      });
     }
   }
 

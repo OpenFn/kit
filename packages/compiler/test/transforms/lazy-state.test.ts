@@ -5,7 +5,7 @@ import { namedTypes, NodePath, builders as b } from 'ast-types';
 import parse from '../../src/parse';
 
 import transform from '../../src/transform';
-import visitors from '../../src/transforms/lazy-state';
+import visitors, { LazyStateError } from '../../src/transforms/lazy-state';
 
 test('convert a simple dollar reference', (t) => {
   const ast = parse('get($.data)');
@@ -106,7 +106,8 @@ test('throw if $ is not inside an operation', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid state operator: must be inside an expression',
+    instanceOf: LazyStateError,
+    message: /must be inside an operation/i,
   });
 });
 
@@ -116,7 +117,8 @@ test('throw if $ is on the left hand side of an assignment', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid state operator: must be inside an expression',
+    instanceOf: LazyStateError,
+    message: /must be inside an operation/i,
   });
 });
 
@@ -126,7 +128,8 @@ test('throw if $ is on the left hand side of a nested assignment', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid state operator: must be inside an expression',
+    instanceOf: LazyStateError,
+    message: /must be inside an operation/i,
   });
 });
 
@@ -136,7 +139,8 @@ test('throw if $ is on the left hand side of a multi assignment', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid state operator: must be inside an expression',
+    instanceOf: LazyStateError,
+    message: /must be inside an operation/i,
   });
 });
 
