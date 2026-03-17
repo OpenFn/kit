@@ -322,8 +322,8 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
   await execute(context);
 });
 
-test.serial(
-  'compilation failure: log should arrive before workflow-error',
+test.serial.only(
+  'on compile error, the error log should arrive before the workflow-error event',
   async (t) => {
     const state = {
       id: 'compile-order',
@@ -336,35 +336,21 @@ test.serial(
 
     const context = createContext({ state, options: {} });
 
-    const eventOrder: string[] = [];
+    const orderedEvents: string[] = [];
 
     context.on(WORKFLOW_LOG, (evt) => {
-      if (
-        evt.message &&
-        typeof evt.message === 'string' &&
-        /compilation/i.test(evt.message)
-      ) {
-        eventOrder.push('log');
-      } else if (Array.isArray(evt.message)) {
-        const msg = evt.message.join(' ');
-        if (/compilation/i.test(msg)) {
-          eventOrder.push('log');
-        }
+      if (/error occurred during compilation/i.test(evt.message)) {
+        orderedEvents.push('log');
       }
     });
 
     context.on(WORKFLOW_ERROR, () => {
-      eventOrder.push('error');
+      orderedEvents.push('error');
     });
 
     await execute(context);
 
-    const logIdx = eventOrder.indexOf('log');
-    const errorIdx = eventOrder.indexOf('error');
-
-    t.not(logIdx, -1, 'should have received a compilation log');
-    t.not(errorIdx, -1, 'should have received an error');
-    t.true(logIdx < errorIdx, `log (${logIdx}) should come before error (${errorIdx})`);
+    t.deepEqual(orderedEvents, ['log', 'error']);
   }
 );
 
