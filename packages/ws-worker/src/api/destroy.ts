@@ -23,7 +23,7 @@ const destroy = async (app: ServerApp, logger: Logger) => {
         resolve();
       });
     }),
-    (async () => {
+    new Promise<void>(async (resolve) => {
       // Let any active runs complete
       await waitForRunsAndClaims(app, logger);
 
@@ -31,7 +31,9 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       // Kill the engine and socket
       await app.engine.destroy();
       app.socket?.disconnect();
-    })(),
+
+      resolve();
+    }),
   ]);
 
   logger.success('Server closed');
