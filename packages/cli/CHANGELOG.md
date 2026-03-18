@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.30.4
+
+### Patch Changes
+
+- 0ed97be: Improve error reporting to resolve the dreaded "fn is not a function" error that occurs when writing `console.log()` at the top of job code
+- Updated dependencies [0ed97be]
+  - @openfn/runtime@1.8.5
+
 ## 1.30.3
 
 ### Patch Changes

@@ -14,6 +14,7 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
     steps: [
       {
+        id: 'a',
         expression,
       },
     ],
@@ -99,6 +100,22 @@ test('extractStackTrace: basic test', (t) => {
     at fn (vm:module(0):1:25)
     at vm:module(0):2:17`
   );
+});
+
+test('crash on invalid operation (the iconic "fn is not a function" error)', async (t) => {
+  // Note that this will output 'x' to stdout and look a bit weird!
+  const expression = 'export default [console.debug("x")]';
+  const plan = createPlan(expression, { timeout: 1 });
+
+  let error;
+  try {
+    await run(plan);
+  } catch (e) {
+    error = e;
+  }
+
+  t.is(error.severity, 'crash');
+  t.regex(error.message, /invalid operation at statement 0/i);
 });
 
 test('crash on timeout', async (t) => {

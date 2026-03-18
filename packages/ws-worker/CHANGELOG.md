@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.22.2
+
+### Patch Changes
+
+- 0ed97be: Improve error reporting to resolve the dreaded "fn is not a function" error that occurs when writing `console.log()` at the top of job code
+- Updated dependencies [0ed97be]
+  - @openfn/runtime@1.8.5
+  - @openfn/engine-multi@1.10.6
+
 ## 1.22.1
 
 ### Patch Changes
