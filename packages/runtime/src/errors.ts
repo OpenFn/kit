@@ -18,7 +18,10 @@ export function assertRuntimeError(e: any) {
 // See https://nodejs.org/api/errors.html for errors
 export function assertRuntimeCrash(e: any) {
   // ignore  instanceof SystemError, AssertionError
-  if (e.constructor.name.match(/ReferenceError|SyntaxError/)) {
+  if (
+    e.severity === 'crash' ||
+    e.constructor.name.match(/ReferenceError|SyntaxError/)
+  ) {
     throw new RuntimeCrash(e);
   }
 }
@@ -106,6 +109,10 @@ export class RTError extends Error {
   name: string = 'Error';
   pos?: ErrorPosition;
   step?: string;
+  /** Hint to the user how to fix the problem */
+  fix?: string;
+  /** More details about the error  */
+  details?: string;
 
   constructor() {
     super();
@@ -121,6 +128,34 @@ export class ValidationError extends RTError {
   constructor(message: string) {
     super();
     this.message = message;
+  }
+}
+export class InvalidExportsError extends RTError {
+  severity = 'crash';
+  name = 'ValidationError';
+
+  constructor() {
+    super();
+    this.message = `Invalid exports in job expression: exports must be an array`;
+
+    this.fix = 'Ensure job code has been compiled before calling the runtime';
+
+    delete this.stack;
+  }
+}
+
+export class InvalidOperationError extends RTError {
+  severity = 'crash';
+  name = 'ValidationError';
+
+  constructor(idx: number) {
+    super();
+    this.message = `Invalid operation at statement ${idx}`;
+
+    this.fix =
+      'Ensure all top-level function or method calls are wrapped in an operation, like fn()';
+
+    delete this.stack;
   }
 }
 
@@ -155,13 +190,19 @@ export class RuntimeCrash extends RTError {
   subtype: string;
   name = 'RuntimeCrash';
 
-  constructor(error: Error) {
+  constructor(error: any) {
     super();
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
 
     this.pos = extractPosition(error);
     this.stack = extractStackTrace(error);
+    if (error.fix) {
+      this.fix = error.fix;
+    }
+    if (error.details) {
+      this.details = error.details;
+    }
   }
 }
 
