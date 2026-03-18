@@ -6,6 +6,6 @@
   "schedule": ["on Friday", "every weekend"],
   "vulnerabilityAlerts": {
     "labels": ["security"],
-    "automerge": false,
+    "automerge": false
   }
 }
