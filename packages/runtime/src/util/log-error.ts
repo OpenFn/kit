@@ -92,9 +92,13 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.error(error.message);
     }
 
+    if (error.fix) {
+      logger.error(error.fix);
+      logger.break();
+    }
     if (error.details) {
       logger.error('Additional error details:');
-      logger.print(error.details);
+      logger.error(error.details);
       logger.break();
     }
 
