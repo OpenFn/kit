@@ -16,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@openfn/compiler": "workspace:*",
-    "@openfn/language-common": "2.0.0-rc3",
+    "@openfn/language-common": "3.2.3",
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",

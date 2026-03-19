@@ -34,7 +34,7 @@
   "license": "ISC",
   "devDependencies": {
     "@openfn/language-collections": "^0.6.2",
-    "@openfn/language-common": "2.0.0-rc3",
+    "@openfn/language-common": "3.2.3",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "^18.19.127",
     "@types/rimraf": "^3.0.2",
