@@ -3,27 +3,52 @@ name: Build and push Docker images
 on:
   push:
     tags: '@openfn/ws-worker@**'
+  workflow_call:
 
 jobs:
+  check-tag:
+    name: Check if Docker tag exists
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      docker_tag: ${{ steps.extract.outputs.docker_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract Docker tag
+        id: extract
+        run: |
+          SOURCE_TAG=$(git tag --sort=-creatordate --list "@openfn/ws-worker@*" | head -n 1)
+          echo Source Tag: $SOURCE_TAG
+
+          VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
+          echo Version Tag: $VERSION_TAG
+
+          DOCKER_TAG=${VERSION_TAG#@}
+          echo Docker Tag: $DOCKER_TAG
+
+          echo "docker_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+      - name: Check if Docker tag exists
+        id: check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://hub.docker.com/v2/repositories/openfn/ws-worker/tags/v${{ steps.extract.outputs.docker_tag }}/)
+          if [ "$STATUS" = "200" ]; then
+            echo "Tag v${{ steps.extract.outputs.docker_tag }} already exists on Docker Hub, skipping build"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push-worker-image:
+    needs: check-tag
+    if: needs.check-tag.outputs.should_build == 'true'
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Manipulate tag for docker
-        id: branch_name
-        run: |
-          SOURCE_TAG=${GITHUB_REF#refs/tags/}
-          echo Source Tag: $SOURCE_TAG
-
-          VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
-          echo Version Tag: $VERSION_TAG
-          
-          DOCKER_TAG=${VERSION_TAG#@}
-          echo Docker Tag: $DOCKER_TAG
-          
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -41,4 +66,4 @@ jobs:
           target: ws-worker
           tags: |
             openfn/ws-worker:latest
-            openfn/ws-worker:v${{ env.DOCKER_TAG }}
+            openfn/ws-worker:v${{ needs.check-tag.outputs.docker_tag }}
