@@ -240,8 +240,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       undici:
-        specifier: 7.12.0
-        version: 7.12.0
+        specifier: 7.24.4
+        version: 7.24.4
       ws:
         specifier: ^8.18.3
         version: 8.18.3
@@ -4867,14 +4867,6 @@ packages:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
     engines: {node: '>=14.0'}
 
-  undici@7.12.0:
-    resolution: {integrity: sha512-GrKEsc3ughskmGA9jevVlIOPMiiAHJ4OFUtaAH+NhfTUSiZ1wMPIQqQvAJUrJspFXJt3EBWgpAeoHEDVT1IBug==}
-    engines: {node: '>=20.18.1'}
-
-  undici@7.16.0:
-    resolution: {integrity: sha512-QEg3HPMll0o3t2ourKwOeUAZ159Kn9mx5pnzHRQO8+Wixmh88YdZRiIwat0iNzNNXn0yoEtXJqFpyW7eM8BV7g==}
-    engines: {node: '>=20.18.1'}
-
   undici@7.24.4:
     resolution: {integrity: sha512-BM/JzwwaRXxrLdElV2Uo6cTLEjhSb3WXboncJamZ15NgUURmvlXvxa6xkwIOILIjPNo9i8ku136ZvWV0Uly8+w==}
     engines: {node: '>=20.18.1'}
@@ -5713,7 +5705,7 @@ snapshots:
       http-status-codes: 2.3.0
       jsonpath-plus: 10.3.0
       lodash: 4.17.21
-      undici: 7.16.0
+      undici: 7.24.4
 
   '@openfn/language-common@3.2.3':
     dependencies:
@@ -9408,10 +9400,6 @@ snapshots:
   undici@5.29.0:
     dependencies:
       '@fastify/busboy': 2.1.1
-
-  undici@7.12.0: {}
-
-  undici@7.16.0: {}
 
   undici@7.24.4: {}
 
