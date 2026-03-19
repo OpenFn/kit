@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.1.2
+
+### Patch Changes
+
+- 5981876: Security updates
+
 ## 1.1.1
 
 ### Patch Changes

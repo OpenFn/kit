@@ -1,6 +1,6 @@
 import Koa from 'koa';
 import Router from '@koa/router';
-import bodyParser from 'koa-bodyparser';
+import bodyParser from '@koa/bodyparser';
 import { Logger } from '@openfn/logger';
 
 import { ServerState } from './server';

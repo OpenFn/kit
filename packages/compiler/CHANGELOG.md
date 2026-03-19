@@ -1,5 +1,15 @@
 # @openfn/compiler
 
+## 1.2.4
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/describe-package@0.1.6
+  - @openfn/lexicon@1.4.2
+  - @openfn/logger@1.1.2
+
 ## 1.2.3
 
 ### Patch Changes

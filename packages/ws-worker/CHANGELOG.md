@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.22.3
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/engine-multi@1.10.7
+  - @openfn/lexicon@1.4.2
+  - @openfn/runtime@1.8.6
+  - @openfn/logger@1.1.2
+
 ## 1.22.2
 
 ### Patch Changes

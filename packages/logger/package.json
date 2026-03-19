@@ -1,6 +1,6 @@
 {
   "name": "@openfn/logger",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Cross-package logging utility",
   "module": "dist/index.js",
   "author": "Open Function Group <admin@openfn.org>",
@@ -33,11 +33,11 @@
     "figures": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.19.127",
+    "@types/node": "^18.19.130",
     "ava": "5.3.1",
     "tslib": "^2.8.1",
-    "tsup": "^7.2.0",
-    "typescript": "^5.9.2"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   },
   "files": [
     "dist",

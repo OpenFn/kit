@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import Koa from 'koa';
-import bodyParser from 'koa-bodyparser';
+import bodyParser from '@koa/bodyparser';
 import koaLogger from 'koa-logger';
 import createLogger, {
   createMockLogger,

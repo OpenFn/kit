@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 1.8.6
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/logger@1.1.2
+
 ## 1.8.5
 
 ### Patch Changes

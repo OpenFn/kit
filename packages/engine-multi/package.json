@@ -1,6 +1,6 @@
 {
   "name": "@openfn/engine-multi",
-  "version": "1.10.6",
+  "version": "1.10.7",
   "description": "Multi-process runtime engine",
   "main": "dist/index.js",
   "type": "module",
@@ -16,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@openfn/compiler": "workspace:*",
-    "@openfn/language-common": "2.0.0-rc3",
+    "@openfn/language-common": "3.2.3",
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
@@ -24,13 +24,13 @@
     "json-stream-stringify": "^3.1.6"
   },
   "devDependencies": {
-    "@types/node": "^18.19.127",
+    "@types/node": "^18.19.130",
     "ava": "5.3.1",
     "tslib": "^2.8.1",
     "tsm": "^2.3.0",
-    "tsup": "^7.2.0",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
   "files": [
     "dist/index.js",

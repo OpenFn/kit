@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.4.2
+
+### Patch Changes
+
+- 5981876: Security updates
+
 ## 1.4.1
 
 ### Patch Changes
