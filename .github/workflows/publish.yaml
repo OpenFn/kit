@@ -7,6 +7,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      ws_worker_tagged: ${{ steps.tags.outputs.ws_worker_tagged }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -27,8 +29,19 @@ jobs:
       - run: git config user.email ${{ secrets.GH_EMAIL }}
 
       - name: Push tags
-        run: pnpm changeset tag && git push --tags
+        id: tags
+        run: |
+          pnpm changeset tag
+          if git tag -l '@openfn/ws-worker@*' | grep -q .; then
+            echo "ws_worker_tagged=true" >> $GITHUB_OUTPUT
+          fi
+          git push --tags
 
       - run: pnpm run generate-slack-report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+  dockerize:
+    needs: publish
+    uses: ./.github/workflows/dockerize.yaml
+    secrets: inherit
