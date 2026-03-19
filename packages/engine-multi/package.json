@@ -24,13 +24,13 @@
     "json-stream-stringify": "^3.1.6"
   },
   "devDependencies": {
-    "@types/node": "^18.19.127",
+    "@types/node": "^18.19.130",
     "ava": "5.3.1",
     "tslib": "^2.8.1",
     "tsm": "^2.3.0",
     "tsup": "^8.5.1",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
   "files": [
     "dist/index.js",
