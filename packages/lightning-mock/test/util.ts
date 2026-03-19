@@ -9,7 +9,11 @@ import { runs } from './data';
 type Channel = any; // TODO
 
 export const setup = (port: number) => {
-  return new Promise<{ server: DevServer; client: any }>((done) => {
+  return new Promise<{
+    server: DevServer;
+    client: any;
+    close: () => Promise<void>;
+  }>((done) => {
     const server = createLightningServer({ port });
     // Note that we need a token to connect, but the mock here
     // doesn't (yet) do any validation on that token
@@ -18,8 +22,18 @@ export const setup = (port: number) => {
       timeout: 1000 * 120,
       transport: WebSocket,
     });
+
+    const close = async () => {
+      await server.destroy();
+      // // Let one I/O tick pass so the client socket transitions to readyState
+      // // CLOSED before Phoenix's waitForSocketClosed check, avoiding its
+      // // 150ms polling loop that otherwise keeps the worker process alive.
+      // await new Promise((r) => setImmediate(r));
+      client.disconnect();
+    };
+
     client.onOpen(() => {
-      done({ server, client });
+      done({ server, client, close });
     });
     client.connect();
   });

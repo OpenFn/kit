@@ -10,15 +10,16 @@ type Channel = any;
 
 let server: any;
 let client: any;
+let close: any;
 
-test.before(async () => ({ server, client } = await setup(port)));
+test.before(async () => ({ server, client, close } = await setup(port)));
 
 test.afterEach(() => {
   server.reset();
 });
 
-test.after(() => {
-  server.destroy();
+test.after(async () => {
+  await close();
 });
 
 const run1 = runs['run-1'];

@@ -7,10 +7,15 @@ import { setup } from './util';
 
 // @ts-ignore
 let server: any;
+let close: any;
 
 const port = 3334;
 
-test.before(async () => ({ server } = await setup(port)));
+test.before(async () => ({ server, close } = await setup(port)));
+
+test.after(async () => {
+  await close();
+});
 
 test('addProject: add a project from yaml', async (t) => {
   const yaml = `

@@ -81,6 +81,7 @@ type MockSocketServer = typeof WebSocketServer & {
     events: Record<string, EventHandler>
   ) => { unsubscribe: () => void };
   sendToClients: (message: PhoenixEvent) => void;
+  destroy: () => Promise<void>;
 };
 
 function createServer({
@@ -140,7 +141,7 @@ function createServer({
     },
   };
 
-  // @ts-ignore something wierd about the wsServer typing
+  // @ts-ignore something weird about the wsServer typing
   wsServer.on('connection', function (ws: DevSocket, req: any) {
     logger?.info('new client connected');
     state.events.emit(CONNECT); // todo client details maybe
@@ -285,6 +286,18 @@ function createServer({
       }
     });
   };
+
+  mockServer.destroy = () =>
+    new Promise<void>((resolve) => {
+      // Terminate WebSocket clients first so any pending socketDelay
+      // setTimeout callbacks don't try to send on a destroyed socket.
+      (wsServer as any).clients.forEach((client: any) => client.terminate());
+      // Also force-close any connections the HTTP server is still tracking
+      // (upgraded WS sockets may or may not still be in its pool depending
+      // on Node version). Without this, httpServer.close() can hang.
+      (wsServer as any)._server?.closeAllConnections?.();
+      (wsServer as any).close(() => resolve());
+    });
 
   return mockServer as MockSocketServer;
 }

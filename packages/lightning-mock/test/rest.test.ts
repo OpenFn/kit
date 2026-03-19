@@ -6,12 +6,17 @@ import { DEFAULT_PROJECT_ID } from '../src/api-rest';
 
 // @ts-ignore
 let server: any;
+let close: any;
 
 const port = 3334;
 
 const endpoint = `http://localhost:${port}`;
 
-test.before(async () => ({ server } = await setup(port)));
+test.before(async () => ({ server, close } = await setup(port)));
+
+test.after(async () => {
+  await close();
+});
 
 test.serial('should pull a project', async (t) => {
   const response = await fetch(

@@ -8,12 +8,17 @@ import { setup } from './util';
 
 let server: any;
 let client: any;
+let close: any;
 
 const port = 3333;
 
 const endpoint = `ws://localhost:${port}/worker`;
 
-test.before(async () => ({ server, client } = await setup(port)));
+test.before(async () => ({ server, client, close } = await setup(port)));
+
+test.after(async () => {
+  await close();
+});
 
 test.serial('should setup a run at /POST /run', async (t) => {
   const state = server.getState();
@@ -76,6 +81,7 @@ test.serial('reject ws connections without a token', (t) => {
     const socket = new Socket(endpoint, { transport: WebSocket });
     socket.onClose(() => {
       t.pass();
+      socket.disconnect();
       done();
     });
     socket.connect();
