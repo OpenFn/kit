@@ -22,6 +22,15 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm publish -r --report-summary --publish-branch main --access=public
+
+      - name: Setup GH user
+        run: git config user.name ${{ secrets.GH_USER }}
+        run: git config user.email ${{ secrets.GH_EMAIL }}
+            
+      - name: Push tags
+        run: pnpm changeset tag
+        run: git push --tags
+
       - run: pnpm run generate-slack-report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
