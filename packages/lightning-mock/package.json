@@ -16,7 +16,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@koa/router": "^12.0.2",
+    "@koa/router": "^15.4.0",
     "@openfn/engine-multi": "workspace:*",
     "@openfn/language-collections": "0.8.3",
     "@openfn/lexicon": "workspace:^",
@@ -28,14 +28,13 @@
     "fast-safe-stringify": "^2.1.1",
     "jose": "^4.15.9",
     "koa": "^2.16.4",
-    "koa-bodyparser": "^4.4.1",
-    "koa-logger": "^3.2.1",
+    "@koa/bodyparser": "^6.1.0",
+    "koa-logger": "^4.0.0",
     "phoenix": "^1.8.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/koa": "^2.15.0",
-    "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-route": "^3.2.8",
     "@types/koa-websocket": "^5.0.10",
     "@types/koa__router": "^12.0.4",

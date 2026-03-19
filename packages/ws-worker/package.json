@@ -33,7 +33,7 @@
     "human-id": "^4.1.1",
     "jose": "^4.15.9",
     "koa": "^2.16.4",
-    "koa-bodyparser": "^4.4.1",
+    "@koa/bodyparser": "^6.1.0",
     "koa-logger": "^3.2.1",
     "phoenix": "1.7.10",
     "ws": "^8.18.3"
@@ -41,7 +41,6 @@
   "devDependencies": {
     "@openfn/lightning-mock": "workspace:*",
     "@types/koa": "^2.15.0",
-    "@types/koa-bodyparser": "^4.3.12",
     "@types/koa__router": "^12.0.4",
     "@types/node": "^18.19.127",
     "@types/nodemon": "1.19.3",
