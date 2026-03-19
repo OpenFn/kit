@@ -27,6 +27,7 @@
     "@openfn/logger": "workspace:^"
   },
   "dependencies": {
+    "ava": "^5.3.1",
     "source-map": "^0.7.6"
   }
 }

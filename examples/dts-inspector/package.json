@@ -12,7 +12,8 @@
   "license": "ISC",
   "private": true,
   "dependencies": {
-    "@openfn/describe-package": "workspace:*"
+    "@openfn/describe-package": "workspace:*",
+    "ava": "^5.3.1"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",

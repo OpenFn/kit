@@ -21,7 +21,7 @@
     "@openfn/ws-worker": "workspace:^",
     "@types/node": "^18.19.127",
     "@types/rimraf": "^3.0.2",
-    "ava": "7.0.0",
+    "ava": "5.3.1",
     "date-fns": "^2.30.0",
     "koa": "^2.16.2",
     "rimraf": "^6.1.3",
