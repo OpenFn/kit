@@ -32,7 +32,7 @@
     "figures": "^5.0.0",
     "human-id": "^4.1.1",
     "jose": "^4.15.9",
-    "koa": "^2.16.2",
+    "koa": "^2.16.4",
     "koa-bodyparser": "^4.4.1",
     "koa-logger": "^3.2.1",
     "phoenix": "1.7.10",

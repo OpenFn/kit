@@ -180,8 +180,8 @@ importers:
         specifier: ^2.30.0
         version: 2.30.0
       koa:
-        specifier: ^2.16.2
-        version: 2.16.2
+        specifier: ^2.16.4
+        version: 2.16.4
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -538,8 +538,8 @@ importers:
         specifier: ^4.15.9
         version: 4.15.9
       koa:
-        specifier: ^2.16.2
-        version: 2.16.2
+        specifier: ^2.16.4
+        version: 2.16.4
       koa-bodyparser:
         specifier: ^4.4.1
         version: 4.4.1
@@ -788,8 +788,8 @@ importers:
         specifier: ^4.15.9
         version: 4.15.9
       koa:
-        specifier: ^2.16.2
-        version: 2.16.2
+        specifier: ^2.16.4
+        version: 2.16.4
       koa-bodyparser:
         specifier: ^4.4.1
         version: 4.4.1
@@ -3820,8 +3820,8 @@ packages:
   koa-websocket@7.0.0:
     resolution: {integrity: sha512-MsHUFKqA4+j+0dpPKWtsvZfnpQ1NcgF+AaTZQZ4B3Xj/cWK31qqmKx9HnA5Gw1LV2aIDzqwy0IDBsZYRurTUAg==}
 
-  koa@2.16.2:
-    resolution: {integrity: sha512-+CCssgnrWKx9aI3OeZwroa/ckG4JICxvIFnSiOUyl2Uv+UTI+xIw0FfFrWS7cQFpoePpr9o8csss7KzsTzNL8Q==}
+  koa@2.16.4:
+    resolution: {integrity: sha512-3An0GCLDSR34tsCO4H8Tef8Pp2ngtaZDAZnsWJYelqXUK5wyiHvGItgK/xcSkmHLSTn1Jcho1mRQs2ehRzvKKw==}
     engines: {node: ^4.8.4 || ^6.10.1 || ^7.10.1 || >= 8.1.4}
 
   lilconfig@2.1.0:
@@ -8152,7 +8152,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  koa@2.16.2:
+  koa@2.16.4:
     dependencies:
       accepts: 1.3.8
       cache-content-type: 1.0.1
