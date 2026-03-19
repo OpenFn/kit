@@ -1,5 +1,16 @@
 # @openfn/integration-tests-worker
 
+## 1.0.96
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/lightning-mock@2.4.9
+  - @openfn/engine-multi@1.10.7
+  - @openfn/ws-worker@1.22.3
+  - @openfn/logger@1.1.2
+
 ## 1.0.95
 
 ### Patch Changes

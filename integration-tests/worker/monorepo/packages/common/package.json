@@ -1,7 +1,7 @@
 {
   "name": "@openfn/language-common",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
     "ava": "^5.3.1"
   }

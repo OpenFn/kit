@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.30.4",
+  "version": "1.30.5",
   "description": "CLI devtools for the OpenFn toolchain",
   "engines": {
     "node": ">=18",
@@ -34,7 +34,7 @@
   "license": "ISC",
   "devDependencies": {
     "@openfn/language-collections": "^0.8.3",
-    "@openfn/language-common": "3.2.3",
+    "@openfn/language-common": "1.0.1",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "^18.19.130",
     "@types/rimraf": "^3.0.2",
