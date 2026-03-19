@@ -30,7 +30,7 @@
     "@types/jsonpath": "^0.2.4",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "^18.19.127",
-    "ava": "5.3.1",
+    "ava": "7.0.0",
     "jsonpath": "^1.1.1",
     "mock-fs": "^5.5.0",
     "tslib": "^2.8.1",

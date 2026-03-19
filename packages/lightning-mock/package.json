@@ -43,7 +43,7 @@
     "@types/nodemon": "1.19.3",
     "@types/phoenix": "^1.6.6",
     "@types/yargs": "^17.0.33",
-    "ava": "5.1.0",
+    "ava": "7.0.0",
     "koa-route": "^3.2.0",
     "koa-websocket": "^7.0.0",
     "query-string": "^8.2.0",

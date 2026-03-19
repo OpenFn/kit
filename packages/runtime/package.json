@@ -32,7 +32,7 @@
     "@types/mock-fs": "^4.13.4",
     "@types/node": "^18.19.127",
     "@types/semver": "^7.7.1",
-    "ava": "5.3.1",
+    "ava": "7.0.0",
     "mock-fs": "^5.5.0",
     "recast": "^0.21.5",
     "ts-node": "^10.9.2",
