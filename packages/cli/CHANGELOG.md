@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.30.6
+
+### Patch Changes
+
+- Deprecate node 18
+
 ## 1.30.5
 
 ### Patch Changes
