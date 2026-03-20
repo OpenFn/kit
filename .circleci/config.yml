@@ -131,6 +131,6 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ['22.20']
+              node_version: ['18.20', '22.20']
           requires:
             - build
