@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.30.6
+
+### Patch Changes
+
+- Rollback undici and inquirer versions for node18 compatibility
+- Updated dependencies
+  - @openfn/deploy@0.11.7
+
 ## 1.30.5
 
 ### Patch Changes
