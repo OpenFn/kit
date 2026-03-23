@@ -124,10 +124,7 @@ export default async (
   return result;
 };
 
-async function handleError(
-  logger: Logger,
-  response: Dispatcher.ResponseData<any>
-) {
+async function handleError(logger: Logger, response: Dispatcher.ResponseData) {
   logger.error('Error from server', response.statusCode);
   let message;
   let fix;
