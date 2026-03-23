@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.23.0
+
+### Minor Changes
+
+- 01a05ff: on send complete, only send final_state for multi-leaf output state. For single-leaf runs, reutrn final_dataclip_id
+
 ## 1.22.1
 
 ### Patch Changes
