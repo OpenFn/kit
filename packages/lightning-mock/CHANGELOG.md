@@ -1,5 +1,25 @@
 # @openfn/lightning-mock
 
+## 2.4.9
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/engine-multi@1.10.7
+  - @openfn/lexicon@1.4.2
+  - @openfn/project@0.14.4
+  - @openfn/runtime@1.8.6
+  - @openfn/logger@1.1.2
+
+## 2.4.8
+
+### Patch Changes
+
+- Updated dependencies [0ed97be]
+  - @openfn/runtime@1.8.5
+  - @openfn/engine-multi@1.10.6
+
 ## 2.4.7
 
 ### Patch Changes

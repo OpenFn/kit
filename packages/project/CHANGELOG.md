@@ -1,5 +1,14 @@
 # @openfn/project
 
+## 0.14.4
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/lexicon@1.4.2
+  - @openfn/logger@1.1.2
+
 ## 0.14.3
 
 ### Patch Changes

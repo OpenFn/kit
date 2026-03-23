@@ -20,6 +20,8 @@ import {
   assertRuntimeError,
   assertSecurityKill,
   AdaptorError,
+  InvalidOperationError,
+  InvalidExportsError,
 } from '../errors';
 import type { JobModule, ExecutionContext, GlobalsModule } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
@@ -234,6 +236,17 @@ const prepareJob = async (
       log: opts.logger,
     });
     const operations = exports.default;
+
+    if (!Array.isArray(operations)) {
+      throw new InvalidExportsError();
+    }
+
+    operations.forEach((op: unknown, idx: number) => {
+      if (typeof op !== 'function') {
+        throw new InvalidOperationError(idx);
+      }
+    });
+
     return {
       operations,
       ...exports,

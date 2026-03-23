@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.1.6
+
+### Patch Changes
+
+- 5981876: Security updates
+
 ## 0.1.5
 
 ### Patch Changes

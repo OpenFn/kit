@@ -1,5 +1,15 @@
 # @openfn/integration-tests-execute
 
+## 1.0.24
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/language-common@1.0.1
+  - @openfn/compiler@1.2.4
+  - @openfn/runtime@1.8.6
+
 ## 1.0.23
 
 ### Patch Changes

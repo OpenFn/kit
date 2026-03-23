@@ -1,5 +1,19 @@
 # @openfn/runtime
 
+## 1.8.6
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/logger@1.1.2
+
+## 1.8.5
+
+### Patch Changes
+
+- 0ed97be: Improve error reporting to resolve the dreaded "fn is not a function" error that occurs when writing `console.log()` at the top of job code
+
 ## 1.8.4
 
 ### Patch Changes

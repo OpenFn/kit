@@ -1,5 +1,35 @@
 # @openfn/cli
 
+## 1.30.6
+
+### Patch Changes
+
+- Rollback undici and inquirer versions for node18 compatibility
+- Updated dependencies
+  - @openfn/deploy@0.11.7
+
+## 1.30.5
+
+### Patch Changes
+
+- 5981876: Security updates
+- Updated dependencies [5981876]
+  - @openfn/describe-package@0.1.6
+  - @openfn/compiler@1.2.4
+  - @openfn/lexicon@1.4.2
+  - @openfn/project@0.14.4
+  - @openfn/runtime@1.8.6
+  - @openfn/deploy@0.11.6
+  - @openfn/logger@1.1.2
+
+## 1.30.4
+
+### Patch Changes
+
+- 0ed97be: Improve error reporting to resolve the dreaded "fn is not a function" error that occurs when writing `console.log()` at the top of job code
+- Updated dependencies [0ed97be]
+  - @openfn/runtime@1.8.5
+
 ## 1.30.3
 
 ### Patch Changes

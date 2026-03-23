@@ -5,7 +5,7 @@ import { exec as _exec } from 'node:child_process';
 
 import * as Sentry from '@sentry/node';
 import Koa from 'koa';
-import bodyParser from 'koa-bodyparser';
+import bodyParser from '@koa/bodyparser';
 import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';

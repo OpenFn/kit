@@ -1,8 +1,6 @@
-import { SanitizePolicies } from '@openfn/logger';
 import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type { Channel as PhxChannel } from 'phoenix';
-
-export { Socket };
+export type { Socket } from 'node:ws';
 
 // Internal server state for each run
 export type RunState = {
