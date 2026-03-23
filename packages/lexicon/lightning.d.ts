@@ -169,7 +169,8 @@ export type RunStartReply = {}; // no payload
 
 export type RunCompletePayload = ExitReason & {
   timestamp: TimeInMicroSeconds;
-  final_state?: any; // The aggregated final state from the workflow (handles branching)
+  final_dataclip_id?: string; // Single-leaf: reuse the step's output dataclip
+  final_state?: any; // Multi-leaf: aggregated final state keyed by step id
 };
 export type RunCompleteReply = undefined;
 
