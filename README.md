@@ -59,7 +59,7 @@ Thanks for being here! You're contributing to a digital public good that will al
 
 We use changesets to manage releases: [`github.com/changesets`](https://github.com/changesets/changesets)
 
-A changeset is a description of batch of changes, coupled with semver information.
+A changeset is a file with a short note about something that has changed. At release time, version numbers are bumped and all changeset notes are compiled into a CHANGELOG.md.
 
 ### Adding a change
 
@@ -69,21 +69,18 @@ When submitting a PR against this repo, include a changeset to describe your wor
 pnpm changeset
 ```
 
-For example changeset notes, look in the `.changesets` folder.
+A good changeset is usually a single-sentence explanation of a change, suitable for a technical user not familiar with this repository. We do not recommend using AI to generate changesets.
 
 ### Releasing
 
-New releases will be published to npm automatically when merging into main.
+When merging into main, new packages will be published to npm and new images built to docker hub.
 
 Before merging to main, check out the release branch locally and run the following steps:
 
 1. Run `pnpm changeset version` from root to bump versions
+1. Check that the updated changelogs look correct.
 1. Run `pnpm install`
-1. Commit the new version numbers
-1. Run `pnpm changeset tag` to generate tags
-1. Push tags `git push --tags`
-
-Remember tags may need updating if commits come in after the tags are first generated.
+1. Commit and push the new version numbers and lockfile
 
 ## TypeSync
 
