@@ -19,7 +19,7 @@ test('should send a run:complete event with final_dataclip_id for single leaf', 
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
       t.is(evt.final_dataclip_id, 'clip-1');
-      t.falsy(evt.final_state);
+      t.deepEqual(evt.final_state, result);
       t.falsy(evt.time);
     },
   });
@@ -293,7 +293,7 @@ test('should send final_dataclip_id for a single-leaf workflow', async (t) => {
   await handleRunComplete(context, event);
 
   t.is(completeEvent.final_dataclip_id, 'abc-123');
-  t.falsy(completeEvent.final_state);
+  t.deepEqual(completeEvent.final_state, finalResult);
   t.is(completeEvent.reason, 'success');
 });
 
