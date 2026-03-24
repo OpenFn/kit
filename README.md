@@ -78,12 +78,12 @@ New releases will be published to npm automatically when merging into main.
 Before merging to main, check out the release branch locally and run the following steps:
 
 1. Run `pnpm changeset version` from root to bump versions
-1. Run `pnpm install`
-1. Commit the new version numbers
-1. Run `pnpm changeset tag` to generate tags
-1. Push tags `git push --tags`
+2. Run `pnpm install`
+3. Commit the new version numbers
 
-Remember tags may need updating if commits come in after the tags are first generated.
+When the PR is merged to main a new tag will be generated automatically.
+
+Note: Remember tags may need updating if commits come in after the tags are first generated.
 
 ## TypeSync
 
