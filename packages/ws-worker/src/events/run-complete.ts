@@ -25,13 +25,12 @@ export default async function onWorkflowComplete(
 
   const payload: RunCompletePayload = {
     timestamp: timeInMicroseconds(event.time),
+    final_state: result,
     ...reason,
   };
 
   if (isSingleLeaf) {
     payload.final_dataclip_id = state.leafDataclipIds[0];
-  } else {
-    payload.final_state = result;
   }
 
   try {
