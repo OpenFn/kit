@@ -25,7 +25,7 @@ export type LazyResolvers = {
 
 export type APIOptions = Partial<Omit<EngineOptions, 'whitelist'>>;
 
-const DEFAULT_REPO_DIR = path.join(os.homedir(), '.openfn/repo');
+const DEFAULT_REPO_DIR = path.join(os.homedir(), '.openfn/worker/repo');
 
 const DEFAULT_MEMORY_LIMIT = 500;
 
