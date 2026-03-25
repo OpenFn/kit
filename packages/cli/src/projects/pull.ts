@@ -72,13 +72,13 @@ export async function handler(options: PullOptions, logger: Logger) {
   logger.success(`Checked out project locally`);
 }
 
-const ensureProjectId = (options: any, logger?: Logger) => {
+export const ensureProjectId = (options: any, logger?: Logger) => {
   if (!options.project) {
     logger?.debug(
       'No project ID specified: looking up checked out project in Workspace'
     );
     const ws = new Workspace(options.workspace);
-    if (ws.activeProject) {
+    if (ws.activeProject?.uuid) {
       options.project = ws.activeProject.uuid;
       logger?.info(
         `Project id not provided: will default to ${options.project}`
