@@ -73,11 +73,12 @@ export async function handler(options: PullOptions, logger: Logger) {
 }
 
 export const ensureProjectId = (options: any, logger?: Logger) => {
+  const ws = new Workspace(options.workspace);
   if (!options.project) {
     logger?.debug(
       'No project ID specified: looking up checked out project in Workspace'
     );
-    const ws = new Workspace(options.workspace);
+
     if (ws.activeProject?.uuid) {
       options.project = ws.activeProject.uuid;
       logger?.info(
@@ -88,6 +89,13 @@ export const ensureProjectId = (options: any, logger?: Logger) => {
         'Project not provided: specify a project UUID, id or alias'
       );
     }
+    return;
+  }
+
+  if (!ws.get(options.project)) {
+    throw new Error(
+      `Project "${options.project}" not found. Ensure the project has been pulled first, or provide a UUID.`
+    );
   }
 };
 

@@ -3,7 +3,7 @@ import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 
 import { ensureProjectId } from '../../src/projects/pull';
-import { UUID } from './fixtures';
+import { UUID, myProject_yaml } from './fixtures';
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -44,5 +44,29 @@ test('no project: throws if no active project in workspace', (t) => {
   const options: any = { workspace: WORKSPACE };
   t.throws(() => ensureProjectId(options, logger), {
     message: /Project not provided/,
+  });
+});
+
+test('valid alias: passes through when found in workspace', (t) => {
+  mock({
+    '/ws/openfn.yaml': openfnYaml,
+    '/ws/.projects/my-project@app.openfn.org.yaml': myProject_yaml,
+  });
+
+  const options: any = { workspace: WORKSPACE, project: 'my-project' };
+  ensureProjectId(options, logger);
+
+  t.is(options.project, 'my-project');
+});
+
+test('invalid alias: throws a clear error when not found in workspace', (t) => {
+  mock({
+    '/ws/openfn.yaml': openfnYaml,
+    '/ws/.projects': {},
+  });
+
+  const options: any = { workspace: WORKSPACE, project: 'nonexistent' };
+  t.throws(() => ensureProjectId(options, logger), {
+    message: /Project "nonexistent" not found/,
   });
 });
