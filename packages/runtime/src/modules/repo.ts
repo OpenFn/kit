@@ -231,27 +231,10 @@ export const getModuleEntryPoint = async (
       'utf8'
     );
     const pkg = JSON.parse(pkgRaw);
-    let main = 'index.js';
 
-    // TODO Turns out that importing the ESM format actually blows up
-    // (at least when we try to import lodash)
-    // if (pkg.exports) {
-    //   if (typeof pkg.exports === 'string') {
-    //     main = pkg.exports;
-    //   } else {
-    //     const defaultExport = pkg.exports['.']; // TODO what if this doesn't exist...
-    //     if (typeof defaultExport == 'string') {
-    //       main = defaultExport;
-    //     } else {
-    //       main = defaultExport.import;
-    //     }
-    //   }
-    // } else
-    // Safer for now to just use the CJS import
-    if (pkg.main) {
-      main = pkg.main;
-    }
+    const main = pkg.exports?.['.']?.import ?? pkg.main ?? 'index.js';
     const p = path.resolve(moduleRoot, main);
+
     return { path: p, version: pkg.version };
   }
   return null;
