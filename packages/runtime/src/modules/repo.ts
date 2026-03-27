@@ -232,7 +232,22 @@ export const getModuleEntryPoint = async (
     );
     const pkg = JSON.parse(pkgRaw);
 
-    const main = pkg.exports?.['.']?.import ?? pkg.main ?? 'index.js';
+    // Find the best ESM entrypoint
+    // https://nodejs.org/api/packages.html#package-entry-points
+    let esm;
+    if (typeof pkg.exports === 'string') {
+      esm = pkg.exports;
+    } else {
+      const exportsField = pkg.exports?.['.'];
+      esm =
+        typeof exportsField === 'string' ? exportsField : exportsField?.import;
+    }
+
+    // main might point to esm or cjs, but in our adaptors it points to CJS
+    const cjsProbably = pkg.main;
+
+    const main = esm ?? cjsProbably ?? 'index.js';
+
     const p = path.resolve(moduleRoot, main);
 
     return { path: p, version: pkg.version };
