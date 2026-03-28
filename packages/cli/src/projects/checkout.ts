@@ -15,6 +15,7 @@ import {
   tidyWorkflowDir,
   updateForkedFrom,
 } from './util';
+import { createProjectCredentials } from './create-credentials';
 
 export type CheckoutOptions = Pick<
   Opts,
@@ -125,5 +126,8 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       logger?.warn('WARNING! No content for file', f);
     }
   }
+
+  createProjectCredentials(workspacePath, switchProject, logger);
+
   logger?.success(`Expanded project to ${workspacePath}`);
 };
