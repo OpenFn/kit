@@ -2,13 +2,13 @@ import nodePath from 'node:path';
 import yargs from 'yargs';
 
 import type { CommandList } from './commands';
-import { DEFAULT_REPO_DIR } from './constants';
 import {
   expandAdaptors as doExpandAdaptors,
   ensureLogOpts,
   LogLevel,
 } from './util';
 import { existsSync } from 'node:fs';
+import { defaultRepoPath } from '@openfn/runtime';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -490,7 +490,7 @@ export const repoDir: CLIOption = {
   name: 'repo-dir',
   yargs: () => ({
     description: 'Provide a path to the repo root dir',
-    default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    default: process.env.OPENFN_REPO_DIR || defaultRepoPath,
   }),
 };
 

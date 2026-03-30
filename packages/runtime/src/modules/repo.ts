@@ -14,7 +14,7 @@ const defaultPkg = {
   dependencies: {},
 };
 
-export const defaultRepoPath = path.join(homeDir, '/.openfn/repo');
+export const defaultRepoPath = path.join(homeDir, './openfn/repo/cli');
 
 type InstallList = Array<{ name: string; version: string }>;
 
