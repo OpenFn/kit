@@ -4,7 +4,7 @@ import yargs from 'yargs';
 import { repo } from '../../src/repo/command';
 
 import type { Opts } from '../../src/options';
-import { DEFAULT_REPO_DIR } from '../../src/constants';
+import { defaultRepoPath } from '@openfn/runtime';
 
 // Build the repo command and test the options it returns
 // Note that this will re-parse the command each time, so env vars will be re-calculated
@@ -17,7 +17,7 @@ test('repoDir: use the built-in default if no env var', (t) => {
 
   const options = parse('repo');
 
-  t.is(options.repoDir, DEFAULT_REPO_DIR);
+  t.is(options.repoDir, defaultRepoPath);
   process.env.OPENFN_REPO_DIR = dir;
 });
 

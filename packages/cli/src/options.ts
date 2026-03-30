@@ -2,13 +2,13 @@ import nodePath from 'node:path';
 import yargs from 'yargs';
 
 import type { CommandList } from './commands';
-import { DEFAULT_REPO_DIR } from './constants';
 import {
   expandAdaptors as doExpandAdaptors,
   ensureLogOpts,
   LogLevel,
 } from './util';
 import { existsSync } from 'node:fs';
+import { defaultRepoPath } from '@openfn/runtime';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -490,20 +490,8 @@ export const repoDir: CLIOption = {
   name: 'repo-dir',
   yargs: () => ({
     description: 'Provide a path to the repo root dir',
-    default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    default: process.env.OPENFN_REPO_DIR || defaultRepoPath,
   }),
-  ensure: (opts) => {
-    if (opts.repoDir === DEFAULT_REPO_DIR) {
-      // Note that we don't use the logger here - it's not been created yet
-      console.warn(
-        'WARNING: no repo module dir found! Using the default (/tmp/repo)'
-      );
-      console.warn(
-        'You should set OPENFN_REPO_DIR or pass --repoDir=some/path in to the CLI'
-      );
-      console.log();
-    }
-  },
 };
 
 export const start: CLIOption = {
