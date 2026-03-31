@@ -12,3 +12,5 @@ export * from './errors';
 export * from './modules/repo';
 
 export * from './runtime-helpers';
+
+export { registerEsmHook } from './modules/register-esm-hook';

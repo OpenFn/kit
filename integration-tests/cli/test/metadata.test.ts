@@ -136,7 +136,7 @@ test.serial('does not log credentials', async (t) => {
 
 // When installing an adaptor that doesn't support metadata, the adaptor should be removed
 test.serial(
-  `openfn metadata -S "${state}" -a openfn@3.0.0 --log-json --log info`,
+  `openfn metadata -S "${state}" -a openfn@3.0.0 --log-json --log info --no-autoinstall`,
   async (t) => {
     const { stdout } = await run(t.title);
 

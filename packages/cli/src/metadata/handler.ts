@@ -2,7 +2,7 @@ import { Logger } from '../util/logger';
 import { MetadataOpts } from './command';
 import loadState from '../util/load-state';
 import * as cache from './cache';
-import { getModuleEntryPoint } from '@openfn/runtime';
+import { getModuleEntryPoint, registerEsmHook } from '@openfn/runtime';
 import { ExecutionPlan } from '@openfn/lexicon';
 import { install, removePackage } from '../repo/handler';
 
@@ -67,6 +67,9 @@ const metadataHandler = async (
     logger.error('No metadata helper found');
     process.exit(1);
   }
+
+  // This is needed to import older packages which aren't fully ESM compatible
+  registerEsmHook();
 
   const state = await loadState({} as ExecutionPlan, options, logger);
   logger.success(`Generating metadata`);
