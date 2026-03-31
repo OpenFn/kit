@@ -1,7 +1,4 @@
 import { createMockLogger } from '@openfn/logger';
-import createLightningServer, {
-  DEFAULT_PROJECT_ID,
-} from '@openfn/lightning-mock';
 import test from 'ava';
 import mock from 'mock-fs';
 import { execSync } from 'node:child_process';
@@ -21,16 +18,6 @@ import type { Opts } from '../src/options';
 const TIMEOUT = 1000 * 30;
 
 const logger = createMockLogger('', { level: 'debug' });
-
-const port = 8967;
-
-let server;
-
-const endpoint = `http://localhost:${port}`;
-
-test.before(async () => {
-  server = await createLightningServer({ port });
-});
 
 test.afterEach(() => {
   mock.restore();
