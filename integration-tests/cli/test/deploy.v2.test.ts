@@ -14,7 +14,7 @@ let server: ReturnType<typeof createLightningServer>;
 const port = 8968;
 const endpoint = `http://localhost:${port}`;
 
-const tmpDir = path.resolve('tmp/deploy-v2');
+const tmpDir = path.resolve('/tmp/deploy-v2');
 
 const makeProject = (id: string) => ({
   id,
