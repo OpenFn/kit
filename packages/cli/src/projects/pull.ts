@@ -92,7 +92,7 @@ export const ensureProjectId = (options: any, logger?: Logger) => {
     return;
   }
 
-  if (!ws.get(options.project)) {
+  if (!isUUID(options.project) && !ws.get(options.project)) {
     throw new Error(
       `Project "${options.project}" not found. Ensure the project has been pulled first, or provide a UUID.`
     );
@@ -100,3 +100,5 @@ export const ensureProjectId = (options: any, logger?: Logger) => {
 };
 
 export default handler;
+
+const isUUID = (str: string) => str.length === 36 && str.includes('-');
