@@ -8,7 +8,6 @@ const dirname = path.dirname(url.fileURLToPath(import.meta.url));
 // e.g. `import set from 'lodash/set'` instead of `import set from 'lodash/set.js'`
 export const registerEsmHook = () => {
   try {
-    console.log('>>>> REGISTERING ESM HOOK<<<<<<<<<<<');
     register(`file://${dirname}/modules/esm-resolve-hook.js`);
   } catch (e) {
     console.error(e);
