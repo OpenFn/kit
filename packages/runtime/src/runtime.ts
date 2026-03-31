@@ -43,7 +43,7 @@ export type Options = {
   stateLimitMb?: number;
 
   /** Disable the custom module loader which tries to load import paths without an extension */
-  disableEsmHook: boolean;
+  disableEsmHook?: boolean;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
