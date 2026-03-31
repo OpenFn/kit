@@ -169,7 +169,7 @@ function mergeTriggers(
             trigger.cron_expression = specTrigger.cron_expression;
 
             if (specTrigger.cron_cursor_job) {
-              trigger.cron_cursor_job = getStateJob(
+              trigger.cron_cursor_job_id = getStateJob(
                 specTrigger.cron_cursor_job,
                 jobs
               );
@@ -199,8 +199,19 @@ function mergeTriggers(
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
         };
 
+        if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
+          trigger.webhook_reply = specTrigger!.webhook_reply;
+        }
+
         if (specTrigger!.type === 'cron') {
           trigger.cron_expression = specTrigger!.cron_expression;
+
+          if (specTrigger!.cron_cursor_job) {
+            trigger.cron_cursor_job_id = getStateJob(
+              specTrigger!.cron_cursor_job,
+              jobs
+            );
+          }
         }
 
         if (specTrigger!.type === 'kafka') {
