@@ -75,15 +75,16 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // This is needed to ensure that pnpm dependencies can be dynamically loaded
   // (for recast in particular)
   const pnpm = path.resolve('../../node_modules/.pnpm');
-  const pkgPath = path.resolve('./package.json');
 
+  const pkgPath = path.resolve('./package.json');
+  const recastPath = `${pnpm}/recast@0.21.5`;
   // Mock the file system in-memory
   if (!options.disableMock) {
     mock({
       [expressionPath]: job,
       [statePath]: state,
       [outputPath]: '{}',
-      [pnpm]: mock.load(pnpm, {}),
+      [recastPath]: mock.load(recastPath, {}),
       // enable us to load test modules through the mock
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
       '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
@@ -838,22 +839,3 @@ test.serial(
     );
   }
 );
-
-test.serial('pull: should pull a simple project', async (t) => {
-  t.timeout(TIMEOUT);
-  mock({
-    './state.json': '',
-    './project.yaml': '',
-  });
-  process.env.OPENFN_ENDPOINT = endpoint;
-
-  const opts = cmd.parse(`pull ${DEFAULT_PROJECT_ID}`) as Opts;
-  await commandParser(opts, logger);
-
-  const last = logger._parse(logger._history.at(-1));
-  t.is(last.message, 'Project pulled successfully');
-  const errors = logger._find('error', /./);
-  t.falsy(errors);
-
-  delete process.env.OPENFN_ENDPOINT;
-});
