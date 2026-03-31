@@ -140,7 +140,7 @@ test.serial('pull a project', async (t) => {
   t.regex(yaml, /id\: test-project/);
 });
 
-test.serial.only('pull, change and re-deploy', async (t) => {
+test.serial('pull, change and re-deploy', async (t) => {
   const projectId = 'aaaaaaaa';
   server.addProject(makeProject(projectId) as any);
 

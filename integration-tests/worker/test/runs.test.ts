@@ -217,7 +217,7 @@ test.serial('run a http adaptor job', async (t) => {
   });
 });
 
-test.serial.only('Run with collections', async (t) => {
+test.serial('Run with collections', async (t) => {
   const job1 = createJob({
     body: `fn((state = {}) => {
     const server = collections.createMockServer();
