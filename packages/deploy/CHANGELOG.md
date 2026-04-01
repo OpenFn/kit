@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.12.0
+
+### Minor Changes
+
+- Support webhook_reply and cron_cursor_job.
+
 ## 0.11.7
 
 ### Patch Changes

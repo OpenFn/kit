@@ -475,6 +475,247 @@ test('toNextState with for kafka trigger', (t) => {
   });
 });
 
+test('toNextState sets webhook_reply when specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook', webhook_reply: 'before_start' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.webhook_reply, 'before_start');
+});
+
+test('toNextState omits webhook_reply when not specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_reply' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets cron_cursor_job_id when specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
+        },
+        triggers: {
+          t: {
+            type: 'cron',
+            cron_expression: '0 * * * *',
+            cron_cursor_job: 'job-a',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  const jobId = result.workflows.w.jobs['job-a'].id;
+  t.is(result.workflows.w.triggers.t.cron_cursor_job_id, jobId);
+});
+
+test('toNextState omits cron_cursor_job_id when not specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
+        },
+        triggers: {
+          t: { type: 'cron', cron_expression: '0 * * * *' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('cron_cursor_job_id' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets webhook_reply on existing trigger', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook', webhook_reply: 'after_completion' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.id, triggerId);
+  t.is(result.workflows.w.triggers.t.webhook_reply, 'after_completion');
+});
+
+test('toNextState omits webhook_reply on existing trigger when not specified', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_reply' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets cron_cursor_job_id on existing trigger', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const jobId = 'job-uuid-111';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {
+          'job-a': { id: jobId, name: 'job a' },
+        },
+        triggers: {
+          t: { id: triggerId, type: 'cron', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {
+          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+        },
+        triggers: {
+          t: { type: 'cron', cron_expression: '0 * * * *', cron_cursor_job: 'job-a' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.id, triggerId);
+  t.is(result.workflows.w.triggers.t.cron_cursor_job_id, jobId);
+});
+
+test('toNextState omits cron_cursor_job_id on existing trigger when not specified', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const jobId = 'job-uuid-111';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {
+          'job-a': { id: jobId, name: 'job a' },
+        },
+        triggers: {
+          t: { id: triggerId, type: 'cron', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {
+          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+        },
+        triggers: {
+          t: { type: 'cron', cron_expression: '0 * * * *' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('cron_cursor_job_id' in result.workflows.w.triggers.t);
+});
+
 test('mergeProjectIntoState with no changes', (t) => {
   let existingState = fullExampleState();
   const workflowOne = existingState.workflows['workflow-one'];

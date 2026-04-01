@@ -63,6 +63,20 @@ function getStateJobCredential(
   return stateCredentials[specJobCredential].id;
 }
 
+function getStateJob(
+  specJob: string,
+  stateJobs: WorkflowState['jobs']
+): string {
+  if (!stateJobs[specJob]) {
+    throw new DeployError(
+      `Could not find a job with key: ${specJob}`,
+      'VALIDATION_ERROR'
+    );
+  }
+
+  return stateJobs[specJob].id;
+}
+
 function mergeJobs(
   credentials: ProjectState['project_credentials'],
   stateJobs: WorkflowState['jobs'],
@@ -134,6 +148,7 @@ function pickValue(
 }
 
 function mergeTriggers(
+  jobs: WorkflowState['jobs'],
   stateTriggers: WorkflowState['triggers'],
   specTriggers: WorkflowSpec['triggers']
 ): WorkflowState['triggers'] {
@@ -146,8 +161,19 @@ function mergeTriggers(
             ...pickKeys(specTrigger, ['type', 'enabled']),
           };
 
+          if (specTrigger.type === 'webhook' && specTrigger.webhook_reply) {
+            trigger.webhook_reply = specTrigger.webhook_reply;
+          }
+
           if (specTrigger.type === 'cron') {
             trigger.cron_expression = specTrigger.cron_expression;
+
+            if (specTrigger.cron_cursor_job) {
+              trigger.cron_cursor_job_id = getStateJob(
+                specTrigger.cron_cursor_job,
+                jobs
+              );
+            }
           }
 
           if (specTrigger.type === 'kafka') {
@@ -173,8 +199,19 @@ function mergeTriggers(
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
         };
 
+        if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
+          trigger.webhook_reply = specTrigger!.webhook_reply;
+        }
+
         if (specTrigger!.type === 'cron') {
           trigger.cron_expression = specTrigger!.cron_expression;
+
+          if (specTrigger!.cron_cursor_job) {
+            trigger.cron_cursor_job_id = getStateJob(
+              specTrigger!.cron_cursor_job,
+              jobs
+            );
+          }
         }
 
         if (specTrigger!.type === 'kafka') {
@@ -334,6 +371,7 @@ export function mergeSpecIntoState(
         );
 
         const nextTriggers = mergeTriggers(
+          nextJobs,
           stateWorkflow?.triggers || {},
           specWorkflow?.triggers || {}
         );
