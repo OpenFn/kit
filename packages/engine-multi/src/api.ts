@@ -1,6 +1,8 @@
 // Creates the public/external API to the runtime
 // Basically a thin wrapper, with validation, around the engine
 
+import path from 'node:path';
+import os from 'node:os';
 import createLogger from '@openfn/logger';
 
 import whitelist from './whitelist';
@@ -23,7 +25,7 @@ export type LazyResolvers = {
 
 export type APIOptions = Partial<Omit<EngineOptions, 'whitelist'>>;
 
-const DEFAULT_REPO_DIR = '/tmp/openfn/worker/repo';
+const DEFAULT_REPO_DIR = path.join(os.homedir(), '.openfn/worker/repo');
 
 const DEFAULT_MEMORY_LIMIT = 500;
 
@@ -38,7 +40,6 @@ const createAPI = async function (
 
   if (!repoDir) {
     repoDir = DEFAULT_REPO_DIR;
-    logger.warn('Using default repo directory: ', DEFAULT_REPO_DIR);
   }
   logger.info('repoDir set to ', repoDir);
 

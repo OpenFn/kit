@@ -2,6 +2,8 @@ import path from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { defaultLogger, Logger } from '@openfn/logger';
 import exec from '../util/exec';
+import * as os from 'node:os';
+const homeDir = os.homedir();
 
 const defaultPkg = {
   name: 'openfn-repo',
@@ -12,7 +14,7 @@ const defaultPkg = {
   dependencies: {},
 };
 
-export const defaultRepoPath = '/tmp/openfn/repo';
+export const defaultRepoPath = path.join(homeDir, './openfn/repo/cli');
 
 type InstallList = Array<{ name: string; version: string }>;
 
