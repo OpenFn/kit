@@ -31,7 +31,7 @@ export function createProjectCredentials(
   logger?: Logger
 ): void {
   const credentialsPath = project.config.credentials;
-  if (typeof credentialsPath !== 'string' || !credentialsPath.trim()) return;
+  if (typeof credentialsPath !== 'string') return;
 
   const ids = findCredentialIds(project);
   if (!ids.length) return;
