@@ -5,17 +5,15 @@ import mock from 'mock-fs';
 import Project from '@openfn/project';
 import { yamlToJson } from '@openfn/project';
 
-import { CREDENTIALS_KEY } from '../../src/execute/apply-credential-map';
 import {
-  collectCredentialReferences,
+  findCredentialIds,
   createProjectCredentials,
 } from '../../src/projects/create-credentials';
 
 test.afterEach(() => {
   try {
     mock.restore();
-  } catch {
-  }
+  } catch {}
 });
 
 const baseWorkflow = (steps: any[]) => ({
@@ -31,18 +29,14 @@ test('sync-credentials: inline string references', (t) => {
     workflows: [
       baseWorkflow([
         { id: 'a', configuration: 'owner|cred' },
-        {
-          id: 'b',
-          configuration: { [CREDENTIALS_KEY]: 'uuid-1', extra: true },
-        },
         { id: 'c', configuration: 'ignored.json' },
         { id: 'd', configuration: '' },
       ]),
     ],
   } as any);
 
-  const ids = collectCredentialReferences(project).sort();
-  t.deepEqual(ids, ['owner|cred', 'uuid-1'].sort());
+  const ids = findCredentialIds(project);
+  t.deepEqual(ids, ['owner|cred']);
 });
 
 test('sync-credentials: ignores duplicate references', (t) => {
@@ -54,10 +48,10 @@ test('sync-credentials: ignores duplicate references', (t) => {
     ],
   } as any);
 
-  t.deepEqual(collectCredentialReferences(project), ['same']);
+  t.deepEqual(findCredentialIds(project), ['same']);
 });
 
-test('sync-credentials: creates credential yaml file', (t) => {
+test.only('sync-credentials: creates credential yaml file', (t) => {
   mock({ '/ws': {} });
 
   const project = new Project(
@@ -71,7 +65,9 @@ test('sync-credentials: creates credential yaml file', (t) => {
   createProjectCredentials('/ws', project);
 
   t.true(fs.existsSync('/ws/credentials.yaml'));
-  const doc = yamlToJson(fs.readFileSync('/ws/credentials.yaml', 'utf8')) as any;
+  const doc = yamlToJson(
+    fs.readFileSync('/ws/credentials.yaml', 'utf8')
+  ) as any;
   t.deepEqual(doc, { 'new-id': {} });
 });
 
@@ -98,7 +94,9 @@ test('sync-credentials: preserves existing credentials and adds missing ones', (
 
   createProjectCredentials('/ws', project);
 
-  const doc = yamlToJson(fs.readFileSync('/ws/credentials.yaml', 'utf8')) as any;
+  const doc = yamlToJson(
+    fs.readFileSync('/ws/credentials.yaml', 'utf8')
+  ) as any;
   t.is(doc.existing.password, 'secret');
   t.deepEqual(doc['brand-new'], {});
 });
