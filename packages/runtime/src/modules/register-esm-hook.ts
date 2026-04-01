@@ -8,8 +8,13 @@ export const registerEsmHook = () => {
   try {
     // Resolve relative to the package entry point so this works both from source
     // (where import.meta.url is src/modules/) and from the bundle (where it's dist/)
-    const packageEntry = url.fileURLToPath(import.meta.resolve('@openfn/runtime'));
-    const hookPath = path.join(path.dirname(packageEntry), 'modules/esm-resolve-hook.js');
+    const packageEntry = url.fileURLToPath(
+      import.meta.resolve('@openfn/runtime')
+    );
+    const hookPath = path.join(
+      path.dirname(packageEntry),
+      'modules/esm-resolve-hook.js'
+    );
     register(`file://${hookPath}`);
   } catch (e) {
     console.error(e);
