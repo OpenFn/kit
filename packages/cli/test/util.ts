@@ -7,9 +7,13 @@ import path from 'node:path';
 import type { ExecutionPlan, Job, StepEdge } from '@openfn/lexicon';
 
 export const mockFs = (files: Record<string, string>) => {
+  // We have to explicitly expose some modules paths so that dependencies can run in the tests
   const pnpm = path.resolve('../../node_modules/.pnpm');
+  const recastPath = `${pnpm}/recast@0.21.5`;
+  const sourceMapPath = `${pnpm}/source-map@0.7.6`;
   mock({
-    [pnpm]: mock.load(pnpm, {}),
+    [recastPath]: mock.load(recastPath, {}),
+    [sourceMapPath]: mock.load(sourceMapPath, {}),
     '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
     ...files,
   });
