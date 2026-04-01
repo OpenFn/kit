@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.8.7
+
+### Patch Changes
+
+- 945437c: When installing adaptors, only install versions that have been released for 24hours
+
 ## 1.8.6
 
 ### Patch Changes

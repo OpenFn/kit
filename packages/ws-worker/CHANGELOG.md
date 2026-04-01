@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.23.2
+
+### Patch Changes
+
+- 945437c: When installing adaptors, only install versions that have been released for 24hours
+- Updated dependencies [945437c]
+  - @openfn/runtime@1.8.7
+  - @openfn/engine-multi@1.10.8
+
 ## 1.23.1
 
 ### Patch Changes
