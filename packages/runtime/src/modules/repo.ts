@@ -16,7 +16,7 @@ const npmInstallFlags = [
   '--no-audit',
   '--no-fund',
   '--no-package-lock',
-  `--min-release-age 1`,
+  `--min-release-age=1`,
 ];
 
 export const defaultRepoPath = '/tmp/openfn/repo';
@@ -72,6 +72,7 @@ export const install = async (
       const aliasedName = `${name}_${version}`;
       return `${aliasedName}@${alias}`;
     });
+    log.info(`npm install ${npmInstallFlags.join(' ')} ${aliases.join(' ')}`);
     // TODO it would be nice to report something about what's going on under the hood here
     await execFn(
       `npm install ${npmInstallFlags.join(' ')} ${aliases.join(' ')}`,
