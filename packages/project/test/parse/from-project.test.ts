@@ -115,9 +115,9 @@ test('import from a v2 project as JSON', async (t) => {
         id: 'b',
         expression: 'fn()',
         adaptor: 'common',
+        configuration: 'admin@openfn.org|My Credential',
         openfn: {
           uuid: 3,
-          project_credential_id: 'x',
         },
       },
       {
