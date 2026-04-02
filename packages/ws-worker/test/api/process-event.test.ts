@@ -710,6 +710,62 @@ test('queue events behind a slow event II', async (t) => {
   t.is(events[1], 10);
 });
 
+// Regression test for ordering race condition when batch timeout fires
+// while the queue is empty, and a new event arrives during the slow send.
+//
+// Timeline:
+//   t=0ms   LOG1 arrives, batch opens, timeout set for t=5ms
+//   t=5ms   Timeout fires: activeBatch=null (sync), then awaits slow send (~50ms)
+//   t=30ms  Job's async work completes, JOB_COMPLETE arrives
+//           Queue is empty, activeBatch is null -> next() fires immediately
+//           JOB_COMPLETE sends and completes before the log batch resolves
+//   t=55ms  Log batch send finally resolves
+//
+// Without a fix: events = ['job-complete', 'log'] (wrong order)
+test('batch timeout send should not race with subsequent events', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn(async (s) => {
+      console.log(1);
+      await new Promise(resolve => setTimeout(resolve, 30));
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: string[] = [];
+
+  const callbacks = {
+    [WORKFLOW_LOG]: async (_ctx: any, _event: any) => {
+      // Slow send simulates real websocket latency
+      await new Promise(resolve => setTimeout(resolve, 50));
+      events.push('log');
+    },
+    [JOB_COMPLETE]: async (_ctx: any, _event: any) => {
+      events.push('job-complete');
+    },
+  };
+
+  const options = {
+    batch: { [WORKFLOW_LOG]: true },
+    batchInterval: 5, // fires well before the job's 30ms async completes
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+  await waitForAsync(200);
+
+  t.is(events[0], 'log');
+  t.is(events[1], 'job-complete');
+});
+
 test('should timeout and continue processing when event handler hangs', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan();

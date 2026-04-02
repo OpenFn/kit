@@ -74,10 +74,14 @@ export function eventProcessor(
   let activeBatch: string | null = null;
   let batch: any = [];
   let batchTimeout: NodeJS.Timeout | null = null;
+  let batchSendPromise: Promise<void> | null = null;
   let didFinish = false;
   let timeoutHandle: NodeJS.Timeout;
 
   const next = async () => {
+    if (batchSendPromise) {
+      await batchSendPromise;
+    }
     const evt = queue[0];
     if (evt) {
       didFinish = false;
@@ -118,9 +122,7 @@ export function eventProcessor(
       const start = Date.now();
       // @ts-ignore
       const lightningEvent = eventMap[name] ?? name;
-      console.log('!! calling ', name);
       await callbacks[name](context, payload);
-      console.log('!! finished ', name);
       if (batchSize) {
         logger.info(
           `${planId} :: sent ${lightningEvent} (${batchSize}):: OK :: ${
@@ -144,7 +146,6 @@ export function eventProcessor(
 
   const process = async (name: string, event: any) => {
     // TODO this actually shouldn't be here - should be done separately
-    console.log('<<<<<<<< ', name);
     if (name !== 'workflow-log') {
       Sentry.addBreadcrumb({
         category: 'event',
@@ -188,8 +189,10 @@ export function eventProcessor(
         // finally wait for a time before sending the batch
         if (!batchTimeout) {
           const batchName = activeBatch!;
-          batchTimeout = setTimeout(async () => {
-            sendBatch(batchName);
+          batchTimeout = setTimeout(() => {
+            batchSendPromise = sendBatch(batchName).finally(() => {
+              batchSendPromise = null;
+            });
           }, interval);
         }
       } else {
@@ -201,7 +204,6 @@ export function eventProcessor(
   };
 
   const enqueue = (name: string, event: any) => {
-    console.log('>>>>> ', name);
     queue.push({ name, event });
 
     if (queue.length == 1) {
