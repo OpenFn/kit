@@ -9,7 +9,7 @@ import createLightningServer from '@openfn/lightning-mock';
 import {
   handler as deploy,
   hasRemoteDiverged,
-  reportDiff,
+  printRichDiff,
 } from '../../src/projects/deploy';
 import { myProject_yaml, myProject_v1, UUID } from './fixtures';
 import { checkout } from '../../src/projects';
@@ -194,7 +194,7 @@ test.serial(
   }
 );
 
-test('reportDiff: should report no changes for identical projects', (t) => {
+test('printRichDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
 
   const local = new Project({
@@ -207,7 +207,7 @@ test('reportDiff: should report no changes for identical projects', (t) => {
     workflows: [wf],
   });
 
-  const diffs = reportDiff(local, remote, [], logger);
+  const diffs = printRichDiff(local, remote, [], logger);
   t.is(diffs.length, 0);
 
   const { message, level } = logger._parse(logger._last);
@@ -215,7 +215,7 @@ test('reportDiff: should report no changes for identical projects', (t) => {
   t.is(message, 'No workflow changes detected');
 });
 
-test('reportDiff: should report changed workflow', (t) => {
+test('printRichDiff: should report changed workflow', (t) => {
   const wfRemote = generateWorkflow('@id a trigger-x');
   const wfLocal = generateWorkflow('@id a trigger-y');
 
@@ -229,15 +229,14 @@ test('reportDiff: should report changed workflow', (t) => {
     workflows: [wfRemote],
   });
 
-  const diffs = reportDiff(local, remote, [], logger);
+  const diffs = printRichDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'a', type: 'changed' });
 
-  t.truthy(logger._find('always', /workflows modified/i));
-  t.truthy(logger._find('always', /- a/i));
+  t.truthy(logger._find('always', /: changed/i));
 });
 
-test('reportDiff: should report added workflow', (t) => {
+test('printRichDiff: should report added workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
@@ -251,15 +250,14 @@ test('reportDiff: should report added workflow', (t) => {
     workflows: [wf1],
   });
 
-  const diffs = reportDiff(local, remote, [], logger);
+  const diffs = printRichDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'added' });
 
-  t.truthy(logger._find('always', /workflows added/i));
-  t.truthy(logger._find('always', /- b/i));
+  t.truthy(logger._find('always', /: added/i));
 });
 
-test('reportDiff: should report removed workflow', (t) => {
+test('printRichDiff: should report removed workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
@@ -273,15 +271,14 @@ test('reportDiff: should report removed workflow', (t) => {
     workflows: [wf1, wf2],
   });
 
-  const diffs = reportDiff(local, remote, [], logger);
+  const diffs = printRichDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'removed' });
 
-  t.truthy(logger._find('always', /workflows removed/i));
-  t.truthy(logger._find('always', /- b/i));
+  t.truthy(logger._find('always', /: deleted/i));
 });
 
-test('reportDiff: should report mix of added, changed, and removed workflows', (t) => {
+test('printRichDiff: should report mix of added, changed, and removed workflows', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2Remote = generateWorkflow('@id b trigger-y');
   const wf2Local = generateWorkflow('@id b trigger-different');
@@ -298,7 +295,7 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
     workflows: [wf1, wf2Remote, wf3], // has a, b, c
   });
 
-  const diffs = reportDiff(local, remote, [], logger);
+  const diffs = printRichDiff(local, remote, [], logger);
   t.is(diffs.length, 3);
 
   t.deepEqual(
@@ -314,12 +311,9 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
     { id: 'd', type: 'added' }
   );
 
-  t.truthy(logger._find('always', /workflows added/i));
-  t.truthy(logger._find('always', /- d/i));
-  t.truthy(logger._find('always', /workflows modified/i));
-  t.truthy(logger._find('always', /- b/i));
-  t.truthy(logger._find('always', /workflows removed/i));
-  t.truthy(logger._find('always', /- c/i));
+  t.truthy(logger._find('always', /: added/i));
+  t.truthy(logger._find('always', /: changed/i));
+  t.truthy(logger._find('always', /: deleted/i));
 });
 
 test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
