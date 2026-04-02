@@ -20,6 +20,8 @@ export const sendEvent = <T>(
 
   const { channel, logger, id: runId = '<unknown run>' } = context;
 
+  console.log('>> ', event);
+
   return new Promise<T>((resolve, reject) => {
     const report = (error: any) => {
       logger.error(`${runId} :: ${event} :: ERR: ${error.message || error}`);
