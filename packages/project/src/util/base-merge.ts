@@ -12,5 +12,5 @@ export default function baseMerge<T>(
   assigns: Record<PropsOnly<T>, unknown> = {}
 ) {
   const pickedSource = sourceKeys ? pick(source, sourceKeys) : source;
-  return assign(target, { ...pickedSource, ...assigns });
+  return assign({}, target, { ...pickedSource, ...assigns });
 }
