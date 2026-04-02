@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Provisioner } from '@openfn/lexicon/lightning';
+import { fetch } from 'undici';
 
 import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
