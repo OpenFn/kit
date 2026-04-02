@@ -1,6 +1,4 @@
 import type { ExecutionPlan } from '@openfn/lexicon';
-import { yamlToJson } from '@openfn/project';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ExecuteOptions } from './command';
@@ -22,6 +20,7 @@ import fuzzyMatchStep from '../util/fuzzy-match-step';
 import abort from '../util/abort';
 import validatePlan from '../util/validate-plan';
 import overridePlanAdaptors from '../util/override-plan-adaptors';
+import { loadCredentialMap } from '../util/load-credential-map';
 
 const matchStep = (
   plan: ExecutionPlan,
@@ -56,15 +55,9 @@ const loadAndApplyCredentialMap = async (
   let creds = {};
   if (options.credentials) {
     try {
-      const credsRaw = await readFile(
-        path.resolve(options.workspace!, options.credentials),
-        'utf8'
+      creds = loadCredentialMap(
+        path.resolve(options.workspace!, options.credentials)
       );
-      if (options.credentials.endsWith('.json')) {
-        creds = JSON.parse(credsRaw);
-      } else {
-        creds = yamlToJson(credsRaw);
-      }
       logger.info('Credential map loaded ');
     } catch (e: any) {
       // If we get here, the credential map failed to load
