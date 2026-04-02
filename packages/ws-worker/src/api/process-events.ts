@@ -73,7 +73,7 @@ export function eventProcessor(
 
   let activeBatch: string | null = null;
   let batch: any = [];
-  let batchTimeout: NodeJS.Timeout;
+  let batchTimeout: NodeJS.Timeout | null = null;
   let didFinish = false;
   let timeoutHandle: NodeJS.Timeout;
 
@@ -104,7 +104,9 @@ export function eventProcessor(
   };
 
   const sendBatch = async (name: string) => {
-    clearTimeout(batchTimeout);
+    clearTimeout(batchTimeout!);
+    batchTimeout = null;
+
     // first clear the batch
     activeBatch = null;
     await send(name, batch, batch.length);
@@ -116,7 +118,9 @@ export function eventProcessor(
       const start = Date.now();
       // @ts-ignore
       const lightningEvent = eventMap[name] ?? name;
+      console.log('!! calling ', name);
       await callbacks[name](context, payload);
+      console.log('!! finished ', name);
       if (batchSize) {
         logger.info(
           `${planId} :: sent ${lightningEvent} (${batchSize}):: OK :: ${
@@ -140,6 +144,7 @@ export function eventProcessor(
 
   const process = async (name: string, event: any) => {
     // TODO this actually shouldn't be here - should be done separately
+    console.log('<<<<<<<< ', name);
     if (name !== 'workflow-log') {
       Sentry.addBreadcrumb({
         category: 'event',
@@ -196,9 +201,11 @@ export function eventProcessor(
   };
 
   const enqueue = (name: string, event: any) => {
+    console.log('>>>>> ', name);
     queue.push({ name, event });
 
     if (queue.length == 1) {
+      // if an event is still in flight, will this cause a duplicate?
       next();
     }
   };
