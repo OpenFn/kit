@@ -12,6 +12,13 @@ const defaultPkg = {
   dependencies: {},
 };
 
+const npmInstallFlags = [
+  '--no-audit',
+  '--no-fund',
+  '--no-package-lock',
+  `--min-release-age=1`,
+];
+
 export const defaultRepoPath = '/tmp/openfn/repo';
 
 type InstallList = Array<{ name: string; version: string }>;
@@ -60,16 +67,19 @@ export const install = async (
   }
 
   if (forInstalling.length) {
-    const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
     const aliases = forInstalling.map(({ name, version }) => {
       const alias = `npm:${name}@${version}`;
       const aliasedName = `${name}_${version}`;
       return `${aliasedName}@${alias}`;
     });
+    log.info(`npm install ${npmInstallFlags.join(' ')} ${aliases.join(' ')}`);
     // TODO it would be nice to report something about what's going on under the hood here
-    await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
-      cwd: repoPath,
-    });
+    await execFn(
+      `npm install ${npmInstallFlags.join(' ')} ${aliases.join(' ')}`,
+      {
+        cwd: repoPath,
+      }
+    );
     log.success(
       `Installed ${forInstalling
         .map(({ name, version }) => `${name}@${version}`)
