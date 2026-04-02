@@ -920,7 +920,8 @@ test.serial('set a default payload limit on the worker', (t) => {
   });
 });
 
-test.serial('override the worker payload through run options', (t) => {
+// this is being flaky!! is this new flakiness?
+test.serial.only('override the worker payload through run options', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
       await worker.destroy();

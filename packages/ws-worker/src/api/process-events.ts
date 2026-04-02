@@ -73,11 +73,15 @@ export function eventProcessor(
 
   let activeBatch: string | null = null;
   let batch: any = [];
-  let batchTimeout: NodeJS.Timeout;
+  let batchTimeout: NodeJS.Timeout | null = null;
+  let batchSendPromise: Promise<void> | null = null;
   let didFinish = false;
   let timeoutHandle: NodeJS.Timeout;
 
   const next = async () => {
+    if (batchSendPromise) {
+      await batchSendPromise;
+    }
     const evt = queue[0];
     if (evt) {
       didFinish = false;
@@ -104,7 +108,9 @@ export function eventProcessor(
   };
 
   const sendBatch = async (name: string) => {
-    clearTimeout(batchTimeout);
+    clearTimeout(batchTimeout!);
+    batchTimeout = null;
+
     // first clear the batch
     activeBatch = null;
     await send(name, batch, batch.length);
@@ -183,8 +189,10 @@ export function eventProcessor(
         // finally wait for a time before sending the batch
         if (!batchTimeout) {
           const batchName = activeBatch!;
-          batchTimeout = setTimeout(async () => {
-            sendBatch(batchName);
+          batchTimeout = setTimeout(() => {
+            batchSendPromise = sendBatch(batchName).finally(() => {
+              batchSendPromise = null;
+            });
           }, interval);
         }
       } else {
@@ -199,6 +207,7 @@ export function eventProcessor(
     queue.push({ name, event });
 
     if (queue.length == 1) {
+      // if an event is still in flight, will this cause a duplicate?
       next();
     }
   };
