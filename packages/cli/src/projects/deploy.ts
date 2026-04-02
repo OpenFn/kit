@@ -463,7 +463,9 @@ const printStepChanges = (
       const remoteLines = remoteExpr.split('\n').length;
       const added = Math.max(0, localLines - remoteLines);
       const removed = Math.max(0, remoteLines - localLines);
-      lines.push(`      - body: <+${added}/-${removed}>`);
+      const summary =
+        added === 0 && removed === 0 ? '<changed>' : `<+${added}/-${removed}>`;
+      lines.push(`      - body: ${summary}`);
     }
 
     if (lines.length) {
