@@ -41,6 +41,7 @@ export type DeployOptions = Pick<
   new?: boolean;
   name?: string;
   alias?: string;
+  jsonDiff?: boolean;
 };
 
 const options = [
@@ -51,6 +52,7 @@ const options = [
   o2.new,
   o2.name,
   o2.alias,
+  o2.jsonDiff,
 
   // general options
   o.apiKey,
@@ -121,6 +123,12 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+export type SyncResult = {
+  merged: Project;
+  remoteProject: Project;
+  locallyChangedWorkflows: string[];
+};
+
 // This function is responsible for syncing changes in the user's local project
 // with the remote app version
 // It returns a merged state object
@@ -131,7 +139,7 @@ const syncProjects = async (
   localProject: Project,
   trackedProject: Project, // the project we want to update
   logger: Logger
-): Promise<Project | null> => {
+): Promise<SyncResult | null> => {
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -169,15 +177,10 @@ const syncProjects = async (
   );
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  let diffs = [];
-  if (locallyChangedWorkflows.length) {
-    diffs = reportDiff(
-      localProject,
-      remoteProject,
-      locallyChangedWorkflows,
-      logger
-    );
-  }
+  const diffs = locallyChangedWorkflows.length
+    ? remoteProject.diff(localProject, locallyChangedWorkflows)
+    : [];
+
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return null;
@@ -238,7 +241,7 @@ const syncProjects = async (
     onlyUpdated: true,
   });
 
-  return merged;
+  return { merged, remoteProject, locallyChangedWorkflows };
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {
@@ -306,11 +309,14 @@ export async function handler(options: DeployOptions, logger: Logger) {
     `Loaded checked-out project ${printProjectName(localProject)}`
   );
 
-  let merged;
+  let merged: Project;
+  let remoteProject: Project | undefined;
+  let locallyChangedWorkflows: string[] = [];
+
   if (options.new) {
     merged = localProject;
   } else {
-    merged = await syncProjects(
+    const syncResult = await syncProjects(
       options,
       config,
       ws,
@@ -318,9 +324,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
       tracker,
       logger
     );
-    if (!merged) {
+    if (!syncResult) {
       return;
     }
+    ({ merged, remoteProject, locallyChangedWorkflows } = syncResult);
   }
 
   const state = merged.serialize('state', {
@@ -335,7 +342,21 @@ export async function handler(options: DeployOptions, logger: Logger) {
   logger.debug(JSON.stringify(state, null, 2));
   logger.debug();
 
-  // TODO: I want to report diff HERE, after the merged state and stuff has been built
+  if (remoteProject) {
+    if (options.jsonDiff) {
+      const remoteState = remoteProject.serialize('state', {
+        format: 'json',
+      }) as object;
+      await printJsonDiff(remoteState, state as object, logger);
+    } else {
+      printRichDiff(
+        localProject,
+        remoteProject,
+        locallyChangedWorkflows,
+        logger
+      );
+    }
+  }
 
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
@@ -404,7 +425,65 @@ export async function handler(options: DeployOptions, logger: Logger) {
   }
 }
 
-export const reportDiff = (
+const printStepChanges = (
+  localWf: ReturnType<Project['getWorkflow']>,
+  remoteWf: ReturnType<Project['getWorkflow']>,
+  logger: Logger
+) => {
+  if (!localWf || !remoteWf) return;
+
+  const localSteps = localWf.steps as any[];
+  const remoteSteps = remoteWf.steps as any[];
+  const remoteById = Object.fromEntries(remoteSteps.map((s) => [s.id, s]));
+  const localById = Object.fromEntries(localSteps.map((s) => [s.id, s]));
+
+  for (const step of localSteps) {
+    const remote = remoteById[step.id];
+    if (!remote) {
+      logger.always(c.yellow(`    ${step.id || step.name}: added`));
+      continue;
+    }
+
+    const lines: string[] = [];
+
+    if (step.name !== remote.name) {
+      lines.push(`      - name: "${remote.name}" -> "${step.name}"`);
+    }
+
+    const localAdaptor = step.adaptor ?? step.adaptors?.[0];
+    const remoteAdaptor = remote.adaptor ?? remote.adaptors?.[0];
+    if (localAdaptor !== remoteAdaptor) {
+      lines.push(`      - adaptor: ${remoteAdaptor} -> ${localAdaptor}`);
+    }
+
+    const localExpr = step.expression ?? step.body ?? '';
+    const remoteExpr = remote.expression ?? remote.body ?? '';
+    if (localExpr !== remoteExpr) {
+      const localLines = localExpr.split('\n').length;
+      const remoteLines = remoteExpr.split('\n').length;
+      const added = Math.max(0, localLines - remoteLines);
+      const removed = Math.max(0, remoteLines - localLines);
+      const summary =
+        added === 0 && removed === 0 ? '<changed>' : `<+${added}/-${removed}>`;
+      lines.push(`      - body: ${summary}`);
+    }
+
+    if (lines.length) {
+      logger.always(c.yellow(`    ${step.id || step.name}:`));
+      for (const line of lines) {
+        logger.always(c.yellow(line));
+      }
+    }
+  }
+
+  for (const step of remoteSteps) {
+    if (!localById[step.id]) {
+      logger.always(c.yellow(`    ${step.id || step.name}: removed`));
+    }
+  }
+};
+
+export const printRichDiff = (
   local: Project,
   remote: Project,
   locallyChangedWorkflows: string[],
@@ -416,36 +495,53 @@ export const reportDiff = (
     return diffs;
   }
 
-  const added = diffs.filter((d) => d.type === 'added');
-  const changed = diffs.filter((d) => d.type === 'changed');
   const removed = diffs.filter((d) => d.type === 'removed');
+  const changed = diffs.filter((d) => d.type === 'changed');
+  const added = diffs.filter((d) => d.type === 'added');
 
-  if (added.length > 0) {
+  if (removed.length > 0) {
     logger.break();
-    logger.always(c.green('Workflows added:'));
-    for (const diff of added) {
-      logger.always(c.green(`  - ${diff.id}`));
+    for (const diff of removed) {
+      const wf = remote.getWorkflow(diff.id);
+      const label = wf?.name || diff.id;
+      logger.always(c.red(`${label}: deleted`));
     }
-    logger.break();
   }
 
   if (changed.length > 0) {
     logger.break();
-    logger.always(c.yellow('Workflows modified:'));
     for (const diff of changed) {
-      logger.always(c.yellow(`  - ${diff.id}`));
+      const localWf = local.getWorkflow(diff.id);
+      const remoteWf = remote.getWorkflow(diff.id);
+      const label = localWf?.name || diff.id;
+      logger.always(c.yellow(`${label}: changed`));
+      printStepChanges(localWf, remoteWf, logger);
     }
-    logger.break();
   }
 
-  if (removed.length > 0) {
+  if (added.length > 0) {
     logger.break();
-    logger.always(c.red('Workflows removed:'));
-    for (const diff of removed) {
-      logger.always(c.red(`  - ${diff.id}`));
+    for (const diff of added) {
+      const wf = local.getWorkflow(diff.id);
+      const label = wf?.name || diff.id;
+      logger.always(c.green(`${label}: added`));
     }
-    logger.break();
   }
 
+  logger.break();
   return diffs;
+};
+
+export const printJsonDiff = async (
+  remoteState: object,
+  mergedState: object,
+  logger: Logger
+) => {
+  const { default: jsondiff } = await import('json-diff');
+  const diff = jsondiff.diffString(remoteState, mergedState);
+  if (diff) {
+    logger.break();
+    logger.always(diff);
+    logger.break();
+  }
 };
