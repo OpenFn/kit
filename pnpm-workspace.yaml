@@ -15,3 +15,6 @@ onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
   - oxc-resolver
+
+overrides:
+  path-to-regexp@8.3.0: ^8.4.0
