@@ -158,7 +158,7 @@ test.serial('job with reference error', async (t) => {
     'ref aborted with error (SSSms)',
     `TypeError: Cannot read properties of undefined (reading 'y')
     at vm:module(0):1:23
-    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    @openfn/language-common_2.1.1/dist/index.js:270:12`,
     'Error occurred at: ref',
     '1: fn((state) => state.x.y)',
     '                         ^ ',
@@ -178,7 +178,7 @@ test.serial('job with not a function error', async (t) => {
     'not-function aborted with error (SSSms)',
     `TypeError: state is not a function
     at vm:module(0):1:15
-    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    @openfn/language-common_2.1.1/dist/index.js:270:12`,
     'Error occurred at: not-function',
     '1: fn((state) => state())',
     '                 ^       ',
@@ -198,7 +198,7 @@ test.serial('job with assign-to-const error', async (t) => {
     'assign-const aborted with error (SSSms)',
     `TypeError: Assignment to constant variable.
     at vm:module(0):1:33
-    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    @openfn/language-common_2.1.1/dist/index.js:270:12`,
     'Error occurred at: assign-const',
     '1: fn((state) => {  const x = 10; x = 20; })',
     '                                   ^        ',

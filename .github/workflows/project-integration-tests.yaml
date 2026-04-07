@@ -14,15 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.label.name == 'run_project_tests'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Checkout Integration Test Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           repository: openfn/project-integration-tests
           path: resources/repo
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v6
         with:
-          node-version: '22.12'
+          node-version: '24.14'
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm install:openfnx

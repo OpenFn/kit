@@ -8,6 +8,7 @@ import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
+import { registerEsmHook } from './modules/register-esm-hook';
 
 export type Options = {
   logger?: Logger;
@@ -40,6 +41,9 @@ export type Options = {
   defaultStepId?: string;
 
   stateLimitMb?: number;
+
+  /** Disable the custom module loader which tries to load import paths without an extension */
+  disableEsmHook?: boolean;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
@@ -82,6 +86,10 @@ const run = (
   input?: State,
   opts: RawOptions = {}
 ) => {
+  if (!opts.disableEsmHook) {
+    registerEsmHook();
+  }
+
   const logger = opts.logger || defaultLogger;
 
   if (typeof xplan === 'string') {

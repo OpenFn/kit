@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Provisioner } from '@openfn/lexicon/lightning';
+import { fetch } from 'undici';
 
 import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
@@ -143,7 +144,7 @@ export async function fetchProject(
       );
     }
     logger?.info(`Project retrieved from ${endpoint}`);
-    return response.json();
+    return response.json() as any;
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 
@@ -188,7 +189,7 @@ export async function deployProject(
       );
     }
 
-    return await response.json();
+    return (await response.json()) as any;
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 
