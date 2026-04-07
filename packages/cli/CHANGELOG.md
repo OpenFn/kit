@@ -1,5 +1,28 @@
 # @openfn/cli
 
+## 1.31.1
+
+### Patch Changes
+
+- 945437c: When installing adaptors, only install versions that have been released for 24hours
+- Updated dependencies [945437c]
+  - @openfn/runtime@1.8.7
+
+## 1.31.0
+
+### Minor Changes
+
+- In deploy v1, add support for support for new `webhook_reply` and `cron_cursor_job` keys on triggers.
+
+  When syncing projects with these keys, versions of lightning prior to `2.16.0` will return errors. In other words, projects pulled from the latest cloud may fail when deployed to older instances.
+
+  To workaround, update the target lightning version or use an older CLI version.
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/deploy@0.12.0
+
 ## 1.30.6
 
 ### Patch Changes

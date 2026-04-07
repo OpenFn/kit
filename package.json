@@ -18,7 +18,7 @@
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
-    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
+    "_typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
   "keywords": [],
   "author": "Open Function Group",
@@ -34,8 +34,7 @@
     "prettier": "^2.8.8",
     "rimraf": "^6.1.3",
     "semver": "^7.7.4",
-    "tar-stream": "^3.1.8",
-    "typesync": "^0.14.3"
+    "tar-stream": "^3.1.8"
   },
   "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
 }

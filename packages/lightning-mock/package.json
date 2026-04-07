@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lightning-mock",
-  "version": "2.4.9",
+  "version": "2.4.10",
   "private": true,
   "description": "A mock Lightning server",
   "main": "dist/index.js",
@@ -35,7 +35,6 @@
   },
   "devDependencies": {
     "@types/koa": "^2.15.0",
-    "@types/koa-route": "^3.2.9",
     "@types/koa-websocket": "^5.0.11",
     "@types/koa__router": "^12.0.5",
     "@types/node": "^18.19.130",
@@ -43,7 +42,6 @@
     "@types/phoenix": "^1.6.7",
     "@types/yargs": "^17.0.35",
     "ava": "5.3.1",
-    "koa-route": "^3.2.0",
     "koa-websocket": "^7.0.0",
     "query-string": "^8.2.0",
     "tslib": "^2.8.1",
