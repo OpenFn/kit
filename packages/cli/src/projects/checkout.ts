@@ -46,8 +46,6 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   // TODO: try to retain the endpoint for the projects
   const { project: _, ...config } = workspace.getConfig() as any;
 
-  const currentProject = workspace.getActiveProject();
-
   // get the project
   let switchProject;
   if (/\.(yaml|json)$/.test(projectIdentifier)) {
@@ -68,8 +66,9 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
 
   // get the current state of the checked out project
+  let localProject: Project | undefined;
   try {
-    const localProject = await Project.from('fs', {
+    localProject = await Project.from('fs', {
       root: options.workspace || '.',
     });
     logger?.success(`Loaded local project ${localProject.alias}`);
@@ -108,7 +107,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
   } else {
-    await tidyWorkflowDir(currentProject!, switchProject);
+    await tidyWorkflowDir(localProject, switchProject, false, workspacePath);
   }
 
   // write the forked from map
