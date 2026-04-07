@@ -108,6 +108,7 @@ export function eventProcessor(
   };
 
   const sendBatch = async (name: string) => {
+    console.log('sending batch', name);
     clearTimeout(batchTimeout!);
     batchTimeout = null;
 
@@ -145,6 +146,7 @@ export function eventProcessor(
   };
 
   const process = async (name: string, event: any) => {
+    console.log('process', name);
     // TODO this actually shouldn't be here - should be done separately
     if (name !== 'workflow-log') {
       Sentry.addBreadcrumb({
@@ -207,8 +209,11 @@ export function eventProcessor(
     queue.push({ name, event });
 
     if (queue.length == 1) {
+      console.log(`[${name}] executing immediately`);
       // if an event is still in flight, will this cause a duplicate?
       next();
+    } else {
+      console.log(`[${name}] deffering event`);
     }
   };
 
