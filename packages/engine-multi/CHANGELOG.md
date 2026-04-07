@@ -1,5 +1,17 @@
 # engine-multi
 
+## 1.11.0
+
+### Minor Changes
+
+- b0261ef: Update default repo directory to be relative to homedir
+
+### Patch Changes
+
+- Updated dependencies [b0261ef]
+- Updated dependencies [d97be13]
+  - @openfn/runtime@1.9.0
+
 ## 1.10.8
 
 ### Patch Changes

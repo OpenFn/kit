@@ -33,7 +33,7 @@ const testHandler = async (options: TestOptions, logger: Logger) => {
         {
           id: 'calculate',
           expression:
-            "const fn = () => (state) => { console.log('Calculating to life, the universe, and everything..'); return state }; fn()",
+            "const fn = () => (state) => { console.log('Calculating life, the universe, and everything...'); return state }; fn()",
           next: {
             result: true,
           },

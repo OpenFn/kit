@@ -322,7 +322,7 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
   await execute(context);
 });
 
-test.serial.only(
+test.serial(
   'on compile error, the error log should arrive before the workflow-error event',
   async (t) => {
     const state = {

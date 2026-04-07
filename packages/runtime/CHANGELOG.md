@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 1.9.0
+
+### Minor Changes
+
+- b0261ef: Update default repo directory to be relative to homedir
+- d97be13: - Enable full compatibility with node 24
+  - When loading modules, prefer ESM targets over CJS targets. This should be fully backwards-compatible with older packages.
+
 ## 1.8.7
 
 ### Patch Changes

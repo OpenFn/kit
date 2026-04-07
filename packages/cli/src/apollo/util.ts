@@ -3,8 +3,7 @@ import { ApolloOptions } from './command';
 
 export const PRODUCTION_URL = 'https://apollo.openfn.org';
 
-//export const STAGING_URL = 'https://apollo-staging.openfn.org';
-export const STAGING_URL = 'http://34.95.82.109'; // use direct ip for now
+export const STAGING_URL = 'https://apollo-staging.openfn.org';
 
 export const LOCAL_URL = 'http://localhost:3000';
 
