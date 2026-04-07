@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 1.32.0
+
+### Minor Changes
+
+- b0261ef: Update default repo directory to be relative to homedir
+- 002869e: Auto generates credentials.yaml for pulled projects
+
+### Patch Changes
+
+- f12d7f2: apollo: update staging url
+- Updated dependencies [b0261ef]
+- Updated dependencies [d97be13]
+  - @openfn/runtime@1.9.0
+
 ## 1.31.1
 
 ### Patch Changes

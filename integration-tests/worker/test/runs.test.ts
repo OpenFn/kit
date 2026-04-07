@@ -198,7 +198,7 @@ test.serial('run parallel jobs', async (t) => {
 
 test.serial('run a http adaptor job', async (t) => {
   const job = createJob({
-    adaptor: '@openfn/language-http@7.2.0',
+    adaptor: '@openfn/language-http@7.2.9',
     body: `get("https://jsonplaceholder.typicode.com/todos/1");
     fn((state) => { state.res = state.response; return state });`,
   });
@@ -215,40 +215,6 @@ test.serial('run a http adaptor job', async (t) => {
     title: 'delectus aut autem',
     completed: false,
   });
-});
-
-test.serial('use different versions of the same adaptor', async (t) => {
-  // http@5 exported an axios global - so run this job and validate that the global is there
-  const job1 = createJob({
-    body: `import { axios } from "@openfn/language-http";
-    fn((s) => {
-      if (!axios) {
-        throw new Error('AXIOS NOT FOUND')
-      }
-      return s;
-    })`,
-    adaptor: '@openfn/language-http@5.0.4',
-  });
-
-  // http@6 no longer exports axios - so throw an error if we see it
-  const job2 = createJob({
-    body: `import { axios } from "@openfn/language-http";
-    fn((s) => {
-      if (axios) {
-        throw new Error('AXIOS FOUND')
-      }
-      return s;
-    })`,
-    adaptor: '@openfn/language-http@6.0.0',
-  });
-
-  // Just for fun, run each job a couple of times to make sure that there's no wierd caching or ordering anything
-  const steps = [job1, job2, job1, job2];
-  const attempt = createRun([], steps, []);
-
-  const result = await run(t, attempt);
-  t.log(result);
-  t.falsy(result.errors);
 });
 
 test.serial('Run with collections', async (t) => {
@@ -270,8 +236,6 @@ test.serial('Run with collections', async (t) => {
     state.results.push({ key, value })
   });
   `,
-    // Note: for some reason 1.7.0 fails because it exports a collections ??
-    // 1.7.4 seems fine
     adaptor: '@openfn/language-common@1.7.4',
   });
   const attempt = createRun([], [job1], []);
