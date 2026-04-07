@@ -144,7 +144,7 @@ export async function fetchProject(
       );
     }
     logger?.info(`Project retrieved from ${endpoint}`);
-    return response.json();
+    return response.json() as any;
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 
@@ -189,7 +189,7 @@ export async function deployProject(
       );
     }
 
-    return await response.json();
+    return (await response.json()) as any;
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 
