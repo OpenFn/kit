@@ -251,7 +251,7 @@ test('should send two batches', async (t) => {
   });
 });
 
-test.only('should send a batch on interrupt', async (t) => {
+test('should send a batch on interrupt with a full queue', async (t) => {
   t.plan(3);
   return new Promise((resolve) => {
     const callbacks = createCallbacks({
@@ -276,9 +276,48 @@ test.only('should send a batch on interrupt', async (t) => {
       batchInterval: 1000 * 60 * 60,
     });
 
+    // TODO this sends a full queue
+    // We need to do more deferred stuff with events coming later
     new Array(6).fill(0).forEach((_v, idx) => {
       engine.emit('test', { id: idx });
     });
+    engine.emit('interrupt', { id: 99 });
+  });
+});
+
+test('should send a batch on interrupt with an async queue', async (t) => {
+  t.plan(3);
+  return new Promise(async (resolve) => {
+    const callbacks = createCallbacks({
+      test: async (context, evt) => {
+        t.is(evt.length, 6);
+        await waitForAsync(5);
+      },
+      interrupt: (context, evt) => {
+        t.is(callbacks.test.count, 1);
+        t.is(callbacks.interrupt.count, 1);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test', 'interrupt'],
+      batch: { test: 1 },
+      batchLimit: 99,
+      batchInterval: 1000 * 60 * 60,
+    });
+
+    // TODO this sends a full queue
+    // We need to do more deferred stuff with events coming later
+    for (let i = 0; i < 6; i++) {
+      await waitForAsync(2);
+      engine.emit('test', { id: i });
+    }
+    await waitForAsync(2);
     engine.emit('interrupt', { id: 99 });
   });
 });
@@ -691,7 +730,7 @@ test('integration: should respect the interval', async (t) => {
   const plan = createPlan(
     `fn(async (s) => {
       console.log(1);
-      await new Promise((resolve) => setTimeout(() => resolve(s), 5)),
+      await new Promise((resolve) => setTimeout(() => resolve(s), 10)),
       console.log(3);
       return {};
     })`
@@ -708,6 +747,7 @@ test('integration: should respect the interval', async (t) => {
 
   const callbacks = {
     [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      console.log({ event });
       events.push(event);
     },
   };
@@ -716,7 +756,8 @@ test('integration: should respect the interval', async (t) => {
     batch: {
       [WORKFLOW_LOG]: true,
     },
-    batchInterval: 2,
+    // low interval so I expect this to send two small batches
+    batchInterval: 1,
   };
 
   eventProcessor(engine, context as any, callbacks, options);
