@@ -251,7 +251,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
   const ws = new Workspace(options.workspace || '.');
 
-  const active = await ws.getCheckedOutProject();
+  const active = ws.getTrackedProject();
   const alias = options.alias ?? active?.alias;
 
   const localProject = await Project.from('fs', {
