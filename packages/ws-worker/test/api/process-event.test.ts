@@ -127,12 +127,10 @@ test('should process 100 events in order', async (t) => {
     const results = [];
 
     const finish = () => {
-      console.log('finishing');
       results.forEach((r, idx) => {
         // the 0th item should be 0, the 1st item 1, etc
         t.is(r, idx);
       });
-      console.log('resolving...');
       resolve();
     };
 
@@ -158,6 +156,36 @@ test('should process 100 events in order', async (t) => {
       engine.emit('test', { id: idx });
     });
   });
+});
+
+test('should process multiple different event types in order', async (t) => {
+  const result: number[] = [];
+  const callbacks = createCallbacks({
+    foo: (_context: any, evt: any) => {
+      result.push(evt.id);
+    },
+    bar: (_context: any, evt: any) => {
+      result.push(evt.id);
+    },
+    baz: (_context: any, evt: any) => {
+      result.push(evt.id);
+    },
+  });
+  const engine = createFakeEngine();
+  const context = { logger };
+
+  eventProcessor(engine as any, context as any, callbacks, {
+    events: ['foo', 'bar', 'baz'],
+  });
+
+  engine.emit('foo', { id: 1 });
+  engine.emit('bar', { id: 2 });
+  engine.emit('baz', { id: 3 });
+  engine.emit('foo', { id: 4 });
+
+  await waitForAsync(20);
+
+  t.deepEqual(result, [1, 2, 3, 4]);
 });
 
 test('should send a batch after a default timeout', async (t) => {
@@ -285,6 +313,35 @@ test('should send a batch on interrupt with a full queue', async (t) => {
   });
 });
 
+test('should add deferred events directly to an open batch', async (t) => {
+  return new Promise(async (resolve) => {
+    const callbacks = createCallbacks({
+      test: (_context: any, evt: any) => {
+        t.is(evt.length, 2);
+        t.is(evt[0].id, 1);
+        t.is(evt[1].id, 2);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = { logger };
+
+    eventProcessor(engine as any, context as any, callbacks, {
+      events: ['test'],
+      batch: { test: true },
+      batchLimit: 10,
+      batchInterval: 30,
+    });
+
+    // First event opens the batch and sets activeBatch
+    engine.emit('test', { id: 1 });
+    // Wait for setImmediate to fire so activeBatch is set, but before the timeout
+    await waitForAsync(5);
+    // This event arrives while the batch is open — hits the activeBatch === name path
+    engine.emit('test', { id: 2 });
+  });
+});
+
 test('should send a batch on interrupt with an async queue', async (t) => {
   t.plan(3);
   return new Promise(async (resolve) => {
@@ -319,6 +376,54 @@ test('should send a batch on interrupt with an async queue', async (t) => {
     }
     await waitForAsync(2);
     engine.emit('interrupt', { id: 99 });
+  });
+});
+
+test('should continue processing if a callback throws', async (t) => {
+  const result: number[] = [];
+  const callbacks = createCallbacks({
+    broken: () => {
+      throw new Error('boom');
+    },
+    ok: (_context: any, evt: any) => {
+      result.push(evt.id);
+    },
+  });
+  const engine = createFakeEngine();
+  const context = { logger };
+
+  eventProcessor(engine as any, context as any, callbacks, {
+    events: ['broken', 'ok'],
+  });
+
+  engine.emit('broken', {});
+  engine.emit('ok', { id: 1 });
+  engine.emit('ok', { id: 2 });
+
+  await waitForAsync(20);
+
+  t.deepEqual(result, [1, 2]);
+});
+
+test('should send a batch of 1 when the timeout fires with a single queued event', async (t) => {
+  return new Promise((resolve) => {
+    const callbacks = createCallbacks({
+      test: (_context: any, evt: any) => {
+        t.is(evt.length, 1);
+        t.is(callbacks.test.count, 1);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = { logger };
+
+    eventProcessor(engine as any, context as any, callbacks, {
+      events: ['test'],
+      batch: { test: true },
+      batchInterval: 10,
+    });
+
+    engine.emit('test', { id: 1 });
   });
 });
 
