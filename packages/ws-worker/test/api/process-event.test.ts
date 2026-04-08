@@ -14,6 +14,7 @@ import createMockEngine from '../../src/mock/runtime-engine';
 
 import type { ExecutionPlan } from '@openfn/lexicon';
 import { createMockLogger } from '@openfn/logger';
+import { EventEmitter } from 'node:events';
 
 const logger = createMockLogger();
 
@@ -40,7 +41,221 @@ const createPlan = (...expressions: string[]) =>
     options: {},
   } as ExecutionPlan);
 
-test('should process a workflow-start event and call the callback', async (t) => {
+const createFakeEngine = () => {
+  const bus = new EventEmitter();
+  return {
+    listen: (_id: string, events) => {
+      for (const evt in events) {
+        bus.on(evt, (...args) => {
+          events[evt](...args);
+        });
+      }
+    },
+    emit: (name, payload) => bus.emit(name, payload),
+  };
+};
+
+const createCallbacks = (events: Record<string, any>) => {
+  const obj = {};
+  for (const event in events) {
+    const fn = (...args) => {
+      fn.count++;
+      return events[event](...args);
+    };
+    fn.count = 0;
+    obj[event] = fn;
+  }
+
+  return obj;
+};
+
+// TODO try simpler tests with full control - don't use the engine
+test('should process one event', async (t) => {
+  const callbacks = createCallbacks({ test: () => {} });
+  const engine = createFakeEngine();
+  const context = {
+    logger,
+  };
+
+  const { queue } = eventProcessor(engine, context, callbacks, {
+    events: ['test'],
+  });
+
+  t.is(queue.length, 0);
+
+  engine.emit('test', {});
+
+  t.is(queue.length, 1);
+
+  await waitForAsync(5);
+
+  t.is(callbacks.test.count, 1);
+});
+
+test('should process several events in order', async (t) => {
+  const result = [];
+
+  const callbacks = createCallbacks({
+    test: (context, evt) => {
+      result.push(evt.id);
+    },
+  });
+  const engine = createFakeEngine();
+  const context = {
+    logger,
+  };
+
+  const { queue } = eventProcessor(engine, context, callbacks, {
+    events: ['test'],
+  });
+
+  t.is(queue.length, 0);
+
+  engine.emit('test', { id: 1 });
+  engine.emit('test', { id: 2 });
+  engine.emit('test', { id: 3 });
+
+  await waitForAsync(10);
+
+  t.is(callbacks.test.count, 3);
+  t.deepEqual(result, [1, 2, 3]);
+});
+
+test('should process 100 events in order', async (t) => {
+  t.plan(100);
+  return new Promise((resolve) => {
+    const results = [];
+
+    const finish = () => {
+      console.log('finishing');
+      results.forEach((r, idx) => {
+        // the 0th item should be 0, the 1st item 1, etc
+        t.is(r, idx);
+      });
+      console.log('resolving...');
+      resolve();
+    };
+
+    const callbacks = createCallbacks({
+      test: (context, evt) => {
+        results.push(evt.id);
+
+        if (evt.id === 99) {
+          finish();
+        }
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test'],
+    });
+
+    new Array(100).fill(0).forEach((_v, idx) => {
+      engine.emit('test', { id: idx });
+    });
+  });
+});
+
+test('should send a batch after a default timeout', async (t) => {
+  return new Promise((resolve) => {
+    const callbacks = createCallbacks({
+      test: (context, evt) => {
+        // We should have a single event with 11 entries
+        t.is(evt.length, 11);
+        t.is(callbacks.test.count, 1);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test'],
+      batch: { test: 1 },
+      batchLimit: 20,
+      batchInterval: 20,
+    });
+
+    // send 11 events in quick succession
+    new Array(11).fill(0).forEach((_v, idx) => {
+      engine.emit('test', { id: idx });
+    });
+  });
+});
+
+test.only('should send a batch when a limit is hit', async (t) => {
+  return new Promise((resolve) => {
+    const callbacks = createCallbacks({
+      test: (context, evt) => {
+        // We should have a single event with 11 entries
+        t.is(evt.length, 11);
+        t.is(callbacks.test.count, 1);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test'],
+      batch: { test: 1 },
+      batchLimit: 11,
+      batchInterval: 1000 * 60 * 60,
+    });
+
+    // send 11 events in quick succession
+    new Array(11).fill(0).forEach((_v, idx) => {
+      engine.emit('test', { id: idx });
+    });
+  });
+});
+
+// should send two batches
+
+test.only('should send two batches', async (t) => {
+  return new Promise((resolve) => {
+    let total = 0;
+    const callbacks = createCallbacks({
+      test: (context, evt) => {
+        t.is(evt.length, 6);
+        total += evt.length;
+
+        if (total == 12) {
+          t.is(callbacks.test.count, 2);
+          resolve();
+        }
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test'],
+      batch: { test: 1 },
+      batchLimit: 6,
+      batchInterval: 1000 * 60 * 60,
+    });
+
+    // send 12 events in quick succession
+    new Array(12).fill(0).forEach((_v, idx) => {
+      engine.emit('test', { id: idx });
+    });
+  });
+});
+
+// should send the batch on interrupt
+
+test('integration: should process a workflow-start event and call the callback', async (t) => {
   t.plan(3);
 
   const engine = await createMockEngine();
@@ -69,7 +284,7 @@ test('should process a workflow-start event and call the callback', async (t) =>
   await waitForAsync();
 });
 
-test('should process a workflow-complete event and call the callback', async (t) => {
+test('integration: should process a workflow-complete event and call the callback', async (t) => {
   t.plan(4);
 
   const engine = await createMockEngine();
@@ -97,7 +312,7 @@ test('should process a workflow-complete event and call the callback', async (t)
   await waitForAsync();
 });
 
-test('should process a job-start event and call the callback', async (t) => {
+test('integration: should process a job-start event and call the callback', async (t) => {
   t.plan(4);
 
   const engine = await createMockEngine();
@@ -125,7 +340,7 @@ test('should process a job-start event and call the callback', async (t) => {
   await waitForAsync();
 });
 
-test('should process a job-complete event and call the callback', async (t) => {
+test('integration: should process a job-complete event and call the callback', async (t) => {
   t.plan(5);
 
   const engine = await createMockEngine();
@@ -154,7 +369,7 @@ test('should process a job-complete event and call the callback', async (t) => {
   await waitForAsync();
 });
 
-test('should process a workflow-log event and call the callback', async (t) => {
+test('integration: should process a workflow-log event and call the callback', async (t) => {
   t.plan(4);
 
   const engine = await createMockEngine();
@@ -182,7 +397,7 @@ test('should process a workflow-log event and call the callback', async (t) => {
   await waitForAsync();
 });
 
-test('should process a job-error event and call the callback', async (t) => {
+test('integration: should process a job-error event and call the callback', async (t) => {
   t.plan(4);
 
   const engine = await createMockEngine();
@@ -210,7 +425,7 @@ test('should process a job-error event and call the callback', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 50));
 });
 
-test('should process a workflow-error event and call the callback', async (t) => {
+test('integration: should process a workflow-error event and call the callback', async (t) => {
   t.plan(5);
 
   const engine = await createMockEngine();
@@ -239,7 +454,7 @@ test('should process a workflow-error event and call the callback', async (t) =>
   await new Promise((resolve) => setTimeout(resolve, 50));
 });
 
-test('should process events in the correct order', async (t) => {
+test('integration: should process events in the correct order', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn((s) => {
@@ -306,7 +521,7 @@ test('should process events in the correct order', async (t) => {
   t.assert(events.every((e) => e.workflowId === 'a'));
 });
 
-test('should batch sequential log events', async (t) => {
+test('integration: should batch sequential log events', async (t) => {
   t.plan(4);
 
   const engine = await createMockEngine();
@@ -348,7 +563,7 @@ test('should batch sequential log events', async (t) => {
 });
 
 // 3 logs will be sent within 10ms, but they'll be interrupted by step:complete and step:start
-test('should interrupt a batch of log events', async (t) => {
+test('integration: should interrupt a batch of log events', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn((s) => {
@@ -399,7 +614,7 @@ test('should interrupt a batch of log events', async (t) => {
   t.is(second, 1);
 });
 
-test('should respect the limit', async (t) => {
+test('integration: should respect the limit', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn((s) => {
@@ -443,7 +658,7 @@ test('should respect the limit', async (t) => {
   t.is(events[1].length, 2);
 });
 
-test('should respect the interval', async (t) => {
+test('integration: should respect the interval', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn(async (s) => {
@@ -486,7 +701,7 @@ test('should respect the interval', async (t) => {
   t.is(events[1].length, 1);
 });
 
-test('should handle two batches of logs', async (t) => {
+test('integration: should handle two batches of logs', async (t) => {
   const engine = await createMockEngine();
   // syntax is weird because of how the fake RTE works
   const plan = createPlan(
@@ -535,7 +750,7 @@ test('should handle two batches of logs', async (t) => {
   t.is(second, 2);
 });
 
-test('should process events in the correct order with batching', async (t) => {
+test('integration: should process events in the correct order with batching', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn((s) => {
@@ -597,7 +812,7 @@ test('should process events in the correct order with batching', async (t) => {
   t.is(events[4].type, 'workflow-complete');
 });
 
-test('queue events behind a slow event', async (t) => {
+test('integration: queue events behind a slow event', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn((s) => {
@@ -650,7 +865,7 @@ test('queue events behind a slow event', async (t) => {
 
 // This isn't the most watertight test - but I've debugged it closely and it seems
 // to do the right thing
-test('queue events behind a slow event II', async (t) => {
+test('integration: queue events behind a slow event II', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `
@@ -722,7 +937,7 @@ test('queue events behind a slow event II', async (t) => {
 //   t=55ms  Log batch send finally resolves
 //
 // Without a fix: events = ['job-complete', 'log'] (wrong order)
-test('batch timeout send should not race with subsequent events', async (t) => {
+test('integration: batch timeout send should not race with subsequent events', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `fn(async (s) => {
@@ -744,7 +959,7 @@ test('batch timeout send should not race with subsequent events', async (t) => {
   const callbacks = {
     [WORKFLOW_LOG]: async (_ctx: any, _event: any) => {
       // Slow send simulates real websocket latency
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       events.push('log');
     },
     [JOB_COMPLETE]: async (_ctx: any, _event: any) => {
@@ -766,7 +981,7 @@ test('batch timeout send should not race with subsequent events', async (t) => {
   t.is(events[1], 'job-complete');
 });
 
-test('should timeout and continue processing when event handler hangs', async (t) => {
+test('integration: should timeout and continue processing when event handler hangs', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan();
 

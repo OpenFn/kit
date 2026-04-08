@@ -67,6 +67,7 @@ export function eventProcessor(
     batchLimit: limit = DEFAULT_BATCH_LIMIT,
     batchInterval: interval = DEFAULT_BATCH_INTERVAL,
     timeout_ms,
+    events,
   } = options;
 
   const queue: any = [];
@@ -211,16 +212,19 @@ export function eventProcessor(
     if (queue.length == 1) {
       console.log(`[${name}] executing immediately`);
       // if an event is still in flight, will this cause a duplicate?
-      next();
+      setImmediate(next);
     } else {
       console.log(`[${name}] deffering event`);
     }
   };
 
-  const e = allEngineEvents.reduce(
+  const e = (events || allEngineEvents).reduce(
     (obj, e) => Object.assign(obj, { [e]: (p: any) => enqueue(e, p) }),
     {}
   );
 
   engine.listen(planId, e);
+
+  // return debug state
+  return { queue };
 }
