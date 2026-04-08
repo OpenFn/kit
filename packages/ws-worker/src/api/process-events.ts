@@ -26,6 +26,8 @@ export type EventProcessorOptions = {
   batchInterval?: number;
   batchLimit?: number;
   timeout_ms?: number;
+  trace?: boolean;
+  events: Record<string, any>;
 };
 
 const DEFAULT_BATCH_LIMIT = 10;
@@ -93,6 +95,13 @@ export function eventProcessor(
   let didFinish = false;
   let timeoutHandle: NodeJS.Timeout;
 
+  // TODO plug this in because the console tracing is super helpful
+  const trace = (...message) => {
+    if (options.trace) {
+      console.log(...message);
+    }
+  };
+
   const next = async () => {
     if (batchSendPromise) {
       await batchSendPromise;
@@ -118,7 +127,7 @@ export function eventProcessor(
       }
 
       await process(evt.name, evt.event);
-      console.log(`finish ${evt.name}`);
+      trace(`finish ${evt.name}`);
       finish();
     }
   };
@@ -130,7 +139,7 @@ export function eventProcessor(
   // TODO: rename to exitEarly = false, and only early exists have to set this
   const sendBatch = async (triggerNext = false) => {
     if (activeBatch) {
-      console.log('sending batch', activeBatch, batch.length);
+      trace('sending batch', activeBatch, batch.length);
       clearTimeout(batchTimeout!);
       batchTimeout = null;
 
@@ -185,7 +194,7 @@ export function eventProcessor(
   };
 
   const process = async (name: string, event: any) => {
-    console.log('process', name);
+    trace('process', name);
     // TODO this actually shouldn't be here - should be done separately
     if (name !== 'workflow-log') {
       Sentry.addBreadcrumb({
@@ -245,27 +254,27 @@ export function eventProcessor(
   };
 
   const enqueue = (name: string, event: any) => {
-    console.log('queue', name);
+    trace('queue', name);
     if (name === 'workflow-log') {
-      console.log(event.message);
+      trace(event.message);
     }
     queue.push({ name, event });
 
     if (queue.length == 1) {
       // If this is the only item in the queue, start executing right away
-      console.log(`[${name}] executing immediately`);
+      trace(`[${name}] executing immediately`);
       setImmediate(next);
     } else if (activeBatch === name) {
       addToBatch(event);
       queue.pop();
     } else if (queue.length == 2 && batchTimeout) {
-      console.log('Sending batch early');
+      trace('Sending batch early');
       // If this is the second item in the queue, and we have a batch active,
       // send the batch early
       // (note that this event will still be deferred)
       sendBatch(true);
     } else {
-      console.log(`[${name}] deffering event`);
+      trace(`[${name}] deffering event`);
     }
   };
 

@@ -747,7 +747,6 @@ test('integration: should respect the interval', async (t) => {
 
   const callbacks = {
     [WORKFLOW_LOG]: (_ctx: any, event: any) => {
-      console.log({ event });
       events.push(event);
     },
   };
