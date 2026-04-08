@@ -13,6 +13,7 @@ Use `src/projects/list.ts` as the reference pattern for all refactored commands.
 Create a new file in `src/projects/<command-name>.ts` that consolidates all the existing command files.
 
 **Key elements:**
+
 - Import `yargs`, `ensure`, `build`, `Logger`, and options from `../options`
 - Define a `<CommandName>Options` type that picks required fields from `Opts`
 - Create an `options` array with the required options (e.g., `[o.workflow, o.workspace, o.workflowMappings]`)
@@ -24,6 +25,7 @@ Create a new file in `src/projects/<command-name>.ts` that consolidates all the 
 - Export a named `handler` function that takes `(options: <CommandName>Options, logger: Logger)`
 
 **Example structure:**
+
 ```typescript
 import yargs from 'yargs';
 import { Workspace } from '@openfn/project';
@@ -88,23 +90,26 @@ export const projectsCommand = {
 Make three changes:
 
 **a) Remove the old import** (if it exists):
+
 ```typescript
 // Remove: import commandName from './<command>/handler';
 ```
 
 **b) Add to CommandList type:**
+
 ```typescript
 export type CommandList =
   | 'apollo'
   // ...
   | 'project-list'
   | 'project-version'
-  | 'project-<command-name>'  // Add this line
+  | 'project-<command-name>' // Add this line
   | 'test'
   | 'version';
 ```
 
 **c) Add to handlers object:**
+
 ```typescript
 const handlers = {
   // ...
@@ -121,6 +126,7 @@ If the old command was referenced elsewhere in the handlers object (like `projec
 ### 5. Delete the Old Command Folder
 
 Remove the old command directory:
+
 ```bash
 rm -rf packages/cli/src/<command-name>
 ```
@@ -142,6 +148,7 @@ import checkoutCommand from './checkout/command';
 ```
 
 The command will be registered with yargs:
+
 ```typescript
 .command(projectsCommand)
 .command(mergeCommand)  // Top-level alias
@@ -159,18 +166,21 @@ This is different from the `install`/`repo install` pattern, where both entries 
 ## Common Patterns
 
 ### Options to Use
+
 - Always include `o.workspace` for project-related commands
 - Use `o.workflow` for workflow-specific operations
 - Include `o.json` if the command supports JSON output
 - Include `o.log` for commands that need detailed logging
 
 ### Handler Pattern
+
 - Use `new Workspace(options.workspace)` to access the workspace
 - Check `workspace.valid` before proceeding
-- Use `workspace.getActiveProject()` to get the current project
+- Use `workspace.getTrackedProject()` to get the current project
 - Use appropriate logger methods: `logger.info()`, `logger.error()`, `logger.success()`
 
 ### Testing Pattern
+
 If the old command has tests, they need to be refactored:
 
 1. **Create new test file**: Move from `test/<command>/handler.test.ts` to `test/projects/<command>.test.ts`
@@ -181,6 +191,7 @@ If the old command has tests, they need to be refactored:
 4. **Delete old test folder**: Remove `test/<command>` directory
 
 **Example changes:**
+
 ```typescript
 // Before:
 import mergeHandler from '../../src/merge/handler';
@@ -194,6 +205,7 @@ await mergeHandler({ command: 'project-merge', ... }, logger);
 ## Checklist
 
 ### Basic Refactoring
+
 - [ ] Create new file in `src/projects/<command-name>.ts`
 - [ ] Define `<CommandName>Options` type
 - [ ] Export default command object with `ensure('project-<command-name>', options)`
@@ -206,6 +218,7 @@ await mergeHandler({ command: 'project-merge', ... }, logger);
 - [ ] Delete old command folder
 
 ### Testing (if applicable)
+
 - [ ] Create new test file in `test/projects/<command-name>.test.ts`
 - [ ] Update import to use `{ handler } from '../../src/projects/<command-name>'`
 - [ ] Update all `command: '<command>'` to `command: 'project-<command>'` in test cases
@@ -213,6 +226,7 @@ await mergeHandler({ command: 'project-merge', ... }, logger);
 - [ ] Run tests to verify they pass
 
 ### Additional Steps for Top-Level Aliasing
+
 - [ ] Import command directly in `src/cli.ts` (e.g., `import mergeCommand from './projects/merge'`)
 - [ ] Register the imported command with `.command(mergeCommand)`
 - [ ] Verify NO duplicate entries in `src/commands.ts` - only `project-<command-name>` should exist, not `<command-name>`

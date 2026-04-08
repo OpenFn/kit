@@ -116,7 +116,7 @@ export class Workspace {
     return this.projectPaths.get(id);
   }
 
-  getActiveProject() {
+  getTrackedProject() {
     return (
       this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
       this.projects.find((p) => p.id === this.activeProject?.id)
