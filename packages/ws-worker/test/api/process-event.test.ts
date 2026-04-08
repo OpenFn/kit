@@ -189,7 +189,7 @@ test('should send a batch after a default timeout', async (t) => {
   });
 });
 
-test.only('should send a batch when a limit is hit', async (t) => {
+test('should send a batch when a limit is hit', async (t) => {
   return new Promise((resolve) => {
     const callbacks = createCallbacks({
       test: (context, evt) => {
@@ -218,9 +218,7 @@ test.only('should send a batch when a limit is hit', async (t) => {
   });
 });
 
-// should send two batches
-
-test.only('should send two batches', async (t) => {
+test('should send two batches', async (t) => {
   return new Promise((resolve) => {
     let total = 0;
     const callbacks = createCallbacks({
@@ -253,7 +251,37 @@ test.only('should send two batches', async (t) => {
   });
 });
 
-// should send the batch on interrupt
+test.only('should send a batch on interrupt', async (t) => {
+  t.plan(3);
+  return new Promise((resolve) => {
+    const callbacks = createCallbacks({
+      test: (context, evt) => {
+        t.is(evt.length, 6);
+      },
+      interrupt: (context, evt) => {
+        t.is(callbacks.test.count, 1);
+        t.is(callbacks.interrupt.count, 1);
+        resolve();
+      },
+    });
+    const engine = createFakeEngine();
+    const context = {
+      logger,
+    };
+
+    eventProcessor(engine, context, callbacks, {
+      events: ['test', 'interrupt'],
+      batch: { test: 1 },
+      batchLimit: 99,
+      batchInterval: 1000 * 60 * 60,
+    });
+
+    new Array(6).fill(0).forEach((_v, idx) => {
+      engine.emit('test', { id: idx });
+    });
+    engine.emit('interrupt', { id: 99 });
+  });
+});
 
 test('integration: should process a workflow-start event and call the callback', async (t) => {
   t.plan(3);
