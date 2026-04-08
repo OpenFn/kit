@@ -238,7 +238,7 @@ export async function tidyWorkflowDir(
     await rimraf(toRemove.map(abs));
 
     const dirs = new Set(toRemove.map((f) => path.dirname(f)));
-    for (const dir of dirs) {
+    for (const dir of Array.from(dirs)) {
       try {
         fs.rmdirSync(abs(dir)); // throws when not empty
       } catch {}
