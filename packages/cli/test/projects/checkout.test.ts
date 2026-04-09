@@ -499,3 +499,258 @@ workspace:
     ],
   });
 });
+
+test.serial(
+  'checkout: removes old workflow directory when workflow is renamed on server',
+  async (t) => {
+    mock({
+      '/ws3/workflows/old-workflow': {
+        'old-workflow.yaml': jsonToYaml({
+          id: 'old-workflow',
+          name: 'Old Workflow',
+          start: 'webhook',
+          options: {},
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+              next: {
+                'run-job': { disabled: false, condition: 'always' },
+              },
+            },
+            {
+              id: 'run-job',
+              name: 'Run Job',
+              adaptor: '@openfn/language-http@latest',
+              expression: './run-job.js',
+            },
+          ],
+        }),
+        'run-job.js': 'fn(state => state)',
+      },
+      '/ws3/openfn.yaml': jsonToYaml({
+        project: { id: 'main-project' },
+        workspace: {
+          formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+        },
+      }),
+      '/ws3/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'New Workflow',
+            id: 'old-workflow',
+            version_history: ['v1'],
+            jobs: [
+              {
+                name: 'Run Job',
+                body: 'fn(state => state)',
+                adaptor: '@openfn/language-http@latest',
+                id: 'run-job-uuid',
+              },
+            ],
+            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
+            edges: [
+              {
+                id: 'edge-id',
+                target_job_id: 'run-job-uuid',
+                enabled: true,
+                source_trigger_id: 'trigger-id',
+                condition_type: 'always',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws3',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws3/workflows/old-workflow'));
+    t.true(fs.existsSync('/ws3/workflows/new-workflow'));
+  }
+);
+
+test.serial(
+  'checkout: removes old step file when step is renamed on server',
+  async (t) => {
+    mock({
+      '/ws4/workflows/my-workflow': {
+        'my-workflow.yaml': jsonToYaml({
+          id: 'my-workflow',
+          name: 'My Workflow',
+          start: 'webhook',
+          options: {},
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+              next: {
+                'old-step': { disabled: false, condition: 'always' },
+              },
+            },
+            {
+              id: 'old-step',
+              name: 'Old Step',
+              adaptor: '@openfn/language-http@latest',
+              expression: './old-step.js',
+            },
+          ],
+        }),
+        'old-step.js': 'fn(state => state)',
+      },
+      '/ws4/openfn.yaml': jsonToYaml({
+        project: { id: 'main-project' },
+        workspace: {
+          formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+        },
+      }),
+      '/ws4/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'My Workflow',
+            id: 'my-wf-uuid',
+            version_history: ['v1'],
+            jobs: [
+              {
+                name: 'New Step',
+                body: 'fn(state => state)',
+                adaptor: '@openfn/language-http@latest',
+                id: 'new-step-uuid',
+              },
+            ],
+            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
+            edges: [
+              {
+                id: 'edge-id',
+                target_job_id: 'new-step-uuid',
+                enabled: true,
+                source_trigger_id: 'trigger-id',
+                condition_type: 'always',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws4',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws4/workflows/my-workflow/old-step.js'));
+    t.true(fs.existsSync('/ws4/workflows/my-workflow/new-step.js'));
+    t.true(fs.existsSync('/ws4/workflows/my-workflow'));
+  }
+);
+
+test.serial(
+  'checkout: removes workflow directory when workflow is deleted on server',
+  async (t) => {
+    mock({
+      '/ws5/workflows/workflow-a': {
+        'workflow-a.yaml': jsonToYaml({
+          id: 'workflow-a',
+          name: 'Workflow A',
+          start: 'webhook',
+          options: {},
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+              next: { 'run-job': { disabled: false, condition: 'always' } },
+            },
+            {
+              id: 'run-job',
+              name: 'Run Job',
+              adaptor: '@openfn/language-http@latest',
+              expression: './run-job.js',
+            },
+          ],
+        }),
+        'run-job.js': 'fn(state => state)',
+      },
+      '/ws5/workflows/workflow-b': {
+        'workflow-b.yaml': jsonToYaml({
+          id: 'workflow-b',
+          name: 'Workflow B',
+          start: 'webhook',
+          options: {},
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+              next: {},
+            },
+          ],
+        }),
+      },
+      '/ws5/openfn.yaml': jsonToYaml({
+        project: { id: 'main-project' },
+        workspace: {
+          formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+        },
+      }),
+      '/ws5/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'Workflow A',
+            id: 'wf-a-uuid',
+            version_history: ['v1'],
+            jobs: [
+              {
+                name: 'Run Job',
+                body: 'fn(state => state)',
+                adaptor: '@openfn/language-http@latest',
+                id: 'run-job-uuid',
+              },
+            ],
+            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
+            edges: [
+              {
+                id: 'edge-id',
+                target_job_id: 'run-job-uuid',
+                enabled: true,
+                source_trigger_id: 'trigger-id',
+                condition_type: 'always',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws5',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws5/workflows/workflow-b'));
+    t.true(fs.existsSync('/ws5/workflows/workflow-a'));
+  }
+);
