@@ -123,8 +123,14 @@ export class Workspace {
     );
   }
 
-  getCheckedOutProject() {
-    return Project.from('fs', { root: this.root, config: this.config });
+  async getCheckedOutProject() {
+    return await Project.from('fs', {
+      root: this.root,
+      config: this.config,
+    }).catch((e) => {
+      if (e.code === 'ENOENT') return undefined;
+      throw e;
+    });
   }
 
   getCredentialMap() {
