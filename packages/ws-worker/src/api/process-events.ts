@@ -93,7 +93,7 @@ export function eventProcessor(
   let batchTimeout: NodeJS.Timeout | null = null;
   let batchSendPromise: Promise<void> | null = null;
   let didFinish = false;
-  let timeoutHandle: NodeJS.Timeout;
+  let processTimeoutHandle: NodeJS.Timeout;
 
   // TODO plug this in because the console tracing is super helpful
   const trace = (...message: any) => {
@@ -111,7 +111,7 @@ export function eventProcessor(
       didFinish = false;
 
       const finish = () => {
-        clearTimeout(timeoutHandle);
+        clearTimeout(processTimeoutHandle);
         if (!didFinish) {
           didFinish = true;
           queue.shift();
@@ -120,7 +120,7 @@ export function eventProcessor(
       };
 
       if (timeout_ms) {
-        timeoutHandle = setTimeout(() => {
+        processTimeoutHandle = setTimeout(() => {
           logger.error(`${planId} :: ${evt.name} :: timeout (fallback)`);
           finish();
         }, timeout_ms);
@@ -136,7 +136,6 @@ export function eventProcessor(
   // process loop
   // So we need to control whether to trigger the next call,
   // or whether the calling function will process the next item for us
-  // TODO: rename to exitEarly = false, and only early exists have to set this
   const sendBatch = async (triggerNext = false) => {
     if (activeBatch) {
       trace('sending batch', activeBatch, batch.length);
@@ -151,6 +150,7 @@ export function eventProcessor(
       batch = [];
 
       if (triggerNext) {
+        clearTimeout(processTimeoutHandle);
         queue.shift();
         next();
       }
@@ -239,6 +239,7 @@ export function eventProcessor(
         if (!batchTimeout) {
           // finally wait for a time before sending the batch
           // This is the "natural" batch trigger
+          clearTimeout(processTimeoutHandle);
           return new Promise((resolve) => {
             batchTimeout = setTimeout(() => {
               sendBatch(false).then(resolve);
