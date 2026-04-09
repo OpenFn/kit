@@ -41,24 +41,24 @@ const createPlan = (...expressions: string[]) =>
     options: {},
   } as ExecutionPlan);
 
-const createFakeEngine = () => {
+const createFakeEngine = (): any => {
   const bus = new EventEmitter();
   return {
-    listen: (_id: string, events) => {
+    listen: (_id: string, events: any) => {
       for (const evt in events) {
         bus.on(evt, (...args) => {
           events[evt](...args);
         });
       }
     },
-    emit: (name, payload) => bus.emit(name, payload),
+    emit: (name: string, payload: any) => bus.emit(name, payload),
   };
 };
 
-const createCallbacks = (events: Record<string, any>) => {
-  const obj = {};
+const createCallbacks = (events: Record<string, any>): Record<string, any> => {
+  const obj: Record<string, any> = {};
   for (const event in events) {
-    const fn = (...args) => {
+    const fn = (...args: any) => {
       fn.count++;
       return events[event](...args);
     };
@@ -73,7 +73,7 @@ const createCallbacks = (events: Record<string, any>) => {
 test('should process one event', async (t) => {
   const callbacks = createCallbacks({ test: () => {} });
   const engine = createFakeEngine();
-  const context = {
+  const context: any = {
     logger,
   };
 
@@ -93,15 +93,15 @@ test('should process one event', async (t) => {
 });
 
 test('should process several events in order', async (t) => {
-  const result = [];
+  const result: any = [];
 
   const callbacks = createCallbacks({
-    test: (context, evt) => {
+    test: (_context: any, evt: any) => {
       result.push(evt.id);
     },
   });
   const engine = createFakeEngine();
-  const context = {
+  const context: any = {
     logger,
   };
 
@@ -124,10 +124,10 @@ test('should process several events in order', async (t) => {
 test('should process 100 events in order', async (t) => {
   t.plan(100);
   return new Promise((resolve) => {
-    const results = [];
+    const results: any = [];
 
     const finish = () => {
-      results.forEach((r, idx) => {
+      results.forEach((r: any, idx: number) => {
         // the 0th item should be 0, the 1st item 1, etc
         t.is(r, idx);
       });
@@ -135,7 +135,7 @@ test('should process 100 events in order', async (t) => {
     };
 
     const callbacks = createCallbacks({
-      test: (context, evt) => {
+      test: (_context: any, evt: any) => {
         results.push(evt.id);
 
         if (evt.id === 99) {
@@ -144,7 +144,7 @@ test('should process 100 events in order', async (t) => {
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
@@ -172,7 +172,7 @@ test('should process multiple different event types in order', async (t) => {
     },
   });
   const engine = createFakeEngine();
-  const context = { logger };
+  const context: any = { logger };
 
   eventProcessor(engine as any, context as any, callbacks, {
     events: ['foo', 'bar', 'baz'],
@@ -191,7 +191,7 @@ test('should process multiple different event types in order', async (t) => {
 test('should send a batch after a default timeout', async (t) => {
   return new Promise((resolve) => {
     const callbacks = createCallbacks({
-      test: (context, evt) => {
+      test: (_context: any, evt: any) => {
         // We should have a single event with 11 entries
         t.is(evt.length, 11);
         t.is(callbacks.test.count, 1);
@@ -199,13 +199,13 @@ test('should send a batch after a default timeout', async (t) => {
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
     eventProcessor(engine, context, callbacks, {
       events: ['test'],
-      batch: { test: 1 },
+      batch: { test: true },
       batchLimit: 20,
       batchInterval: 20,
     });
@@ -220,7 +220,7 @@ test('should send a batch after a default timeout', async (t) => {
 test('should send a batch when a limit is hit', async (t) => {
   return new Promise((resolve) => {
     const callbacks = createCallbacks({
-      test: (context, evt) => {
+      test: (_context: any, evt: any) => {
         // We should have a single event with 11 entries
         t.is(evt.length, 11);
         t.is(callbacks.test.count, 1);
@@ -228,13 +228,13 @@ test('should send a batch when a limit is hit', async (t) => {
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
     eventProcessor(engine, context, callbacks, {
       events: ['test'],
-      batch: { test: 1 },
+      batch: { test: true },
       batchLimit: 11,
       batchInterval: 1000 * 60 * 60,
     });
@@ -250,7 +250,7 @@ test('should send two batches', async (t) => {
   return new Promise((resolve) => {
     let total = 0;
     const callbacks = createCallbacks({
-      test: (context, evt) => {
+      test: (_context: any, evt: any) => {
         t.is(evt.length, 6);
         total += evt.length;
 
@@ -261,13 +261,13 @@ test('should send two batches', async (t) => {
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
     eventProcessor(engine, context, callbacks, {
       events: ['test'],
-      batch: { test: 1 },
+      batch: { test: true },
       batchLimit: 6,
       batchInterval: 1000 * 60 * 60,
     });
@@ -283,23 +283,23 @@ test('should send a batch on interrupt with a full queue', async (t) => {
   t.plan(3);
   return new Promise((resolve) => {
     const callbacks = createCallbacks({
-      test: (context, evt) => {
+      test: (_context: any, evt: any) => {
         t.is(evt.length, 6);
       },
-      interrupt: (context, evt) => {
+      interrupt: (_context: any) => {
         t.is(callbacks.test.count, 1);
         t.is(callbacks.interrupt.count, 1);
         resolve();
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
     eventProcessor(engine, context, callbacks, {
       events: ['test', 'interrupt'],
-      batch: { test: 1 },
+      batch: { test: true },
       batchLimit: 99,
       batchInterval: 1000 * 60 * 60,
     });
@@ -324,7 +324,7 @@ test('should add deferred events directly to an open batch', async (t) => {
       },
     });
     const engine = createFakeEngine();
-    const context = { logger };
+    const context: any = { logger };
 
     eventProcessor(engine as any, context as any, callbacks, {
       events: ['test'],
@@ -346,24 +346,24 @@ test('should send a batch on interrupt with an async queue', async (t) => {
   t.plan(3);
   return new Promise(async (resolve) => {
     const callbacks = createCallbacks({
-      test: async (context, evt) => {
+      test: async (_context: any, evt: any) => {
         t.is(evt.length, 6);
         await waitForAsync(5);
       },
-      interrupt: (context, evt) => {
+      interrupt: (_context: any) => {
         t.is(callbacks.test.count, 1);
         t.is(callbacks.interrupt.count, 1);
         resolve();
       },
     });
     const engine = createFakeEngine();
-    const context = {
+    const context: any = {
       logger,
     };
 
     eventProcessor(engine, context, callbacks, {
       events: ['test', 'interrupt'],
-      batch: { test: 1 },
+      batch: { test: true },
       batchLimit: 99,
       batchInterval: 1000 * 60 * 60,
     });
@@ -390,7 +390,7 @@ test('should continue processing if a callback throws', async (t) => {
     },
   });
   const engine = createFakeEngine();
-  const context = { logger };
+  const context: any = { logger };
 
   eventProcessor(engine as any, context as any, callbacks, {
     events: ['broken', 'ok'],
@@ -415,7 +415,7 @@ test('should send a batch of 1 when the timeout fires with a single queued event
       },
     });
     const engine = createFakeEngine();
-    const context = { logger };
+    const context: any = { logger };
 
     eventProcessor(engine as any, context as any, callbacks, {
       events: ['test'],
@@ -433,7 +433,7 @@ test('integration: should process a workflow-start event and call the callback',
   const engine = await createMockEngine();
   const plan = createPlan();
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -462,7 +462,7 @@ test('integration: should process a workflow-complete event and call the callbac
   const engine = await createMockEngine();
   const plan = createPlan('fn(() => ({ data: { x: 10 } }))');
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -490,7 +490,7 @@ test('integration: should process a job-start event and call the callback', asyn
   const engine = await createMockEngine();
   const plan = createPlan();
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -518,7 +518,7 @@ test('integration: should process a job-complete event and call the callback', a
   const engine = await createMockEngine();
   const plan = createPlan('fn(() => ({ data: { result: 42 } }))');
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -547,7 +547,7 @@ test('integration: should process a workflow-log event and call the callback', a
   const engine = await createMockEngine();
   const plan = createPlan('fn((s) => { console.log("test log"); return s; })');
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -575,7 +575,7 @@ test('integration: should process a job-error event and call the callback', asyn
   const engine = await createMockEngine();
   const plan = createPlan('fn(() => { throw new Error("job error"); })');
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -603,7 +603,7 @@ test('integration: should process a workflow-error event and call the callback',
   const engine = await createMockEngine();
   const plan = createPlan('fn(() => ( @~!"@£!4 )'); // Invalid syntax to trigger error
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -637,7 +637,7 @@ test('integration: should process events in the correct order', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -706,7 +706,7 @@ test('integration: should batch sequential log events', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -747,7 +747,7 @@ test('integration: should interrupt a batch of log events', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -798,7 +798,7 @@ test('integration: should respect the limit', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -841,7 +841,7 @@ test('integration: should respect the interval', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -891,7 +891,7 @@ test('integration: should handle two batches of logs', async (t) => {
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -934,7 +934,7 @@ test('integration: should process events in the correct order with batching', as
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -994,7 +994,7 @@ test('integration: queue events behind a slow event', async (t) => {
       }
     })`
   );
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -1058,7 +1058,7 @@ test('integration: queue events behind a slow event II', async (t) => {
       }
     })`
   );
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -1120,7 +1120,7 @@ test('integration: batch timeout send should not race with subsequent events', a
     })`
   );
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},
@@ -1158,7 +1158,7 @@ test('integration: should timeout and continue processing when event handler han
   const engine = await createMockEngine();
   const plan = createPlan();
 
-  const context = {
+  const context: any = {
     id: 'a',
     plan,
     options: {},

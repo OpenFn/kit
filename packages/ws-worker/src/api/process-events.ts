@@ -27,7 +27,7 @@ export type EventProcessorOptions = {
   batchLimit?: number;
   timeout_ms?: number;
   trace?: boolean;
-  events: Record<string, any>;
+  events?: Record<string, any>;
 };
 
 const DEFAULT_BATCH_LIMIT = 10;
@@ -88,7 +88,7 @@ export function eventProcessor(
 
   const queue: any = [];
 
-  let activeBatch: string | null | number = null;
+  let activeBatch: string | null = null;
   let batch: any = [];
   let batchTimeout: NodeJS.Timeout | null = null;
   let batchSendPromise: Promise<void> | null = null;
@@ -96,7 +96,7 @@ export function eventProcessor(
   let timeoutHandle: NodeJS.Timeout;
 
   // TODO plug this in because the console tracing is super helpful
-  const trace = (...message) => {
+  const trace = (...message: any) => {
     if (options.trace) {
       console.log(...message);
     }
@@ -143,9 +143,9 @@ export function eventProcessor(
       clearTimeout(batchTimeout!);
       batchTimeout = null;
 
-      // first clear the batch
-      const name = activeBatch;
-      activeBatch = Infinity;
+      // first clear the batch (but leave it truthy)
+      const name = activeBatch as string;
+      activeBatch = '--';
       await send(name, batch, batch.length);
       activeBatch = null;
       batch = [];
@@ -279,7 +279,8 @@ export function eventProcessor(
   };
 
   const e = (events || allEngineEvents).reduce(
-    (obj, e) => Object.assign(obj, { [e]: (p: any) => enqueue(e, p) }),
+    (obj: any, e: string) =>
+      Object.assign(obj, { [e]: (p: any) => enqueue(e, p) }),
     {}
   );
 
