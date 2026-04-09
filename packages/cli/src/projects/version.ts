@@ -32,7 +32,7 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
 
   const output = new Map<string, string>();
 
-  const activeProject = workspace.getActiveProject();
+  const activeProject = await workspace.getCheckedOutProject();
   if (options.workflow) {
     const workflow = activeProject?.getWorkflow(options.workflow);
     if (!workflow) {
