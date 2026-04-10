@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.23.4
+
+### Patch Changes
+
+- 1cd60b8: Fix a critical issue when processing batch events that could cause runs to be lost
+- b724db5: Update docket image to use node 24
+
 ## 1.23.3
 
 ### Patch Changes

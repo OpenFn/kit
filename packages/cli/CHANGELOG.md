@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.33.0
+
+### Minor Changes
+
+- 6829bdc: Remove renamed/deleted workflows or steps during checkout
+
 ## 1.32.0
 
 ### Minor Changes

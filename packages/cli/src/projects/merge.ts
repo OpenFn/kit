@@ -71,7 +71,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     logger.debug('Loading target project from path', basePath);
     targetProject = await Project.from('path', basePath);
   } else {
-    targetProject = workspace.getActiveProject()!;
+    targetProject = workspace.getTrackedProject()!;
     if (!targetProject) {
       logger.error(`No project currently checked out`);
       return;
