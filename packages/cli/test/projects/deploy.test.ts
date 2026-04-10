@@ -9,8 +9,8 @@ import createLightningServer from '@openfn/lightning-mock';
 import {
   handler as deploy,
   hasRemoteDiverged,
-  printRichDiff,
 } from '../../src/projects/deploy';
+import { printRichDiff } from '../../src/projects/diff';
 import { myProject_yaml, myProject_v1, UUID } from './fixtures';
 import { checkout } from '../../src/projects';
 

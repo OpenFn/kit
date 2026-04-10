@@ -1,6 +1,5 @@
 import yargs from 'yargs';
 import Project, { versionsEqual, Workspace } from '@openfn/project';
-import c from 'chalk';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -17,6 +16,7 @@ import {
   AuthOptions,
 } from './util';
 import { build, ensure } from '../util/command-builders';
+import { printRichDiff } from './diff';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
@@ -424,113 +424,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
     }
   }
 }
-
-const printStepChanges = (
-  localWf: ReturnType<Project['getWorkflow']>,
-  remoteWf: ReturnType<Project['getWorkflow']>,
-  logger: Logger
-) => {
-  if (!localWf || !remoteWf) return;
-
-  const localSteps = localWf.steps as any[];
-  const remoteSteps = remoteWf.steps as any[];
-  const remoteById = Object.fromEntries(remoteSteps.map((s) => [s.id, s]));
-  const localById = Object.fromEntries(localSteps.map((s) => [s.id, s]));
-
-  for (const step of localSteps) {
-    const remote = remoteById[step.id];
-    if (!remote) {
-      logger.always(c.yellow(`    ${step.id || step.name}: added`));
-      continue;
-    }
-
-    const lines: string[] = [];
-
-    if (step.name !== remote.name) {
-      lines.push(`      - name: "${remote.name}" -> "${step.name}"`);
-    }
-
-    const localAdaptor = step.adaptor ?? step.adaptors?.[0];
-    const remoteAdaptor = remote.adaptor ?? remote.adaptors?.[0];
-    if (localAdaptor !== remoteAdaptor) {
-      lines.push(`      - adaptor: ${remoteAdaptor} -> ${localAdaptor}`);
-    }
-
-    const localExpr = step.expression ?? step.body ?? '';
-    const remoteExpr = remote.expression ?? remote.body ?? '';
-    if (localExpr !== remoteExpr) {
-      const localLines = localExpr.split('\n').length;
-      const remoteLines = remoteExpr.split('\n').length;
-      const added = Math.max(0, localLines - remoteLines);
-      const removed = Math.max(0, remoteLines - localLines);
-      const summary =
-        added === 0 && removed === 0 ? '<changed>' : `<+${added}/-${removed}>`;
-      lines.push(`      - body: ${summary}`);
-    }
-
-    if (lines.length) {
-      logger.always(c.yellow(`    ${step.id || step.name}:`));
-      for (const line of lines) {
-        logger.always(c.yellow(line));
-      }
-    }
-  }
-
-  for (const step of remoteSteps) {
-    if (!localById[step.id]) {
-      logger.always(c.yellow(`    ${step.id || step.name}: removed`));
-    }
-  }
-};
-
-export const printRichDiff = (
-  local: Project,
-  remote: Project,
-  locallyChangedWorkflows: string[],
-  logger: Logger
-) => {
-  const diffs = remote.diff(local, locallyChangedWorkflows);
-  if (diffs.length === 0) {
-    logger.info('No workflow changes detected');
-    return diffs;
-  }
-
-  const removed = diffs.filter((d) => d.type === 'removed');
-  const changed = diffs.filter((d) => d.type === 'changed');
-  const added = diffs.filter((d) => d.type === 'added');
-
-  if (removed.length > 0) {
-    logger.break();
-    for (const diff of removed) {
-      const wf = remote.getWorkflow(diff.id);
-      const label = wf?.name || diff.id;
-      logger.always(c.red(`${label}: deleted`));
-    }
-  }
-
-  if (changed.length > 0) {
-    logger.break();
-    for (const diff of changed) {
-      const localWf = local.getWorkflow(diff.id);
-      const remoteWf = remote.getWorkflow(diff.id);
-      const label = localWf?.name || diff.id;
-      logger.always(c.yellow(`${label}: changed`));
-      printStepChanges(localWf, remoteWf, logger);
-    }
-  }
-
-  if (added.length > 0) {
-    logger.break();
-    for (const diff of added) {
-      const wf = local.getWorkflow(diff.id);
-      const label = wf?.name || diff.id;
-      logger.always(c.green(`${label}: added`));
-    }
-  }
-
-  logger.break();
-  return diffs;
-};
 
 export const printJsonDiff = async (
   remoteState: object,
