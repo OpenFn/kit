@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { fetch } from 'undici';
@@ -214,7 +215,8 @@ class DeployError extends Error {
 export async function tidyWorkflowDir(
   currentProject: Project | undefined,
   incomingProject: Project | undefined,
-  dryRun = false
+  dryRun = false,
+  dirPath = '.'
 ) {
   if (!currentProject || !incomingProject) {
     return [];
@@ -232,7 +234,15 @@ export async function tidyWorkflowDir(
   }
 
   if (!dryRun) {
-    await rimraf(toRemove);
+    const abs = (p: string) => path.join(dirPath, p);
+    await rimraf(toRemove.map(abs));
+
+    const dirs = new Set(toRemove.map((f) => path.dirname(f)));
+    for (const dir of Array.from(dirs)) {
+      try {
+        fs.rmdirSync(abs(dir)); // throws when not empty
+      } catch {}
+    }
   }
 
   // Return and sort for testing

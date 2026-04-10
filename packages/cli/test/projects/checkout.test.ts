@@ -499,3 +499,127 @@ workspace:
     ],
   });
 });
+
+test.serial(
+  'checkout: removes old workflow directory when workflow is renamed on server',
+  async (t) => {
+    mock({
+      '/ws3/workflows/old-workflow': {
+        'old-workflow.yaml': jsonToYaml({
+          id: 'old-workflow',
+          steps: [{ id: 'run-job', expression: './run-job.js' }],
+        }),
+        'run-job.js': 'fn(state => state)',
+      },
+      '/ws3/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws3/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'New Workflow',
+            jobs: [{ name: 'Run Job', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
+          },
+        ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws3',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws3/workflows/old-workflow'));
+    t.true(fs.existsSync('/ws3/workflows/new-workflow'));
+  }
+);
+
+test.serial(
+  'checkout: removes old step file when step is renamed on server',
+  async (t) => {
+    mock({
+      '/ws4/workflows/my-workflow': {
+        'my-workflow.yaml': jsonToYaml({
+          id: 'my-workflow',
+          steps: [{ id: 'old-step', expression: './old-step.js' }],
+        }),
+        'old-step.js': 'fn(state => state)',
+      },
+      '/ws4/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws4/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'My Workflow',
+            jobs: [{ name: 'New Step', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
+          },
+      ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws4',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws4/workflows/my-workflow/old-step.js'));
+    t.true(fs.existsSync('/ws4/workflows/my-workflow/new-step.js'));
+    t.true(fs.existsSync('/ws4/workflows/my-workflow'));
+  }
+);
+
+test.serial(
+  'checkout: removes workflow directory when workflow is deleted on server',
+  async (t) => {
+    mock({
+      '/ws5/workflows/workflow-a': {
+        'workflow-a.yaml': jsonToYaml({
+          id: 'workflow-a',
+          steps: [{ id: 'run-job', expression: './run-job.js' }],
+        }),
+        'run-job.js': 'fn(state => state)',
+      },
+      '/ws5/workflows/workflow-b': {
+        'workflow-b.yaml': jsonToYaml({ id: 'workflow-b', steps: [] }),
+      },
+      '/ws5/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws5/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        workflows: [
+          {
+            name: 'Workflow A',
+            jobs: [{ name: 'Run Job', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
+          },
+        ],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws5',
+      },
+      logger
+    );
+
+    t.false(fs.existsSync('/ws5/workflows/workflow-b'));
+    t.true(fs.existsSync('/ws5/workflows/workflow-a'));
+  }
+);
