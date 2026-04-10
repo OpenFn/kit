@@ -69,7 +69,6 @@ const createCallbacks = (events: Record<string, any>): Record<string, any> => {
   return obj;
 };
 
-// TODO try simpler tests with full control - don't use the engine
 test('should process one event', async (t) => {
   const callbacks = createCallbacks({ test: () => {} });
   const engine = createFakeEngine();

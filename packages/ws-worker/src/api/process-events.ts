@@ -95,7 +95,6 @@ export function eventProcessor(
   let didFinish = false;
   let processTimeoutHandle: NodeJS.Timeout;
 
-  // TODO plug this in because the console tracing is super helpful
   const trace = (...message: any) => {
     if (options.trace) {
       console.log(...message);
