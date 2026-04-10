@@ -507,7 +507,7 @@ test.serial(
       '/ws3/workflows/old-workflow': {
         'old-workflow.yaml': jsonToYaml({
           id: 'old-workflow',
-          steps: [{ id: 'run-job', name: 'Run Job', adaptor: '@openfn/language-http@latest', expression: './run-job.js' }],
+          steps: [{ id: 'run-job', expression: './run-job.js' }],
         }),
         'run-job.js': 'fn(state => state)',
       },
@@ -518,17 +518,20 @@ test.serial(
         workflows: [
           {
             name: 'New Workflow',
-            id: 'old-workflow',
-            jobs: [{ name: 'Run Job', body: 'fn(state => state)', adaptor: '@openfn/language-http@latest', id: 'run-job-uuid' }],
-            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
-            edges: [{ id: 'edge-id', source_trigger_id: 'trigger-id', target_job_id: 'run-job-uuid', condition_type: 'always', enabled: true }],
+            jobs: [{ name: 'Run Job', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
           },
         ],
       }),
     });
 
     await checkoutHandler(
-      { command: 'project-checkout', project: 'main-project', workspace: '/ws3' },
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws3',
+      },
       logger
     );
 
@@ -544,7 +547,7 @@ test.serial(
       '/ws4/workflows/my-workflow': {
         'my-workflow.yaml': jsonToYaml({
           id: 'my-workflow',
-          steps: [{ id: 'old-step', name: 'Old Step', adaptor: '@openfn/language-http@latest', expression: './old-step.js' }],
+          steps: [{ id: 'old-step', expression: './old-step.js' }],
         }),
         'old-step.js': 'fn(state => state)',
       },
@@ -555,17 +558,20 @@ test.serial(
         workflows: [
           {
             name: 'My Workflow',
-            id: 'my-wf-uuid',
-            jobs: [{ name: 'New Step', body: 'fn(state => state)', adaptor: '@openfn/language-http@latest', id: 'new-step-uuid' }],
-            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
-            edges: [{ id: 'edge-id', source_trigger_id: 'trigger-id', target_job_id: 'new-step-uuid', condition_type: 'always', enabled: true }],
+            jobs: [{ name: 'New Step', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
           },
-        ],
+      ],
       }),
     });
 
     await checkoutHandler(
-      { command: 'project-checkout', project: 'main-project', workspace: '/ws4' },
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws4',
+      },
       logger
     );
 
@@ -582,7 +588,7 @@ test.serial(
       '/ws5/workflows/workflow-a': {
         'workflow-a.yaml': jsonToYaml({
           id: 'workflow-a',
-          steps: [{ id: 'run-job', name: 'Run Job', adaptor: '@openfn/language-http@latest', expression: './run-job.js' }],
+          steps: [{ id: 'run-job', expression: './run-job.js' }],
         }),
         'run-job.js': 'fn(state => state)',
       },
@@ -596,17 +602,20 @@ test.serial(
         workflows: [
           {
             name: 'Workflow A',
-            id: 'wf-a-uuid',
-            jobs: [{ name: 'Run Job', body: 'fn(state => state)', adaptor: '@openfn/language-http@latest', id: 'run-job-uuid' }],
-            triggers: [{ type: 'webhook', enabled: true, id: 'trigger-id' }],
-            edges: [{ id: 'edge-id', source_trigger_id: 'trigger-id', target_job_id: 'run-job-uuid', condition_type: 'always', enabled: true }],
+            jobs: [{ name: 'Run Job', body: 'fn(s => s)' }],
+            triggers: [],
+            edges: [],
           },
         ],
       }),
     });
 
     await checkoutHandler(
-      { command: 'project-checkout', project: 'main-project', workspace: '/ws5' },
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws5',
+      },
       logger
     );
 
