@@ -11,6 +11,15 @@ This package contains:
 
 The mock services allow lightweight and controlled testing of the interfaces between them.
 
+## Docker
+
+To build and run the worker as a Docker image locally:
+
+```bash
+docker build -t openfn-worker .
+docker run --network host -e WORKER_SECRET=$WORKER_SECRET -e WORKER_LIGHTNING_SERVICE_URL="ws://localhost:4000/worker"  openfn-worker
+```
+
 ## Getting started
 
 To use this server:
@@ -98,12 +107,12 @@ remaining capacity serve general work.
 
 ### Syntax
 
-| Element | Meaning |
-|---------|---------|
-| `>` | Queue preference separator (left = highest priority) |
-| `*` | Wildcard: accept runs from any queue (must be last) |
-| `:N` | Number of slots for this group |
-| ` ` (space) | Group separator |
+| Element     | Meaning                                              |
+| ----------- | ---------------------------------------------------- |
+| `>`         | Queue preference separator (left = highest priority) |
+| `*`         | Wildcard: accept runs from any queue (must be last)  |
+| `:N`        | Number of slots for this group                       |
+| ` ` (space) | Group separator                                      |
 
 ### Examples
 

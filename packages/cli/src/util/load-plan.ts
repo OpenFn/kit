@@ -62,7 +62,7 @@ const loadPlan = async (
     };
 
     options.credentials ??= workspace.getConfig().credentials;
-    options.collectionsEndpoint ??= proj.openfn?.endpoint;
+    options.collectionsEndpoint ??= proj?.openfn?.endpoint;
     // Set the cache path to be relative to the workflow
     options.cachePath ??= workspace.workflowsPath + `/${name}/${CACHE_DIR}`;
   }

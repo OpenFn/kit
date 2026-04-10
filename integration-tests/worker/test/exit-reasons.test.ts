@@ -34,7 +34,7 @@ const run = async (attempt) => {
   });
 };
 
-test('crash: syntax error', async (t) => {
+test.serial('crash: syntax error', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -54,7 +54,7 @@ test('crash: syntax error', async (t) => {
 });
 
 // https://github.com/OpenFn/kit/issues/1045
-test('crash: reference error', async (t) => {
+test.serial('crash: reference error', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -78,7 +78,7 @@ test('crash: reference error', async (t) => {
 });
 
 // https://github.com/OpenFn/kit/issues/758
-test('crash: job not found', async (t) => {
+test.serial('crash: job not found', async (t) => {
   lightning.addDataclip('x', {});
 
   const attempt = {
@@ -102,7 +102,7 @@ test('crash: job not found', async (t) => {
   t.regex(error_message, /could not find start job: y/i);
 });
 
-test('exception: autoinstall error', async (t) => {
+test.serial('exception: autoinstall error', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -125,7 +125,7 @@ test('exception: autoinstall error', async (t) => {
   );
 });
 
-test('exception: bad credential (not found)', async (t) => {
+test.serial('exception: bad credential (not found)', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -154,7 +154,7 @@ test('exception: bad credential (not found)', async (t) => {
   );
 });
 
-test('exception: credential timeout', async (t) => {
+test.serial('exception: credential timeout', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -177,7 +177,7 @@ test('exception: credential timeout', async (t) => {
   );
 });
 
-test('kill: oom (small, kill worker)', async (t) => {
+test.serial('kill: oom (small, kill worker)', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -201,7 +201,8 @@ test('kill: oom (small, kill worker)', async (t) => {
   t.is(error_message, 'Run exceeded maximum memory usage');
 });
 
-test('kill: oom (large, kill vm)', async (t) => {
+// TODO this is failing locally... is it OK in CI?
+test.serial('kill: oom (large, kill vm)', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -225,7 +226,7 @@ test('kill: oom (large, kill vm)', async (t) => {
   t.is(error_message, 'Run exceeded maximum memory usage');
 });
 
-test('crash: process.exit() triggered by postgres', async (t) => {
+test.serial('crash: process.exit() triggered by postgres', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [

@@ -39,7 +39,7 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
 
   logger.always(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => describeProject(p, p === workspace.getActiveProject()))
+    .map((p) => describeProject(p, p === workspace.getTrackedProject()))
     .join('\n\n')}
     `);
 };
