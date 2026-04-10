@@ -115,8 +115,17 @@ export const generateHash = (
 
   const edges = Object.values(wfState.edges)
     .map((edge) => {
-      const source = uuidMap[edge.source_trigger_id! ?? edge.source_job_id];
+      const sourceId = edge.source_trigger_id! ?? edge.source_job_id;
+      const source = uuidMap[sourceId];
       const target = uuidMap[edge.target_job_id];
+
+      if (!source || !target) {
+        throw new Error(
+          `Edge references unknown ${
+            !source ? `source "${sourceId}"` : `target "${edge.target_job_id}"`
+          }. seems a node's id changed without edges connecting to it being updated.`
+        );
+      }
 
       (edge as any).name = `${source.name ?? source.id}-${
         target.name ?? target.id
