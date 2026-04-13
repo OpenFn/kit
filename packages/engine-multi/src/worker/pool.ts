@@ -114,10 +114,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
       if (hasPrlimit && options.maxWorkerMemoryMb) {
         // RLIMIT_AS counts virtual address space, not RSS.
-        // Node/V8 reserve ~1-2GB virtual memory at startup, so we need
-        // generous headroom to avoid false positives.
+        // Node/V8 routinely reserves 4-8GB of virtual memory at startup
+        // (page table entries are cheap on 64-bit). We set a generous limit
+        // that only catches truly runaway allocations.
         const limitBytes = Math.ceil(
-          (options.maxWorkerMemoryMb * 3 + 512) * 1024 * 1024
+          (options.maxWorkerMemoryMb * 10 + 2048) * 1024 * 1024
         );
         applyMemoryLimit(child.pid!, limitBytes, logger);
       }
