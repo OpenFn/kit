@@ -10,6 +10,7 @@ export type WorkerEvent = {
 
 type WorkerOptions = {
   maxWorkers?: number;
+  maxWorkerMemoryMb?: number; // kernel-level memory limit per child process (cgroup v2)
   env?: any;
   timeout?: number; // ms
   memoryLimitMb?: number;
@@ -26,6 +27,7 @@ export default function initWorkers(
   const {
     env = {},
     maxWorkers = 5,
+    maxWorkerMemoryMb,
     memoryLimitMb,
     proxyStdout = false,
   } = options;
@@ -34,6 +36,7 @@ export default function initWorkers(
     workerPath,
     {
       maxWorkers,
+      maxWorkerMemoryMb,
       env,
       memoryLimitMb,
       proxyStdout,
