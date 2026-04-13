@@ -1,10 +1,35 @@
 import c from 'chalk';
-import Project, { generateStepDiff } from '@openfn/project';
-import type { StepChange } from '@openfn/project';
+import Project, { generateStepDiff, generateEdgeDiff } from '@openfn/project';
+import type { StepChange, EdgeChange } from '@openfn/project';
 import type { Logger } from '../util/logger';
 
-export { generateStepDiff };
-export type { StepChange };
+export { generateStepDiff, generateEdgeDiff };
+export type { StepChange, EdgeChange };
+
+const printEdgeDiff = (edges: EdgeChange[], logger: Logger) => {
+  for (const edge of edges) {
+    if (edge.type === 'added') {
+      logger.always(c.green(`    ${edge.id}: added`));
+    } else if (edge.type === 'removed') {
+      logger.always(c.red(`    ${edge.id}: removed`));
+    } else if (edge.type === 'changed' && edge.changes) {
+      logger.always(c.yellow(`    ${edge.id}:`));
+      const { condition, label, enabled } = edge.changes;
+      if (condition)
+        logger.always(
+          c.yellow(`      - condition: ${condition.from ?? 'none'} -> ${condition.to ?? 'none'}`)
+        );
+      if (label)
+        logger.always(
+          c.yellow(`      - label: "${label.from ?? ''}" -> "${label.to ?? ''}"`)
+        );
+      if (enabled)
+        logger.always(
+          c.yellow(`      - enabled: ${enabled.from} -> ${enabled.to}`)
+        );
+    }
+  }
+};
 
 const printStepDiff = (steps: StepChange[], logger: Logger) => {
   for (const step of steps) {
@@ -61,6 +86,7 @@ export const printRichDiff = (
       const label = localWf?.name || diff.id;
       logger.always(c.yellow(`${label}: changed`));
       printStepDiff(generateStepDiff(localWf, remoteWf), logger);
+      printEdgeDiff(generateEdgeDiff(localWf, remoteWf), logger);
     }
   }
 

@@ -83,3 +83,69 @@ export const generateStepDiff = (
 
   return changes;
 };
+
+export type EdgeChange = {
+  id: string;
+  type: StepChangeType;
+  changes?: {
+    condition?: { from: string | undefined; to: string | undefined };
+    label?: { from: string | undefined; to: string | undefined };
+    enabled?: { from: boolean; to: boolean };
+  };
+};
+
+const getEdgeMap = (wf: Workflow): Record<string, any> => {
+  const map: Record<string, any> = {};
+  for (const step of wf.steps as any[]) {
+    const next =
+      typeof step.next === 'string' ? { [step.next]: {} } : step.next ?? {};
+    for (const [targetId, rules] of Object.entries(next)) {
+      map[`${step.id}->${targetId}`] =
+        typeof rules === 'object' && rules !== null ? rules : {};
+    }
+  }
+  return map;
+};
+
+export const generateEdgeDiff = (
+  localWf: Workflow | undefined,
+  remoteWf: Workflow | undefined
+): EdgeChange[] => {
+  if (!localWf || !remoteWf) return [];
+
+  const localEdges = getEdgeMap(localWf);
+  const remoteEdges = getEdgeMap(remoteWf);
+  const changes: EdgeChange[] = [];
+
+  for (const [id, local] of Object.entries(localEdges)) {
+    const remote = remoteEdges[id];
+    if (!remote) {
+      changes.push({ id, type: 'added' });
+      continue;
+    }
+
+    const fieldChanges: EdgeChange['changes'] = {};
+
+    if (local.condition !== remote.condition) {
+      fieldChanges.condition = { from: remote.condition, to: local.condition };
+    }
+    if (local.label !== remote.label) {
+      fieldChanges.label = { from: remote.label, to: local.label };
+    }
+    if (!!local.disabled !== !!remote.disabled) {
+      fieldChanges.enabled = { from: !remote.disabled, to: !local.disabled };
+    }
+
+    if (Object.keys(fieldChanges).length > 0) {
+      changes.push({ id, type: 'changed', changes: fieldChanges });
+    }
+  }
+
+  for (const id of Object.keys(remoteEdges)) {
+    if (!localEdges[id]) {
+      changes.push({ id, type: 'removed' });
+    }
+  }
+
+  return changes;
+};
