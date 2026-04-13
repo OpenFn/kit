@@ -62,7 +62,10 @@ export function detectCgroupSupport(logger: Logger): CgroupSupport {
               '+memory'
             );
           } catch (inner: any) {
-            logger.warn('cgroup: failed to delegate memory controller:', inner.message);
+            logger.warn(
+              'cgroup: failed to delegate memory controller:',
+              inner.message
+            );
             cachedResult = { supported: false, cgroupRoot: null };
             return cachedResult;
           }
@@ -118,11 +121,16 @@ export function setupCgroup(
     fs.writeFileSync(path.join(cgroupPath, 'cgroup.procs'), String(pid));
 
     logger.debug(
-      `cgroup: worker ${pid} limited to ${Math.round(memoryLimitBytes / 1024 / 1024)}MB`
+      `cgroup: worker ${pid} limited to ${Math.round(
+        memoryLimitBytes / 1024 / 1024
+      )}MB`
     );
     return cgroupPath;
   } catch (e: any) {
-    logger.warn(`cgroup: failed to set up cgroup for worker ${pid}:`, e.message);
+    logger.warn(
+      `cgroup: failed to set up cgroup for worker ${pid}:`,
+      e.message
+    );
     // Clean up partial state
     try {
       fs.rmdirSync(cgroupPath);
