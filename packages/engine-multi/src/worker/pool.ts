@@ -13,10 +13,12 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 import type { PayloadLimits } from './thread/runtime';
+import { detectPrlimitSupport, applyMemoryLimit } from './rlimit';
 
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
+  maxWorkerMemoryMb?: number; // process-level memory limit via RLIMIT_AS
   env?: Record<string, string>; // default environment for workers
 
   proxyStdout?: boolean; // print internal stdout to console
@@ -71,6 +73,14 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
+  const hasPrlimit = detectPrlimitSupport(logger);
+
+  if (hasPrlimit && options.maxWorkerMemoryMb) {
+    logger.info(
+      `pool: prlimit memory enforcement enabled | limit: ${options.maxWorkerMemoryMb}MB per child`
+    );
+  }
+
   // a pool of processes
   const pool: ChildProcessPool = new Array(capacity).fill(false);
 
@@ -101,6 +111,17 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
+
+      if (hasPrlimit && options.maxWorkerMemoryMb) {
+        // RLIMIT_AS counts virtual address space, not RSS.
+        // Node/V8 routinely reserves 4-8GB of virtual memory at startup
+        // (page table entries are cheap on 64-bit). We set a generous limit
+        // that only catches truly runaway allocations.
+        const limitBytes = Math.ceil(
+          (options.maxWorkerMemoryMb * 10 + 2048) * 1024 * 1024
+        );
+        applyMemoryLimit(child.pid!, limitBytes, logger);
+      }
     } else {
       child = maybeChild as ChildProcess;
       logger.debug('pool: Using existing child process', child.pid);
