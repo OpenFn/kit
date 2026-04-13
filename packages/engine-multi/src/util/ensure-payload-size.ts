@@ -70,7 +70,7 @@ export default async (payload: any, limit_mb: number = 10) => {
 
   for (const key of KEYS_TO_VERIFY) {
     try {
-      await verify(payload[key], limit_mb);
+      await verify(payload[key], limit_mb, 'stream');
     } catch (e) {
       Object.assign(newPayload[key], replacements[key] ?? replacements.default);
       newPayload.redacted = true;
