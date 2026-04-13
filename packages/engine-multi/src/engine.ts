@@ -139,6 +139,7 @@ const createEngine = async (
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
+      memoryLimitMb: defaultMemoryLimit,
       proxyStdout: options.proxyStdout,
     },
     options.logger
