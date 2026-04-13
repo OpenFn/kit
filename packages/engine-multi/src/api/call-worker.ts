@@ -10,6 +10,7 @@ export type WorkerEvent = {
 
 type WorkerOptions = {
   maxWorkers?: number;
+  maxWorkerMemoryMb?: number; // kernel-level memory limit per child process (cgroup v2)
   env?: any;
   timeout?: number; // ms
   proxyStdout?: boolean; // print internal stdout to console
@@ -22,12 +23,14 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger: Logger
 ) {
-  const { env = {}, maxWorkers = 5, proxyStdout = false } = options;
+  const { env = {}, maxWorkers = 5, maxWorkerMemoryMb, proxyStdout = false } =
+    options;
 
   const workers = createPool(
     workerPath,
     {
       maxWorkers,
+      maxWorkerMemoryMb,
       env,
       proxyStdout,
     },
