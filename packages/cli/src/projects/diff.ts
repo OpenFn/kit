@@ -17,11 +17,17 @@ const printEdgeDiff = (edges: EdgeChange[], logger: Logger) => {
       const { condition, label, enabled } = edge.changes;
       if (condition)
         logger.always(
-          c.yellow(`      - condition: ${condition.from ?? 'none'} -> ${condition.to ?? 'none'}`)
+          c.yellow(
+            `      - condition: ${condition.from ?? 'none'} -> ${
+              condition.to ?? 'none'
+            }`
+          )
         );
       if (label)
         logger.always(
-          c.yellow(`      - label: "${label.from ?? ''}" -> "${label.to ?? ''}"`)
+          c.yellow(
+            `      - label: "${label.from ?? ''}" -> "${label.to ?? ''}"`
+          )
         );
       if (enabled)
         logger.always(
