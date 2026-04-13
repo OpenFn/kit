@@ -23,8 +23,12 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger: Logger
 ) {
-  const { env = {}, maxWorkers = 5, maxWorkerMemoryMb, proxyStdout = false } =
-    options;
+  const {
+    env = {},
+    maxWorkers = 5,
+    maxWorkerMemoryMb,
+    proxyStdout = false,
+  } = options;
 
   const workers = createPool(
     workerPath,
