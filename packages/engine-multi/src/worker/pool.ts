@@ -13,12 +13,12 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 import type { PayloadLimits } from './thread/runtime';
-import { detectCgroupSupport, setupCgroup, cleanupCgroup } from './cgroup';
+import { detectPrlimitSupport, applyMemoryLimit } from './rlimit';
 
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
-  maxWorkerMemoryMb?: number; // kernel-level memory limit per child process (cgroup v2)
+  maxWorkerMemoryMb?: number; // process-level memory limit via RLIMIT_AS
   env?: Record<string, string>; // default environment for workers
 
   proxyStdout?: boolean; // print internal stdout to console
@@ -73,12 +73,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
-  const cgroupInfo = detectCgroupSupport(logger);
-  const cgroupPaths = new Map<number, string>();
+  const hasPrlimit = detectPrlimitSupport(logger);
 
-  if (cgroupInfo.supported && options.maxWorkerMemoryMb) {
+  if (hasPrlimit && options.maxWorkerMemoryMb) {
     logger.info(
-      `pool: cgroup memory enforcement enabled | limit: ${options.maxWorkerMemoryMb}MB per child`
+      `pool: prlimit memory enforcement enabled | limit: ${options.maxWorkerMemoryMb}MB per child`
     );
   }
 
@@ -113,33 +112,20 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
 
-      if (cgroupInfo.supported && options.maxWorkerMemoryMb) {
+      if (hasPrlimit && options.maxWorkerMemoryMb) {
+        // RLIMIT_AS counts virtual address space, not RSS.
+        // Node/V8 reserve ~1-2GB virtual memory at startup, so we need
+        // generous headroom to avoid false positives.
         const limitBytes = Math.ceil(
-          (options.maxWorkerMemoryMb * 1.2 + 50) * 1024 * 1024
+          (options.maxWorkerMemoryMb * 3 + 512) * 1024 * 1024
         );
-        const cgPath = setupCgroup(
-          child.pid!,
-          limitBytes,
-          cgroupInfo.cgroupRoot!,
-          logger
-        );
-        if (cgPath) {
-          cgroupPaths.set(child.pid!, cgPath);
-        }
+        applyMemoryLimit(child.pid!, limitBytes, logger);
       }
     } else {
       child = maybeChild as ChildProcess;
       logger.debug('pool: Using existing child process', child.pid);
     }
     return child;
-  };
-
-  const maybeCleanupCgroup = (pid: number) => {
-    const cgPath = cgroupPaths.get(pid);
-    if (cgPath) {
-      cleanupCgroup(cgPath, logger);
-      cgroupPaths.delete(pid);
-    }
   };
 
   const finish = (worker: ChildProcess | false) => {
@@ -176,20 +162,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
-      const onExit = async (code: number | null, signal: string | null) => {
-        // Kernel OOM kill: cgroup sends SIGKILL with null exit code
-        if (signal === 'SIGKILL' && code === null && !destroyed) {
-          logger.debug(
-            `pool: Worker ${worker.pid} killed by SIGKILL (probable OOM)`
-          );
-          clearTimeout(timeout);
-          maybeCleanupCgroup(worker.pid!);
-          killWorker(worker);
-          finish(false);
-          reject(new OOMError());
-          return;
-        }
-
+      const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
           logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
           clearTimeout(timeout);
@@ -215,9 +188,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           } catch (e) {
             // do nothing
           }
-          maybeCleanupCgroup(worker.pid!);
           finish(worker);
-          reject(new ExitError(code!));
+          reject(new ExitError(code));
         }
       };
 
@@ -305,11 +277,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
   const killWorker = (worker: ChildProcess | false) => {
     if (worker) {
-      const pid = worker.pid!;
-      logger.debug('pool: destroying worker ', pid);
+      logger.debug('pool: destroying worker ', worker.pid);
       worker.kill();
-      delete allWorkers[pid];
-      worker.once('exit', () => maybeCleanupCgroup(pid));
+      delete allWorkers[worker.pid!];
     }
   };
 
@@ -326,13 +296,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       const timeout = setTimeout(() => {
         logger.debug('pool: force killing worker', worker.pid);
         worker.kill('SIGKILL');
-        maybeCleanupCgroup(worker.pid!);
         resolve();
       }, forceKillTimeout);
 
       worker.once('exit', () => {
         clearTimeout(timeout);
-        maybeCleanupCgroup(worker.pid!);
         resolve();
       });
 
