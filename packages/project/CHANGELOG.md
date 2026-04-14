@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.14.5
+
+### Patch Changes
+
+- b2e7b98: Include `webhook_reply` and `cron_cursor_job_id` in workflow version hashes.
+
 ## 0.14.4
 
 ### Patch Changes

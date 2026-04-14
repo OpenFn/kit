@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.23.5
+
+### Patch Changes
+
+- aa833d6: Enforce run memory limits at the child_process level
+- 69a7e0e: When processing final state for a run with multiple leaf nodes, don't send empty leaf results. This prevents state recursively growing in cron tasks
+- Updated dependencies [aa833d6]
+  - @openfn/engine-multi@1.11.1
+
 ## 1.23.4
 
 ### Patch Changes

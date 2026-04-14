@@ -54,7 +54,13 @@ export const generateHash = (
     'body',
   ].sort();
 
-  const triggerKeys = ['type', 'cron_expression', 'enabled'].sort();
+  const triggerKeys = [
+    'type',
+    'cron_expression',
+    'enabled',
+    'webhook_reply',
+    'cron_cursor_job_id',
+  ].sort();
 
   const edgeKeys = [
     'name', // generated
