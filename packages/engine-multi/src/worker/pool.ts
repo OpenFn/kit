@@ -18,6 +18,7 @@ export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
+  memoryLimitMb?: number; // --max-old-space-size for child processes
 
   proxyStdout?: boolean; // print internal stdout to console
 };
@@ -83,8 +84,13 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     let child: ChildProcess;
     if (!maybeChild) {
       // create a new child process and load the module script into it
+      const execArgv = ['--experimental-vm-modules', '--no-warnings'];
+      if (options.memoryLimitMb) {
+        execArgv.push(`--max-old-space-size=${options.memoryLimitMb}`);
+      }
+
       child = fork(envPath, [script], {
-        execArgv: ['--experimental-vm-modules', '--no-warnings'],
+        execArgv,
 
         env: options.env || {},
 

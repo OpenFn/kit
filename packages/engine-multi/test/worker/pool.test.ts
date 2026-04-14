@@ -185,6 +185,30 @@ test('throw if memory limit is exceeded', async (t) => {
   }
 });
 
+test('child process should have --max-old-space-size when memoryLimitMb is set', async (t) => {
+  const pool = createPool(workerPath, { memoryLimitMb: 200 }, logger);
+  const execArgv = await pool.exec('getExecArgv', []);
+  t.true(execArgv.some((a: string) => a === '--max-old-space-size=200'));
+});
+
+test('child process should not have --max-old-space-size when memoryLimitMb is not set', async (t) => {
+  const pool = createPool(workerPath, {}, logger);
+  const execArgv = await pool.exec('getExecArgv', []);
+  t.false(execArgv.some((a: string) => a.includes('--max-old-space-size')));
+});
+
+test('pool recovers after process-level OOM', async (t) => {
+  const pool = createPool(workerPath, { memoryLimitMb: 50 }, logger);
+
+  await t.throwsAsync(() => pool.exec('blowMemory', [], { memoryLimitMb: 20 }), {
+    name: 'OOMError',
+  });
+
+  // Pool should still be functional after the OOM
+  const result = await pool.exec('test', [42]);
+  t.is(result, 42);
+});
+
 test('handle weird exit', async (t) => {
   const pool = createPool(workerPath, {}, logger);
 

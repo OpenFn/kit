@@ -12,6 +12,7 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
+  memoryLimitMb?: number;
   proxyStdout?: boolean; // print internal stdout to console
 };
 
@@ -22,13 +23,19 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger: Logger
 ) {
-  const { env = {}, maxWorkers = 5, proxyStdout = false } = options;
+  const {
+    env = {},
+    maxWorkers = 5,
+    memoryLimitMb,
+    proxyStdout = false,
+  } = options;
 
   const workers = createPool(
     workerPath,
     {
       maxWorkers,
       env,
+      memoryLimitMb,
       proxyStdout,
     },
     logger
