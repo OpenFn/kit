@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.11.1
+
+### Patch Changes
+
+- aa833d6: Enforce run memory limits at the child_process level
+
 ## 1.11.0
 
 ### Minor Changes
