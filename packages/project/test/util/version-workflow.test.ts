@@ -384,6 +384,40 @@ test('hash a trigger', (t) => {
   t.not(generateHash(webhook), generateHash(cronExpression));
 });
 
+test('hash changes when webhook_reply changes', (t) => {
+  const wf1 = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(type=webhook,webhook_reply=x)-x
+    `
+  );
+  const wf2 = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(type=webhook,webhook_reply=y)-x
+    `
+  );
+
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
+test('hash changes when cron_cursor_job_id changes', (t) => {
+  const wf1 = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(type=cron,cron_expression="1",cron_cursor_job_id=x)-x
+    `
+  );
+  const wf2 = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(type=cron,cron_expression="1",cron_cursor_job_id=y)-x
+    `
+  );
+
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
 test('hash changes across an edge', (t) => {
   const basicEdge = generateWorkflow(
     `
