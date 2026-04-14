@@ -38,12 +38,38 @@ test('should send final_state when there are multiple leaves', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.leafDataclipIds = ['clip-1', 'clip-2'];
+  state.leafDataclipIds = ['a', 'b'];
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
       t.deepEqual(evt.final_state, result);
+      t.falsy(evt.final_dataclip_id);
+    },
+  });
+
+  const event: any = { state: result };
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunComplete(context, event);
+});
+
+test('should ignore empty leaf state in final_state', async (t) => {
+  const result = {};
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.leafDataclipIds = ['clip-1', 'clip-2'];
+  state.dataclips = {
+    // two different structures of empty
+    a: {},
+    b: { data: {} },
+  };
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      t.deepEqual(evt.final_state, {});
       t.falsy(evt.final_dataclip_id);
     },
   });
@@ -438,7 +464,10 @@ test('should properly serialize final_state as JSON', async (t) => {
   await handleRunComplete(context, event);
 
   t.deepEqual(completeEvent.final_state, complexState);
-  t.deepEqual(completeEvent.final_state.data.users[0], { id: 1, name: 'Alice' });
+  t.deepEqual(completeEvent.final_state.data.users[0], {
+    id: 1,
+    name: 'Alice',
+  });
   t.is(completeEvent.final_state.data.metadata.nested.deeply.value, 42);
 
   const jsonString = JSON.stringify(completeEvent.final_state);
@@ -473,5 +502,8 @@ test('should handle Uint8Array in final_state', async (t) => {
 
   await handleRunComplete(context, event);
 
-  t.deepEqual(completeEvent.final_state.data.buffer, new Uint8Array([1, 2, 3, 4, 5]));
+  t.deepEqual(
+    completeEvent.final_state.data.buffer,
+    new Uint8Array([1, 2, 3, 4, 5])
+  );
 });

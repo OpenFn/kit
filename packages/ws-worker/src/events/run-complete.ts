@@ -8,20 +8,44 @@ import logFinalReason from '../util/log-final-reason';
 import { timeInMicroseconds } from '../util';
 import { sendEvent } from '../util/send-event';
 
+const isEmptyState = (obj: any) => {
+  if (Object.keys(obj).length == 0) {
+    return true;
+  }
+  if (
+    Object.keys(obj).length == 1 &&
+    'data' in obj &&
+    !Object.keys(obj.data).length
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export default async function onWorkflowComplete(
   context: Context,
   event: WorkflowCompletePayload
 ) {
   const { state, onFinish, logger } = context;
 
-  const result = event.state;
-
-  const reason = calculateRunExitReason(state);
-  await logFinalReason(context, reason);
-
   const isSingleLeaf =
     state.leafDataclipIds.length === 1 &&
     !state.withheldDataclips[state.leafDataclipIds[0]];
+
+  const result = event.state;
+
+  // remove any empty leaf nodes from state
+  // This fixes recursive state growth in cron jobs https://github.com/OpenFn/kit/issues/1367
+  if (!isSingleLeaf) {
+    for (const key in result) {
+      if (isEmptyState(result[key])) {
+        delete result[key];
+      }
+    }
+  }
+
+  const reason = calculateRunExitReason(state);
+  await logFinalReason(context, reason);
 
   const payload: RunCompletePayload = {
     timestamp: timeInMicroseconds(event.time),
