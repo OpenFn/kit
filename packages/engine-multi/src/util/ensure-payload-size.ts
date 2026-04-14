@@ -48,6 +48,16 @@ export const calculateSizeStream = async (
   value: any,
   limit?: number
 ): Promise<number> => {
+  // skip all primitives
+  if (
+    !value ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'function'
+  ) {
+    return 1;
+  }
+
   let size_bytes = 0;
 
   const stream = new JsonStreamStringify(value);
@@ -69,11 +79,16 @@ export default async (payload: any, limit_mb: number = 10) => {
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
-    try {
-      await verify(payload[key], limit_mb, 'stream');
-    } catch (e) {
-      Object.assign(newPayload[key], replacements[key] ?? replacements.default);
-      newPayload.redacted = true;
+    if (key in payload) {
+      try {
+        await verify(payload[key], limit_mb, 'stream');
+      } catch (e) {
+        Object.assign(
+          newPayload[key],
+          replacements[key] ?? replacements.default
+        );
+        newPayload.redacted = true;
+      }
     }
   }
 
