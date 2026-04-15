@@ -9,15 +9,33 @@ import { timeInMicroseconds } from '../util';
 import { sendEvent } from '../util/send-event';
 
 const isEmptyState = (obj: any) => {
-  if (Object.keys(obj).length == 0) {
+  if (
+    typeof obj === 'string' ||
+    typeof obj === 'number' ||
+    typeof obj === 'boolean' ||
+    obj === null
+  ) {
+    return false;
+  }
+
+  if (typeof obj === 'undefined') {
+    // ignore undefined
     return true;
   }
-  if (
-    Object.keys(obj).length == 1 &&
-    'data' in obj &&
-    !Object.keys(obj.data).length
-  ) {
-    return true;
+
+  try {
+    if (Object.keys(obj).length == 0) {
+      return true;
+    }
+    if (
+      Object.keys(obj).length == 1 &&
+      'data' in obj &&
+      !Object.keys(obj.data).length
+    ) {
+      return true;
+    }
+  } catch (e) {
+    // do nothing
   }
   return false;
 };

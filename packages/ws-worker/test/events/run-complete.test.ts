@@ -55,21 +55,76 @@ test('should send final_state when there are multiple leaves', async (t) => {
 });
 
 test('should ignore empty leaf state in final_state', async (t) => {
-  const result = {};
-  const plan = createPlan();
-
-  const state = createRunState(plan);
-  state.leafDataclipIds = ['clip-1', 'clip-2'];
-  state.dataclips = {
+  const result = {
     // two different structures of empty
     a: {},
     b: { data: {} },
   };
 
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.leafDataclipIds = ['a', 'b'];
+
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
       t.deepEqual(evt.final_state, {});
+      t.falsy(evt.final_dataclip_id);
+    },
+  });
+
+  const event: any = { state: result };
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunComplete(context, event);
+});
+
+test('should handle falsy leaves in final_state', async (t) => {
+  const result = {
+    a: null,
+    b: 0,
+    c: '',
+  };
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.leafDataclipIds = ['a', 'b', 'c'];
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      t.deepEqual(evt.final_state, {
+        a: null,
+        b: 0,
+        c: '',
+      });
+      t.falsy(evt.final_dataclip_id);
+    },
+  });
+
+  const event: any = { state: result };
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunComplete(context, event);
+});
+
+test('should treat undefined leaves as empty state', async (t) => {
+  const result = {
+    a: undefined,
+    b: { x: 1 },
+  };
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.leafDataclipIds = ['a', 'b', 'c', 'd'];
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      t.deepEqual(evt.final_state, {
+        b: { x: 1 },
+      });
       t.falsy(evt.final_dataclip_id);
     },
   });
