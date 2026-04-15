@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.23.6
+
+### Patch Changes
+
+- Harden empty state detection in final_state processing
+
 ## 1.23.5
 
 ### Patch Changes
