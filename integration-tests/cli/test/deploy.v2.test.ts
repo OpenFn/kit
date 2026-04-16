@@ -212,7 +212,7 @@ test.serial('pull, change and re-deploy twice', async (t) => {
   );
   assertLog(t, logs, /My Workflow: changed/);
   assertLog(t, logs, /My Job:/gm);
-  assertLog(t, logs, /- body: <changed>/gm);
+  assertLog(t, logs, /- expression: \+1 lines/gm);
 
   proj = server.state.projects[projectId];
   t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v\: 2/);
