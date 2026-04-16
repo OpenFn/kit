@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.34.0
+
+### Minor Changes
+
+- 5b5d016: Adds new form of json diffing for cli
+
+### Patch Changes
+
+- Updated dependencies [5b5d016]
+  - @openfn/project@0.15.0
+
 ## 1.33.1
 
 ### Patch Changes
