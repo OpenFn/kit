@@ -159,6 +159,21 @@ test('generateStepDiff: should register a change to a step adaptor', (t) => {
   t.deepEqual(changes, [expected]);
 });
 
+test('generateStepDiff: should register a change to a step configuration', (t) => {
+  const local = createWorkflow([createStep({ configuration: 'new-credential' })]);
+  const remote = createWorkflow([createStep({ configuration: 'old-credential' })]);
+
+  const changes = generateStepDiff(local, remote);
+
+  const expected = {
+    id: 'a',
+    name: 'Step A',
+    type: 'changed',
+    changes: { configuration: { from: 'old-credential', to: 'new-credential' } },
+  };
+  t.deepEqual(changes, [expected]);
+});
+
 test('generateStepDiff: should report multiple field changes on one step', (t) => {
   const local = createWorkflow([
     createStep({ name: 'New Name', adaptor: '@openfn/language-http@2.0.0' }),
@@ -234,9 +249,8 @@ test('generateEdgeDiff: should register a new edge (added)', (t) => {
 
   const changes = generateEdgeDiff(local, remote);
 
-  t.is(changes.length, 1);
-  t.is(changes[0].id, 'a->c');
-  t.is(changes[0].type, 'added');
+  const expected = { id: 'a->c', type: 'added' };
+  t.deepEqual(changes, [expected]);
 });
 
 test('generateEdgeDiff: should register a removed edge', (t) => {
@@ -252,9 +266,8 @@ test('generateEdgeDiff: should register a removed edge', (t) => {
 
   const changes = generateEdgeDiff(local, remote);
 
-  t.is(changes.length, 1);
-  t.is(changes[0].id, 'a->c');
-  t.is(changes[0].type, 'removed');
+  const expected = { id: 'a->c', type: 'removed' };
+  t.deepEqual(changes, [expected]);
 });
 
 test('generateEdgeDiff: should register a change to an edge condition', (t) => {
@@ -269,13 +282,12 @@ test('generateEdgeDiff: should register a change to an edge condition', (t) => {
 
   const changes = generateEdgeDiff(local, remote);
 
-  t.is(changes.length, 1);
-  t.is(changes[0].id, 'a->b');
-  t.is(changes[0].type, 'changed');
-  t.deepEqual(changes[0].changes?.condition, {
-    from: 'state.ok',
-    to: '!state.error',
-  });
+  const expected = {
+    id: 'a->b',
+    type: 'changed',
+    changes: { condition: { from: 'state.ok', to: '!state.error' } },
+  };
+  t.deepEqual(changes, [expected]);
 });
 
 test('generateEdgeDiff: should register a change to an edge label', (t) => {
@@ -290,11 +302,15 @@ test('generateEdgeDiff: should register a change to an edge label', (t) => {
 
   const changes = generateEdgeDiff(local, remote);
 
-  t.is(changes.length, 1);
-  t.deepEqual(changes[0].changes?.label, { from: 'always', to: 'on success' });
+  const expected = {
+    id: 'a->b',
+    type: 'changed',
+    changes: { label: { from: 'always', to: 'on success' } },
+  };
+  t.deepEqual(changes, [expected]);
 });
 
-test('generateEdgeDiff: should register a change to edge enabled state', (t) => {
+test('generateEdgeDiff: should register a change to edge disabled state', (t) => {
   const local = createWorkflow([
     makeStepWithNext('a', { b: { disabled: true } }),
     makeStepWithNext('b'),
@@ -306,6 +322,10 @@ test('generateEdgeDiff: should register a change to edge enabled state', (t) => 
 
   const changes = generateEdgeDiff(local, remote);
 
-  t.is(changes.length, 1);
-  t.deepEqual(changes[0].changes?.disabled, { from: undefined, to: true });
+  const expected = {
+    id: 'a->b',
+    type: 'changed',
+    changes: { disabled: { from: undefined, to: true } },
+  };
+  t.deepEqual(changes, [expected]);
 });
