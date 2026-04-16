@@ -36,7 +36,6 @@ export const generateStepDiff = (
 ): StepChange[] => {
   if (!localWf || !remoteWf) return [];
 
-  // TODO typings are wrong here - why?
   const localSteps = localWf.steps as any[];
   const remoteSteps = remoteWf.steps as any[];
   const remoteById = Object.fromEntries(remoteSteps.map((s) => [s.id, s]));
@@ -66,13 +65,8 @@ export const generateStepDiff = (
     if (localExpr !== remoteExpr) {
       const lineDiff =
         localExpr.split('\n').length - remoteExpr.split('\n').length;
-      //  TODO 1 line changed should be +1
       fieldChanges.body =
-        lineDiff > 0
-          ? `+${lineDiff} lines`
-          : lineDiff < 0
-          ? `${lineDiff} lines`
-          : '<changed>';
+        lineDiff >= 0 ? `+${lineDiff + 1} lines` : `${lineDiff} lines`;
     }
 
     if (Object.keys(fieldChanges).length > 0) {

@@ -64,7 +64,7 @@ test('generateStepDiff: should register a change to a step expression (body)', (
     id: 'a',
     name: 'Step A',
     type: 'changed',
-    changes: { body: '<changed>' },
+    changes: { body: '+1 lines' },
   };
   t.deepEqual(changes, [expected]);
 });
@@ -82,7 +82,7 @@ test('generateStepDiff: body diff reports +N lines when local has more lines', (
     id: 'a',
     name: 'Step A',
     type: 'changed',
-    changes: { body: '+2 lines' },
+    changes: { body: '+3 lines' },
   };
   t.deepEqual(changes, [expected]);
 });
@@ -105,7 +105,7 @@ test('generateStepDiff: body diff reports -N lines when local has fewer lines', 
   t.deepEqual(changes, [expected]);
 });
 
-test('generateStepDiff: body diff reports <changed> when line count is unchanged', (t) => {
+test('generateStepDiff: body diff reports +1 lines when line count is unchanged', (t) => {
   const local = createWorkflow([createStep({ expression: 'fn(s => s.x)' })]);
   const remote = createWorkflow([createStep({ expression: 'fn(s => s.y)' })]);
 
@@ -115,7 +115,7 @@ test('generateStepDiff: body diff reports <changed> when line count is unchanged
     id: 'a',
     name: 'Step A',
     type: 'changed',
-    changes: { body: '<changed>' },
+    changes: { body: '+1 lines' },
   };
   t.deepEqual(changes, [expected]);
 });
