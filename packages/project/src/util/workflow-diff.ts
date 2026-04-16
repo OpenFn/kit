@@ -10,13 +10,25 @@ export type StepChange = {
     name?: { from: string; to: string };
     adaptor?: { from: string; to: string };
     body?: string;
+
+    [other: string]: any;
   };
 };
 
-const TRACKED_FIELDS: Array<{ key: 'name' | 'adaptor' }> = [
-  { key: 'name' },
-  { key: 'adaptor' },
-];
+export type EdgeChange = {
+  id: string;
+  type: StepChangeType;
+  changes?: {
+    condition?: { from?: string; to?: string };
+    label?: { from?: string; to?: string };
+    enabled?: { from: boolean; to: boolean };
+
+    [other: string]: any;
+  };
+};
+
+const trackedStepFields: string[] = ['name', 'adaptor', 'configuration'];
+const trackedEdgeFields: string[] = ['condition', 'label', 'disabled'];
 
 export const generateStepDiff = (
   localWf: Workflow | undefined,
@@ -24,6 +36,7 @@ export const generateStepDiff = (
 ): StepChange[] => {
   if (!localWf || !remoteWf) return [];
 
+  // TODO typings are wrong here - why?
   const localSteps = localWf.steps as any[];
   const remoteSteps = remoteWf.steps as any[];
   const remoteById = Object.fromEntries(remoteSteps.map((s) => [s.id, s]));
@@ -40,7 +53,7 @@ export const generateStepDiff = (
 
     const fieldChanges: StepChange['changes'] = {};
 
-    for (const { key } of TRACKED_FIELDS) {
+    for (const key of trackedStepFields) {
       const localVal = step[key];
       const remoteVal = remote[key];
       if (localVal !== remoteVal) {
@@ -53,6 +66,7 @@ export const generateStepDiff = (
     if (localExpr !== remoteExpr) {
       const lineDiff =
         localExpr.split('\n').length - remoteExpr.split('\n').length;
+      //  TODO 1 line changed should be +1
       fieldChanges.body =
         lineDiff > 0
           ? `+${lineDiff} lines`
@@ -82,16 +96,6 @@ export const generateStepDiff = (
   }
 
   return changes;
-};
-
-export type EdgeChange = {
-  id: string;
-  type: StepChangeType;
-  changes?: {
-    condition?: { from: string | undefined; to: string | undefined };
-    label?: { from: string | undefined; to: string | undefined };
-    enabled?: { from: boolean; to: boolean };
-  };
 };
 
 const getEdgeMap = (wf: Workflow): Record<string, any> => {
@@ -126,14 +130,10 @@ export const generateEdgeDiff = (
 
     const fieldChanges: EdgeChange['changes'] = {};
 
-    if (local.condition !== remote.condition) {
-      fieldChanges.condition = { from: remote.condition, to: local.condition };
-    }
-    if (local.label !== remote.label) {
-      fieldChanges.label = { from: remote.label, to: local.label };
-    }
-    if (!!local.disabled !== !!remote.disabled) {
-      fieldChanges.enabled = { from: !remote.disabled, to: !local.disabled };
+    for (const key of trackedEdgeFields) {
+      if (local[key] != remote[key]) {
+        fieldChanges[key] = { from: remote[key], to: local[key] };
+      }
     }
 
     if (Object.keys(fieldChanges).length > 0) {
