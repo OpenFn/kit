@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.23.7
+
+### Patch Changes
+
+- 27ec317: Add debug logging to step-complete payloads
+
 ## 1.23.6
 
 ### Patch Changes
