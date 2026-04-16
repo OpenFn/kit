@@ -73,19 +73,20 @@ export const printRichDiff = (
   const changed = diffs.filter((d) => d.type === 'changed');
   const added = diffs.filter((d) => d.type === 'added');
 
+  logger.break();
   logger.always('This will make the following changes to the remote project:');
+  logger.break();
 
   if (removed.length > 0) {
-    logger.break();
     for (const diff of removed) {
       const wf = remote.getWorkflow(diff.id);
       const label = wf?.name || diff.id;
       logger.always(c.red(`${label}: deleted`));
     }
+    logger.break();
   }
 
   if (changed.length > 0) {
-    logger.break();
     for (const diff of changed) {
       const localWf = local.getWorkflow(diff.id);
       const remoteWf = remote.getWorkflow(diff.id);
@@ -94,17 +95,17 @@ export const printRichDiff = (
       printStepDiff(generateStepDiff(localWf, remoteWf), logger);
       printEdgeDiff(generateEdgeDiff(localWf, remoteWf), logger);
     }
+    logger.break();
   }
 
   if (added.length > 0) {
-    logger.break();
     for (const diff of added) {
       const wf = local.getWorkflow(diff.id);
       const label = wf?.name || diff.id;
       logger.always(c.green(`${label}: added`));
     }
+    logger.break();
   }
 
-  logger.break();
   return diffs;
 };
