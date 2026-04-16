@@ -160,7 +160,7 @@ const syncProjects = async (
       endpoint: endpoint,
     });
 
-    logger.success('Downloaded latest version of project at ', endpoint);
+    logger.info('Downloaded latest version of project at ', endpoint);
   } catch (e) {
     console.log(e);
     throw e;

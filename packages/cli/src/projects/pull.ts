@@ -66,7 +66,7 @@ export async function handler(options: PullOptions, logger: Logger) {
   ensureProjectId(options, logger);
 
   await fetch(options, logger);
-  logger.success(`Downloaded latest project version`);
+  logger.info(`Downloaded latest project version`);
 
   await checkout(options, logger);
   logger.success(`Checked out project locally`);
