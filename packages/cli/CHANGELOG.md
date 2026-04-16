@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- 5b5d016: Adds new form of json diffing for cli
+- 5b5d016: `project deploy`: Prints out a nice diff on deploy to tell users what to expect. Pass `--diff-json` for a plain JSON readout (which is a bit less opinionated and a useful fallback)
 
 ### Patch Changes
 

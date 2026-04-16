@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- 5b5d016: Adds new form of json diffing for cli
+- 5b5d016: Add workflow-diff function
 
 ## 0.14.5
 
