@@ -82,5 +82,12 @@ export default async function onStepComplete(
 
   Object.assign(evt, reason);
 
+  const { output_dataclip, ...eventWithoutDataclip } = evt;
+  context.logger.debug(
+    `${context.id} step-complete payload: ${JSON.stringify(
+      eventWithoutDataclip
+    )}`
+  );
+
   return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
 }
