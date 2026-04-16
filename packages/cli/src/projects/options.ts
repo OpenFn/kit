@@ -119,4 +119,14 @@ export const name: CLIOption = {
   },
 };
 
+export const jsonDiff: CLIOption = {
+  name: 'json-diff',
+  yargs: {
+    alias: ['diff-json'],
+    boolean: true,
+    description:
+      'Show a full JSON diff of the project state instead of the default rich text summary',
+  },
+};
+
 export { newProject as new };

@@ -1,6 +1,5 @@
 import yargs from 'yargs';
 import Project, { versionsEqual, Workspace } from '@openfn/project';
-import c from 'chalk';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -17,6 +16,7 @@ import {
   AuthOptions,
 } from './util';
 import { build, ensure } from '../util/command-builders';
+import { printRichDiff } from './diff';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
@@ -41,6 +41,7 @@ export type DeployOptions = Pick<
   new?: boolean;
   name?: string;
   alias?: string;
+  jsonDiff?: boolean;
 };
 
 const options = [
@@ -51,6 +52,7 @@ const options = [
   o2.new,
   o2.name,
   o2.alias,
+  o2.jsonDiff,
 
   // general options
   o.apiKey,
@@ -121,6 +123,12 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+export type SyncResult = {
+  merged: Project;
+  remoteProject: Project;
+  locallyChangedWorkflows: string[];
+};
+
 // This function is responsible for syncing changes in the user's local project
 // with the remote app version
 // It returns a merged state object
@@ -131,7 +139,7 @@ const syncProjects = async (
   localProject: Project,
   trackedProject: Project, // the project we want to update
   logger: Logger
-): Promise<Project | null> => {
+): Promise<SyncResult | null> => {
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -152,7 +160,7 @@ const syncProjects = async (
       endpoint: endpoint,
     });
 
-    logger.success('Downloaded latest version of project at ', endpoint);
+    logger.info('Downloaded latest version of project at ', endpoint);
   } catch (e) {
     console.log(e);
     throw e;
@@ -169,15 +177,10 @@ const syncProjects = async (
   );
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  let diffs = [];
-  if (locallyChangedWorkflows.length) {
-    diffs = reportDiff(
-      localProject,
-      remoteProject,
-      locallyChangedWorkflows,
-      logger
-    );
-  }
+  const diffs = locallyChangedWorkflows.length
+    ? remoteProject.diff(localProject, locallyChangedWorkflows)
+    : [];
+
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return null;
@@ -238,7 +241,7 @@ const syncProjects = async (
     onlyUpdated: true,
   });
 
-  return merged;
+  return { merged, remoteProject, locallyChangedWorkflows };
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {
@@ -306,11 +309,14 @@ export async function handler(options: DeployOptions, logger: Logger) {
     `Loaded checked-out project ${printProjectName(localProject)}`
   );
 
-  let merged;
+  let merged: Project;
+  let remoteProject: Project | undefined;
+  let locallyChangedWorkflows: string[] = [];
+
   if (options.new) {
     merged = localProject;
   } else {
-    merged = await syncProjects(
+    const syncResult = await syncProjects(
       options,
       config,
       ws,
@@ -318,9 +324,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
       tracker,
       logger
     );
-    if (!merged) {
+    if (!syncResult) {
       return;
     }
+    ({ merged, remoteProject, locallyChangedWorkflows } = syncResult);
   }
 
   const state = merged.serialize('state', {
@@ -335,7 +342,21 @@ export async function handler(options: DeployOptions, logger: Logger) {
   logger.debug(JSON.stringify(state, null, 2));
   logger.debug();
 
-  // TODO: I want to report diff HERE, after the merged state and stuff has been built
+  if (remoteProject) {
+    if (options.jsonDiff) {
+      const remoteState = remoteProject.serialize('state', {
+        format: 'json',
+      }) as object;
+      await printJsonDiff(remoteState, state as object, logger);
+    } else {
+      printRichDiff(
+        localProject,
+        remoteProject,
+        locallyChangedWorkflows,
+        logger
+      );
+    }
+  }
 
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
@@ -404,48 +425,16 @@ export async function handler(options: DeployOptions, logger: Logger) {
   }
 }
 
-export const reportDiff = (
-  local: Project,
-  remote: Project,
-  locallyChangedWorkflows: string[],
+export const printJsonDiff = async (
+  remoteState: object,
+  mergedState: object,
   logger: Logger
 ) => {
-  const diffs = remote.diff(local, locallyChangedWorkflows);
-  if (diffs.length === 0) {
-    logger.info('No workflow changes detected');
-    return diffs;
-  }
-
-  const added = diffs.filter((d) => d.type === 'added');
-  const changed = diffs.filter((d) => d.type === 'changed');
-  const removed = diffs.filter((d) => d.type === 'removed');
-
-  if (added.length > 0) {
+  const { default: jsondiff } = await import('json-diff');
+  const diff = jsondiff.diffString(remoteState, mergedState);
+  if (diff) {
     logger.break();
-    logger.always(c.green('Workflows added:'));
-    for (const diff of added) {
-      logger.always(c.green(`  - ${diff.id}`));
-    }
+    logger.always(diff);
     logger.break();
   }
-
-  if (changed.length > 0) {
-    logger.break();
-    logger.always(c.yellow('Workflows modified:'));
-    for (const diff of changed) {
-      logger.always(c.yellow(`  - ${diff.id}`));
-    }
-    logger.break();
-  }
-
-  if (removed.length > 0) {
-    logger.break();
-    logger.always(c.red('Workflows removed:'));
-    for (const diff of removed) {
-      logger.always(c.red(`  - ${diff.id}`));
-    }
-    logger.break();
-  }
-
-  return diffs;
 };

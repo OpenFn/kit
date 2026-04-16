@@ -1,5 +1,12 @@
 # @openfn/lightning-mock
 
+## 2.4.13
+
+### Patch Changes
+
+- Updated dependencies [5b5d016]
+  - @openfn/project@0.15.0
+
 ## 2.4.12
 
 ### Patch Changes

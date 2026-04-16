@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.34.0
+
+### Minor Changes
+
+- 5b5d016: `project deploy`: Prints out a nice diff on deploy to tell users what to expect. Pass `--diff-json` for a plain JSON readout (which is a bit less opinionated and a useful fallback)
+
+### Patch Changes
+
+- Updated dependencies [5b5d016]
+  - @openfn/project@0.15.0
+
 ## 1.33.1
 
 ### Patch Changes

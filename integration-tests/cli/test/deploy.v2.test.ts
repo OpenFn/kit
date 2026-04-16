@@ -205,8 +205,14 @@ test.serial('pull, change and re-deploy twice', async (t) => {
   );
   t.falsy(stderr);
   const logs = extractLogs(stdout);
-  assertLog(t, logs, /Updated project/);
-  assertLog(t, logs, /Workflows modified/);
+  assertLog(
+    t,
+    logs,
+    /This will make the following changes to the remote project:/
+  );
+  assertLog(t, logs, /My Workflow: changed/);
+  assertLog(t, logs, /My Job:/gm);
+  assertLog(t, logs, /- expression: \+1 lines/gm);
 
   proj = server.state.projects[projectId];
   t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v\: 2/);
@@ -265,7 +271,9 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
 
   // another-workflow should appear in the modified list
   const anotherLog = logs.find(
-    (log) => log.level === 'always' && /another-workflow/.test(`${log.message}`)
+    (log) =>
+      log.level === 'always' &&
+      /Another Workflow: changed/.test(`${log.message}`)
   );
   t.truthy(anotherLog);
 
