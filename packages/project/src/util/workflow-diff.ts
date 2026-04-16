@@ -42,7 +42,6 @@ export const generateStepDiff = (
   const localById = Object.fromEntries(localSteps.map((s) => [s.id, s]));
 
   const changes: StepChange[] = [];
-
   for (const step of localSteps) {
     const remote = remoteById[step.id];
     if (!remote) {
