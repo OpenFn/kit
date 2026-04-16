@@ -45,14 +45,17 @@ const printStepDiff = (steps: StepChange[], logger: Logger) => {
       logger.always(c.red(`    ${step.name}: removed`));
     } else if (step.type === 'changed' && step.changes) {
       logger.always(c.yellow(`    ${step.name}:`));
-      const { name, adaptor, body } = step.changes;
-      if (name)
-        logger.always(c.yellow(`      - name: "${name.from}" -> "${name.to}"`));
-      if (adaptor)
-        logger.always(
-          c.yellow(`      - adaptor: ${adaptor.from} -> ${adaptor.to}`)
-        );
-      if (body) logger.always(c.yellow(`      - body: ${body}`));
+      for (const key in step.changes) {
+        if (key === 'body') {
+          logger.always(c.yellow(`      - expression: ${step.changes[key]}`));
+        } else {
+          logger.always(
+            c.yellow(
+              `      - ${key}: "${step.changes[key].from}" -> "${step.changes[key].to}"`
+            )
+          );
+        }
+      }
     }
   }
 };
