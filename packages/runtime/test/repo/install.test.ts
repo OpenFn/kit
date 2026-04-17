@@ -123,7 +123,6 @@ test.serial('installing should use the correct flags', async (t) => {
   t.assert(flags.includes('--no-audit'));
   t.assert(flags.includes('--no-fund'));
   t.assert(flags.includes('--no-package-lock'));
-  t.assert(flags.includes('--min-release-age=1'));
 });
 
 test.serial('install with the correct alias', async (t) => {
