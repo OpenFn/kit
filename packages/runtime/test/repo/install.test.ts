@@ -119,7 +119,7 @@ test.serial('installing should use the correct flags', async (t) => {
   const flags = cmd
     .split(' ')
     .filter((token: string) => token.startsWith('--'));
-  t.assert(flags.length === 4);
+  t.assert(flags.length === 3);
   t.assert(flags.includes('--no-audit'));
   t.assert(flags.includes('--no-fund'));
   t.assert(flags.includes('--no-package-lock'));
