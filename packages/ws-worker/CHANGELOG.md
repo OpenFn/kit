@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.23.8
+
+### Patch Changes
+
+- 9f65093: Revert min-release-age constraint on adaptor installation
+- Updated dependencies [9f65093]
+  - @openfn/runtime@1.9.1
+  - @openfn/engine-multi@1.11.2
+
 ## 1.23.7
 
 ### Patch Changes

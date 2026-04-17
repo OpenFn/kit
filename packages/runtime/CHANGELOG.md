@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.9.1
+
+### Patch Changes
+
+- 9f65093: Revert min-release-age constraint on adaptor installation
+
 ## 1.9.0
 
 ### Minor Changes

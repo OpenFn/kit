@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.34.1
+
+### Patch Changes
+
+- 9f65093: Revert min-release-age constraint on adaptor installation
+- Updated dependencies [9f65093]
+  - @openfn/runtime@1.9.1
+
 ## 1.34.0
 
 ### Minor Changes
