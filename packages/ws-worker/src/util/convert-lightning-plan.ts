@@ -234,6 +234,7 @@ export default (
       plan.workflow.credentials = {
         collections_token: true,
         collections_endpoint: true,
+        project_id: run.project_id,
       };
     }
   }
