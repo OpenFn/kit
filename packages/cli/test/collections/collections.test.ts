@@ -24,6 +24,7 @@ let api: any;
 const loadData = (items: Record<string, object>) => {
   for (const key in items) {
     api.upsert(
+      PROJECT,
       COLLECTION,
       key,
       JSON.stringify({
@@ -135,6 +136,7 @@ test.serial('get 200 items over 4 pages', async (t) => {
 
   new Array(300).fill(0).forEach((_v, idx) => {
     api.upsert(
+      PROJECT,
       COLLECTION,
       idx,
       JSON.stringify({
@@ -225,7 +227,7 @@ test.serial('set a single value', async (t) => {
   t.is(api.count(PROJECT, COLLECTION), 3);
 
   const item = api.collectionsByProject[PROJECT][COLLECTION].z;
-  t.deepEqual(item, { id: 'z' });
+  t.deepEqual(JSON.parse(item), { id: 'z' });
 });
 
 test.serial('set multiple values', async (t) => {
@@ -245,9 +247,9 @@ test.serial('set multiple values', async (t) => {
   t.is(api.count(PROJECT, COLLECTION), 4);
 
   const col = api.collectionsByProject[PROJECT][COLLECTION];
-  t.deepEqual(col.a, { id: 'a' });
+  t.deepEqual(JSON.parse(col.a), { id: 'a' });
 
-  t.deepEqual(col.b, { id: 'b' });
+  t.deepEqual(JSON.parse(col.b), { id: 'b' });
 });
 
 test.serial('set should throw if key and items are both set', async (t) => {
@@ -264,8 +266,8 @@ test.serial('set should throw if key and items are both set', async (t) => {
 });
 
 test.serial('remove one key', async (t) => {
-  const itemBefore = api.byKey(COLLECTION, 'x');
-  t.truthy(itemBefore);
+  const col = api.collectionsByProject[PROJECT][COLLECTION];
+  t.truthy(col.x);
 
   const options = createOptions({
     key: 'x',
@@ -273,7 +275,6 @@ test.serial('remove one key', async (t) => {
 
   await remove(options, logger);
 
-  const col = api.collectionsByProject[PROJECT][COLLECTION];
   t.falsy(col.x);
 });
 
