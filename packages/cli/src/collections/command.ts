@@ -89,6 +89,7 @@ const key = {
 };
 
 const endpoint = {
+  // TODO in docs, prefer endpoint to lightning
   name: 'endpoint',
   yargs: {
     alias: ['e', 'lightning'],

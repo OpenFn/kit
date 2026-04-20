@@ -30,6 +30,9 @@ export type LightningPlan = {
   /** The human readable name of the workflow. Not currently sent by Lightning. */
   name?: string;
 
+  /** The id of the project which owns this plan */
+  project_id?: string;
+
   dataclip_id: string;
   starting_node_id: string;
 
@@ -129,7 +132,11 @@ export type CHANNEL_LEAVE = 'socket:channel-leave';
 export type CLAIM = 'claim';
 
 // This is the payload in the message sent to lightning
-export type ClaimPayload = { demand?: number; worker_name: string | null; queues?: string[] };
+export type ClaimPayload = {
+  demand?: number;
+  worker_name: string | null;
+  queues?: string[];
+};
 
 // This is the response from lightning
 export type ClaimReply = { runs: Array<ClaimRun> };
