@@ -135,6 +135,10 @@ async function handleError(logger: Logger, response: Dispatcher.ResponseData) {
   let fix;
 
   switch (response.statusCode) {
+    case 409:
+      message = `409: multiple collection names matched`;
+      fix = `Pass --project-id to disambiguate the request`;
+      break;
     case 404:
       message = `404: collection not found`;
       fix = `Ensure the Collection has been created on the admin page`;

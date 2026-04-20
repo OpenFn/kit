@@ -337,6 +337,39 @@ test.serial("should throw if a collection doesn't exist", async (t) => {
   }
 });
 
+test.serial('should throw if a collection is ambiguous', async (t) => {
+  api.createCollection('project-2', COLLECTION);
+
+  const options = createOptions({
+    key: '*',
+    collectionName: COLLECTION,
+  });
+  try {
+    await get(options, logger);
+  } catch (e: any) {
+    t.regex(e.reason, /409: multiple collection names matched/i);
+  }
+});
+
+test.serial('do not throw if project_id is passed', async (t) => {
+  api.createCollection('project-2', COLLECTION);
+
+  api.upsert('project-2', COLLECTION, 'x', JSON.stringify({ id: 'x' }));
+
+  const options = createOptions({
+    key: 'x',
+    collectionName: COLLECTION,
+    projectId: 'project-2',
+  });
+
+  await get(options, logger);
+
+  const [_level, log] = logger._history.at(-1);
+  t.deepEqual(log.message[0], {
+    id: 'x',
+  });
+});
+
 test.serial('use OPENFN_ENDPOINT if endpoint option is not set', async (t) => {
   const options = createOptions({
     key: 'x',
