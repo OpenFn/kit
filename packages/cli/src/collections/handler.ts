@@ -15,18 +15,18 @@ import { QueryOptions } from '@openfn/language-collections/types/collections';
 
 const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   if (!('token' in opts)) {
-    if (process.env.OPENFN_PAT) {
-      const token = process.env.OPENFN_PAT;
+    const token = process.env.OPENFN_API_KEY ?? process.env.OPENFN_PAT;
+    if (token) {
       logger.info(
         `Using access token ending in ${token?.substring(
           token.length - 10
-        )} from env (OPENFN_PAT)`
+        )} from env`
       );
       opts.token = token;
     } else {
       logger.error('No access token detected!');
       logger.error(
-        'Ensure you pass a Personal Access Token (PAT) with --token $MY_TOKEN or set the OPENFN_PAT env var'
+        'Ensure you pass a Personal Access Token (PAT) with --token $MY_TOKEN or set the OPENFN_API_KEY env var'
       );
       logger.error(
         'You can get a PAT from OpenFn, see https://docs.openfn.org/documentation/api-tokens'
@@ -76,6 +76,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
       key: options.key,
       collectionName: options.collectionName,
       query: buildQuery(options),
+      projectId: options.projectId,
     },
     logger
   );
@@ -152,6 +153,7 @@ export const set = async (options: SetOptions, logger: Logger) => {
       key: options.key,
       collectionName: options.collectionName,
       data: { items },
+      projectId: options.projectId,
     },
     logger
   );
@@ -179,6 +181,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
         token: options.token!,
         key: options.key,
         collectionName: options.collectionName,
+        projectId: options.projectId,
       },
       logger
     );

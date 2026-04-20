@@ -15,6 +15,7 @@ export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
   token?: string;
   key: string;
   collectionName: string;
+  projectId?: string;
 };
 
 export type GetOptions = CollectionsOptions &
@@ -106,6 +107,17 @@ const pageSize = {
   },
 };
 
+const projectId = {
+  name: 'project-id',
+  yargs: {
+    alias: ['p'],
+    // TODO maybe CLI should be smart and support a local alias here
+    // Or if inside a workspace, use that
+    description: 'The UUID of the project which owns this collection',
+    type: 'string',
+  },
+};
+
 // TODO not working yet
 const limit = {
   name: 'limit',
@@ -158,6 +170,7 @@ const getOptions = [
   pageSize,
   limit,
   pretty,
+  projectId,
 
   createdBefore,
   createdAfter,

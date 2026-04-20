@@ -3,6 +3,7 @@ import { request } from 'undici';
 import type { Dispatcher } from 'undici';
 import { Logger } from '../util';
 import { throwAbortableError } from '../util/abort';
+import { projectId } from '../options';
 
 // helper function to call out to the collections API
 
@@ -11,6 +12,7 @@ type Options = {
   collectionName: string;
   token: string;
   lightning?: string;
+  projectId?: string;
 
   includeMeta?: boolean; // TODO ignored right now
   pageSize?: number;
@@ -48,6 +50,9 @@ export default async (
     },
     options.query
   );
+  if (options.projectId) {
+    query.project_id = options.projectId;
+  }
 
   const args: Partial<Dispatcher.RequestOptions> = {
     headers,
