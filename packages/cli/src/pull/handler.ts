@@ -12,6 +12,7 @@ import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import beta from '../projects/pull';
 import { fileExists } from '../util/file-exists';
+import { yamlToJson } from '@openfn/project';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
@@ -26,6 +27,12 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       'openfn.yaml'
     );
     if (await fileExists(v2ConfigPath)) {
+      // override endpoint with one from openfn.yaml
+      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+      if (config?.project?.endpoint) {
+        config.endpoint = config.project.endpoint;
+      }
+
       logger.always(
         'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
       );

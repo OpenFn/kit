@@ -10,6 +10,8 @@ import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
 import path from 'node:path';
 import { fileExists } from '../util/file-exists';
+import { yamlToJson } from '@openfn/project';
+import fs from 'node:fs/promises';
 
 export type DeployFn = typeof deploy;
 
@@ -39,6 +41,12 @@ async function deployHandler(
       'openfn.yaml'
     );
     if (await fileExists(v2ConfigPath)) {
+      // override endpoint with one from openfn.yaml
+      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+      if (config?.project?.endpoint) {
+        config.endpoint = config.project.endpoint;
+      }
+
       logger.always(
         'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy)'
       );
