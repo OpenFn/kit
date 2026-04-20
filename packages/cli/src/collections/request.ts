@@ -3,7 +3,6 @@ import { request } from 'undici';
 import type { Dispatcher } from 'undici';
 import { Logger } from '../util';
 import { throwAbortableError } from '../util/abort';
-import { projectId } from '../options';
 
 // helper function to call out to the collections API
 
