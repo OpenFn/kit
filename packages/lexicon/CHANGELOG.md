@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.5.0
+
+### Minor Changes
+
+- Accept project id on workflow (for use with collections)
+
 ## 1.4.2
 
 ### Patch Changes
