@@ -132,15 +132,18 @@ async function handleError(logger: Logger, response: Dispatcher.ResponseData) {
   logger.error('Error from server', response.statusCode);
   let message;
   let fix;
+  let logBody = true;
 
   switch (response.statusCode) {
     case 409:
       message = `409: multiple collection names matched`;
       fix = `Pass --project-id to disambiguate the request`;
+      logBody = false;
       break;
     case 404:
       message = `404: collection not found`;
       fix = `Ensure the Collection has been created on the admin page`;
+      logBody = false;
       break;
     default:
       message = `Error from server: ${response.statusCode}`;
@@ -148,16 +151,18 @@ async function handleError(logger: Logger, response: Dispatcher.ResponseData) {
 
   let contentType = (response.headers?.['content-type'] as string) ?? '';
 
-  if (contentType.startsWith('application/json')) {
-    try {
-      const body = await response.body.json();
-      logger.error(body);
-    } catch (e) {}
-  } else {
-    try {
-      const text = await response.body.text();
-      logger.error(text);
-    } catch (e) {}
+  if (logBody) {
+    if (contentType.startsWith('application/json')) {
+      try {
+        const body = await response.body.json();
+        logger.error(body);
+      } catch (e) {}
+    } else {
+      try {
+        const text = await response.body.text();
+        logger.error(text);
+      } catch (e) {}
+    }
   }
 
   throwAbortableError(message, fix);
