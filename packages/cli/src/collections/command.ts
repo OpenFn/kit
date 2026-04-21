@@ -113,8 +113,14 @@ const projectId = {
     alias: ['p'],
     // TODO maybe CLI should be smart and support a local alias here
     // Or if inside a workspace, use that
-    description: 'The UUID of the project which owns this collection',
+    description:
+      'The UUID of the project which owns this collection. Set via env var OPENFN_PROJECT_ID',
     type: 'string',
+  },
+  ensure: (opts: any) => {
+    if (!opts.projectId) {
+      opts.projectId = process.env.OPENFN_PROJECT_ID;
+    }
   },
 };
 
@@ -164,13 +170,13 @@ const updatedAfter = {
 
 const getOptions = [
   collectionName,
+  projectId,
   key,
   o.apiKey,
   endpoint,
   pageSize,
   limit,
   pretty,
-  projectId,
 
   createdBefore,
   createdAfter,
@@ -206,6 +212,7 @@ const dryRun = {
 
 const removeOptions = [
   collectionName,
+  projectId,
   key,
   o.apiKey,
   endpoint,
@@ -246,6 +253,7 @@ const items = {
 
 const setOptions = [
   collectionName,
+  projectId,
   override(key as any, {
     demand: false,
   }),
