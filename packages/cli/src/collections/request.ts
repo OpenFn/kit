@@ -137,7 +137,7 @@ async function handleError(logger: Logger, response: Dispatcher.ResponseData) {
   switch (response.statusCode) {
     case 409:
       message = `409: multiple collection names matched`;
-      fix = `Pass --project-id to disambiguate the request`;
+      fix = `Pass --project-id or set OPENFN_PROJECT_ID to disambiguate the request`;
       logBody = false;
       break;
     case 404:
