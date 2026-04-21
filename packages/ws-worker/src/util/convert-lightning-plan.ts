@@ -235,6 +235,9 @@ export default (
         collections_token: true,
         collections_endpoint: true,
       };
+      if (run.project_id) {
+        plan.workflow.credentials.project_id = run.project_id;
+      }
     }
   }
 

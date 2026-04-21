@@ -15,6 +15,7 @@ export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
   token?: string;
   key: string;
   collectionName: string;
+  projectId?: string;
 };
 
 export type GetOptions = CollectionsOptions &
@@ -89,6 +90,7 @@ const key = {
 };
 
 const endpoint = {
+  // TODO in docs, prefer endpoint to lightning
   name: 'endpoint',
   yargs: {
     alias: ['e', 'lightning'],
@@ -102,6 +104,23 @@ const pageSize = {
   yargs: {
     description: 'Number of items to fetch per page',
     type: 'number',
+  },
+};
+
+const projectId = {
+  name: 'project-id',
+  yargs: {
+    alias: ['p'],
+    // TODO maybe CLI should be smart and support a local alias here
+    // Or if inside a workspace, use that
+    description:
+      'The UUID of the project which owns this collection. Set via env var OPENFN_PROJECT_ID',
+    type: 'string',
+  },
+  ensure: (opts: any) => {
+    if (!opts.projectId) {
+      opts.projectId = process.env.OPENFN_PROJECT_ID;
+    }
   },
 };
 
@@ -151,6 +170,7 @@ const updatedAfter = {
 
 const getOptions = [
   collectionName,
+  projectId,
   key,
   o.apiKey,
   endpoint,
@@ -192,6 +212,7 @@ const dryRun = {
 
 const removeOptions = [
   collectionName,
+  projectId,
   key,
   o.apiKey,
   endpoint,
@@ -232,6 +253,7 @@ const items = {
 
 const setOptions = [
   collectionName,
+  projectId,
   override(key as any, {
     demand: false,
   }),

@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.24.0
+
+### Minor Changes
+
+- Accept project id on workflow (for use with collections)
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.5.0
+
 ## 1.23.8
 
 ### Patch Changes

@@ -13,6 +13,7 @@ import { readFile } from 'fs/promises';
 // Log as json to make testing easier
 const logger = createMockLogger('default', { level: 'debug', json: true });
 
+const PROJECT = 'project-1';
 const COLLECTION = 'test-collection-a';
 const ENDPOINT = 'https://mock.openfn.org';
 
@@ -23,6 +24,7 @@ let api: any;
 const loadData = (items: Record<string, object>) => {
   for (const key in items) {
     api.upsert(
+      PROJECT,
       COLLECTION,
       key,
       JSON.stringify({
@@ -42,7 +44,7 @@ test.before(() => {
 test.beforeEach(() => {
   logger._reset();
   api.reset();
-  api.createCollection(COLLECTION);
+  api.createCollection(PROJECT, COLLECTION);
   loadData({
     x: {},
     y: {},
@@ -130,10 +132,11 @@ test.serial('get one key from a collection and write to disk', async (t) => {
 // So we'll test on the logs - it's good enough for today
 test.serial('get 200 items over 4 pages', async (t) => {
   api.reset();
-  api.createCollection(COLLECTION);
+  api.createCollection(PROJECT, COLLECTION);
 
   new Array(300).fill(0).forEach((_v, idx) => {
     api.upsert(
+      PROJECT,
       COLLECTION,
       idx,
       JSON.stringify({
@@ -142,7 +145,7 @@ test.serial('get 200 items over 4 pages', async (t) => {
       })
     );
   });
-  t.is(api.count(COLLECTION), 300);
+  t.is(api.count(PROJECT, COLLECTION), 300);
 
   const options = createOptions({
     key: '*',
@@ -168,10 +171,11 @@ test.serial('get 200 items over 4 pages', async (t) => {
 // This test uses an irregular page size
 test.serial('get 180 items over 4 pages', async (t) => {
   api.reset();
-  api.createCollection(COLLECTION);
+  api.createCollection(PROJECT, COLLECTION);
 
   new Array(300).fill(0).forEach((_v, idx) => {
     api.upsert(
+      PROJECT,
       COLLECTION,
       idx,
       JSON.stringify({
@@ -180,7 +184,7 @@ test.serial('get 180 items over 4 pages', async (t) => {
       })
     );
   });
-  t.is(api.count(COLLECTION), 300);
+  t.is(api.count(PROJECT, COLLECTION), 300);
 
   const options = createOptions({
     key: '*',
@@ -220,9 +224,10 @@ test.serial('set a single value', async (t) => {
 
   await set(options, logger);
 
-  t.is(api.count(COLLECTION), 3);
-  const item = api.asJSON(COLLECTION, 'z');
-  t.deepEqual(item, { id: 'z' });
+  t.is(api.count(PROJECT, COLLECTION), 3);
+
+  const item = api.collectionsByProject[PROJECT][COLLECTION].z;
+  t.deepEqual(JSON.parse(item), { id: 'z' });
 });
 
 test.serial('set multiple values', async (t) => {
@@ -239,12 +244,12 @@ test.serial('set multiple values', async (t) => {
 
   await set(options, logger);
 
-  t.is(api.count(COLLECTION), 4);
-  const a = api.asJSON(COLLECTION, 'a');
-  t.deepEqual(a, { id: 'a' });
+  t.is(api.count(PROJECT, COLLECTION), 4);
 
-  const b = api.asJSON(COLLECTION, 'b');
-  t.deepEqual(b, { id: 'b' });
+  const col = api.collectionsByProject[PROJECT][COLLECTION];
+  t.deepEqual(JSON.parse(col.a), { id: 'a' });
+
+  t.deepEqual(JSON.parse(col.b), { id: 'b' });
 });
 
 test.serial('set should throw if key and items are both set', async (t) => {
@@ -261,8 +266,8 @@ test.serial('set should throw if key and items are both set', async (t) => {
 });
 
 test.serial('remove one key', async (t) => {
-  const itemBefore = api.byKey(COLLECTION, 'x');
-  t.truthy(itemBefore);
+  const col = api.collectionsByProject[PROJECT][COLLECTION];
+  t.truthy(col.x);
 
   const options = createOptions({
     key: 'x',
@@ -270,12 +275,11 @@ test.serial('remove one key', async (t) => {
 
   await remove(options, logger);
 
-  const itemAfter = api.byKey(COLLECTION, 'x');
-  t.falsy(itemAfter);
+  t.falsy(col.x);
 });
 
 test.serial('remove multiple keys', async (t) => {
-  t.is(api.count(COLLECTION), 2);
+  t.is(api.count(PROJECT, COLLECTION), 2);
 
   const options = createOptions({
     key: '*',
@@ -283,11 +287,11 @@ test.serial('remove multiple keys', async (t) => {
 
   await remove(options, logger);
 
-  t.is(api.count(COLLECTION), 0);
+  t.is(api.count(PROJECT, COLLECTION), 0);
 });
 
 test.serial('remove with dry run', async (t) => {
-  t.is(api.count(COLLECTION), 2);
+  t.is(api.count(PROJECT, COLLECTION), 2);
 
   const options = createOptions({
     key: '*',
@@ -296,7 +300,7 @@ test.serial('remove with dry run', async (t) => {
 
   await remove(options, logger);
 
-  t.is(api.count(COLLECTION), 2);
+  t.is(api.count(PROJECT, COLLECTION), 2);
 
   // Find the outputted keys
   const [, output] = logger._history.find(
@@ -331,6 +335,39 @@ test.serial("should throw if a collection doesn't exist", async (t) => {
     t.regex(e.reason, /collection not found/i);
     t.regex(e.help, /ensure the collection has been created/i);
   }
+});
+
+test.serial('should throw if a collection is ambiguous', async (t) => {
+  api.createCollection('project-2', COLLECTION);
+
+  const options = createOptions({
+    key: '*',
+    collectionName: COLLECTION,
+  });
+  try {
+    await get(options, logger);
+  } catch (e: any) {
+    t.regex(e.reason, /409: multiple collection names matched/i);
+  }
+});
+
+test.serial('do not throw if project_id is passed', async (t) => {
+  api.createCollection('project-2', COLLECTION);
+
+  api.upsert('project-2', COLLECTION, 'x', JSON.stringify({ id: 'x' }));
+
+  const options = createOptions({
+    key: 'x',
+    collectionName: COLLECTION,
+    projectId: 'project-2',
+  });
+
+  await get(options, logger);
+
+  const [_level, log] = logger._history.at(-1);
+  t.deepEqual(log.message[0], {
+    id: 'x',
+  });
 });
 
 test.serial('use OPENFN_ENDPOINT if endpoint option is not set', async (t) => {
