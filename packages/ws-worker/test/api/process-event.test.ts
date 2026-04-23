@@ -434,7 +434,7 @@ test('should not drop an event', async (t) => {
   });
 });
 
-test.only('should not drop an event in batch mode', async (t) => {
+test('should not drop an event in batch mode', async (t) => {
   t.timeout(1000 * 30)
 
   const total = 100; // this should suffice for unit tests
