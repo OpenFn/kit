@@ -441,7 +441,7 @@ test('should not drop an event in batch mode', async (t) => {
   return new Promise((resolve) => {
     const events: any[] = [];
     
-    const handler = (evt) => {
+    const handler = (evt: any) => {
        if (evt.id === total) {
         let prevId= 0;
         for(const e of events) {
@@ -453,7 +453,7 @@ test('should not drop an event in batch mode', async (t) => {
     }
     
     const callbacks = createCallbacks({
-      a: (c, e) => {
+      a: (_c: any, e: any) => {
         events.push(e)
         handler(e)
       },
@@ -486,103 +486,6 @@ test('should not drop an event in batch mode', async (t) => {
         engine.emit('a', {id: count })
       }
     }
-  });
-});
-
-// debugging
-/**
- * this test sort of works now
- * 
- * it send 100 events (maybe more) and expects them all to be received
- * But it fails because sometimes events are dropped
- * sometimes it just doesn't exit either
- * 
- * I'd like to tidy this somehow
- */
-test.skip('!!!', async (t) => {
-  t.timeout(1000 * 30)
-  return new Promise((resolve) => {
-    let count = 0;
-    let didStart;
-    let done = false;
-    const events = [];
-    
-    const maybeFinish = (evt) => {
-      if (done && evt.id === count) {
-        console.log('>>> finishing', evt.id)
-        console.log(count, events.length)
-        console.log(events)
-
-        let prevId= 0;
-        for(const e of events) {
-          if (e.id == prevId + 1) {
-            prevId++
-          } else {
-            console.log('fail on ', e)
-
-            t.fail()
-            resolve()
-            break;
-          }
-        }
-        resolve()
-      }
-    }
-
-    const callbacks = createCallbacks({
-      start: (c, e) => {
-        events.push(e)
-        console.log('start')
-        maybeFinish(e)
-      },
-      end: (c, e) => {
-        events.push(e)
-        console.log('end')
-        maybeFinish(e)
-      },
-      test: (_context: any, evt: any) => {
-        events.push(...evt)
-        console.log('test', evt.length)
-        console.log(evt.at(-1))
-        maybeFinish(evt.pop()) // send the last one
-      },
-    });
-
-    const engine = createFakeEngine();
-    const context: any = {
-      logger,
-    };
-
-    eventProcessor(engine, context, callbacks, {
-      events: ['test', 'start', 'end'],
-      batch: { test: true },
-      batchLimit: 6,
-      batchInterval: 100,
-    });
-
-    // randomly send events at high volume
-    // every start should be paired with an end
-    while(count < 100 || !didStart) {
-      count++;
-
-      if (Math.random() < 0.8) {
-        engine.emit('test', {id: count })
-      } else {
-        if (didStart) {
-          engine.emit('end', {id: count })
-          didStart = false;
-        } else {
-          engine.emit('start', {id: count })
-          didStart = true;
-        }
-      }
-    }
-    done = true;
-
-    // // TODO assert event order is correct
-    // t.pass()
-    // resolve()
-
   });
 });
 
