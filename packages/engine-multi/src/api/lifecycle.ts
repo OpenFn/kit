@@ -14,7 +14,6 @@ export const workflowStart = (
 ) => {
   const { state, logger } = context;
   const { workflowId, threadId } = event;
-
   logger.info('starting workflow ', workflowId);
 
   // where would this throw get caught?
@@ -68,7 +67,9 @@ export const jobStart = (
   context: ExecutionContext,
   event: internalEvents.JobStartEvent
 ) => {
+  const { logger,state} = context;
   const { threadId, jobId } = event;
+  logger.debug(`${state.id}: sending job start (step start): ${event.jobId}`)
 
   context.emit(externalEvents.JOB_START, {
     jobId,
@@ -81,7 +82,9 @@ export const jobComplete = (
   context: ExecutionContext,
   event: internalEvents.JobCompleteEvent
 ) => {
+  const { logger, state: runState } = context;
   const { threadId, state, duration, jobId, next, mem, redacted } = event;
+  logger.debug(`${runState.id}: sending job complete (step complete): ${event.jobId}`)
 
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
