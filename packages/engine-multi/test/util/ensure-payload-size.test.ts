@@ -17,7 +17,7 @@ import ensurePayloadSize, {
   });
 
   test(algo + ': throw for limit 1byte, payload 2 bytes', async (t) => {
-    await t.throwsAsync(() => verify(12, 1 / 1024 / 1024, algo), {
+    await t.throwsAsync(() => verify('ab', 1 / 1024 / 1024, algo), {
       name: 'PAYLOAD_TOO_LARGE',
     });
   });

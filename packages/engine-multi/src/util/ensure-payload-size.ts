@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { JsonStreamStringify } from 'json-stream-stringify';
 
 // This specifies which keys of an event payload to potentially redact
@@ -55,7 +56,8 @@ export const calculateSizeStream = async (
     typeof value === 'boolean' ||
     typeof value === 'function'
   ) {
-    return 1;
+    // Treat as size 0
+    return 0;
   }
 
   let size_bytes = 0;
@@ -76,21 +78,61 @@ export const calculateSizeStream = async (
 };
 
 export default async (payload: any, limit_mb: number = 10) => {
+  if (!limit_mb || isNaN(limit_mb)) {
+    return payload;
+  }
+
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
     if (key in payload) {
       try {
         await verify(payload[key], limit_mb, 'stream');
-      } catch (e) {
-        Object.assign(
-          newPayload[key],
-          replacements[key] ?? replacements.default
-        );
-        newPayload.redacted = true;
+      } catch (e: any) {
+        if (e.name === 'PAYLOAD_TOO_LARGE') {
+          Object.assign(
+            newPayload[key],
+            replacements[key] ?? replacements.default
+          );
+          newPayload.redacted = true;
+        } else {
+          console.log(e)
+        }
       }
     }
   }
 
   return newPayload;
 };
+
+// export default async (payload: any, limit_mb: number = 10) => {
+//   return new Promise(async (resolve) => {
+//     if (!limit_mb || isNaN(limit_mb)) {
+//       resolve( payload);
+//     }
+
+//     const newPayload = { ...payload };
+
+//     for (const key of KEYS_TO_VERIFY) {
+//       if (key in payload) {
+//         try {
+//           await verify(payload[key], limit_mb, 'stream');
+//         } catch (e) {
+//           if (e.name === 'PAYLOAD_TOO_LARGE') {
+//             Object.assign(
+//               newPayload[key],
+//               replacements[key] ?? replacements.default
+//             );
+//             newPayload.redacted = true;
+//           }
+//         }
+//       }
+//     }
+
+//     setTimeout(() => {
+//       resolve(newPayload)
+
+//     }, 1000)
+
+//   })
+// };

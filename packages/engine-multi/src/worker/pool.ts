@@ -99,11 +99,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       });
 
       // This will forward all internal console.debug() lines to the parent stdout
-      if (options.proxyStdout) {
+      // if (options.proxyStdout) {
         child.stdout!.on('data', (data) => {
           console.log(`${child.pid ?? ''} |> ${data.toString()}`);
         });
-      }
+      // }
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
