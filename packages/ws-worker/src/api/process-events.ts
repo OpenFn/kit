@@ -183,12 +183,12 @@ export function eventProcessor(
     }
   };
 
-  const addToBatch = async (event: any) => {
+  const addToBatch = async (event: any, triggerNext = false) => {
     batch.push(event);
 
     if (batch.length >= batchLimit) {
       // If we're at the batch limit, return right away
-      return sendBatch(true);
+      return sendBatch(triggerNext);
     }
   };
 
@@ -225,13 +225,13 @@ export function eventProcessor(
 
             if (batch.length >= batchLimit) {
               // If we're at the batch limit, return right away
-              return sendBatch(true);
+              return sendBatch(false);
             }
           } else {
             // If there's another pending item not a part of this batch,
             // just send the batch now
             // send the batch early
-            return sendBatch(true);
+            return sendBatch(false);
           }
         }
 
@@ -265,7 +265,7 @@ export function eventProcessor(
       trace(`[${name}] executing immediately`);
       setImmediate(next);
     } else if (activeBatch === name) {
-      addToBatch(event);
+      addToBatch(event, true);
       queue.pop();
     } else if (queue.length == 2 && batchTimeout) {
       trace('Sending batch early');
