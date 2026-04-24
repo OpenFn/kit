@@ -81,7 +81,7 @@ register({
         notify: (name: NotifyEvents, payload: any) => {
           // @ts-ignore
           const mappedPayload = eventMap[name]?.(payload) ?? payload;
-          publish(`worker:${name}`, {
+          return publish(`worker:${name}`, {
             workflowId: plan.id,
             ...mappedPayload,
           });
