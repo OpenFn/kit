@@ -180,7 +180,7 @@ test.serial('should emit a job-complete event', async (t) => {
   t.assert(!isNaN(event.duration));
 });
 
-test.serial.only('should emit a log event', async (t) => {
+test.serial('should emit a log event', async (t) => {
   let workflowLog: any;
   const plan = {
     id: 'y',
