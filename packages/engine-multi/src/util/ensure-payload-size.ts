@@ -26,7 +26,7 @@ export const verify = async (
     if (algo === 'stream') {
       sizeBytes = await calculateSizeStream(value, limitBytes);
     } else {
-      sizeBytes = calculateSizeStringify(value);
+      sizeBytes = await calculateSizeStringify(value);
     }
 
     if (sizeBytes > limitBytes) {
@@ -39,10 +39,13 @@ export const verify = async (
   }
 };
 
-export const calculateSizeStringify = (value: any): number => {
-  const str = typeof value === 'string' ? value : JSON.stringify(value);
-  const size_bytes = Buffer.byteLength(str, 'utf8');
-  return size_bytes;
+export const calculateSizeStringify = (value: any): Promise<number> => {
+  return new Promise((resolve) => {
+    const str = typeof value === 'string' ? value : JSON.stringify(value);
+    const size_bytes = Buffer.byteLength(str, 'utf8');
+    setTimeout(() => resolve(size_bytes), 10);
+    return size_bytes;
+  });
 };
 
 export const calculateSizeStream = async (
@@ -87,7 +90,7 @@ export default async (payload: any, limit_mb: number = 10) => {
   for (const key of KEYS_TO_VERIFY) {
     if (key in payload) {
       try {
-        await verify(payload[key], limit_mb, 'stream');
+        await verify(payload[key], limit_mb, 'stringify');
       } catch (e: any) {
         if (e.name === 'PAYLOAD_TOO_LARGE') {
           Object.assign(
@@ -96,7 +99,7 @@ export default async (payload: any, limit_mb: number = 10) => {
           );
           newPayload.redacted = true;
         } else {
-          console.log(e)
+          console.log(e);
         }
       }
     }

@@ -100,9 +100,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
       // This will forward all internal console.debug() lines to the parent stdout
       // if (options.proxyStdout) {
-        child.stdout!.on('data', (data) => {
-          console.log(`${child.pid ?? ''} |> ${data.toString()}`);
-        });
+      child.stdout!.on('data', (data) => {
+        console.log(`${child.pid ?? ''} |> ${data.toString()}`);
+      });
       // }
 
       logger.debug('pool: Created new child process', child.pid);
@@ -239,7 +239,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           if (!didTimeout) {
             resolve(evt.result);
 
-            finish(worker);
+            setTimeout(() => {
+              finish(worker);
+            }, 10000);
           }
         } else if (evt.type === ENGINE_REJECT_TASK) {
           // Note that this is an unexpected error
