@@ -147,7 +147,7 @@ const executeStep = async (
     const jobName = job.name || job.id;
 
     // The notify events only apply to jobs - not steps - so names don't need to be changed here
-    notify(NOTIFY_INIT_START, { jobId });
+    await notify(NOTIFY_INIT_START, { jobId });
 
     // lazy load config and state
     const configuration = await loadCredentials(
@@ -166,7 +166,7 @@ const executeStep = async (
       plan.workflow?.credentials
     );
 
-    notify(NOTIFY_INIT_COMPLETE, {
+    await notify(NOTIFY_INIT_COMPLETE, {
       jobId,
       duration: Date.now() - duration,
     });
@@ -182,7 +182,7 @@ const executeStep = async (
     const startTime = Date.now();
     try {
       // TODO include the upstream job?
-      notify(NOTIFY_JOB_START, { jobId });
+      await notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(
         ctx,
         job.expression!,
@@ -212,7 +212,7 @@ const executeStep = async (
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
-        notify(NOTIFY_JOB_ERROR, {
+        await notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
           error,
           state,
@@ -267,7 +267,7 @@ const executeStep = async (
       }
 
       next = calculateNext(step, result, logger);
-      notify(NOTIFY_JOB_COMPLETE, {
+      await notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
         jobId,

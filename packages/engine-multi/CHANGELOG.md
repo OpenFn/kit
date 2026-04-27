@@ -1,5 +1,14 @@
 # engine-multi
 
+## 1.11.3
+
+### Patch Changes
+
+- 4a25473: Add debugging to for step start/complete
+- 8d2954d: Make publish() async
+- Updated dependencies [944ed19]
+  - @openfn/runtime@1.9.2
+
 ## 1.11.2
 
 ### Patch Changes

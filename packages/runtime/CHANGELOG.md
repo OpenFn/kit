@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.9.2
+
+### Patch Changes
+
+- 944ed19: make sure that notify are properly awaited
+
 ## 1.9.1
 
 ### Patch Changes

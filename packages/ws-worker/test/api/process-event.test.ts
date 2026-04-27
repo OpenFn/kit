@@ -378,6 +378,117 @@ test('should send a batch on interrupt with an async queue', async (t) => {
   });
 });
 
+test('should not drop an event', async (t) => {
+  // const total = 1e5; // this works!
+  // t.timeout(1000 * 30)
+
+  const total = 100; // this should suffice for unit tests
+
+  t.plan(total)
+  return new Promise((resolve) => {
+    const events: any[] = [];
+    
+    const handler = (evt: any) => {
+      events.push(evt)
+      if (evt.id === total) {
+        let prevId= 0;
+        for(const e of events) {
+          t.is(e.id, prevId + 1)
+          prevId++
+        }
+        resolve()
+      }
+    }
+    
+    const callbacks = createCallbacks({
+      a: (_c: any, e: any) => {
+        handler(e)
+      },
+      b: (_c: any, e: any) => {
+        handler(e)
+      },
+    });
+    
+    const engine = createFakeEngine();
+    const context: any = {
+      logger,
+    };
+    
+    eventProcessor(engine, context, callbacks, {
+      events: ['a', 'b'],
+      batchLimit: 6,
+      batchInterval: 100,
+    });
+    
+    let count = 0;
+    // randomly send events at high volume
+    while(count < total) {
+      count++;
+
+      if (Math.random() < 0.6) {
+        engine.emit('b', {id: count })
+      } else {
+        engine.emit('a', {id: count })
+      }
+    }
+  });
+});
+
+test('should not drop an event in batch mode', async (t) => {
+  t.timeout(1000 * 30)
+
+  const total = 100; // this should suffice for unit tests
+  return new Promise((resolve) => {
+    const events: any[] = [];
+    
+    const handler = (evt: any) => {
+       if (evt.id === total) {
+        let prevId= 0;
+        for(const e of events) {
+          t.is(e.id, prevId + 1)
+          prevId++
+        }
+        resolve()
+      }
+    }
+    
+    const callbacks = createCallbacks({
+      a: (_c: any, e: any) => {
+        events.push(e)
+        handler(e)
+      },
+      b: (_context: any, evt: any) => {
+        events.push(...evt)
+        handler(evt.pop())
+      },
+    });
+    
+    const engine = createFakeEngine();
+    const context: any = {
+      logger,
+    };
+    
+    eventProcessor(engine, context, callbacks, {
+      events: ['a', 'b'],
+      batch: { b: true },
+      batchLimit: 6,
+      batchInterval: 100,
+    });
+    
+    let count = 0;
+    // randomly send events at high volume
+    while(count < total) {
+      count++;
+
+      if (Math.random() < 0.8) {
+        engine.emit('b', {id: count })
+      } else {
+        engine.emit('a', {id: count })
+      }
+    }
+  });
+});
+
 test('should continue processing if a callback throws', async (t) => {
   const result: number[] = [];
   const callbacks = createCallbacks({

@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.35.1
+
+### Patch Changes
+
+- Updated dependencies [944ed19]
+  - @openfn/runtime@1.9.2
+
 ## 1.35.0
 
 ### Minor Changes
@@ -16,7 +23,6 @@
 ### Patch Changes
 
 - 3918358: Override config.endpoint with one from openfn.yaml
-
 
 ## 1.34.1
 
