@@ -67,9 +67,9 @@ export const jobStart = (
   context: ExecutionContext,
   event: internalEvents.JobStartEvent
 ) => {
-  const { logger,state} = context;
+  const { logger, state } = context;
   const { threadId, jobId } = event;
-  logger.debug(`${state.id}: sending job start (step start): ${event.jobId}`)
+  logger.debug(`${state.id}: sending job start (step start): ${event.jobId}`);
 
   context.emit(externalEvents.JOB_START, {
     jobId,
@@ -84,7 +84,9 @@ export const jobComplete = (
 ) => {
   const { logger, state: runState } = context;
   const { threadId, state, duration, jobId, next, mem, redacted } = event;
-  logger.debug(`${runState.id}: sending job complete (step complete): ${event.jobId}`)
+  logger.debug(
+    `${runState.id}: sending job complete (step complete): ${event.jobId}`
+  );
 
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
