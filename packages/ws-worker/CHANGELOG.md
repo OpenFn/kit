@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.24.1
+
+### Patch Changes
+
+- 7f93ddb: Fix an issue in batch events
+- Updated dependencies [944ed19]
+- Updated dependencies [4a25473]
+- Updated dependencies [8d2954d]
+  - @openfn/runtime@1.9.2
+  - @openfn/engine-multi@1.11.3
+
 ## 1.24.0
 
 ### Minor Changes
