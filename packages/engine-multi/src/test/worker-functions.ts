@@ -29,13 +29,13 @@ const tasks = {
   // Most tests should use the mock-worker instead
   run: async (plan: ExecutionPlan, _input: any, _adaptorPaths: any) => {
     const workflowId = plan.id;
-    publish('worker:workflow-start', {
+    await publish('worker:workflow-start', {
       workflowId,
     });
     try {
       const [job] = plan.workflow.steps as Job[];
       const result = eval(job.expression!);
-      publish('worker:workflow-complete', {
+      await publish('worker:workflow-complete', {
         workflowId,
         state: result,
       });

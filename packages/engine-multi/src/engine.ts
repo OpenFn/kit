@@ -40,7 +40,6 @@ const createWorkflowEvents = (
   workflowId: UUID
 ) => {
   // proxy all events to the main emitter
-  // uh actually there may be no point in this
   function proxy(event: string) {
     context.on(event, (evt) => {
       // ensure the run id is on the event

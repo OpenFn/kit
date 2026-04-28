@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { JsonStreamStringify } from 'json-stream-stringify';
 
 // This specifies which keys of an event payload to potentially redact
@@ -25,7 +26,7 @@ export const verify = async (
     if (algo === 'stream') {
       sizeBytes = await calculateSizeStream(value, limitBytes);
     } else {
-      sizeBytes = calculateSizeStringify(value);
+      sizeBytes = await calculateSizeStringify(value);
     }
 
     if (sizeBytes > limitBytes) {
@@ -38,16 +39,30 @@ export const verify = async (
   }
 };
 
-export const calculateSizeStringify = (value: any): number => {
-  const str = typeof value === 'string' ? value : JSON.stringify(value);
-  const size_bytes = Buffer.byteLength(str, 'utf8');
-  return size_bytes;
+export const calculateSizeStringify = (value: any): Promise<number> => {
+  return new Promise((resolve) => {
+    const str = typeof value === 'string' ? value : JSON.stringify(value);
+    const size_bytes = Buffer.byteLength(str, 'utf8');
+    setTimeout(() => resolve(size_bytes), 10);
+    return size_bytes;
+  });
 };
 
 export const calculateSizeStream = async (
   value: any,
   limit?: number
 ): Promise<number> => {
+  // skip all primitives
+  if (
+    !value ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'function'
+  ) {
+    // Treat as size 0
+    return 0;
+  }
+
   let size_bytes = 0;
 
   const stream = new JsonStreamStringify(value);
@@ -66,16 +81,61 @@ export const calculateSizeStream = async (
 };
 
 export default async (payload: any, limit_mb: number = 10) => {
+  if (!limit_mb || isNaN(limit_mb)) {
+    return payload;
+  }
+
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
-    try {
-      await verify(payload[key], limit_mb);
-    } catch (e) {
-      Object.assign(newPayload[key], replacements[key] ?? replacements.default);
-      newPayload.redacted = true;
+    if (key in payload) {
+      try {
+        await verify(payload[key], limit_mb, 'stringify');
+      } catch (e: any) {
+        if (e.name === 'PAYLOAD_TOO_LARGE') {
+          Object.assign(
+            newPayload[key],
+            replacements[key] ?? replacements.default
+          );
+          newPayload.redacted = true;
+        } else {
+          console.log(e);
+        }
+      }
     }
   }
 
   return newPayload;
 };
+
+// export default async (payload: any, limit_mb: number = 10) => {
+//   return new Promise(async (resolve) => {
+//     if (!limit_mb || isNaN(limit_mb)) {
+//       resolve( payload);
+//     }
+
+//     const newPayload = { ...payload };
+
+//     for (const key of KEYS_TO_VERIFY) {
+//       if (key in payload) {
+//         try {
+//           await verify(payload[key], limit_mb, 'stream');
+//         } catch (e) {
+//           if (e.name === 'PAYLOAD_TOO_LARGE') {
+//             Object.assign(
+//               newPayload[key],
+//               replacements[key] ?? replacements.default
+//             );
+//             newPayload.redacted = true;
+//           }
+//         }
+//       }
+//     }
+
+//     setTimeout(() => {
+//       resolve(newPayload)
+
+//     }, 1000)
+
+//   })
+// };
