@@ -1,7 +1,14 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
-
+export {
+  Step,
+  Job,
+  Trigger,
+  StepEdge,
+  ConditionalStepEdge,
+  Credential,
+} from './portability';
 /**
  * Canonical internal stateful Project representation.
  * This is what gets serialized in a v2 <alias>@<domain>.yaml file
@@ -21,11 +28,7 @@ export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
 
   config: WorkspaceConfig;
 
-  credentials?: Array<
-    Credential & {
-      uuid: string;
-    }
-  >;
+  credentials?: Array<CredentialState>;
 
   /** Stuff only used by the CLI for this project */
   cli?: LocalMeta;
@@ -79,7 +82,7 @@ export type SandboxMeta = {
  * another object
  */
 export type WithState<P, S = {}> = P & {
-  openfn: {
+  openfn?: {
     uuid?: UUID;
     [key: string]: any;
   } & S;
@@ -95,6 +98,10 @@ export interface LocalMeta {
 }
 
 export interface OpenFnMetadata {
+  uuid?: UUID;
+}
+
+export interface CredentialState extends Credential {
   uuid?: UUID;
 }
 

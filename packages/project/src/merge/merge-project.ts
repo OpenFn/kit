@@ -1,6 +1,6 @@
 import { defaultsDeep, isEmpty } from 'lodash-es';
-
-import { Credential, Project } from '../Project';
+import { CredentialState } from '@openfn/lexicon';
+import { Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
@@ -178,9 +178,9 @@ export function merge(
 }
 
 export const replaceCredentials = (
-  sourceCreds: Credential[] = [],
-  targetCreds: Credential[] = []
-): Credential[] => {
+  sourceCreds: CredentialState[] = [],
+  targetCreds: CredentialState[] = []
+): CredentialState[] => {
   const result = [...targetCreds];
 
   // Build an object of existing target credential names for quick lookup
@@ -196,7 +196,7 @@ export const replaceCredentials = (
       // This is a new credential - add it without the source uuid
       // (a new UUID will be generated elsewhere)
       const { uuid, ...credWithoutUuid } = sourceCred;
-      result.push(credWithoutUuid as Credential);
+      result.push(credWithoutUuid as CredentialState);
     }
   }
 

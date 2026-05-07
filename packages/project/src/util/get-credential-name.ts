@@ -1,4 +1,4 @@
-import { Credential } from '../Project';
+import { Credential } from '@openfn/lexicon';
 
 export const DELIMETER = '|';
 

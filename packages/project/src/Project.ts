@@ -14,7 +14,12 @@ import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
 import { buildConfig, extractConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { SandboxMeta, UUID, WorkspaceConfig } from '@openfn/lexicon';
+import {
+  SandboxMeta,
+  UUID,
+  WorkspaceConfig,
+  Credential,
+} from '@openfn/lexicon';
 import { parse } from './util/get-credential-name';
 
 const maybeCreateWorkflow = (wf: any) =>
@@ -33,14 +38,6 @@ type CLIMeta = {
   version?: number;
   alias?: string;
   forked_from?: Record<string, string>;
-};
-
-export type Credential = {
-  uuid: string;
-  name: string;
-
-  // TODO having the owner in the credential is controvertial and we may need to rethink this later
-  owner: string;
 };
 
 export class Project {
@@ -138,7 +135,7 @@ export class Project {
 
   // TODO maybe the constructor is (data, Workspace)
   constructor(
-    data: Partial<l.Project> = {},
+    data: Partial<l.ProjectState> = {},
     meta?: Partial<l.WorkspaceConfig> & CLIMeta
   ) {
     this.id =
@@ -164,7 +161,7 @@ export class Project {
     this.options = data.options;
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
-    this.credentials = data.credentials;
+    this.credentials = data.credentials ?? [];
     this.sandbox = data.sandbox;
   }
 

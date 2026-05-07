@@ -3,7 +3,7 @@
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 
-import { Project, Credential } from '../Project';
+import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 import ensureJson from '../util/ensure-json';
@@ -42,7 +42,7 @@ export default (
     owner: c.owner,
   }));
 
-  const proj: Partial<l.Project> = {
+  const proj: Partial<l.ProjectState> = {
     name,
     description: description ?? undefined,
     collections,
@@ -71,7 +71,7 @@ export default (
     mapWorkflow(w, proj.credentials)
   );
 
-  return new Project(proj as l.Project, config);
+  return new Project(proj as l.ProjectState, config);
 };
 
 // TODO maybe this is a util and moved out of this file
@@ -103,11 +103,11 @@ export const mapEdge = (edge: Provisioner.Edge) => {
 // TODO this probably gets easier if I index everything by name
 export const mapWorkflow = (
   workflow: Provisioner.Workflow,
-  credentials: Credential[] = []
+  credentials: l.CredentialState[] = []
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
-  const mapped: l.Workflow = {
+  const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
     history: workflow.version_history ?? [],

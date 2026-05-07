@@ -9,7 +9,7 @@ export type WithMeta<T> = T & {
 };
 
 class Workflow {
-  workflow: l.Workflow; // this is the raw workflow JSON representation
+  workflow: l.WorkflowState; // this is the raw workflow JSON representation
   index: any;
 
   name?: string;
@@ -17,7 +17,7 @@ class Workflow {
   openfn?: l.WorkflowMeta;
   options: any; // TODO
 
-  constructor(workflow: l.Workflow) {
+  constructor(workflow: l.WorkflowState) {
     this.index = {
       steps: {}, // steps by id
       edges: {}, // edges by from-id id
