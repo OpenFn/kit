@@ -1,5 +1,63 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
+import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
+
+/**
+ * Canonical internal stateful Project representation.
+ * This is what gets serialized in a v2 <alias>@<domain>.yaml file
+ */
+export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
+  // override Workflows to include state
+  workflows: WorkflowState[];
+
+  options?: {
+    env?: string;
+    color?: string;
+
+    [key: string]: any;
+  };
+
+  sandbox?: SandboxMeta;
+
+  config: WorkspaceConfig;
+
+  credentials?: Array<
+    Credential & {
+      uuid: string;
+    }
+  >;
+
+  /** Stuff only used by the CLI for this project */
+  cli?: LocalMeta;
+}
+
+export interface WorkflowState extends WithState<WorkflowSpec, WorkflowMeta> {
+  /** holds version history information of a workflow **/
+  history?: string[];
+
+  /** global credentials (gets applied to every configuration object) */
+  credentials?: Record<string, any>;
+}
+
+export interface JobState extends Job {
+  /** Some of this stuff is more like internal runtime options and needs moving */
+
+  state?: Omit<State, 'configuration'> | string;
+
+  // this is a runtime property and not part of the
+  sourceMap?: SourceMapWithOperations;
+
+  // Internal use only
+  // Allow module paths and versions to be overridden in the linker
+  // Maps to runtime.ModuleInfoMap
+  linker?: Record<
+    string,
+    {
+      path?: string;
+      version?: string;
+    }
+  >;
+}
 
 /** UUID v4 (or numbers, when running in dev mode*/
 export type UUID = string | number;
@@ -13,40 +71,18 @@ export type SourceMapWithOperations = RawSourceMap & {
 export type SandboxMeta = {
   parentId?: string;
   parentName?: string; // not supported yet
+  [key: string]: any;
 };
 
-// The serialised shape of of a project, as JSON
-// this is what is saved to project.yaml
-export type Project = {
-  /** Single-word identifier */
-  id: string;
-
-  /** human readable name */
-  name?: string;
-
-  description?: string;
-
-  workflows: Workflow[];
-
-  options?: {
-    env?: string;
-    color?: string;
-
+/**
+ * Utility to append a .openfn state object to
+ * another object
+ */
+export type WithState<P, S = {}> = P & {
+  openfn: {
+    uuid?: UUID;
     [key: string]: any;
-  };
-
-  sandbox?: SandboxMeta;
-
-  credentials: any;
-  collections: string[];
-
-  // metadata about the app for sync
-  openfn?: Partial<ProjectMeta>;
-
-  config: WorkspaceConfig;
-
-  /** Stuff only used by the CLI for this project */
-  cli?: LocalMeta;
+  } & S;
 };
 
 export interface LocalMeta {
@@ -145,105 +181,16 @@ export interface NodeMeta {
  */
 export type ExecutionPlan = {
   id?: UUID; // TODO make required
-  workflow: Workflow;
+  workflow: WorkflowSpec;
   options?: WorkflowOptions;
-};
-
-/**
- * A workflow is just a series of steps, executed start to finish
- */
-export type Workflow = {
-  /** The ID is the primary internal identifier for a Workflow */
-  id?: string;
-
-  /** Human readable name, like display. Can be used to generate an internal id */
-  name?: string;
-
-  /** Local shorthand name for use in CLI commands. Not used by Lightning */
-  alias?: string;
-
-  steps: Array<Job | Trigger>;
-
-  // global credentials
-  // (gets applied to every configuration object)
-  credentials?: Record<string, any>;
-
-  // a path to a file where functions are defined
-  globals?: string;
-
-  openfn?: WorkflowMeta;
-
-  // holds history information of a workflow
-  history?: string[];
-
-  /** The default start node - the one the workflow was designed for (the trigger) */
-  start?: string;
-
-  /** extra options from the app. Not really used */
-  options?: any;
 };
 
 export type StepId = string;
 
 /**
- * A thing to be run as part of a workflow
- * (usually a job)
- */
-export interface Step {
-  // TODO a Step must ALWAYS have an id (util functions can default it)
-  id?: StepId;
-  name?: string; // user-friendly name used in logging
-  next?: string | Record<StepId, StepEdge>;
-  previous?: StepId;
-}
-
-/**
- * Not actually keen on the node/edge semantics here
- * Maybe StepLink?
- */
-export type StepEdge = boolean | string | ConditionalStepEdge;
-
-export type ConditionalStepEdge = {
-  condition?: string; // Javascript expression (function body, not function)
-  label?: string; // TODO this is probably the name
-  disabled?: boolean;
-};
-
-/**
- * A no-op type of Step
- */
-export interface Trigger extends Step {
-  enabled?: boolean;
-}
-
-/**
  * An expression which has been compiled, and so includes import and export statements
  */
 export type CompiledExpression = Expression;
-
-/**
- * A type of Step which executes code
- * This is some openfn expression plus metadata (adaptor, credentials)
- */
-export interface Job extends Step {
-  adaptors?: string[];
-  expression?: Expression;
-  configuration?: object | string;
-  state?: Omit<State, 'configuration'> | string;
-
-  sourceMap?: SourceMapWithOperations;
-
-  // Internal use only
-  // Allow module paths and versions to be overridden in the linker
-  // Maps to runtime.ModuleInfoMap
-  linker?: Record<
-    string,
-    {
-      path?: string;
-      version?: string;
-    }
-  >;
-}
 
 /**
  * A raw openfn-js script to be executed by the runtime
