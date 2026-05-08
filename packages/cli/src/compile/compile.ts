@@ -3,12 +3,12 @@ import compile, {
   Options,
   getExports,
 } from '@openfn/compiler';
-import { getModulePath } from '@openfn/runtime';
-import type {
-  ExecutionPlan,
-  Job,
-  SourceMapWithOperations,
-} from '@openfn/lexicon';
+import {
+  getModulePath,
+  type ExecutionPlan,
+  type Job,
+  type SourceMapWithOperations,
+} from '@openfn/runtime';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';

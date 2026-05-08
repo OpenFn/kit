@@ -1,5 +1,5 @@
 import test from 'ava';
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 import { parseAdaptors } from '../../src/execute/execute';
 

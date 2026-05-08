@@ -1,4 +1,4 @@
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 import test from 'ava';
 import overridePlanAdaptors, {
   isJob,

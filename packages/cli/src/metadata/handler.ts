@@ -2,8 +2,11 @@ import { Logger } from '../util/logger';
 import { MetadataOpts } from './command';
 import loadState from '../util/load-state';
 import * as cache from './cache';
-import { getModuleEntryPoint, registerEsmHook } from '@openfn/runtime';
-import { ExecutionPlan } from '@openfn/lexicon';
+import {
+  getModuleEntryPoint,
+  registerEsmHook,
+  type ExecutionPlan,
+} from '@openfn/runtime';
 import { install, removePackage } from '../repo/handler';
 
 // Add created date stamp to the metadata object

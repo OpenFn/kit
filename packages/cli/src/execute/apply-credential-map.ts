@@ -3,7 +3,7 @@
  * and apply credentials to each step
  */
 
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 import { Logger } from '../util';
 
 type JobId = string;

@@ -1,4 +1,4 @@
-import { ExecutionPlan, Job, Step } from '@openfn/lexicon';
+import { ExecutionPlan, Job, Step } from '@openfn/runtime';
 
 function overridePlanAdaptors(
   plan: ExecutionPlan,

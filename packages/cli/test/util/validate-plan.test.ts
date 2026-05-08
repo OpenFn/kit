@@ -1,6 +1,6 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import validate from '../../src/util/validate-plan';
 
 const logger = createMockLogger('', { level: 'debug' });

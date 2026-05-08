@@ -1,4 +1,4 @@
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 
 import { TestOptions } from './command';
 import { createNullLogger, Logger } from '../util/logger';

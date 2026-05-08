@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import { getCachePath } from './cache';
 
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
 import type { Opts } from '../options';
 

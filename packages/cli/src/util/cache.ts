@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { rmdir } from 'node:fs/promises';
 
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
 

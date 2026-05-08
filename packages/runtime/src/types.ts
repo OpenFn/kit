@@ -1,5 +1,5 @@
 import type { RawSourceMap } from 'source-map';
-import { Operation, State, WorkflowOptions } from '@openfn/lexicon';
+import { Operation, State, UUID, WorkflowOptions } from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
 import type { ErrorReporter } from './util/log-error';
@@ -33,7 +33,7 @@ export interface Step {
 export interface Trigger extends Step {
   enabled?: boolean;
 
-  //The trigger is allowed extra keys, but they will be ignored
+  // The trigger is allowed extra keys, but they will be ignored
   [key: string]: unknown;
 }
 
@@ -64,7 +64,7 @@ export interface Workflow {
 }
 
 export type ExecutionPlan = {
-  id?: string;
+  id?: UUID;
   workflow: Workflow;
   options?: WorkflowOptions;
 };
@@ -94,7 +94,7 @@ export interface CompiledWorkflow {
 }
 
 export type CompiledExecutionPlan = {
-  id?: string;
+  id?: UUID;
   workflow: CompiledWorkflow;
   options: WorkflowOptions & {
     start: StepId;

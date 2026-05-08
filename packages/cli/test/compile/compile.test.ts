@@ -11,7 +11,7 @@ import compile, {
 import { CompileOptions } from '../../src/compile/command';
 import { mockFs, resetMockFs } from '../util';
 
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { ExecutionPlan, Job } from '@openfn/runtime';
 
 const mockLog = createMockLogger();
 

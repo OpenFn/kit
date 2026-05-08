@@ -2,7 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 import { omit } from 'lodash-es';
-import type { Job } from '@openfn/lexicon';
+import type { Job } from '@openfn/runtime';
 
 import loadPlan from '../../src/util/load-plan';
 import { Opts } from '../../src/options';

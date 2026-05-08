@@ -1,4 +1,4 @@
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 const expand = (name: string) => {
   if (typeof name === 'string') {
