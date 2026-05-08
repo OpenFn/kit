@@ -1,4 +1,5 @@
 import { SanitizePolicies } from '@openfn/logger';
+import type { RawSourceMap } from 'source-map';
 
 import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
 export {
@@ -65,6 +66,10 @@ export interface JobState extends Job {
 export type UUID = string | number;
 
 export type SourceMap = RawSourceMap;
+
+export type SourceMapWithOperations = RawSourceMap & {
+  operations: [{ line: number; order: number; name: string }];
+};
 
 export type SandboxMeta = {
   parentId?: string;

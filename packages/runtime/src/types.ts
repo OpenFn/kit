@@ -1,5 +1,10 @@
-import type { RawSourceMap } from 'source-map';
-import { Operation, State, UUID, WorkflowOptions } from '@openfn/lexicon';
+import {
+  Operation,
+  SourceMapWithOperations,
+  State,
+  UUID,
+  WorkflowOptions,
+} from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
 import type { ErrorReporter } from './util/log-error';
@@ -107,10 +112,6 @@ export type ErrorPosition = {
   line: number;
   column: number;
   src?: string; // the source line for this error
-};
-
-export type SourceMapWithOperations = RawSourceMap & {
-  operations: [{ line: number; order: number; name: string }];
 };
 
 export type ErrorReport = {
