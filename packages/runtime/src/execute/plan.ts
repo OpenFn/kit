@@ -1,5 +1,5 @@
 import type { Logger } from '@openfn/logger';
-import type { ExecutionPlan, State, Lazy } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
 
 import executeStep from './step';
 import compilePlan from './compile-plan';
@@ -9,7 +9,12 @@ import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
 import createProfiler from '../util/profile-memory';
 import { NOTIFY_STATE_LOAD } from '../events';
-import { CompiledExecutionPlan, ExecutionContext } from '../types';
+import {
+  CompiledExecutionPlan,
+  ExecutionContext,
+  ExecutionPlan,
+  Lazy,
+} from '../types';
 
 const executePlan = async (
   plan: ExecutionPlan,

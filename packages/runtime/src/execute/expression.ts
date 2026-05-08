@@ -1,9 +1,6 @@
 import { printDuration, Logger } from '@openfn/logger';
-import type {
-  Operation,
-  SourceMapWithOperations,
-  State,
-} from '@openfn/lexicon';
+import type { Operation, State } from '@openfn/lexicon';
+import type { SourceMapWithOperations } from '../types';
 
 import loadModule from '../modules/module-loader';
 import { Options } from '../runtime';

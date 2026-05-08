@@ -1,8 +1,8 @@
 import type { RawSourceMap } from 'source-map';
-import { Operation, StepId, WorkflowOptions, Step } from '@openfn/lexicon';
+import { Operation, State, WorkflowOptions } from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
-import { ErrorReporter } from './util/log-error';
+import type { ErrorReporter } from './util/log-error';
 import {
   NOTIFY_INIT_COMPLETE,
   NOTIFY_JOB_COMPLETE,
@@ -13,32 +13,61 @@ import {
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
 
-export type ErrorPosition = {
-  line: number;
-  column: number;
-  src?: string; // the source line for this error
+export type StepId = string;
+
+export type ConditionalStepEdge = {
+  condition?: string; // Javascript expression (function body, not function)
+  label?: string;
+  disabled?: boolean;
 };
 
-export type SourceMapWithOperations = RawSourceMap & {
-  operations: [{ line: number; order: number; name: string }];
-};
+export type StepEdge = boolean | string | ConditionalStepEdge;
 
-// note that this doesn't extend the portable workflow spec
-// because this is an internal structure, and is quite different
-// (maybe in future we'll align them more closely)
-export interface CompiledWorkflow {
-  globals?: string;
-
-  steps: Record<StepId, CompiledStep>;
-
-  // this is a runtime property and not part of the spec
-  sourceMap?: SourceMapWithOperations;
-
-  credentials?: Record<string, any>;
-
-  /** The default start node - the one the workflow was designed for (the trigger) */
-  start?: StepId;
+export interface Step {
+  id?: StepId;
+  name?: string;
+  next?: string | Record<StepId, StepEdge>;
+  previous?: StepId;
 }
+
+export interface Trigger extends Step {
+  enabled?: boolean;
+
+  //The trigger is allowed extra keys, but they will be ignored
+  [key: string]: unknown;
+}
+
+export interface Job extends Step {
+  // Spec-compliant props
+  expression?: string;
+  configuration?: object | string;
+
+  // internal runtime props
+  adaptors?: string[];
+  state?: Omit<State, 'configuration'> | string;
+  sourceMap?: SourceMapWithOperations;
+  linker?: ModuleInfoMap;
+}
+
+// Runtime-internal mirror of the portability schema. Adds runtime-only
+// fields (linker, sourceMap, adaptors[], state, etc) that aren't portable.
+export interface Workflow {
+  // Spec-compliant props
+  id?: string;
+  name?: string;
+  steps: Array<Job | Trigger>;
+  globals?: string;
+  start?: StepId;
+
+  // internal runtime props
+  credentials?: Record<string, any>;
+}
+
+export type ExecutionPlan = {
+  id?: string;
+  workflow: Workflow;
+  options?: WorkflowOptions;
+};
 
 export type CompiledEdge =
   | boolean
@@ -51,37 +80,48 @@ export type CompiledStep = Omit<Step, 'next'> & {
   id: StepId;
   next?: Record<StepId, CompiledEdge>;
 
-  // custom overrides for the linker
-  // This lets us set version or even path per job
   linker?: ModuleInfoMap;
 
-  // The compiled step can take other properties - but they will be ignored buy the runtime
-  // Would it make more sense for the compiler to strip these properties?
   [other: string]: any;
 };
 
-export type Lazy<T> = string | T;
+export interface CompiledWorkflow {
+  globals?: string;
+  steps: Record<StepId, CompiledStep>;
+  sourceMap?: SourceMapWithOperations;
+  credentials?: Record<string, any>;
+  start?: StepId;
+}
 
-export type ExecutionPlan = {
+export type CompiledExecutionPlan = {
   id?: string;
-  workflow: Workflow;
+  workflow: CompiledWorkflow;
   options: WorkflowOptions & {
-    /** User-specified start node */
     start: StepId;
   };
 };
 
-export type Workflow = Partial<CompiledWorkflow>;
+export type Lazy<T> = string | T;
 
-// TODO I don't live the compiled vs non compiled distinction
-// It implies too much dependency on the compiler
-// It's more like a take a RawExecutionPlan as an argument, and that gets
-// converted into this InternalExecutionPlan
-// (which doesn't use the compiler component, it's just an internal process)
-export type CompiledExecutionPlan = {
-  id?: string;
-  workflow: CompiledWorkflow;
-  options: ExecutionPlan['options'];
+export type ErrorPosition = {
+  line: number;
+  column: number;
+  src?: string; // the source line for this error
+};
+
+export type SourceMapWithOperations = RawSourceMap & {
+  operations: [{ line: number; order: number; name: string }];
+};
+
+export type ErrorReport = {
+  type: string; // The name/type of error, ie Error, TypeError
+  message: string; // simple human readable message
+  stepId: StepId; // ID of the associated job
+  error: Error; // the original underlying error object
+
+  code?: string; // The error code, if any (found on node errors)
+  stack?: string;
+  data?: any;
 };
 
 export type JobModule = {

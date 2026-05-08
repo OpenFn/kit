@@ -174,39 +174,6 @@ export interface NodeMeta {
   [key: string]: unknown;
 }
 
-// // TODO this isn't right now
-// // the execution plan is an internal runtime structure
-// // the project spec is the portable bit
-// /**
-//  * An execution plan is a portable definition of a Work Order,
-//  * or, a unit of work to execute
-//  * This definition represents the external format - the shape of
-//  * the plan pre-compilation before it's passed into the runtime manager
-//  * (ie, the CLI or Worker)
-//  */
-// export type ExecutionPlan = {
-//   id?: UUID; // TODO make required
-//   workflow: WorkflowSpec;
-//   options?: WorkflowOptions;
-// };
-
-export type StepId = string;
-
-/**
- * An expression which has been compiled, and so includes import and export statements
- */
-export type CompiledExpression = Expression;
-
-/**
- * A raw openfn-js script to be executed by the runtime
- *
- * Can be compiled as part of a job.
- *
- * The expression itself has no metadata. It likely needs
- * an adaptor and input state to run
- */
-export type Expression = string;
-
 /**
  * State is an object passed into a workflow and returned from a workflow
  */

@@ -1,4 +1,4 @@
-import { ExecutionPlan, Step } from '@openfn/lexicon';
+import { ExecutionPlan, Step } from '../types';
 import { ValidationError } from '../errors';
 
 type ModelNode = {

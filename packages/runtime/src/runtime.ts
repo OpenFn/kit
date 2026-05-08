@@ -1,10 +1,10 @@
 import { createMockLogger, Logger } from '@openfn/logger';
+import type { State } from '@openfn/lexicon';
 import type {
+  ExecutionCallbacks,
   ExecutionPlan,
-  State,
   SourceMapWithOperations,
-} from '@openfn/lexicon';
-import type { ExecutionCallbacks } from './types';
+} from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';

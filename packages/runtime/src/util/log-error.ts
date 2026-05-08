@@ -1,5 +1,6 @@
 import { Logger } from '@openfn/logger';
-import type { State, ErrorReport, StepId } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
+import type { ErrorReport, StepId } from '../types';
 
 export type ErrorReporter = (
   state: State,
