@@ -70,6 +70,11 @@ export type ConditionalStepEdge = {
 };
 
 export interface Trigger extends Step {
+  type?: 'webhook' | 'cron' | 'kafka';
+
+  /** cron schedule, only meaningful when type is 'cron' */
+  cron_expression?: string;
+
   enabled?: boolean;
 }
 
