@@ -1,27 +1,25 @@
-The lexicon (aka the OpenFunctionicon) is a central repositoty of key type and word definitions.
+The lexicon is a central repository of key type and word definitions. It's a types repo and glossary at the same time.
 
-It's a types repo and glossary at the same time.
+The most important part of it is the Portability Spec: which describes the portable Project and Workflow interfaces which are common not just to this repo, but to the whole OpenFn platform and toolchain.
 
 ## Overview
 
 The OpenFunction stack is built on the concepts of Workflows, Runs, Jobs and Expressions (and more). Some of these terms can be used interchangable, or used differently in certain contexts.
 
-Here are the key concepts
+Here are the key concepts:
 
 - An **Expression** is a string of Javascript (or Javascript-like code) written to be run in the CLI or Lightning.
-- A **Job** is an expression plus some metadata required to run it - typically an adaptor and credentials.
-  The terms Job and Expression are often used interchangeably.
-- A **Workflow** is a series of steps to be executed in sequence. Steps are usually Jobs (and so job and step are often used
-  interchangeably), but can be Triggers.
+- A **Step** is an expression plus some metadata required to run it - typically an adaptor and credentials. Also known as a Job.
+- A **Workflow** is a series of steps to be executed in sequence
 - An **Execution Plan** is a Workflow plus some options which inform how it should be executed (ie, start node, timeout).
 
 The term "Execution plan" is mostly used internally and not exposed to users, and is usually interchangeable with Workflow.
 
 You can find formal type definition of these and more in `src/core.d.ts`.
 
-Lightning also introduces it's own terminolgy as it is standalone application and has features that the runtime itself does not.
+Lightning also introduces its own terminology for platform-specific features not share by the runtime.
 
-In Lightning, a Step can be a Job or a Trigger. Jobs are connected by Paths (also known sometimes as Edges), which may be conditional.
+In Lightning, a Step can be a Job or a Trigger. Jobs are connected by Edges , which may be conditional.
 
 You can find lightning-specific typings in `src/lightning.d.ts`
 

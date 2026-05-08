@@ -17,7 +17,7 @@ import {
   RUN_COMPLETE,
   GET_CREDENTIAL,
 } from '../src/events';
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 
 let engine: any;
 let logger: any;

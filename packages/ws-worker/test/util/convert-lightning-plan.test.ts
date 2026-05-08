@@ -5,7 +5,7 @@ import type {
   LightningTrigger,
 } from '@openfn/lexicon/lightning';
 import convertPlan from '../../src/util/convert-lightning-plan';
-import { Job } from '@openfn/lexicon';
+import { Job } from '@openfn/runtime';
 
 // Creates a lightning node (job or trigger)
 const createNode = (props = {}) =>

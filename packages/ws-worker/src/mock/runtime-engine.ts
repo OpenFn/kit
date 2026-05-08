@@ -1,8 +1,8 @@
 import { EventEmitter } from 'node:events';
 import crypto from 'node:crypto';
-import run from '@openfn/runtime';
+import run, { type ExecutionPlan, type Job } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
-import type { ExecutionPlan, Job, State } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
 
 import mockResolvers from './resolvers';
 import { RuntimeEngine } from '@openfn/engine-multi';

@@ -1,18 +1,20 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
+import type { State, WorkflowOptions } from '@openfn/lexicon';
 import type {
   Step,
   StepId,
   ExecutionPlan,
-  State,
   Job,
-  Trigger,
   StepEdge,
-  WorkflowOptions,
   Lazy,
-} from '@openfn/lexicon';
+} from '@openfn/runtime';
 import type { LogLevel } from '@openfn/logger';
-import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
+import {
+  LightningPlan,
+  LightningEdge,
+  LightningTrigger,
+} from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
 import { getNameAndVersion } from '@openfn/runtime';
 
@@ -138,7 +140,7 @@ export default (
 
   // We don't really care about triggers, it's mostly just a empty node
   if (run.triggers?.length) {
-    run.triggers.forEach((trigger: Trigger) => {
+    run.triggers.forEach((trigger: LightningTrigger) => {
       const id = trigger.id || 'trigger';
 
       nodes[id] = {
@@ -149,9 +151,8 @@ export default (
       const connectedEdges = edges.filter((e) => e.source_trigger_id === id);
       if (connectedEdges.length) {
         nodes[id].next = connectedEdges.reduce(
-          (obj: Partial<Trigger>, edge) => {
+          (obj: Record<StepId, StepEdge>, edge) => {
             if (edge.enabled !== false) {
-              // @ts-ignore
               obj[edge.target_job_id] = mapTriggerEdgeCondition(edge);
             }
             return obj;

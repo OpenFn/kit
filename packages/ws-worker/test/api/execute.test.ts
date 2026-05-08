@@ -1,6 +1,6 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 
 import {
   STEP_START,

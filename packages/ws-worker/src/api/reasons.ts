@@ -1,4 +1,5 @@
-import { State, Step } from '@openfn/lexicon';
+import { State } from '@openfn/lexicon';
+import { Step } from '@openfn/runtime';
 import { ExitReason, ExitReasonStrings } from '@openfn/lexicon/lightning';
 import type { RunState } from '../types';
 

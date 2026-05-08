@@ -61,10 +61,6 @@ export interface Step {
   previous?: StepId;
 }
 
-/**
- * Not actually keen on the node/edge semantics here
- * Maybe StepLink?
- */
 export type StepEdge = boolean | string | ConditionalStepEdge;
 
 export type ConditionalStepEdge = {
@@ -73,14 +69,8 @@ export type ConditionalStepEdge = {
   disabled?: boolean;
 };
 
-/**
- * A no-op type of Step
- */
 export interface Trigger extends Step {
   enabled?: boolean;
-
-  // TODO a trigger supports many more keys which the
-  // spec must support
 }
 
 // TODO credential should just be an id string in the near future
@@ -89,10 +79,6 @@ export interface Credential {
   owner: string;
 }
 
-/**
- * A type of Step which executes code
- * This is some openfn expression plus metadata (adaptor, credentials)
- */
 export interface Job extends Step {
   adaptor?: string;
   expression?: string;

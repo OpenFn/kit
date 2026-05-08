@@ -1,5 +1,5 @@
 import test from 'ava';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { ExecutionPlan, Job } from '@openfn/runtime';
 
 import { createRunState } from '../../src/util';
 
