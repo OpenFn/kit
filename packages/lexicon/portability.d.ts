@@ -76,6 +76,8 @@ export interface Trigger extends Step {
   cron_expression?: string;
 
   enabled?: boolean;
+
+  webhook_reply?: string;
 }
 
 // TODO credential should just be an id string in the near future

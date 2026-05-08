@@ -3,11 +3,7 @@ import compile, {
   Options,
   getExports,
 } from '@openfn/compiler';
-import {
-  getModulePath,
-  type ExecutionPlan,
-  type Job,
-} from '@openfn/runtime';
+import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
