@@ -1,4 +1,5 @@
-import { ExecutionPlan, State } from '@openfn/lexicon';
+import { State } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 import { WorkflowState } from '../types';
 
 // TODO should this be a weakmap for better memory efficiency?

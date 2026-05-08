@@ -4,9 +4,10 @@ import {
   getNameAndVersion,
   getLatestVersion,
   loadRepoPkg,
+  install as runtimeInstall,
+  type ExecutionPlan,
+  type Job,
 } from '@openfn/runtime';
-import { install as runtimeInstall } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';

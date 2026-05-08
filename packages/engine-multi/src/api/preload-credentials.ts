@@ -1,4 +1,4 @@
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
 import { CredentialErrorObj, CredentialLoadError } from '../errors';
 

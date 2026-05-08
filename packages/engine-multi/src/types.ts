@@ -1,5 +1,6 @@
 import type { Logger, SanitizePolicies } from '@openfn/logger';
-import type { ExecutionPlan, State, UUID } from '@openfn/lexicon';
+import type { State, UUID } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
 
 import type { EngineOptions } from './engine';

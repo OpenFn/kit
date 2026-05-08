@@ -1,7 +1,8 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ExecutionPlan, State, UUID } from '@openfn/lexicon';
+import type { State, UUID } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
 
 import {

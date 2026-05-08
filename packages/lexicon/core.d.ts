@@ -4,6 +4,7 @@ import type { RawSourceMap } from 'source-map';
 import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
 export {
   Step,
+  StepId,
   Job,
   Trigger,
   StepEdge,
