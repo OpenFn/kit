@@ -1,5 +1,3 @@
-// the executionPLan for the CLI is a bit differnt to the runtime's perspective
-
 import { Trigger, UUID, WorkflowOptions } from '@openfn/lexicon';
 
 // Ie config can be a string

@@ -35,7 +35,7 @@ export interface WorkflowSpec {
 
   steps: Array<Job | Trigger>;
 
-  // a path to a file where functions are defined
+  /** Global functions (path to a js file, unsupported in app) */
   globals?: string;
 
   /** The default start node - the one the workflow was designed for (the trigger) */
@@ -94,7 +94,7 @@ export interface Credential {
  * This is some openfn expression plus metadata (adaptor, credentials)
  */
 export interface Job extends Step {
-  adaptors?: string[];
+  adaptor?: string;
   expression?: string;
   configuration?: object | string;
 }

@@ -1,5 +1,5 @@
 import { SanitizePolicies } from '@openfn/logger';
-import type { RawSourceMap } from 'source-map';
+
 import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
 export {
   Step,
@@ -8,7 +8,9 @@ export {
   StepEdge,
   ConditionalStepEdge,
   Credential,
+  WorkflowSpec,
 } from './portability';
+
 /**
  * Canonical internal stateful Project representation.
  * This is what gets serialized in a v2 <alias>@<domain>.yaml file
@@ -47,9 +49,6 @@ export interface JobState extends Job {
 
   state?: Omit<State, 'configuration'> | string;
 
-  // this is a runtime property and not part of the
-  sourceMap?: SourceMapWithOperations;
-
   // Internal use only
   // Allow module paths and versions to be overridden in the linker
   // Maps to runtime.ModuleInfoMap
@@ -66,10 +65,6 @@ export interface JobState extends Job {
 export type UUID = string | number;
 
 export type SourceMap = RawSourceMap;
-
-export type SourceMapWithOperations = RawSourceMap & {
-  operations: [{ line: number; order: number; name: string }];
-};
 
 export type SandboxMeta = {
   parentId?: string;
@@ -179,18 +174,21 @@ export interface NodeMeta {
   [key: string]: unknown;
 }
 
-/**
- * An execution plan is a portable definition of a Work Order,
- * or, a unit of work to execute
- * This definition represents the external format - the shape of
- * the plan pre-compilation before it's passed into the runtime manager
- * (ie, the CLI or Worker)
- */
-export type ExecutionPlan = {
-  id?: UUID; // TODO make required
-  workflow: WorkflowSpec;
-  options?: WorkflowOptions;
-};
+// // TODO this isn't right now
+// // the execution plan is an internal runtime structure
+// // the project spec is the portable bit
+// /**
+//  * An execution plan is a portable definition of a Work Order,
+//  * or, a unit of work to execute
+//  * This definition represents the external format - the shape of
+//  * the plan pre-compilation before it's passed into the runtime manager
+//  * (ie, the CLI or Worker)
+//  */
+// export type ExecutionPlan = {
+//   id?: UUID; // TODO make required
+//   workflow: WorkflowSpec;
+//   options?: WorkflowOptions;
+// };
 
 export type StepId = string;
 

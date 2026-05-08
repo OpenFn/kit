@@ -1,5 +1,5 @@
+import type { RawSourceMap } from 'source-map';
 import { Operation, StepId, WorkflowOptions, Step } from '@openfn/lexicon';
-
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
 import { ErrorReporter } from './util/log-error';
@@ -19,6 +19,27 @@ export type ErrorPosition = {
   src?: string; // the source line for this error
 };
 
+export type SourceMapWithOperations = RawSourceMap & {
+  operations: [{ line: number; order: number; name: string }];
+};
+
+// note that this doesn't extend the portable workflow spec
+// because this is an internal structure, and is quite different
+// (maybe in future we'll align them more closely)
+export interface CompiledWorkflow {
+  globals?: string;
+
+  steps: Record<StepId, CompiledStep>;
+
+  // this is a runtime property and not part of the spec
+  sourceMap?: SourceMapWithOperations;
+
+  credentials?: Record<string, any>;
+
+  /** The default start node - the one the workflow was designed for (the trigger) */
+  start?: StepId;
+}
+
 export type CompiledEdge =
   | boolean
   | {
@@ -34,23 +55,33 @@ export type CompiledStep = Omit<Step, 'next'> & {
   // This lets us set version or even path per job
   linker?: ModuleInfoMap;
 
+  // The compiled step can take other properties - but they will be ignored buy the runtime
+  // Would it make more sense for the compiler to strip these properties?
   [other: string]: any;
 };
 
 export type Lazy<T> = string | T;
 
-export type CompiledExecutionPlan = {
-  workflow: {
-    globals?: string;
-    steps: Record<StepId, CompiledStep>;
-    credentials?: Record<string, any>;
-    /** The default start node - the one the workflow was designed for (the trigger) */
-    start?: StepId;
-  };
+export type ExecutionPlan = {
+  id?: string;
+  workflow: Workflow;
   options: WorkflowOptions & {
     /** User-specified start node */
     start: StepId;
   };
+};
+
+export type Workflow = Partial<CompiledWorkflow>;
+
+// TODO I don't live the compiled vs non compiled distinction
+// It implies too much dependency on the compiler
+// It's more like a take a RawExecutionPlan as an argument, and that gets
+// converted into this InternalExecutionPlan
+// (which doesn't use the compiler component, it's just an internal process)
+export type CompiledExecutionPlan = {
+  id?: string;
+  workflow: CompiledWorkflow;
+  options: ExecutionPlan['options'];
 };
 
 export type JobModule = {
