@@ -78,6 +78,10 @@ export interface Trigger extends Step {
   enabled?: boolean;
 
   webhook_reply?: string;
+  cron_cursor_job_id?: string;
+
+  /** Allow arbitrary properties on trigger nodes (as configuration options) */
+  [option: string]: any;
 }
 
 // TODO credential should just be an id string in the near future
