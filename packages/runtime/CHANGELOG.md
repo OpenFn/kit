@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.9.3
+
+### Patch Changes
+
+- 380bccd: Refactor internal workflow types to be independent of the portability spec in the lexicon
+
 ## 1.9.2
 
 ### Patch Changes

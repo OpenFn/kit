@@ -1,5 +1,17 @@
 # engine-multi
 
+## 1.11.4
+
+### Patch Changes
+
+Update type interfaces to match new portability spec.
+
+- Updated dependencies [728e6cb]
+- Updated dependencies [380bccd]
+  - @openfn/lexicon@2.0.0
+  - @openfn/runtime@1.9.3
+  - @openfn/compiler@1.2.5
+
 ## 1.11.3
 
 ### Patch Changes

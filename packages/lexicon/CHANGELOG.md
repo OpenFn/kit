@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.0.0
+
+### Major Changes
+
+- 728e6cb: Introduce a formal Portabilty schema
+
 ## 1.5.0
 
 ### Minor Changes
