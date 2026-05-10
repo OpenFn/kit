@@ -1,4 +1,4 @@
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 
 export const createPlan = (job = {}) =>
   ({

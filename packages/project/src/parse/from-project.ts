@@ -11,7 +11,7 @@ import { WithMeta } from '../Workflow';
 // But is really designed for v2 project.yaml files
 
 // TODO move these types to a common types.ts, or maybe Project.ts
-export type SerializedProject = Omit<Partial<l.Project>, 'workflows'> & {
+export type SerializedProject = Omit<Partial<l.ProjectState>, 'workflows'> & {
   version: number;
   workflows: SerializedWorkflow[];
 };
@@ -26,7 +26,7 @@ export type SerializedWorkflow = {
 };
 
 export default (
-  data: l.Project | SerializedProject | string,
+  data: l.ProjectState | SerializedProject | string,
   config?: Partial<l.WorkspaceConfig> & { alias?: string; version?: number }
 ) => {
   // first ensure the data is in JSON format

@@ -1,8 +1,8 @@
 // This is the run command that will be executed inside the worker thread
 // Most of the heavy lifting is actually handled by execute
 import run from '@openfn/runtime';
-import type { NotifyEvents } from '@openfn/runtime';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionPlan, NotifyEvents } from '@openfn/runtime';
+import type { State } from '@openfn/lexicon';
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 
 import compile from './compile';

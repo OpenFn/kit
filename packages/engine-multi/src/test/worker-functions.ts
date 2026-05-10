@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { register, publish, threadId } from '../worker/thread/runtime';
 import { increment } from './counter.js';
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 const tasks = {
   test: async (result = 42) => {

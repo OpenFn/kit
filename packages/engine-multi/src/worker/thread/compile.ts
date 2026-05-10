@@ -1,6 +1,10 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
-import { getModulePath, getNameAndVersion } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import {
+  getModulePath,
+  getNameAndVersion,
+  type ExecutionPlan,
+  type Job,
+} from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
 
 import { CompileError } from '../../errors';

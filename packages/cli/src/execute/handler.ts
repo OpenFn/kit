@@ -1,4 +1,4 @@
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import path from 'node:path';
 
 import type { ExecuteOptions } from './command';

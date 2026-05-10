@@ -1,12 +1,15 @@
 import type {
+  ExecutionPlan,
+  Workflow,
   CompiledEdge,
   CompiledExecutionPlan,
   CompiledStep,
+  Job,
+  StepEdge,
 } from '../types';
 
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
-import { ExecutionPlan, Job, StepEdge, Workflow } from '@openfn/lexicon';
 import { getNameAndVersion } from '../modules/repo';
 
 // map special condition strings to JS expressions

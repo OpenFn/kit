@@ -1,5 +1,5 @@
 import test from 'ava';
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 
 import create from '../../src/mock/runtime-engine';
 import { waitForEvent, clone, createPlan } from '../util';

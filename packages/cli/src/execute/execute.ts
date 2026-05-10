@@ -1,6 +1,7 @@
 import run, { NOTIFY_JOB_COMPLETE, getNameAndVersion } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import type {
+  ExecutionPlan,
+  Job,
   ModuleInfo,
   ModuleInfoMap,
   NotifyJobCompletePayload,

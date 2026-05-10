@@ -114,7 +114,7 @@ export const parseProject = async (options: FromFsConfig) => {
     }
   }
 
-  return new Project(proj as l.Project, {
+  return new Project(proj as l.ProjectState, {
     alias,
     ...context.workspace,
   });

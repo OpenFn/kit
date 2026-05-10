@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.35.2
+
+### Patch Changes
+
+Update type interfaces to match new portability spec.
+
+- Updated dependencies [728e6cb]
+- Updated dependencies [380bccd]
+  - @openfn/lexicon@2.0.0
+  - @openfn/runtime@1.9.3
+  - @openfn/compiler@1.2.5
+  - @openfn/project@0.15.1
+
 ## 1.35.1
 
 ### Patch Changes

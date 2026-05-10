@@ -1,4 +1,4 @@
-import type { Job, State, StepId } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import executeExpression, { ExecutionErrorWrapper } from './expression';
@@ -7,6 +7,8 @@ import assembleState from '../util/assemble-state';
 import type {
   CompiledStep,
   ExecutionContext,
+  Job,
+  StepId,
   NotifyJobCompletePayload,
 } from '../types';
 import { EdgeConditionError } from '../errors';

@@ -1,8 +1,13 @@
-import { Operation, StepId, WorkflowOptions, Step } from '@openfn/lexicon';
-
+import {
+  Operation,
+  SourceMapWithOperations,
+  State,
+  UUID,
+  WorkflowOptions,
+} from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
-import { ErrorReporter } from './util/log-error';
+import type { ErrorReporter } from './util/log-error';
 import {
   NOTIFY_INIT_COMPLETE,
   NOTIFY_JOB_COMPLETE,
@@ -13,10 +18,60 @@ import {
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
 
-export type ErrorPosition = {
-  line: number;
-  column: number;
-  src?: string; // the source line for this error
+export type StepId = string;
+
+export type ConditionalStepEdge = {
+  condition?: string; // Javascript expression (function body, not function)
+  label?: string;
+  disabled?: boolean;
+};
+
+export type StepEdge = boolean | string | ConditionalStepEdge;
+
+export interface Step {
+  id?: StepId;
+  name?: string;
+  next?: string | Record<StepId, StepEdge>;
+  previous?: StepId;
+}
+
+export interface Trigger extends Step {
+  enabled?: boolean;
+
+  // The trigger is allowed extra keys, but they will be ignored
+  [key: string]: unknown;
+}
+
+export interface Job extends Step {
+  // Spec-compliant props
+  expression?: string;
+  configuration?: object | string;
+
+  // internal runtime props
+  adaptors?: string[];
+  state?: Omit<State, 'configuration'> | string;
+  sourceMap?: SourceMapWithOperations;
+  linker?: ModuleInfoMap;
+}
+
+// Runtime-internal mirror of the portability schema. Adds runtime-only
+// fields (linker, sourceMap, adaptors[], state, etc) that aren't portable.
+export interface Workflow {
+  // Spec-compliant props
+  id?: string;
+  name?: string;
+  steps: Array<Job | Trigger>;
+  globals?: string;
+  start?: StepId;
+
+  // internal runtime props
+  credentials?: Record<string, any>;
+}
+
+export type ExecutionPlan = {
+  id?: UUID;
+  workflow: Workflow;
+  options?: WorkflowOptions;
 };
 
 export type CompiledEdge =
@@ -29,28 +84,45 @@ export type CompiledEdge =
 export type CompiledStep = Omit<Step, 'next'> & {
   id: StepId;
   next?: Record<StepId, CompiledEdge>;
-
-  // custom overrides for the linker
-  // This lets us set version or even path per job
+  previous?: StepId;
   linker?: ModuleInfoMap;
 
   [other: string]: any;
 };
 
-export type Lazy<T> = string | T;
+export interface CompiledWorkflow {
+  globals?: string;
+  steps: Record<StepId, CompiledStep>;
+  sourceMap?: SourceMapWithOperations;
+  credentials?: Record<string, any>;
+  start?: StepId;
+}
 
 export type CompiledExecutionPlan = {
-  workflow: {
-    globals?: string;
-    steps: Record<StepId, CompiledStep>;
-    credentials?: Record<string, any>;
-    /** The default start node - the one the workflow was designed for (the trigger) */
-    start?: StepId;
-  };
+  id?: UUID;
+  workflow: CompiledWorkflow;
   options: WorkflowOptions & {
-    /** User-specified start node */
     start: StepId;
   };
+};
+
+export type Lazy<T> = string | T;
+
+export type ErrorPosition = {
+  line: number;
+  column: number;
+  src?: string; // the source line for this error
+};
+
+export type ErrorReport = {
+  type: string; // The name/type of error, ie Error, TypeError
+  message: string; // simple human readable message
+  stepId: StepId; // ID of the associated job
+  error: Error; // the original underlying error object
+
+  code?: string; // The error code, if any (found on node errors)
+  stack?: string;
+  data?: any;
 };
 
 export type JobModule = {

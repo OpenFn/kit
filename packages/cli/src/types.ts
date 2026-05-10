@@ -1,43 +1,34 @@
-// the executionPLan for the CLI is a bit differnt to the runtime's perspective
+import { WorkflowOptions } from '@openfn/lexicon';
+import type { ExecutionPlan, Job, Trigger } from '@openfn/runtime';
 
-import { Trigger, UUID, WorkflowOptions } from '@openfn/lexicon';
-
-// Ie config can be a string
 export type JobNodeID = string;
 
 export type OldCLIWorkflow = {
-  id?: string; // UUID for this plan
+  id?: string;
   start?: JobNodeID;
   jobs: CLIJobNode[];
 };
 
-export type CLIExecutionPlan = {
-  id?: UUID;
+// Input-format wrapper around the runtime ExecutionPlan.
+// Accepts singular `adaptor` on jobs (normalized to `adaptors[]` by ensureAdaptors
+// before handing to the runtime) and adds the CLI-only collectionsEndpoint option.
+export type CLIExecutionPlan = Omit<ExecutionPlan, 'workflow' | 'options'> & {
   options?: WorkflowOptions & {
     collectionsEndpoint?: string;
   };
-  workflow: {
-    id?: string;
-    name?: string;
+  workflow: Omit<ExecutionPlan['workflow'], 'steps'> & {
     steps: Array<CLIJobNode | Trigger>;
-    globals?: string;
   };
 };
 
-export type CLIJobNode = {
-  id?: string;
-  expression?: string; // path or expression
-  configuration?: string | object; // path or credential object
+// Loose input variant of Job: `adaptor` (singular) is normalized to `adaptors[]`
+// by the CLI before the plan reaches the runtime.
+export type CLIJobNode = Job & {
   data?: any;
-  next?: string | Record<JobNodeID, true | CLIJobEdge>;
-
-  // We can accept a single adaptor or multiple
-  // The CLI will convert it to adaptors as an array
   adaptor?: string;
-  adaptors?: string[];
 };
 
 export type CLIJobEdge = {
-  condition?: string; // Javascript expression (function body, not function)
+  condition?: string;
   label?: string;
 };

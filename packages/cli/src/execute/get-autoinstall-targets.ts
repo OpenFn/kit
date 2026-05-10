@@ -1,4 +1,4 @@
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 const getAutoinstallTargets = (plan: ExecutionPlan) => {
   const adaptors = {} as Record<string, true>;

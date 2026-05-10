@@ -2,8 +2,11 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert';
 import { Logger } from '@openfn/logger';
-import { getNameAndVersion } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import {
+  getNameAndVersion,
+  type ExecutionPlan,
+  type Job,
+} from '@openfn/runtime';
 
 import type { Opts } from '../options';
 

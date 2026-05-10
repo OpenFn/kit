@@ -4,7 +4,7 @@
 import mock from 'mock-fs';
 import path from 'node:path';
 
-import type { ExecutionPlan, Job, StepEdge } from '@openfn/lexicon';
+import type { ExecutionPlan, Job, StepEdge } from '@openfn/runtime';
 
 export const mockFs = (files: Record<string, string>) => {
   // We have to explicitly expose some modules paths so that dependencies can run in the tests

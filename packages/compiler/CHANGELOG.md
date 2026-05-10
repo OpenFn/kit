@@ -1,5 +1,14 @@
 # @openfn/compiler
 
+## 1.2.5
+
+### Patch Changes
+
+Update type interfaces to match new portability spec.
+
+- Updated dependencies [728e6cb]
+  - @openfn/lexicon@2.0.0
+
 ## 1.2.4
 
 ### Patch Changes

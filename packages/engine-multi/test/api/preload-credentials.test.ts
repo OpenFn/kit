@@ -1,5 +1,5 @@
 import test from 'ava';
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 import preloadCredentials from '../../src/api/preload-credentials';
 

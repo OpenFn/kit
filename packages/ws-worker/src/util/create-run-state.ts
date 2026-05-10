@@ -1,4 +1,5 @@
-import type { ExecutionPlan, Job, Lazy, State } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
+import type { ExecutionPlan, Job, Lazy } from '@openfn/runtime';
 import type { RunState } from '../types';
 
 export default (plan: ExecutionPlan, input?: Lazy<State>): RunState => {

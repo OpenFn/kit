@@ -1,7 +1,7 @@
 import test from 'ava';
 
 import getAutoinstallTargets from '../../src/execute/get-autoinstall-targets';
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 
 const getPlan = (steps: Job[]) =>
   ({

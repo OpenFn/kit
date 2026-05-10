@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.24.2
+
+### Patch Changes
+
+- Update type interfaces to match new portability spec.
+- Updated dependencies [728e6cb]
+- Updated dependencies [380bccd]
+  - @openfn/lexicon@2.0.0
+  - @openfn/runtime@1.9.3
+  - @openfn/engine-multi@1.11.4
+
 ## 1.24.1
 
 ### Patch Changes

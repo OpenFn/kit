@@ -61,9 +61,7 @@ export function mergeWorkflows(
       newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
-        // @ts-ignore
         'adaptor',
-        'adaptors',
         'expression',
         'next',
       ]);

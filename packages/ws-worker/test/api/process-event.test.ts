@@ -12,7 +12,7 @@ import {
 import { eventProcessor } from '../../src/api/process-events';
 import createMockEngine from '../../src/mock/runtime-engine';
 
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/runtime';
 import { createMockLogger } from '@openfn/logger';
 import { EventEmitter } from 'node:events';
 

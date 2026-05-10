@@ -1,8 +1,9 @@
 import { pick, omitBy, isNil, sortBy } from 'lodash-es';
+import { CredentialState } from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { randomUUID } from 'node:crypto';
 
-import { Credential, Project } from '../Project';
+import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
@@ -44,12 +45,12 @@ export default function (
   const credentialsWithUuids =
     project.credentials?.map((c) => ({
       ...c,
-      uuid: c.uuid ?? randomUUID(),
+      uuid: (c as CredentialState).uuid ?? randomUUID(),
     })) ?? [];
 
   state.project_credentials = credentialsWithUuids.map((c) => ({
     // note the subtle conversion here
-    id: c.uuid,
+    id: c.uuid as string,
     name: c.name,
     owner: c.owner,
   }));
@@ -74,7 +75,7 @@ export default function (
 
 export const mapWorkflow = (
   workflow: Workflow,
-  credentials: Credential[] = []
+  credentials: CredentialState[] = []
 ) => {
   if (workflow instanceof Workflow) {
     // @ts-ignore

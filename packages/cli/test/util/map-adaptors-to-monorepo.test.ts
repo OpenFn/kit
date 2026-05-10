@@ -7,7 +7,7 @@ import mapAdaptorsToMonorepo, {
   validateMonoRepo,
   updatePath,
 } from '../../src/util/map-adaptors-to-monorepo';
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const REPO_PATH = 'a/b/c';
 const ABS_REPO_PATH = path.resolve(REPO_PATH);

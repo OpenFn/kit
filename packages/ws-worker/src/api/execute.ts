@@ -1,4 +1,5 @@
-import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
+import type { State, UUID } from '@openfn/lexicon';
+import type { ExecutionPlan, Lazy } from '@openfn/runtime';
 import * as Sentry from '@sentry/node';
 
 import type { Logger } from '@openfn/logger';

@@ -1,6 +1,6 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { ExecutionPlan, Job } from '@openfn/runtime';
 
 import autoinstall, {
   AutoinstallOptions,

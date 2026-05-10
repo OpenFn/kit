@@ -1,4 +1,4 @@
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan, Job } from '@openfn/runtime';
 import * as Sentry from '@sentry/node';
 import sentryTestkit from 'sentry-testkit';
 import {

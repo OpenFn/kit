@@ -1,7 +1,7 @@
 import { SourceMapConsumer } from 'source-map';
 import { extractPositionForFrame, RTError } from '../errors';
 import pick from './pick';
-import type { Job } from '@openfn/lexicon';
+import type { Job } from '../types';
 
 // This function takes an error and a job and updates the error with sourcemapped metadata
 export default async (job: Job, error: RTError) => {

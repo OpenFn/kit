@@ -1,4 +1,5 @@
-import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import type { State } from '@openfn/lexicon';
+import type { ExecutionPlan, Lazy } from '@openfn/runtime';
 import type { Channel as PhxChannel } from 'phoenix';
 export type { Socket } from 'node:ws';
 

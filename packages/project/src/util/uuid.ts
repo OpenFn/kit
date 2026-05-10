@@ -1,8 +1,8 @@
 // bunch of common utilities for comparing state and project files
 // just a sketch/idea right now
 
-import { Workflow } from '@openfn/lexicon';
 import { Project } from '../Project';
+import Workflow from '../Workflow';
 
 // Given a workflow step, this will find the UUID for it in state
 // TODO We probably need the workflow name too?
