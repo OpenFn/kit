@@ -84,7 +84,7 @@ export type CompiledEdge =
 export type CompiledStep = Omit<Step, 'next'> & {
   id: StepId;
   next?: Record<StepId, CompiledEdge>;
-
+  previous?: StepId;
   linker?: ModuleInfoMap;
 
   [other: string]: any;

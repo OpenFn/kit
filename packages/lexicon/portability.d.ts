@@ -58,7 +58,6 @@ export interface Step {
 
   // TODO remove next: string (next should always be an object)
   next?: string | Record<StepId, StepEdge>;
-  previous?: StepId;
 }
 
 export type StepEdge = boolean | string | ConditionalStepEdge;
