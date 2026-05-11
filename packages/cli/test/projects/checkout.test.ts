@@ -476,7 +476,6 @@ workspace:
   t.deepEqual(JSON.parse(wf), {
     id: 'simple-workflow',
     name: 'Simple Workflow',
-    options: {},
     start: 'webhook',
     steps: [
       {

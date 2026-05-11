@@ -61,7 +61,7 @@ export const myProject_v1: Provisioner.Project = {
 
 export const myProject_yaml = `id: my-project
 name: My Project
-schema_version: "4.0"
+schema_version: '4.0'
 description: my lovely project
 collections: []
 credentials: []
@@ -80,7 +80,7 @@ workflows:
       - id: transform-data
         name: Transform data
         expression: fn()
-        adaptor: "@openfn/language-common@latest"
+        adaptor: '@openfn/language-common@latest'
         openfn:
           uuid: 66add020-e6eb-4eec-836b-20008afca816
       - id: webhook
