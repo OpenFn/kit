@@ -36,8 +36,8 @@ test('jsonToYaml: convert an array of primitives', (t) => {
     arr: ['1', '2', 3, true],
   };
   const expected = `arr:
-  - "1"
-  - "2"
+  - '1'
+  - '2'
   - 3
   - true
 `;

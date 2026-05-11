@@ -61,8 +61,7 @@ export const myProject_v1: Provisioner.Project = {
 
 export const myProject_yaml = `id: my-project
 name: My Project
-cli:
-  version: 2
+schema_version: "4.0"
 description: my lovely project
 collections: []
 credentials: []

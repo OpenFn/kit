@@ -12,7 +12,7 @@ import { WithMeta } from '../Workflow';
 
 // TODO move these types to a common types.ts, or maybe Project.ts
 export type SerializedProject = Omit<Partial<l.ProjectState>, 'workflows'> & {
-  version: number;
+  version?: number;
   workflows: SerializedWorkflow[];
 };
 
@@ -32,8 +32,11 @@ export default (
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
 
-  if (rawJson.cli?.version ?? rawJson.version /*deprecated*/) {
-    // If there's any version key at all, its at least v2
+  if (
+    rawJson.schema_version ||
+    rawJson.cli?.version === 2 ||
+    rawJson.version /*deprecated*/
+  ) {
     return new Project(from_v2(rawJson as SerializedProject), config);
   }
 

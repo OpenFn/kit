@@ -11,5 +11,7 @@ export function jsonToYaml(json: string | Object) {
   }
 
   const doc = new yaml.Document(json);
-  return yaml.stringify(doc, null, 2);
+  return yaml.stringify(doc, null, {
+    singleQuote: true,
+  });
 }

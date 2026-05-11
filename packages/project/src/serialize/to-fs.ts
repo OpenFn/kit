@@ -7,14 +7,19 @@ import { extractConfig } from '../util/config';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
-export default function (project: Project) {
+type ToFsOptions = {
+  // private: stamp schema_version on each workflow file. off by default
+  includeSchemaVersion?: boolean;
+};
+
+export default function (project: Project, options: ToFsOptions = {}) {
   const files: Record<string, string> = {};
 
   const { path, content } = extractConfig(project);
   files[path] = content;
 
   for (const wf of project.workflows) {
-    const { path, content } = extractWorkflow(project, wf.id);
+    const { path, content } = extractWorkflow(project, wf.id, options);
     files[path] = content;
 
     for (const s of wf.steps) {
@@ -30,7 +35,11 @@ export default function (project: Project) {
 }
 
 // extracts a workflow.json|yaml from a project
-export const extractWorkflow = (project: Project, workflowId: string) => {
+export const extractWorkflow = (
+  project: Project,
+  workflowId: string,
+  options: ToFsOptions = {}
+) => {
   const format = project.config.formats.workflow;
 
   const workflow = project.getWorkflow(workflowId);
@@ -46,6 +55,7 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
   const path = nodepath.join(root, workflow.id, workflow.id);
 
   const wf = {
+    ...(options.includeSchemaVersion ? { schema_version: '4.0' } : {}),
     id: workflow.id,
     name: workflow.name,
     start: workflow.start,

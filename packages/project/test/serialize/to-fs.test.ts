@@ -40,7 +40,7 @@ start: step
 options: {}
 steps:
   - id: step
-    adaptor: "@openfn/language-common@latest"
+    adaptor: '@openfn/language-common@latest'
     expression: ./step.js
 `
   );
@@ -227,6 +227,30 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
     type: 'webhook',
     enabled: false,
   });
+});
+
+test('extractWorkflow: includeSchemaVersion stamps schema_version into workflow', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json',
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow', {
+    includeSchemaVersion: true,
+  });
+
+  t.is(JSON.parse(content).schema_version, '4.0');
 });
 
 test('extractWorkflow: single simple workflow with custom root', (t) => {
