@@ -276,6 +276,17 @@ const executeStep = async (
         next,
         mem,
       });
+
+      // webhookResponse is a platform contract between jobs and the worker.
+      // It's emitted on step:complete but must not propagate into the next
+      // step's input state.
+      if (
+        result &&
+        typeof result === 'object' &&
+        'webhookResponse' in result
+      ) {
+        delete result.webhookResponse;
+      }
     }
   } else {
     // calculate next for trigger nodes

@@ -1,5 +1,8 @@
 import crypto from 'node:crypto';
-import type { StepCompletePayload } from '@openfn/lexicon/lightning';
+import type {
+  StepCompletePayload,
+  WebhookResponse,
+} from '@openfn/lexicon/lightning';
 import type { JobCompletePayload } from '@openfn/engine-multi';
 import { timestamp } from '@openfn/logger';
 
@@ -25,6 +28,23 @@ export default async function onStepComplete(
   if (!state.dataclips) {
     state.dataclips = {};
   }
+
+  // Extract webhookResponse off user state BEFORE the state is captured as a
+  // dataclip, so it doesn't persist in the dataclip and doesn't flow into
+  // downstream steps. This is the worker↔Lightning contract: user sets
+  // state.webhookResponse in job code (camelCase, JS-style), the worker
+  // forwards it on step:complete as `webhook_response` (snake_case, matching
+  // the rest of the payload), and Lightning decides when to flush the response.
+  let webhookResponse: WebhookResponse | undefined;
+  if (
+    event.state &&
+    typeof event.state === 'object' &&
+    'webhookResponse' in event.state
+  ) {
+    webhookResponse = event.state.webhookResponse;
+    delete event.state.webhookResponse;
+  }
+
   const outputState = event.state || {};
 
   state.dataclips[dataclipId] = event.state;
@@ -75,6 +95,10 @@ export default async function onStepComplete(
       // Write the dataclip if it's not too big
       evt.output_dataclip = payload;
     }
+  }
+
+  if (webhookResponse !== undefined) {
+    evt.webhook_response = webhookResponse;
   }
 
   const reason = calculateJobExitReason(job_id, event.state, error);
