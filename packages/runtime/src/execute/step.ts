@@ -280,11 +280,7 @@ const executeStep = async (
       // webhookResponse is a platform contract between jobs and the worker.
       // It's emitted on step:complete but must not propagate into the next
       // step's input state.
-      if (
-        result &&
-        typeof result === 'object' &&
-        'webhookResponse' in result
-      ) {
+      if (result && typeof result === 'object' && 'webhookResponse' in result) {
         delete result.webhookResponse;
       }
     }
