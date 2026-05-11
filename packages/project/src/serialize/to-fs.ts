@@ -54,28 +54,32 @@ export const extractWorkflow = (
 
   const path = nodepath.join(root, workflow.id, workflow.id);
 
-  const wf = {
-    ...(options.includeSchemaVersion ? { schema_version: '4.0' } : {}),
-    id: workflow.id,
-    name: workflow.name,
-    start: workflow.start,
-    // Note: if no options are defined, options will serialize to an empty object
-    // Not crazy about this - maybe we should do something better? Or do we like the consistency?
-    options: workflow.options,
-    steps: workflow.steps.map((step) => {
-      const { openfn, expression, next, ...mapped } = step;
-      if (expression) {
-        (mapped as any).expression = `./${step.id}.js`;
-      }
-      if (next && typeof next === 'object') {
-        (mapped as any).next = {};
-        for (const id in next) {
-          (mapped as any).next[id] = omit(next[id] as any, ['openfn']);
+  const wf = Object.assign(
+    {
+      id: workflow.id,
+      name: workflow.name,
+      start: workflow.start,
+      // Note: if no options are defined, options will serialize to an empty object
+      // Not crazy about this - maybe we should do something better? Or do we like the consistency?
+    },
+    Object.keys(workflow.options).length && { options: workflow.options },
+    options.includeSchemaVersion && { schema_version: '4.0' },
+    {
+      steps: workflow.steps.map((step) => {
+        const { openfn, expression, next, ...mapped } = step;
+        if (expression) {
+          (mapped as any).expression = `./${step.id}.js`;
         }
-      }
-      return mapped;
-    }),
-  };
+        if (next && typeof next === 'object') {
+          (mapped as any).next = {};
+          for (const id in next) {
+            (mapped as any).next[id] = omit(next[id] as any, ['openfn']);
+          }
+        }
+        return mapped;
+      }),
+    }
+  );
   return handleOutput(wf, path, format!);
 };
 

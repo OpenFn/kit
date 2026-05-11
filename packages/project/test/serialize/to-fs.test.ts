@@ -37,7 +37,6 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
     `id: my-workflow
 name: My Workflow
 start: step
-options: {}
 steps:
   - id: step
     adaptor: '@openfn/language-common@latest'
@@ -91,7 +90,6 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
-    options: {},
     steps: [
       {
         id: 'step1',
@@ -145,7 +143,6 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
-    options: {},
     steps: [
       {
         id: 'step',
