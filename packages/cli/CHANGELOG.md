@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.35.3
+
+### Patch Changes
+
+- Include version number in serialized project files
+- Updated dependencies
+  - @openfn/project@0.15.2
+
 ## 1.35.2
 
 ### Patch Changes

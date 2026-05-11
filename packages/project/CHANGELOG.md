@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.15.2
+
+### Patch Changes
+
+- Include version number in serialized project files
+
 ## 0.15.1
 
 ### Patch Changes
