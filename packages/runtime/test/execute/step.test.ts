@@ -440,36 +440,29 @@ test.serial(
   }
 );
 
-test.serial(
-  'webhookResponse is emitted on NOTIFY_JOB_COMPLETE',
-  async (t) => {
-    const job = [
-      async (s: State) => ({
-        ...s,
-        webhookResponse: { status: 201, body: { ok: true } },
-      }),
-    ];
-    const step = { id: 'k', expression: job };
+test.serial('webhookResponse is emitted on NOTIFY_JOB_COMPLETE', async (t) => {
+  const job = [
+    async (s: State) => ({
+      ...s,
+      webhookResponse: { status: 201, body: { ok: true } },
+    }),
+  ];
+  const step = { id: 'k', expression: job };
 
-    // Snapshot the state inside the notify callback because in real use
-    // notify crosses the worker thread boundary (postMessage structured-clones
-    // the payload), so consumers receive a copy. Here it's a shared reference,
-    // so we must capture before the runtime strips webhookResponse.
-    let snapshot: any;
-    const notify = (event: string, payload: any) => {
-      if (event === NOTIFY_JOB_COMPLETE) {
-        snapshot = JSON.parse(JSON.stringify(payload.state));
-      }
-    };
-    const context = createContext({ notify });
+  let webhook_response: any;
+  const notify = (event: string, payload: any) => {
+    if (event === NOTIFY_JOB_COMPLETE) {
+      webhook_response = JSON.parse(JSON.stringify(payload.webhook_response));
+    }
+  };
+  const context = createContext({ notify });
 
-    await execute(context, step, createState());
-    t.deepEqual(snapshot.webhookResponse, {
-      status: 201,
-      body: { ok: true },
-    });
-  }
-);
+  await execute(context, step, createState());
+  t.deepEqual(webhook_response, {
+    status: 201,
+    body: { ok: true },
+  });
+});
 
 test.serial(
   'webhookResponse is removed from result state so it does not propagate to next step',
