@@ -4,26 +4,15 @@ import Project from '../Project';
 import ensureJson from '../util/ensure-json';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import fromAppState, { fromAppStateConfig } from './from-app-state';
-import { WithMeta } from '../Workflow';
 
 // Load a project from any JSON or yaml representation
 // This is backwards-compatible with v1 state.json files
 // But is really designed for v2 project.yaml files
 
 // TODO move these types to a common types.ts, or maybe Project.ts
-export type SerializedProject = Omit<Partial<l.ProjectState>, 'workflows'> & {
-  version: number;
-  workflows: SerializedWorkflow[];
-};
+export type SerializedProject = l.ProjectState;
 
-export type SerializedWorkflow = {
-  id: string;
-  name: string;
-
-  steps: WithMeta<Array<l.Job | l.Trigger>>;
-
-  openfn?: l.ProjectMeta;
-};
+export type SerializedWorkflow = l.WorkflowState;
 
 export default (
   data: l.ProjectState | SerializedProject | string,
@@ -32,8 +21,11 @@ export default (
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
 
-  if (rawJson.cli?.version ?? rawJson.version /*deprecated*/) {
-    // If there's any version key at all, its at least v2
+  if (
+    rawJson.schema_version ||
+    rawJson.cli?.version === 2 ||
+    rawJson.version /*deprecated*/
+  ) {
     return new Project(from_v2(rawJson as SerializedProject), config);
   }
 

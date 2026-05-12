@@ -79,6 +79,20 @@ test('import from a v1 state as YAML', async (t) => {
   t.is(proj.workflows.length, 1);
 });
 
+test('import a legacy v2 project (cli.version === 2) as JSON', async (t) => {
+  const legacy = {
+    id: 'legacy-project',
+    name: 'Legacy Project',
+    cli: { version: 2 },
+    workflows: [],
+  };
+  const proj = await Project.from('project', legacy, {});
+
+  t.is(proj.id, 'legacy-project');
+  t.is(proj.name, 'Legacy Project');
+  t.is(proj.workflows.length, 0);
+});
+
 test('import from a v2 project as JSON', async (t) => {
   const proj = await Project.from('project', v2.json, { alias: 'main' });
 

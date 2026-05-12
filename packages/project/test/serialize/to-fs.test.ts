@@ -37,10 +37,9 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
     `id: my-workflow
 name: My Workflow
 start: step
-options: {}
 steps:
   - id: step
-    adaptor: "@openfn/language-common@latest"
+    adaptor: '@openfn/language-common@latest'
     expression: ./step.js
 `
   );
@@ -91,7 +90,6 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
-    options: {},
     steps: [
       {
         id: 'step1',
@@ -145,7 +143,6 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
-    options: {},
     steps: [
       {
         id: 'step',
@@ -227,6 +224,30 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
     type: 'webhook',
     enabled: false,
   });
+});
+
+test('extractWorkflow: includeSchemaVersion stamps schema_version into workflow', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json',
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow', {
+    includeSchemaVersion: true,
+  });
+
+  t.is(JSON.parse(content).schema_version, '4.0');
 });
 
 test('extractWorkflow: single simple workflow with custom root', (t) => {

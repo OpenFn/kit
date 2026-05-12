@@ -402,9 +402,7 @@ test.serial(
     const json = {
       id: 'my-project',
       name: 'My Project',
-      cli: {
-        version: 2,
-      },
+      schema_version: '4.0',
       description: 'my lovely project',
       collections: [],
       credentials: [],

@@ -151,7 +151,6 @@ test.serial('Checkout a project', async (t) => {
     `id: hello-workflow
 name: Hello Workflow
 start: trigger
-options: {}
 steps:
   - id: trigger
     type: webhook
@@ -161,7 +160,7 @@ steps:
         condition: true
   - id: transform-data
     name: Transform data
-    adaptor: "@openfn/language-dhis2@8.0.4"
+    adaptor: '@openfn/language-dhis2@8.0.4'
     expression: ./transform-data.js
 `
   );

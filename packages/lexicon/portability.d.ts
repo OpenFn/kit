@@ -1,15 +1,13 @@
 /**
- * Typings which define the Portability Spec
- * See https://docs.openfn.org/documentation/deploy/portability
- */
-
-/**
  * Schema for portable representation of a Project
  * AKA Project Spec
  * Can serialize to JSON or YAML or whatever you like
  *
+ * This interface describes the 4.0 Portability Spec: https://docs.openfn.org/documentation/deploy/portability
+ *
  * If you serialize a v2 project file without state, this is what you get
  */
+
 export interface ProjectSpec {
   /** Single-word identifier */
   id: string;
@@ -18,6 +16,8 @@ export interface ProjectSpec {
   name?: string;
 
   description?: string;
+
+  schema_version?: string;
 
   workflows: WorkflowSpec[];
 
@@ -32,6 +32,8 @@ export interface WorkflowSpec {
 
   /** Human readable label. Can be used to generate an internal id */
   name?: string;
+
+  schema_version?: string;
 
   steps: Array<Job | Trigger>;
 

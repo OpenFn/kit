@@ -26,7 +26,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       options.workspace || process.cwd(),
       'openfn.yaml'
     );
-    if (await fileExists(v2ConfigPath)) {
+    if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
       // override endpoint with one from openfn.yaml
       const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
       if (config?.project?.endpoint) {
@@ -34,7 +34,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       }
 
       logger.always(
-        'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
+        'Detected openfn.yaml file - switching to v2 pull (openfn project pull). Set PREFER_LEGACY_SYNC to disable this.'
       );
       return beta(
         {

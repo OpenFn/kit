@@ -10,7 +10,7 @@ import { jsonToYaml } from '../util/yaml';
 import { WithMeta } from '../Workflow';
 import { tidyOpenfn } from '../util/omit-nil';
 
-const SERIALIZE_VERSION = 2;
+const SCHEMA_VERSION = '4.0';
 
 type ToProjectOptions = {
   /** What serialisation version should we write to? defaults to the highest supported by this CLI. For v1, use `Project.serialize('state)`  */
@@ -23,14 +23,13 @@ type ToProjectOptions = {
 export default (project: Project, options: ToProjectOptions = {}) => {
   // return a compatible json structure
   const { alias, ...cliWithoutAlias } = project.cli;
+  const cli = Object.keys(cliWithoutAlias).length ? cliWithoutAlias : undefined;
   const proj: SerializedProject = omitBy(
     {
       id: project.id,
       name: project.name,
-      cli: {
-        ...cliWithoutAlias,
-        version: SERIALIZE_VERSION, // important!
-      },
+      schema_version: SCHEMA_VERSION,
+      cli,
       description: project.description,
 
       collections: project.collections,

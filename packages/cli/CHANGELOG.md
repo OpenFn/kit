@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 1.35.3
+
+### Patch Changes
+
+- Include version number in serialized project files
+- Don't validate workflows on execution unless `--validate` is explicitly passed
+- Allow setting `PREFER_LEGACY_SYNC=1` to strictly disable v2 sync when calling the v1 API
+- Updated dependencies
+  - @openfn/project@0.15.2
+
 ## 1.35.2
 
 ### Patch Changes

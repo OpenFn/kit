@@ -40,7 +40,7 @@ async function deployHandler(
       options.workspace || process.cwd(),
       'openfn.yaml'
     );
-    if (await fileExists(v2ConfigPath)) {
+    if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
       // override endpoint with one from openfn.yaml
       const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
       if (config?.project?.endpoint) {
@@ -48,7 +48,7 @@ async function deployHandler(
       }
 
       logger.always(
-        'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy)'
+        'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy). Set PREFER_LEGACY_SYNC to disable this.'
       );
       return beta.handler(
         {

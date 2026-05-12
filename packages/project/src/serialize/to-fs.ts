@@ -7,14 +7,19 @@ import { extractConfig } from '../util/config';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
-export default function (project: Project) {
+type ToFsOptions = {
+  // private: stamp schema_version on each workflow file. off by default
+  includeSchemaVersion?: boolean;
+};
+
+export default function (project: Project, options: ToFsOptions = {}) {
   const files: Record<string, string> = {};
 
   const { path, content } = extractConfig(project);
   files[path] = content;
 
   for (const wf of project.workflows) {
-    const { path, content } = extractWorkflow(project, wf.id);
+    const { path, content } = extractWorkflow(project, wf.id, options);
     files[path] = content;
 
     for (const s of wf.steps) {
@@ -30,7 +35,11 @@ export default function (project: Project) {
 }
 
 // extracts a workflow.json|yaml from a project
-export const extractWorkflow = (project: Project, workflowId: string) => {
+export const extractWorkflow = (
+  project: Project,
+  workflowId: string,
+  options: ToFsOptions = {}
+) => {
   const format = project.config.formats.workflow;
 
   const workflow = project.getWorkflow(workflowId);
@@ -45,27 +54,30 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
 
   const path = nodepath.join(root, workflow.id, workflow.id);
 
-  const wf = {
-    id: workflow.id,
-    name: workflow.name,
-    start: workflow.start,
-    // Note: if no options are defined, options will serialize to an empty object
-    // Not crazy about this - maybe we should do something better? Or do we like the consistency?
-    options: workflow.options,
-    steps: workflow.steps.map((step) => {
-      const { openfn, expression, next, ...mapped } = step;
-      if (expression) {
-        (mapped as any).expression = `./${step.id}.js`;
-      }
-      if (next && typeof next === 'object') {
-        (mapped as any).next = {};
-        for (const id in next) {
-          (mapped as any).next[id] = omit(next[id] as any, ['openfn']);
+  const wf = Object.assign(
+    {
+      id: workflow.id,
+      name: workflow.name,
+      start: workflow.start,
+    },
+    Object.keys(workflow.options).length && { options: workflow.options },
+    options.includeSchemaVersion && { schema_version: '4.0' },
+    {
+      steps: workflow.steps.map((step) => {
+        const { openfn, expression, next, ...mapped } = step;
+        if (expression) {
+          (mapped as any).expression = `./${step.id}.js`;
         }
-      }
-      return mapped;
-    }),
-  };
+        if (next && typeof next === 'object') {
+          (mapped as any).next = {};
+          for (const id in next) {
+            (mapped as any).next[id] = omit(next[id] as any, ['openfn']);
+          }
+        }
+        return mapped;
+      }),
+    }
+  );
   return handleOutput(wf, path, format!);
 };
 

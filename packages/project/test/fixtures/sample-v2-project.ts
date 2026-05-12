@@ -6,8 +6,8 @@ import { SerializedProject } from '../../src/parse/from-project';
 export const json: SerializedProject = {
   id: 'my-project',
   name: 'My Project',
+  schema_version: '4.0',
   description: 'my lovely project',
-  cli: { version: 2 },
   openfn: { uuid: '1234', endpoint: 'https://app.openfn.org' },
   options: { allow_support_access: false, env: 'dev', color: 'red' },
   sandbox: {
@@ -49,15 +49,14 @@ export const json: SerializedProject = {
 
 export const yaml = `id: my-project
 name: My Project
-cli:
-  version: 2
+schema_version: '4.0'
 description: my lovely project
 credentials:
   - uuid: x
     owner: admin@openfn.org
     name: My Credential
 openfn:
-  uuid: "1234"
+  uuid: '1234'
   endpoint: https://app.openfn.org
 options:
   allow_support_access: false

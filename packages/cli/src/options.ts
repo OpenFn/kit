@@ -70,6 +70,7 @@ export type Opts = {
   useAdaptorsMonorepo?: boolean;
   workflow: string;
   workflowName?: string;
+  validate?: boolean;
 
   // deprecated
   workflowPath?: string;
@@ -610,6 +611,15 @@ export const sanitize: CLIOption = {
     const err = 'Unknown sanitize value provided: ' + opts.sanitize;
     console.error(err);
     throw new Error(err);
+  },
+};
+
+export const validate: CLIOption = {
+  name: 'validate',
+  yargs: {
+    boolean: true,
+    default: false,
+    description: 'Validate workflows before executing',
   },
 };
 
