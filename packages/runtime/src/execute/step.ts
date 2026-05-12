@@ -99,9 +99,9 @@ const prepareFinalState = async (
 
     // configuration & webhookResponse will by default always be removed
     const defaultRemoveFields = ['configuration', 'webhookResponse'];
-    statePropsToRemove = [
-      ...new Set((statePropsToRemove || []).concat(defaultRemoveFields)),
-    ];
+    statePropsToRemove = Array.from(
+      new Set((statePropsToRemove || []).concat(defaultRemoveFields))
+    );
 
     const removedProps: string[] = [];
     statePropsToRemove.forEach((prop) => {
