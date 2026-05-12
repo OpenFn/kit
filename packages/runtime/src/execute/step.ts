@@ -97,11 +97,11 @@ const prepareFinalState = async (
       throw e;
     }
 
-    if (!statePropsToRemove) {
-      // As a strict default, remove the configuration key
-      // tbh this should happen higher up in the stack but it causes havoc in unit testing
-      statePropsToRemove = ['configuration'];
-    }
+    // configuration & webhookResponse will by default always be removed
+    const defaultRemoveFields = ['configuration', 'webhookResponse'];
+    statePropsToRemove = [
+      ...new Set((statePropsToRemove || []).concat(defaultRemoveFields)),
+    ];
 
     const removedProps: string[] = [];
     statePropsToRemove.forEach((prop) => {
@@ -235,6 +235,7 @@ const executeStep = async (
     if (!didError) {
       const humanDuration = logger.timer(timerId);
       logger.success(`${jobName} completed in ${humanDuration}`);
+      const webhook_response = result?.webhookResponse || undefined;
       result = await prepareFinalState(
         result,
         logger,
@@ -275,14 +276,8 @@ const executeStep = async (
         jobId,
         next,
         mem,
+        webhook_response,
       });
-
-      // webhookResponse is a platform contract between jobs and the worker.
-      // It's emitted on step:complete but must not propagate into the next
-      // step's input state.
-      if (result && typeof result === 'object' && 'webhookResponse' in result) {
-        delete result.webhookResponse;
-      }
     }
   } else {
     // calculate next for trigger nodes

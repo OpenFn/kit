@@ -173,6 +173,7 @@ export type NotifyJobCompletePayload = {
     system: number;
     peak?: number;
   };
+  webhook_response?: any;
 };
 
 export type NotifyJobErrorPayload = {
