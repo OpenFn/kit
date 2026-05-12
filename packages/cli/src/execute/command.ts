@@ -8,39 +8,40 @@ import type { Opts } from '../options';
 export type ExecuteOptions = { workspace?: string } & Required<
   Pick<
     Opts,
-    | 'apiKey'
     | 'adaptors'
+    | 'apiKey'
     | 'autoinstall'
     | 'baseDir'
     | 'cacheSteps'
+    | 'collectionsEndpoint'
+    | 'collectionsVersion'
     | 'command'
     | 'compile'
     | 'credentials'
-    | 'collectionsEndpoint'
-    | 'collectionsVersion'
-    | 'expandAdaptors'
     | 'end'
-    | 'immutable'
-    | 'ignoreImports'
+    | 'expandAdaptors'
     | 'expressionPath'
+    | 'globals'
+    | 'ignoreImports'
+    | 'immutable'
     | 'log'
     | 'logJson'
+    | 'only'
     | 'outputPath'
     | 'outputStdout'
-    | 'only'
     | 'path'
     | 'repoDir'
+    | 'sanitize'
     | 'skipAdaptorValidation'
     | 'start'
     | 'statePath'
     | 'stateStdin'
-    | 'sanitize'
     | 'timeout'
     | 'trace'
     | 'useAdaptorsMonorepo'
-    | 'workflowPath'
+    | 'validate'
     | 'workflowName'
-    | 'globals'
+    | 'workflowPath'
   >
 > &
   Pick<Opts, 'monorepoPath' | 'repoDir'>;
@@ -77,6 +78,7 @@ const options = [
   o.timeout,
   o.trace,
   o.useAdaptorsMonorepo,
+  o.validate,
 
   po.workspace,
 ];

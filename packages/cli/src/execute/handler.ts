@@ -87,7 +87,9 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   await validateAdaptors(options, logger);
 
   let plan = await loadPlan(options, logger);
-  validatePlan(plan, logger);
+  if (options.validate) {
+    validatePlan(plan, logger);
+  }
   await loadAndApplyCredentialMap(plan, options, logger);
   if (options.cacheSteps) {
     await clearCache(plan, options, logger);
