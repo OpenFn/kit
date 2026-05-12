@@ -132,7 +132,7 @@ export default function parseArgs(argv: string[]): Args {
     .option('monorepo-dir', {
       alias: 'm',
       description:
-        'Path to the adaptors monorepo, from where @local adaptors will be loaded. Env: OPENFN_ADAPTORS_REPO',
+        'Path to the adaptors monorepo, from where @local adaptors will be loaded. Accepts a colon-separated list to merge multiple monorepos; the first path containing a given adaptor wins. Env: OPENFN_ADAPTORS_REPO',
     })
     .option('secret', {
       alias: 's',

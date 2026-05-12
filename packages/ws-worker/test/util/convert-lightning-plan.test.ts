@@ -1,4 +1,7 @@
 import test from 'ava';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import type {
   LightningPlan,
   LightningJob,
@@ -6,6 +9,17 @@ import type {
 } from '@openfn/lexicon/lightning';
 import convertPlan from '../../src/util/convert-lightning-plan';
 import { Job } from '@openfn/runtime';
+
+// Builds a temporary monorepo root with package.json files in each named adaptor.
+const makeMonorepo = (adaptors: string[]) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'multi-root-'));
+  for (const adaptor of adaptors) {
+    const pkgDir = path.join(root, 'packages', adaptor);
+    fs.mkdirSync(pkgDir, { recursive: true });
+    fs.writeFileSync(path.join(pkgDir, 'package.json'), '{}');
+  }
+  return root;
+};
 
 // Creates a lightning node (job or trigger)
 const createNode = (props = {}) =>
@@ -583,6 +597,112 @@ test('Use local paths', (t) => {
       version: 'local',
     },
   });
+});
+
+test('Use local paths: resolves @local against a single existing root', (t) => {
+  const root = makeMonorepo(['common']);
+
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a', adaptor: 'common@local' })],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, { monorepoPath: root });
+  const [, a] = plan.workflow.steps as any[];
+
+  t.deepEqual(a.linker.common, {
+    path: path.resolve(root, 'packages', 'common'),
+    version: 'local',
+  });
+});
+
+test('Use local paths: walks colon-separated roots in order, first match wins', (t) => {
+  const privateRoot = makeMonorepo(['publicschema']);
+  const canonicalRoot = makeMonorepo(['common', 'publicschema']);
+
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({ id: 'a', adaptor: 'common@local' }),
+      createNode({ id: 'b', adaptor: 'publicschema@local' }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a'), createEdge('a', 'b')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    monorepoPath: `${privateRoot}:${canonicalRoot}`,
+  });
+  const [, a, b] = plan.workflow.steps as any[];
+
+  // common only exists in the canonical root, so it falls through.
+  t.is(a.linker.common.path, path.resolve(canonicalRoot, 'packages', 'common'));
+  // publicschema exists in both; the private (earlier) root wins.
+  t.is(
+    b.linker.publicschema.path,
+    path.resolve(privateRoot, 'packages', 'publicschema')
+  );
+});
+
+test('Use local paths: ignores roots that do not contain the adaptor', (t) => {
+  const emptyRoot = makeMonorepo([]);
+  const realRoot = makeMonorepo(['http']);
+
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a', adaptor: 'http@local' })],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    monorepoPath: `${emptyRoot}:${realRoot}`,
+  });
+  const [, a] = plan.workflow.steps as any[];
+
+  t.is(a.linker.http.path, path.resolve(realRoot, 'packages', 'http'));
+});
+
+test('Use local paths: trims whitespace and drops empty segments', (t) => {
+  const root = makeMonorepo(['common']);
+
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a', adaptor: 'common@local' })],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    monorepoPath: `  :  ${root}  : `,
+  });
+  const [, a] = plan.workflow.steps as any[];
+
+  t.is(a.linker.common.path, path.resolve(root, 'packages', 'common'));
+});
+
+test('Use local paths: falls back to the first root when no root has the adaptor', (t) => {
+  const rootA = makeMonorepo([]);
+  const rootB = makeMonorepo([]);
+
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a', adaptor: 'mystery@local' })],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    monorepoPath: `${rootA}:${rootB}`,
+  });
+  const [, a] = plan.workflow.steps as any[];
+
+  // The candidate path under the first root is surfaced even though the
+  // adaptor is missing, so the runtime emits a clean "missing adaptor"
+  // error instead of crashing on a malformed colon-joined path.
+  t.is(a.linker.mystery.path, path.resolve(rootA, 'packages', 'mystery'));
 });
 
 test('pass globals from lightning run to plan', (t) => {

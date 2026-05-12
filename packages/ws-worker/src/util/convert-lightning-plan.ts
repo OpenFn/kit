@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import path from 'node:path';
 import type { State, WorkflowOptions } from '@openfn/lexicon';
 import type {
@@ -52,18 +53,49 @@ export default (
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
   const { collectionsVersion, monorepoPath } = options;
 
+  // monorepoPath is a colon-separated list of monorepo roots, mirroring how
+  // Lightning's AdaptorRegistry parses OPENFN_ADAPTORS_REPO. A single path
+  // (the common case) just becomes a one-element list. Order is precedence:
+  // when a `packages/<shortName>` directory exists in more than one root, the
+  // earlier entry wins, so a private adaptor repo can be listed before the
+  // canonical OpenFn monorepo to override individual adaptors locally.
+  const monorepoRoots = (monorepoPath ?? '')
+    .split(':')
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  const resolveLocalAdaptorPath = (shortName: string): string | undefined => {
+    if (monorepoRoots.length === 0) return undefined;
+
+    for (const root of monorepoRoots) {
+      const candidate = path.resolve(root, 'packages', shortName);
+      if (fs.existsSync(path.join(candidate, 'package.json'))) {
+        return candidate;
+      }
+    }
+    // Fall back to the first root's resolved candidate path. The directory
+    // does not exist, but this surfaces a recognisable "missing local
+    // adaptor" path to the runtime instead of an unresolved colon-joined
+    // string. It also preserves the single-path behaviour from before
+    // multi-root support was added (the path was returned without an
+    // existence check).
+    return path.resolve(monorepoRoots[0], 'packages', shortName);
+  };
+
   const appendLocalVersions = (job: Job) => {
-    if (monorepoPath && job.adaptors!) {
+    if (monorepoRoots.length && job.adaptors!) {
       for (const adaptor of job.adaptors) {
         const { name, version } = getNameAndVersion(adaptor);
-        if (monorepoPath && version === 'local') {
+        if (version === 'local') {
           const shortName = name.replace('@openfn/language-', '');
-          const localPath = path.resolve(monorepoPath, 'packages', shortName);
-          job.linker ??= {};
-          job.linker[name] = {
-            path: localPath,
-            version: 'local',
-          };
+          const localPath = resolveLocalAdaptorPath(shortName);
+          if (localPath) {
+            job.linker ??= {};
+            job.linker[name] = {
+              path: localPath,
+              version: 'local',
+            };
+          }
         }
       }
     }
