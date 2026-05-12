@@ -97,11 +97,11 @@ const prepareFinalState = async (
       throw e;
     }
 
-    // configuration & webhookResponse will by default always be removed
-    const defaultRemoveFields = ['configuration', 'webhookResponse'];
-    statePropsToRemove = Array.from(
-      new Set((statePropsToRemove || []).concat(defaultRemoveFields))
-    );
+    if (!statePropsToRemove) {
+      // As a strict default, remove the configuration key
+      // tbh this should happen higher up in the stack but it causes havoc in unit testing
+      statePropsToRemove = ['configuration', 'webhookResponse'];
+    }
 
     const removedProps: string[] = [];
     statePropsToRemove.forEach((prop) => {
