@@ -49,7 +49,11 @@ test.serial('engine api uses default options', async (t) => {
 
   t.truthy(api.options);
 
-  t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
+  t.deepEqual(api.options.statePropsToRemove, [
+    'configuration',
+    'webhookResponse',
+    'response',
+  ]);
   t.truthy(api.options.whitelist);
 });
 

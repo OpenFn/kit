@@ -62,6 +62,7 @@ const createAPI = async function (
 
     statePropsToRemove: options.statePropsToRemove ?? [
       'configuration',
+      'webhookResponse',
       'response',
     ],
     profile: options.profile,
