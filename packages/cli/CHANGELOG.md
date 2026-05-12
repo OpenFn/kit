@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Include version number in serialized project files
+- Don't validate workflows on execution unless `--validate` is explicitly passed
 - Updated dependencies
   - @openfn/project@0.15.2
 
