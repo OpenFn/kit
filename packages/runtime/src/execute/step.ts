@@ -100,7 +100,7 @@ const prepareFinalState = async (
     if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
       // tbh this should happen higher up in the stack but it causes havoc in unit testing
-      statePropsToRemove = ['configuration', 'webhookResponse'];
+      statePropsToRemove = ['configuration'];
     }
 
     const removedProps: string[] = [];
@@ -235,7 +235,6 @@ const executeStep = async (
     if (!didError) {
       const humanDuration = logger.timer(timerId);
       logger.success(`${jobName} completed in ${humanDuration}`);
-      const webhook_response = result?.webhookResponse || undefined;
       result = await prepareFinalState(
         result,
         logger,
@@ -276,7 +275,6 @@ const executeStep = async (
         jobId,
         next,
         mem,
-        webhook_response,
       });
     }
   } else {
