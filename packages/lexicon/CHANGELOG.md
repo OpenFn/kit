@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.1.0
+
+### Minor Changes
+
+- e453f6a: Support webhook_response in step:complete event when data available in results
+
 ## 2.0.0
 
 ### Major Changes

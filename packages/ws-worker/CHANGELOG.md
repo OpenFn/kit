@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.25.0
+
+### Minor Changes
+
+- e453f6a: Support webhook_response in step:complete event when data available in results
+
+### Patch Changes
+
+- Updated dependencies [e453f6a]
+  - @openfn/lexicon@2.1.0
+
 ## 1.24.2
 
 ### Patch Changes
