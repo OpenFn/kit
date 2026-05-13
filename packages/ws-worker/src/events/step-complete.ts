@@ -42,6 +42,19 @@ export default async function onStepComplete(
     state.inputDataclips[nextJobId] = dataclipId;
   });
 
+  let webhook_response,
+    response_data = event.state?.webhookResponse;
+
+  // validating structure of response
+  if (
+    response_data &&
+    Number.isInteger(response_data.status) &&
+    response_data.body &&
+    typeof response_data.body === 'object'
+  ) {
+    webhook_response = response_data;
+  }
+
   const evt = {
     step_id,
     job_id,
@@ -50,7 +63,7 @@ export default async function onStepComplete(
     duration: event.duration,
     thread_id: event.threadId,
     timestamp: timeInMicroseconds(event.time),
-    webhook_response: event.state?.webhookResponse || undefined,
+    webhook_response,
   } as StepCompletePayload;
 
   if (event.redacted) {
