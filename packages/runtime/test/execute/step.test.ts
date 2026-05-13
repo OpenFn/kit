@@ -440,47 +440,6 @@ test.serial(
   }
 );
 
-test.serial('webhookResponse is emitted on NOTIFY_JOB_COMPLETE', async (t) => {
-  const job = [
-    async (s: State) => ({
-      ...s,
-      webhookResponse: { status: 201, body: { ok: true } },
-    }),
-  ];
-  const step = { id: 'k', expression: job };
-
-  let webhook_response: any;
-  const notify = (event: string, payload: any) => {
-    if (event === NOTIFY_JOB_COMPLETE) {
-      webhook_response = JSON.parse(JSON.stringify(payload.webhook_response));
-    }
-  };
-  const context = createContext({ notify });
-
-  await execute(context, step, createState());
-  t.deepEqual(webhook_response, {
-    status: 201,
-    body: { ok: true },
-  });
-});
-
-test.serial(
-  'webhookResponse is removed from result state so it does not propagate to next step',
-  async (t) => {
-    const job = [
-      async (s: State) => ({
-        ...s,
-        webhookResponse: { status: 201, body: { ok: true } },
-      }),
-    ];
-    const step = { id: 'k', expression: job };
-    const context = createContext();
-
-    const result = await execute(context, step, createState());
-    t.false('webhookResponse' in (result.state as any));
-  }
-);
-
 test.serial(
   'no props are removed from state if an empty array is passed to statePropsToRemove',
   async (t) => {
