@@ -365,6 +365,262 @@ test('accumulate multiple leaf dataclips for branching workflow', async (t) => {
   t.not(state.leafDataclipIds[0], state.leafDataclipIds[1]);
 });
 
+test('includes webhook_response in step:complete payload when webhookResponse is set on state', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { status: 201, body: { ok: true } } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    status: 201,
+    body: { ok: true },
+  });
+});
+
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (status only)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { status: 201 } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    status: 201,
+  });
+});
+
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (body only)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { body: { ok: true } } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    body: { ok: true },
+  });
+});
+
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (no keys)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: {} },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {});
+});
+
+test('omits webhook_response from payload when webhookResponse is not set on state', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = { state: { x: 10 } } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.is(lightningEvent.webhook_response, undefined);
+});
+
+test('webhookResponse is included in dataclip', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: () => true,
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { status: 201, body: {} } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  const [dataclip] = Object.values(state.dataclips);
+  t.deepEqual(dataclip, { x: 10, webhookResponse: { status: 201, body: {} } });
+});
+
+test('webhookResponse included in the serialized output_dataclip sent to Lightning', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { status: 201, body: {} } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(JSON.parse(lightningEvent.output_dataclip), {
+    x: 10,
+    webhookResponse: { status: 201, body: {} },
+  });
+});
+
+test('handles webhookResponse with only a body', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { webhookResponse: { body: { message: 'hello' } } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, { body: { message: 'hello' } });
+});
+
+test('handles webhookResponse body as a JSON array', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { webhookResponse: { status: 200, body: [{ id: 1 }, { id: 2 }] } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    status: 200,
+    body: [{ id: 1 }, { id: 2 }],
+  });
+});
+
+test('does nothing with webhookResponse when event.state is empty', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  await handleStepComplete({ channel, state } as any, { state: {} } as any);
+  t.is(lightningEvent.webhook_response, undefined);
+});
+
+test('does nothing with webhookResponse when event.state is undefined', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  await t.notThrowsAsync(() =>
+    handleStepComplete({ channel, state } as any, {} as any)
+  );
+  t.is(lightningEvent.webhook_response, undefined);
+});
+
 // Single leaf reached by two paths: start → a → x, start → b → x
 // x executes twice, both times with no downstream
 test('accumulate two leaf dataclips when same node reached by two paths', async (t) => {

@@ -52,6 +52,14 @@ export default async function onStepComplete(
     timestamp: timeInMicroseconds(event.time),
   } as StepCompletePayload;
 
+  // Feed through the webhook response if it's on state
+  // We do this on the event so that Lightning
+  // doesn't have the parse the dataclip
+  // (which may not be sent in zero persistence mode!)
+  if (outputState.webhookResponse) {
+    evt.webhook_response = outputState.webhookResponse;
+  }
+
   if (event.redacted) {
     state.withheldDataclips[dataclipId] = true;
     evt.output_dataclip_error = 'DATACLIP_TOO_LARGE';

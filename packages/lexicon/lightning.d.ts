@@ -209,6 +209,11 @@ export type StepStartPayload = {
 };
 export type StepStartReply = void;
 
+export type WebhookResponse = {
+  status?: number;
+  body?: Record<string, any> | any[];
+};
+
 export type StepCompletePayload = ExitReason & {
   run_id?: string;
   job_id: string;
@@ -223,6 +228,7 @@ export type StepCompletePayload = ExitReason & {
   };
   duration: number;
   timestamp: TimeInMicroSeconds;
+  webhook_response?: WebhookResponse;
 };
 export type StepCompleteReply = void;
 
