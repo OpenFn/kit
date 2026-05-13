@@ -45,14 +45,18 @@ export default async function onStepComplete(
   let webhook_response,
     response_data = event.state?.webhookResponse;
 
-  // validating structure of response
+  // validating structure of response & add status if it's a number
   if (
     response_data &&
-    Number.isInteger(response_data.status) &&
     response_data.body &&
     typeof response_data.body === 'object'
   ) {
-    webhook_response = response_data;
+    webhook_response = {
+      ...(Number.isInteger(response_data.status)
+        ? { status: response_data.status }
+        : {}),
+      body: response_data.body,
+    };
   }
 
   const evt = {

@@ -412,7 +412,7 @@ test('omits webhook_response from payload when webhookResponse is not set on sta
   t.is(lightningEvent.webhook_response, undefined);
 });
 
-test('strips webhookResponse from the stored dataclip', async (t) => {
+test('webhookResponse is included in dataclip', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
 
@@ -430,10 +430,10 @@ test('strips webhookResponse from the stored dataclip', async (t) => {
   await handleStepComplete({ channel, state } as any, event);
 
   const [dataclip] = Object.values(state.dataclips);
-  t.deepEqual(dataclip, { x: 10 });
+  t.deepEqual(dataclip, { x: 10, webhookResponse: { status: 201, body: {} } });
 });
 
-test('strips webhookResponse from the serialized output_dataclip sent to Lightning', async (t) => {
+test('webhookResponse included in the serialized output_dataclip sent to Lightning', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
 
@@ -453,28 +453,10 @@ test('strips webhookResponse from the serialized output_dataclip sent to Lightni
   } as any;
   await handleStepComplete({ channel, state } as any, event);
 
-  t.deepEqual(JSON.parse(lightningEvent.output_dataclip), { x: 10 });
-});
-
-test('strips webhookResponse from event.state so it does not flow downstream', async (t) => {
-  const plan = createPlan();
-  const jobId = 'job-1';
-
-  const state = createRunState(plan);
-  state.activeJob = jobId;
-  state.activeStep = 'b';
-
-  const channel = mockChannel({
-    [STEP_COMPLETE]: () => true,
+  t.deepEqual(JSON.parse(lightningEvent.output_dataclip), {
+    x: 10,
+    webhookResponse: { status: 201, body: {} },
   });
-
-  const event = {
-    state: { x: 10, webhookResponse: { status: 201, body: {} } },
-    next: ['job-2'],
-  } as any;
-  await handleStepComplete({ channel, state } as any, event);
-
-  t.false('webhookResponse' in event.state);
 });
 
 test('handles webhookResponse with only a body', async (t) => {
