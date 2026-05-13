@@ -51,12 +51,12 @@ export const publish = async (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
 ) => {
+  // console.log(type, payload)
   // Validate the size of every outgoing message
   // Redact any payloads that are too large
   const limit =
     payloadLimits?.[type as keyof PayloadLimits] ?? payloadLimits?.default;
   const safePayload = await ensurePayloadSize(payload, limit);
-
   parentPort!.postMessage({
     type,
     threadId,
@@ -82,12 +82,12 @@ export const publishSync = async (
 const run = (task: string, args: any[], options: Options = {}) => {
   payloadLimits = options.payloadLimits;
   tasks[task](...args)
-    .then((result) => {
+    .then((result) =>
       publish(ENGINE_RESOLVE_TASK, {
         result,
-      });
-    })
-    .catch((e) => {
+      })
+    )
+    .catch((e) =>
       publish(ENGINE_REJECT_TASK, {
         error: {
           severity: e.severity || 'crash',
@@ -95,8 +95,8 @@ const run = (task: string, args: any[], options: Options = {}) => {
           type: e.type,
           name: e.name,
         },
-      });
-    })
+      })
+    )
     .finally(() => {
       payloadLimits = undefined;
     });

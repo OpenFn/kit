@@ -95,33 +95,28 @@ test('execute a mock plan with delay', async (t) => {
 });
 
 test('Publish workflow-start event', async (t) => {
+  t.plan(1)
   const plan = createPlan();
   plan.id = 'xx';
-  let didFire = false;
   await workers.exec('run', [plan, {}], {
     on: ({ type }) => {
       if (type === e.WORKFLOW_START) {
-        didFire = true;
+        t.pass()
       }
     },
   });
-  t.true(didFire);
 });
 
 test('Publish workflow-complete event with state', async (t) => {
+  t.plan(1)
   const plan = createPlan();
-  let didFire = false;
-  let state;
   await workers.exec('run', [plan, {}], {
     on: ({ type, ...args }) => {
       if (type === e.WORKFLOW_COMPLETE) {
-        didFire = true;
-        state = args.state;
+        t.deepEqual(args.state, { data: { answer: 42 } });
       }
     },
   });
-  t.true(didFire);
-  t.deepEqual(state, { data: { answer: 42 } });
 });
 
 test('Publish a job log event', async (t) => {
@@ -131,19 +126,16 @@ test('Publish a job log event', async (t) => {
       return s;
     }`,
   });
-  let didFire = false;
   let log: any;
   let id;
   await workers.exec('run', [plan, {}], {
     on: ({ workflowId, type, log: _log }) => {
       if (type === e.LOG) {
-        didFire = true;
         log = _log;
         id = workflowId;
       }
     },
   });
-  t.true(didFire);
   t.is(id, plan.id as any);
 
   t.is(log.level, 'info');
