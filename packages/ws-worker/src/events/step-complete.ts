@@ -42,23 +42,6 @@ export default async function onStepComplete(
     state.inputDataclips[nextJobId] = dataclipId;
   });
 
-  let webhook_response,
-    response_data = event.state?.webhookResponse;
-
-  // validating structure of response & add status if it's a number
-  if (
-    response_data &&
-    response_data.body &&
-    typeof response_data.body === 'object'
-  ) {
-    webhook_response = {
-      ...(Number.isInteger(response_data.status)
-        ? { status: response_data.status }
-        : {}),
-      body: response_data.body,
-    };
-  }
-
   const evt = {
     step_id,
     job_id,
@@ -67,8 +50,15 @@ export default async function onStepComplete(
     duration: event.duration,
     thread_id: event.threadId,
     timestamp: timeInMicroseconds(event.time),
-    webhook_response,
   } as StepCompletePayload;
+
+  // Feed through the webhook response if it's on state
+  // We do this on the event so that Lightning
+  // doesn't have the parse the dataclip
+  // (which may not be sent in zero persistence mode!)
+  if (outputState.webhookResponse) {
+    evt.webhook_response = outputState.webhookResponse;
+  }
 
   if (event.redacted) {
     state.withheldDataclips[dataclipId] = true;

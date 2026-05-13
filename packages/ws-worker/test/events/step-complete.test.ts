@@ -391,6 +391,79 @@ test('includes webhook_response in step:complete payload when webhookResponse is
   });
 });
 
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (status only)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { status: 201 } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    status: 201,
+  });
+});
+
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (body only)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: { body: { ok: true } } },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {
+    body: { ok: true },
+  });
+});
+
+test('includes webhook_response in step:complete payload when webhookResponse is set on state (no keys)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  let lightningEvent: any;
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const event = {
+    state: { x: 10, webhookResponse: {} },
+  } as any;
+  await handleStepComplete({ channel, state } as any, event);
+
+  t.deepEqual(lightningEvent.webhook_response, {});
+});
+
 test('omits webhook_response from payload when webhookResponse is not set on state', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
