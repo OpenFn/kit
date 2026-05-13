@@ -46,11 +46,7 @@ export default async function onStepComplete(
     response_data = event.state?.webhookResponse;
 
   // validating structure of response & add status if it's a number
-  if (
-    response_data &&
-    response_data.body &&
-    typeof response_data.body === 'object'
-  ) {
+  if (typeof response_data?.body === 'object') {
     webhook_response = {
       ...(Number.isInteger(response_data.status)
         ? { status: response_data.status }
