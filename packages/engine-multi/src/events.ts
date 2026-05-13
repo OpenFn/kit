@@ -89,7 +89,6 @@ export interface JobCompletePayload extends ExternalEvent {
     job: number;
     system: number;
   };
-  webhook_response?: any;
 }
 
 export interface JobErrorPayload extends ExternalEvent {

@@ -25,7 +25,6 @@ export default async function onStepComplete(
   if (!state.dataclips) {
     state.dataclips = {};
   }
-
   const outputState = event.state || {};
 
   state.dataclips[dataclipId] = event.state;
@@ -51,7 +50,7 @@ export default async function onStepComplete(
     duration: event.duration,
     thread_id: event.threadId,
     timestamp: timeInMicroseconds(event.time),
-    webhook_response: event.webhook_response,
+    webhook_response: event.state?.webhookResponse || undefined,
   } as StepCompletePayload;
 
   if (event.redacted) {
