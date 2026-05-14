@@ -161,6 +161,7 @@ test('mapWorkflow: map a cron trigger', (t) => {
         id: '1234',
         type: 'cron',
         cron_expression: '0 1 0 0',
+        cron_cursor_job_id: 'x',
         enabled: true,
       },
     },
@@ -174,15 +175,30 @@ test('mapWorkflow: map a cron trigger', (t) => {
     type: 'cron',
     next: {},
     enabled: true,
+    cron_expression: '0 1 0 0',
+    cron_cursor_job_id: 'x',
     openfn: {
       uuid: '1234',
-      cron_expression: '0 1 0 0',
     },
   });
 });
 
 test('mapWorkflow: map a webhook trigger', (t) => {
-  const mapped = mapWorkflow(state.workflows['my-workflow']);
+  const mapped = mapWorkflow({
+    ...state.workflows['my-workflow'],
+    triggers: {
+      webhook: {
+        id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+        type: 'webhook',
+        enabled: true,
+        webhook_reply: 'before_start',
+        webhook_response: {
+          success_code: 202,
+          error_code: 500,
+        },
+      },
+    },
+  });
 
   const [trigger] = mapped.steps;
 
@@ -190,6 +206,11 @@ test('mapWorkflow: map a webhook trigger', (t) => {
     id: 'webhook',
     type: 'webhook',
     enabled: true,
+    webhook_reply: 'before_start',
+    webhook_response: {
+      success_code: 202,
+      error_code: 500,
+    },
     next: {
       'transform-data': {
         condition: 'always',

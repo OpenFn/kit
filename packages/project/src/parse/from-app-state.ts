@@ -6,6 +6,7 @@ import { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
+import omitNil from '../util/omit-nil';
 import ensureJson from '../util/ensure-json';
 import getCredentialName from '../util/get-credential-name';
 
@@ -120,8 +121,15 @@ export const mapWorkflow = (
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
   Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
-    const { type, enabled, webhook_reply, webhook_response, ...otherProps } =
-      trigger;
+    const {
+      type,
+      enabled,
+      cron_expression,
+      cron_cursor_job_id,
+      webhook_reply,
+      webhook_response,
+      ...otherProps
+    } = trigger;
     if (!mapped.start) {
       mapped.start = type;
     }
@@ -129,24 +137,29 @@ export const mapWorkflow = (
     const connectedEdges = Object.values(edges).filter(
       (e) => e.source_trigger_id === trigger.id
     );
-    mapped.steps.push({
-      id: type,
-      type,
-      enabled,
-      webhook_reply,
-      openfn: renameKeys(otherProps, { id: 'uuid' }),
-      next: connectedEdges.reduce((obj: any, edge) => {
-        const target = Object.values(jobs).find(
-          (j) => j.id === edge.target_job_id
-        );
-        if (!target) {
-          throw new Error(`Failed to find ${edge.target_job_id}`);
-        }
-        // we use the name, not the id, to reference
-        obj[slugify(target.name)] = mapEdge(edge);
-        return obj;
-      }, {}),
-    } as l.Trigger);
+    mapped.steps.push(
+      omitNil({
+        id: type,
+        type,
+        enabled,
+        cron_expression,
+        cron_cursor_job_id,
+        webhook_reply,
+        webhook_response,
+        openfn: renameKeys(otherProps, { id: 'uuid' }),
+        next: connectedEdges.reduce((obj: any, edge) => {
+          const target = Object.values(jobs).find(
+            (j) => j.id === edge.target_job_id
+          );
+          if (!target) {
+            throw new Error(`Failed to find ${edge.target_job_id}`);
+          }
+          // we use the name, not the id, to reference
+          obj[slugify(target.name)] = mapEdge(edge);
+          return obj;
+        }, {}),
+      }) as l.Trigger
+    );
   });
 
   Object.values(workflow.jobs).forEach((step: Provisioner.Job) => {
