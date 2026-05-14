@@ -120,7 +120,8 @@ export const mapWorkflow = (
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
   Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
-    const { type, enabled, ...otherProps } = trigger;
+    const { type, enabled, webhook_reply, webhook_response, ...otherProps } =
+      trigger;
     if (!mapped.start) {
       mapped.start = type;
     }
@@ -132,6 +133,7 @@ export const mapWorkflow = (
       id: type,
       type,
       enabled,
+      webhook_reply,
       openfn: renameKeys(otherProps, { id: 'uuid' }),
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = Object.values(jobs).find(
