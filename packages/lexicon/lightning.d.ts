@@ -309,10 +309,20 @@ export namespace Provisioner {
     delete?: boolean;
   };
 
+  export type WebhookResponse = {
+    error_code: number | null;
+    success_code: number | null;
+  };
+
+  export type WebhookReply = 'before_start' | 'after_completion';
+
   export type Trigger = {
     id: string;
     type: string;
     cron_expression?: string;
+    cron_cursor_job?: string;
+    webhook_reply?: WebhookReply;
+    webhook_response?: WebhookResponse | null;
     delete?: boolean;
     enabled?: boolean;
     kafka_configuration?: KafkaConfiguration;

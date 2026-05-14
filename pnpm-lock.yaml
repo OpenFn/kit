@@ -332,6 +332,9 @@ importers:
       '@inquirer/testing':
         specifier: ^2.1.53
         version: 2.1.53(@types/node@18.19.130)
+      '@openfn/lexicon':
+        specifier: workspace:^
+        version: link:../lexicon
       '@types/json-diff':
         specifier: ^1.0.3
         version: 1.0.3
