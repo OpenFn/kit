@@ -33,6 +33,7 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
   const output = new Map<string, string>();
 
   const activeProject = await workspace.getCheckedOutProject();
+  console.log({ activeProject });
   if (options.workflow) {
     const workflow = activeProject?.getWorkflow(options.workflow);
     if (!workflow) {
@@ -42,6 +43,7 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
     output.set(workflow.name || workflow.id, workflow.getVersionHash());
   } else {
     for (const wf of activeProject?.workflows || []) {
+      console.log({ steps: wf.steps });
       output.set(wf.name || wf.id, wf.getVersionHash());
     }
   }

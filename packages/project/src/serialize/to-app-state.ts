@@ -117,9 +117,11 @@ export const mapWorkflow = (
 
     if (s.type) {
       isTrigger = true;
+
+      const { type, id, ...rest } = s;
       node = {
+        ...rest,
         type: s.type ?? 'webhook', // this is mostly for tests
-        enabled: s.enabled,
         ...renameKeys(s.openfn, { uuid: 'id' }),
       } as Provisioner.Trigger;
       wfState.triggers[node.type] = node;
