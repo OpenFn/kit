@@ -24,6 +24,8 @@ export interface ProjectSpec {
   credentials?: Credential[];
 
   collections?: string[];
+
+  channels?: Channel[];
 }
 
 export interface WorkflowSpec {

@@ -52,7 +52,7 @@ export default (
     credentials,
     options,
     config: config as l.WorkspaceConfig,
-  } as Partial<l.ProjectState>;
+  };
 
   const { id: _ignore, ...restMeta } = meta;
   proj.openfn = {
