@@ -5,6 +5,7 @@ export function fullExampleSpec() {
     name: 'my project',
     description: 'some helpful description',
     collections: {},
+    channels: {},
     credentials: {},
     workflows: {
       'workflow-one': {
@@ -58,6 +59,7 @@ export function fullExampleState() {
     name: 'my project',
     description: 'some helpful description',
     collections: {},
+    channels: {},
     project_credentials: {},
     workflows: {
       'workflow-one': {
@@ -254,6 +256,7 @@ export const lightningProjectState = {
       name: 'collection-one',
     },
   },
+  channels: {},
   project_credentials: {
     'email@test.com-Basic-Auth': {
       id: '25f48989-d349-4eb8-99c3-923ebba5b116',

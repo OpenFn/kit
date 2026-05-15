@@ -374,6 +374,48 @@ export function mergeSpecIntoState(
       }
     )
   );
+  const nextChannels = Object.fromEntries(
+    splitZip(oldState.channels || {}, spec.channels || {}).map(
+      ([channelKey, stateChannel, specChannel]) => {
+        if (specChannel && !stateChannel) {
+          return [
+            channelKey,
+            {
+              id: crypto.randomUUID(),
+              name: specChannel.name,
+              destination_url: specChannel.destination_url,
+              enabled: specChannel.enabled,
+              destination_credential_id: specChannel.destination_credential && getStateJobCredential(specChannel.destination_credential, nextCredentials),
+            },
+          ];
+        }
+
+        if (specChannel && stateChannel) {
+          return [
+            channelKey,
+            {
+              id: stateChannel.id,
+              name: specChannel.name,
+              destination_url: specChannel.destination_url,
+              enabled: specChannel.enabled,
+              destination_credential_id: specChannel.destination_credential && getStateJobCredential(specChannel.destination_credential, nextCredentials),
+            },
+          ];
+        }
+
+        if (!specChannel && stateChannel) {
+          return [channelKey, { id: stateChannel.id, delete: true }];
+        }
+
+        throw new DeployError(
+          `Invalid channel spec or corrupted state for channel: ${
+            stateChannel?.name || specChannel?.name
+          }`,
+          'VALIDATION_ERROR'
+        );
+      }
+    )
+  );
 
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
@@ -442,6 +484,7 @@ export function mergeSpecIntoState(
     workflows: nextWorkflows,
     project_credentials: nextCredentials,
     collections: nextCollections,
+    channels: nextChannels,
   };
 
   if (spec.description) projectState.description = spec.description;
@@ -490,9 +533,12 @@ export function getStateFromProjectPayload(
 
   const collections = reduceByKey('name', project.collections || []);
 
+  const channels = reduceByKey('name', project.channels || []);
+
   return {
     ...project,
     collections,
+    channels,
     project_credentials,
     workflows,
   };
@@ -561,9 +607,18 @@ export function mergeProjectPayloadIntoState(
     )
   );
 
+  const nextChannels = Object.fromEntries(
+    idKeyPairs(project.channels || [], state.channels || {}).map(
+      ([key, nextChannel, _state]) => {
+        return [key, nextChannel];
+      }
+    )
+  );
+
   return {
     ...project,
     collections: nextCollections,
+    channels: nextChannels,
     project_credentials: nextCredentials,
     workflows: nextWorkflows,
   };
@@ -609,12 +664,21 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     state.collections
   );
 
-  const { collections: _, ...stateWithoutCollections } = state;
+  const channels: ProjectPayload['channels'] = Object.values(
+    state.channels || {}
+  );
+
+  const {
+    collections: _,
+    channels: __,
+    ...stateWithoutOptionals
+  } = state;
 
   return {
-    ...stateWithoutCollections,
+    ...stateWithoutOptionals,
     project_credentials,
     workflows,
     ...(collections.length > 0 && { collections }),
+    ...(channels.length > 0 && { channels }),
   };
 }
