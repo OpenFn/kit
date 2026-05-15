@@ -1,5 +1,18 @@
 # @openfn/project
 
+## 0.16.0
+
+### Minor Changes
+
+- aade583: Add support for channels
+
+### Patch Changes
+
+- d43bab9: Support more trigger keys
+- Updated dependencies [aade583]
+- Updated dependencies [d43bab9]
+  - @openfn/lexicon@2.2.0
+
 ## 0.15.2
 
 ### Patch Changes
