@@ -127,7 +127,7 @@ export const mapWorkflow = (
       cron_expression,
       cron_cursor_job_id,
       webhook_reply,
-      webhook_response,
+      webhook_response_config,
       ...otherProps
     } = trigger;
     if (!mapped.start) {
@@ -145,7 +145,7 @@ export const mapWorkflow = (
         cron_expression,
         cron_cursor_job_id,
         webhook_reply,
-        webhook_response,
+        webhook_response_config,
         openfn: renameKeys(otherProps, { id: 'uuid' }),
         next: connectedEdges.reduce((obj: any, edge) => {
           const target = Object.values(jobs).find(

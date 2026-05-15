@@ -59,7 +59,7 @@ export const generateHash = (
     'enabled',
     'cron_expression',
     'webhook_reply',
-    'webhook_response',
+    'webhook_response_config',
     'cron_cursor_job_id',
   ].sort();
 

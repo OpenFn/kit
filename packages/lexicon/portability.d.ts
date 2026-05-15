@@ -79,7 +79,7 @@ export interface Trigger extends Step {
   enabled?: boolean;
 
   webhook_reply?: 'before_start' | 'after_completion';
-  webhook_response?: {
+  webhook_response_config?: {
     error_code?: number;
     success_code?: number;
   };

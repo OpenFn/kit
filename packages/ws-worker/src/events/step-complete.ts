@@ -57,7 +57,7 @@ export default async function onStepComplete(
   // doesn't have the parse the dataclip
   // (which may not be sent in zero persistence mode!)
   if (outputState.webhookResponse) {
-    evt.webhook_response = outputState.webhookResponse;
+    evt.webhook_response_config = outputState.webhookResponse;
   }
 
   if (event.redacted) {

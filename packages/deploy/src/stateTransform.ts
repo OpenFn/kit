@@ -164,8 +164,12 @@ function mergeTriggers(
           if (specTrigger.type === 'webhook' && specTrigger.webhook_reply) {
             trigger.webhook_reply = specTrigger.webhook_reply;
           }
-          if (specTrigger.type === 'webhook' && specTrigger.webhook_response) {
-            trigger.webhook_response = specTrigger.webhook_response;
+          if (
+            specTrigger.type === 'webhook' &&
+            specTrigger.webhook_response_config
+          ) {
+            trigger.webhook_response_config =
+              specTrigger.webhook_response_config;
           }
 
           if (specTrigger.type === 'cron') {
@@ -205,8 +209,12 @@ function mergeTriggers(
         if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
           trigger.webhook_reply = specTrigger!.webhook_reply;
         }
-        if (specTrigger!.type === 'webhook' && specTrigger!.webhook_response) {
-          trigger.webhook_response = specTrigger!.webhook_response;
+        if (
+          specTrigger!.type === 'webhook' &&
+          specTrigger!.webhook_response_config
+        ) {
+          trigger.webhook_response_config =
+            specTrigger!.webhook_response_config;
         }
 
         if (specTrigger!.type === 'cron') {

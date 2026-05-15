@@ -38,7 +38,7 @@ export type SpecKafkaConfiguration = {
   connect_timeout: number;
 };
 
-export type WebhookResponse = {
+export type WebhookResponseConfig = {
   error_code: number | null;
   success_code: number | null;
 };
@@ -50,7 +50,7 @@ export type SpecTrigger = {
   cron_expression?: string;
   cron_cursor_job?: string;
   webhook_reply?: WebhookReply;
-  webhook_response?: WebhookResponse | null;
+  webhook_response_config?: WebhookResponseConfig | null;
   enabled?: boolean;
   kafka_configuration?: SpecKafkaConfiguration;
 };
@@ -61,7 +61,7 @@ export type StateTrigger = {
   cron_expression?: string;
   cron_cursor_job_id?: string | null;
   webhook_reply?: WebhookReply;
-  webhook_response?: WebhookResponse | null;
+  webhook_response_config?: WebhookResponseConfig | null;
   delete?: boolean;
   enabled?: boolean;
   kafka_configuration?: StateKafkaConfiguration;
