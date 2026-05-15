@@ -41,7 +41,6 @@ export const generateHash = (
   // this means we can match keys with lightning
   // and everything gets cleaner
   const wfState = mapWorkflow(workflow);
-  console.log({ wfState: wfState.triggers.webhook });
   // These are the keys we hash against
   const wfKeys = ['name', 'positions'].sort();
 
@@ -158,7 +157,6 @@ export const generateHash = (
   }
 
   const str = parts.join('');
-  console.log(str);
   if (sha) {
     const hash = crypto.createHash('sha256').update(str).digest('hex');
     return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
