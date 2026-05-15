@@ -76,6 +76,8 @@ export class Project {
 
   collections: any;
 
+  channels: any;
+
   credentials: Credential[];
 
   sandbox?: SandboxMeta;
@@ -161,6 +163,7 @@ export class Project {
     this.options = data.options;
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
+    this.channels = (data as any).channels;
     this.credentials = data.credentials ?? [];
     this.sandbox = data.sandbox;
   }

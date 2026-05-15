@@ -252,6 +252,8 @@ export namespace Provisioner {
     // should be an array of something?
     collections: any[];
 
+    channels?: Channel[];
+
     // serverside metadata
     inserted_at?: string;
     updated_at?: string;
@@ -292,6 +294,15 @@ export namespace Provisioner {
   export type Collection = {
     id: string;
     name: string;
+    delete?: boolean;
+  };
+
+  export type Channel = {
+    id: string;
+    name: string;
+    destination_url: string;
+    enabled: boolean;
+    destination_credential_id: string | null;
     delete?: boolean;
   };
 

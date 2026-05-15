@@ -33,6 +33,7 @@ export default (project: Project, options: ToProjectOptions = {}) => {
       description: project.description,
 
       collections: project.collections,
+      channels: project.channels,
       credentials: project.credentials,
 
       openfn: omitBy(project.openfn, isNil),

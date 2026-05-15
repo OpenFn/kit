@@ -151,6 +151,69 @@ test('Merge new credentials into the target', (t) => {
   ]);
 });
 
+test('replace mode: source channels override target channels', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-target',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  const sourceChannels = [
+    {
+      id: 'chan-source',
+      name: 'source-channel',
+      destination_url: 'https://source.example.com',
+      enabled: false,
+      destination_credential_id: null,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  const source = createProject(wf_b, 'b', { channels: sourceChannels });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, sourceChannels);
+});
+
+test('replace mode: target channels preserved when source has none', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-target',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, targetChannels);
+});
+
 test('replace mode: replace the name and UUID of the target project', (t) => {
   const wf = {
     steps: [

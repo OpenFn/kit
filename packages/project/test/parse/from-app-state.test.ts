@@ -54,6 +54,29 @@ test('should create a Project from prov state with collections', (t) => {
   t.deepEqual(project.collections, []);
 });
 
+test('should create a Project from prov state with channels', (t) => {
+  const channels = [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  const stateWithChannels = { ...state, channels };
+
+  const project = fromAppState(stateWithChannels, meta);
+
+  t.deepEqual(project.channels, channels);
+});
+
+test('project channels is undefined when missing from state', (t) => {
+  const project = fromAppState(state, meta);
+
+  t.is(project.channels, undefined);
+});
+
 test('should create a Project from prov state with sandbox stuff', (t) => {
   const stateWithSandbox = {
     ...state,

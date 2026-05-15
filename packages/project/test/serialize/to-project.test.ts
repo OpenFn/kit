@@ -101,3 +101,29 @@ test('should include sandboxy metadata', (t) => {
   t.is(json.options.env, 'dev');
   t.is(json.options.color, 'red');
 });
+
+test('should include channels in serialized project', (t) => {
+  const channels = [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  // @ts-ignore - channels is opaque (any) on Project
+  const proj = createProject({ channels });
+
+  const json = proj.serialize('project', { format: 'json' });
+
+  t.deepEqual((json as any).channels, channels);
+});
+
+test('should omit channels from serialized project when unset', (t) => {
+  const proj = createProject();
+
+  const json = proj.serialize('project', { format: 'json' });
+
+  t.false('channels' in (json as any));
+});

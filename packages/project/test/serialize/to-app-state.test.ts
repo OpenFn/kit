@@ -486,6 +486,42 @@ a-(condition=x)-f
   t.is(a_f.condition_expression, 'x');
 });
 
+test('should serialize channels to app state', (t) => {
+  const channels = [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  const project = new Project(
+    {
+      id: 'p',
+      // @ts-ignore - channels is opaque (any) on the Project type
+      channels,
+      workflows: [],
+    },
+    { formats: { project: 'json' } }
+  );
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.channels, channels);
+});
+
+test('should omit channels from app state when not set', (t) => {
+  const project = new Project(
+    { id: 'p', workflows: [] },
+    { formats: { project: 'json' } }
+  );
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.false('channels' in state);
+});
+
 test('should convert a project back to app state in json', (t) => {
   // this is a serialized project file
   const data: any = {

@@ -30,6 +30,7 @@ export default (
     workflows,
     project_credentials = [],
     collections,
+    channels,
     inserted_at,
     updated_at,
     parent_id,
@@ -47,10 +48,11 @@ export default (
     name,
     description: description ?? undefined,
     collections,
+    channels,
     credentials,
     options,
     config: config as l.WorkspaceConfig,
-  };
+  } as Partial<l.ProjectState>;
 
   const { id: _ignore, ...restMeta } = meta;
   proj.openfn = {
