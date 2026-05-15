@@ -385,7 +385,12 @@ export function mergeSpecIntoState(
               name: specChannel.name,
               destination_url: specChannel.destination_url,
               enabled: specChannel.enabled,
-              destination_credential_id: specChannel.destination_credential && getStateJobCredential(specChannel.destination_credential, nextCredentials),
+              destination_credential_id:
+                specChannel.destination_credential &&
+                getStateJobCredential(
+                  specChannel.destination_credential,
+                  nextCredentials
+                ),
             },
           ];
         }
@@ -398,7 +403,12 @@ export function mergeSpecIntoState(
               name: specChannel.name,
               destination_url: specChannel.destination_url,
               enabled: specChannel.enabled,
-              destination_credential_id: specChannel.destination_credential && getStateJobCredential(specChannel.destination_credential, nextCredentials),
+              destination_credential_id:
+                specChannel.destination_credential &&
+                getStateJobCredential(
+                  specChannel.destination_credential,
+                  nextCredentials
+                ),
             },
           ];
         }
@@ -668,11 +678,7 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     state.channels || {}
   );
 
-  const {
-    collections: _,
-    channels: __,
-    ...stateWithoutOptionals
-  } = state;
+  const { collections: _, channels: __, ...stateWithoutOptionals } = state;
 
   return {
     ...stateWithoutOptionals,
