@@ -176,7 +176,6 @@ test('it should generate a simple workflow with trailing space', (t) => {
 });
 
 test("it should fail if there's a space on an edge", (t) => {
-  const result = gen('a -b');
   t.throws(() => gen('a-'), {
     message: /parsing failed!/i,
   });
@@ -495,7 +494,7 @@ test('it should generate a node with two props', (t) => {
 
 test('it should treat quotes specially', (t) => {
   const result = gen('a(expression="fn()")-b', t);
-  const expected = _.cloneDeep(fixtures.ab);
+  const expected: any = _.cloneDeep(fixtures.ab);
   expected.steps[0].expression = 'fn()';
 
   t.deepEqual(result, expected);

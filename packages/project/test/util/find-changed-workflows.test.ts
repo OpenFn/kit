@@ -46,7 +46,7 @@ test('should return 1 removed workflow', (t) => {
   };
 
   // remove workflow b
-  project.workflows.pop()
+  project.workflows.pop();
 
   const changed = findChangedWorkflows(project);
   t.is(changed.length, 1);
@@ -55,7 +55,7 @@ test('should return 1 removed workflow', (t) => {
 
 test('should return 1 added workflow', (t) => {
   const project = generateProject('proj', ['@id a a-b', '@id b x-y']);
-  const [a, b] = project.workflows;
+  const [a] = project.workflows;
 
   project.cli.forked_from = {
     [a.id]: generateHash(a),

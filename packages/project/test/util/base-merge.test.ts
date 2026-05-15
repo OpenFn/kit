@@ -35,7 +35,7 @@ test('full merge: additional source keys', (t) => {
 
 test('full merge: existing target props & additional source keys', (t) => {
   const target = { key: 'one', title: 'target', openfn: { uuid: '<uuid>' } };
-  const source = { key: 'two', title: 'source', props: { isNew: true } };
+  const source: any = { key: 'two', title: 'source', props: { isNew: true } };
   const result = baseMerge(target, source);
 
   t.deepEqual(result, {
@@ -72,7 +72,7 @@ test('partial merge: existing target props', (t) => {
 test('partial merge: additional source keys', (t) => {
   const target = { key: 'one', title: 'target' };
   const source = { key: 'two', title: 'source', props: { isNew: true } };
-  const result = baseMerge(target, source, ['key', 'props']);
+  const result = baseMerge(target, source, ['key', 'props'] as any);
 
   t.deepEqual(result, {
     key: 'two',
@@ -84,7 +84,7 @@ test('partial merge: additional source keys', (t) => {
 test('partial merge: existing target props & additional source keys', (t) => {
   const target = { key: 'one', title: 'target', openfn: { uuid: '<uuid>' } };
   const source = { key: 'two', title: 'source', props: { isNew: true } };
-  const result = baseMerge(target, source, ['key', 'props']);
+  const result = baseMerge(target, source as any, ['key', 'props']);
 
   t.deepEqual(result, {
     key: 'two',
@@ -97,7 +97,7 @@ test('partial merge: existing target props & additional source keys', (t) => {
 test('assign', (t) => {
   const target = { key: 'one', title: 'target', openfn: { uuid: '<uuid>' } };
   const source = { key: 'two', title: 'source', props: { isNew: true } };
-  const result = baseMerge(target, source, ['key', 'props'], {
+  const result = baseMerge(target, source as any, ['key', 'props'], {
     something: 'an assign prop',
   });
 
@@ -111,9 +111,13 @@ test('assign', (t) => {
 });
 
 test('special: arrays are shallow merged', (t) => {
-  const target = { key: 'one', title: 'target', colours: ['red', 'blue', 'green'] };
+  const target = {
+    key: 'one',
+    title: 'target',
+    colours: ['red', 'blue', 'green'],
+  };
   const source = { key: 'two', title: 'source', colours: ['green', 'yellow'] };
-  const result = baseMerge(target, source, ['key', 'props', 'colours']);
+  const result = baseMerge(target, source, ['key', 'props', 'colours'] as any);
 
   t.deepEqual(result, {
     key: 'two',
@@ -134,7 +138,7 @@ test('special: objects are shallow merged', (t) => {
     title: 'source',
     opts: { isDeleted: true, time: 'yesterday' },
   };
-  const result = baseMerge(target, source, ['key', 'props', 'opts']);
+  const result = baseMerge(target, source as any, ['key', 'props', 'opts']);
 
   t.deepEqual(result, {
     key: 'two',

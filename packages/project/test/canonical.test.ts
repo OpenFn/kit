@@ -170,7 +170,7 @@ workflows:
         type: webhook
         enabled: true
         webhook_reply: before_start
-        webhook_response:
+        webhook_response_config:
           success_code: 202
           error_code: 500
         next: fetch

@@ -63,7 +63,7 @@ test('should create a Project from prov state with sandbox stuff', (t) => {
   };
   const project = fromAppState(stateWithSandbox, meta, { format: 'json' });
 
-  t.is(project.sandbox.parentId, 'abc');
+  t.is(project.sandbox!.parentId, 'abc');
   t.is(project.options.env, 'dev');
   t.is(project.options.color, 'red');
 });
@@ -81,14 +81,18 @@ test('should create a Project from prov state with positions', (t) => {
   // the provisioner right now doesn't include positions
   // - but one day it will, and Project needs to be able to sync it
   newState.workflows['my-workflow'].positions = {
-    x: 1,
-    y: 1,
+    step1: {
+      x: 1,
+      y: 1,
+    },
   };
   const project = fromAppState(newState, meta);
 
-  t.deepEqual(project.workflows[0].openfn.positions, {
-    x: 1,
-    y: 1,
+  t.deepEqual(project.workflows[0].openfn!.positions, {
+    step1: {
+      x: 1,
+      y: 1,
+    },
   });
 });
 
@@ -408,7 +412,7 @@ test('mapEdge: map conditions', (t) => {
 // TODO the workflow yaml is not a project yaml
 // so this test doesn't work
 // I'll need to pull the project yaml, with uuids, to get this to work
-test.skip('mapWorkflow: map edge conditions', (t) => {
+test.skip('mapWorkflow: map edge conditions', () => {
   // TODO for yaml like this:
   const yaml = `
 workflows:
@@ -460,12 +464,10 @@ workflows:
           condition_expression: state.ok == 22
 
 `;
-  const project = fromAppState(yaml, meta, {
+  fromAppState(yaml, meta, {
     format: 'yaml',
   });
-  console.log(project.workflows['my-workflow'].steps);
-  const { next } = project.workflows['my-workflow'].steps[1];
-  console.log({ next });
+  // const { next } = project.workflows['my-workflow'].steps[1];
   // make sure that the condition_types get mapped to condition
   // also make sure that custom conditions work (both ways)
 });

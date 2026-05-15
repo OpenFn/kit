@@ -855,7 +855,9 @@ test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
   ]);
 
   // Scribble on both workflows
+  // @ts-ignore
   target.workflows[0].jam = 'jar';
+  // @ts-ignore
   target.workflows[1].jam = 'jar';
 
   // change the source

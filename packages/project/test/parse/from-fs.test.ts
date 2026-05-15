@@ -18,6 +18,7 @@ function mockFile(path: string, content: string | object) {
     content = JSON.stringify(content);
   }
 
+  // @ts-ignore
   files[path] = content;
   mock(files);
 }
@@ -55,12 +56,12 @@ test.serial('should include multiple workflows (legacy format)', async (t) => {
 
   t.is(project.workflows.length, 2);
 
-  const wf1 = project.getWorkflow('workflow-1');
+  const wf1 = project.getWorkflow('workflow-1')!;
   t.truthy(wf1);
   t.is(wf1.id, 'workflow-1');
   t.is(wf1.name, 'Workflow 1');
 
-  const wf2 = project.getWorkflow('workflow-2');
+  const wf2 = project.getWorkflow('workflow-2')!;
   t.truthy(wf2);
   t.is(wf2.id, 'workflow-2');
   t.is(wf2.name, 'Workflow 2');
@@ -85,7 +86,7 @@ test.serial('should load a workflow expression (legacy format)', async (t) => {
   const project = await parseProject({ root: '/ws' });
   t.is(project.workflows.length, 1);
 
-  const wf = project.getWorkflow('my-workflow');
+  const wf = project.getWorkflow('my-workflow')!;
 
   t.truthy(wf);
 
@@ -136,6 +137,7 @@ test.serial(
     t.is(project.workflows.length, 1);
     const [wf] = project.workflows;
 
+    // @ts-ignore
     t.is(typeof wf.steps[1].next.c, 'object');
   }
 );

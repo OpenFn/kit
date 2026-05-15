@@ -216,10 +216,10 @@ test('should merge two projects', (t) => {
   const result = Project.merge(staging, main);
 
   t.is(result.name, 'a');
-  const mergedStep = result.workflows[0].get('a');
+  const mergedStep: any = result.workflows[0].get('a');
 
   t.is(mergedStep.expression, 'b()');
-  t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn.uuid);
+  t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn!.uuid);
 });
 
 test('should return UUIDs for everything', async (t) => {
