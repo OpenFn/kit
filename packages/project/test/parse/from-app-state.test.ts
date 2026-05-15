@@ -64,7 +64,7 @@ test('should create a Project from prov state with channels', (t) => {
       destination_credential_id: null,
     },
   ];
-  const stateWithChannels = { ...state, channels };
+  const stateWithChannels: any = { ...state, channels };
 
   const project = fromAppState(stateWithChannels, meta);
 
