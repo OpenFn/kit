@@ -180,7 +180,7 @@ test('should serialize workflow positions', (t) => {
     },
   });
 
-  const state = toAppState(project);
+  const state = toAppState(project) as Provisioner.Project_v1;
   t.deepEqual(state.workflows['wf'].positions, {
     step: {
       x: 1,
@@ -193,7 +193,7 @@ test('should serialize workflow positions', (t) => {
 // gets written back to state
 test('should write openfn keys to objects', (t) => {
   const openfn = { x: 1 };
-  const data = {
+  const data: any = {
     id: 'my-project',
     openfn,
     workflows: [
@@ -227,7 +227,8 @@ test('should write openfn keys to objects', (t) => {
     },
   });
 
-  const state = toAppState(project);
+  // Disable typing because we're doing wierd stuff
+  const state = toAppState(project) as any;
   t.is(state.x, 1);
   t.is(state.workflows['wf'].x, 1);
   t.is(state.workflows['wf'].jobs.step.x, 1);
@@ -270,7 +271,9 @@ test('should handle credentials', (t) => {
     ],
   };
 
-  const state = toAppState(new Project(data), { format: 'json' });
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
   const { step } = state.workflows['wf'].jobs;
   t.is(step.keychain_credential_id, 'k');
   t.is(step.project_credential_id, '123');
@@ -380,7 +383,9 @@ test('should ignore workflow start keys', (t) => {
     ],
   };
 
-  const state = toAppState(new Project(data), { format: 'json' });
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as any;
   t.falsy(state.workflows['wf'].start);
 });
 
@@ -415,7 +420,9 @@ test('should handle edge labels', (t) => {
     ],
   };
 
-  const state = toAppState(new Project(data), { format: 'json' });
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
   t.is(state.workflows.wf.edges['trigger->step'].condition_label, 'hello');
 });
 
@@ -427,7 +434,9 @@ c-p
   `;
   const project = generateProject('proj', [wf], { uuidSeed: 1 });
 
-  const state = toAppState(project, { format: 'json' });
+  const state = toAppState(project, {
+    format: 'json',
+  }) as Provisioner.Project_v1;
 
   const jobs = Object.keys(state.workflows['wf'].jobs);
   // short be sorted by name
@@ -450,7 +459,9 @@ a-(condition=x)-f
     uuidSeed: 1, // ensure predictable UUIDS
   });
 
-  const state = toAppState(project, { format: 'json' });
+  const state = toAppState(project, {
+    format: 'json',
+  }) as Provisioner.Project_v1;
   const {
     'a->b': a_b,
     'a->c': a_c,
@@ -477,7 +488,7 @@ a-(condition=x)-f
 
 test('should convert a project back to app state in json', (t) => {
   // this is a serialized project file
-  const data = {
+  const data: any = {
     name: 'aaa',
     description: 'a project',
     credentials: [
@@ -567,7 +578,7 @@ test('should convert a project back to app state in json', (t) => {
 // We probably need to force alphabetical sorting on yaml keys
 test.skip('should convert a project back to app state in yaml', (t) => {
   // this is a serialized project file
-  const data = {
+  const data: any = {
     name: 'aaa',
     description: 'a project',
     credentials: [],

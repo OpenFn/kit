@@ -285,6 +285,8 @@ export namespace Provisioner {
     inserted_at?: string;
     updated_at?: string;
     deleted_at: string | null;
+
+    positions?: Record<string, { x: number; y: number }>;
   }
 
   export type Collection = {

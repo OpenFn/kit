@@ -8,7 +8,7 @@ const LOG_OUTPUTS = false;
 
 // Generate a workflow with a fixed UUID seed
 // Pass test context to log the result
-const gen = (src: string, t?: ExecutionContext<unknown>, options = {}) => {
+const gen = (src: string, t?: ExecutionContext<unknown>, options = {}): any => {
   const result = generateWorkflow(src, {
     uuidSeed: 1,
     printErrors: false,
@@ -444,7 +444,7 @@ test('it should generate a webhook trigger', (t) => {
 
 test('it should generate a node with a prop', (t) => {
   const result = gen('a(expression=y)-b', t);
-  const expected = _.cloneDeep(fixtures.ab);
+  const expected: any = _.cloneDeep(fixtures.ab);
   expected.steps[0].expression = 'y';
 
   t.deepEqual(result, expected);
@@ -452,7 +452,7 @@ test('it should generate a node with a prop', (t) => {
 
 test('it should generate a node with a prop with an underscore', (t) => {
   const result = gen('a(project_credential_id=y)-b', t);
-  const expected = _.cloneDeep(fixtures.ab);
+  const expected: any = _.cloneDeep(fixtures.ab);
   expected.steps[0].openfn = {
     uuid: 1,
     project_credential_id: 'y',
@@ -486,7 +486,7 @@ test('it should save unexpected props to .openfn', (t) => {
 
 test('it should generate a node with two props', (t) => {
   const result = gen('a(adaptor=j,expression=k)-b', t);
-  const expected = _.cloneDeep(fixtures.ab);
+  const expected: any = _.cloneDeep(fixtures.ab);
   expected.steps[0].adaptor = 'j';
   expected.steps[0].expression = 'k';
 
@@ -623,40 +623,12 @@ a-b #zz
 });
 
 test('it should generate a project with seeded uuids', (t) => {
-  const result = generateProject('x', ['a-b'], {
+  const result: any = generateProject('x', ['a-b'], {
     openfnUuid: true,
     uuidSeed: 1000,
     uuid: 123,
   });
 
-  const expected = {
-    id: 'workflow',
-    name: 'Workflow',
-    history: [],
-    steps: [
-      {
-        id: 'a',
-        name: 'a',
-        openfn: {
-          uuid: 'A',
-        },
-        next: {
-          b: {
-            openfn: {
-              uuid: 'AB',
-            },
-          },
-        },
-      },
-      {
-        id: 'b',
-        name: 'b',
-        openfn: {
-          uuid: 'B',
-        },
-      },
-    ],
-  };
   t.deepEqual(result.openfn, {
     uuid: 123,
   });
@@ -710,6 +682,7 @@ test('it should generate a simple workflow with mapped uuids', (t) => {
 test('it should generate a project with mapped uuids', (t) => {
   const result = generateProject('x', ['a-b'], {
     openfnUuid: true,
+    // @ts-ignore
     uuidMap: [
       {
         a: 'A',

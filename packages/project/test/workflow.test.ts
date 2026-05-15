@@ -3,7 +3,7 @@ import test from 'ava';
 import Workflow from '../src/Workflow';
 import { generateWorkflow } from '../src';
 
-const simpleWorkflow = {
+const simpleWorkflow: any = {
   id: 'my-workflow',
   history: [],
   name: 'My Workflow',
@@ -106,7 +106,7 @@ test('a Workflow class can serialize to JSON', (t) => {
 test('get - get a step', (t) => {
   const w = new Workflow(simpleWorkflow);
 
-  const step = w.get('a');
+  const step: any = w.get('a');
 
   t.deepEqual(step, simpleWorkflow.steps[0]);
 });
@@ -140,7 +140,7 @@ test('set properties on a step', (t) => {
 
   w.set('a', { adaptor: 'salesforce' });
 
-  const step = w.get('a');
+  const step: any = w.get('a');
   t.is(step.adaptor, 'salesforce');
 });
 
@@ -149,10 +149,10 @@ test('set properties on a step, with a chain', (t) => {
 
   w.set('a', { adaptor: 'salesforce' }).set('b', { adaptor: 'dhis2' });
 
-  const a = w.get('a');
+  const a: any = w.get('a');
   t.is(a.adaptor, 'salesforce');
 
-  const b = w.get('b');
+  const b: any = w.get('b');
   t.is(b.adaptor, 'dhis2');
 });
 
@@ -161,7 +161,7 @@ test('set properties on an edge', (t) => {
 
   w.set('a-c', { condition: '!state.error' });
 
-  const edge = w.get('a-c');
+  const edge: any = w.get('a-c');
   t.is(edge.condition, '!state.error');
 });
 
