@@ -76,7 +76,7 @@ export class Project {
 
   collections: any;
 
-  channels: l.Channel[];
+  channels?: l.Channel[];
 
   credentials: Credential[];
 
@@ -163,7 +163,7 @@ export class Project {
     this.options = data.options;
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
-    this.channels = (data as any).channels;
+    this.channels = data.channels;
     this.credentials = data.credentials ?? [];
     this.sandbox = data.sandbox;
   }
