@@ -41,7 +41,6 @@ export const generateHash = (
   // this means we can match keys with lightning
   // and everything gets cleaner
   const wfState = mapWorkflow(workflow);
-
   // These are the keys we hash against
   const wfKeys = ['name', 'positions'].sort();
 
@@ -56,9 +55,10 @@ export const generateHash = (
 
   const triggerKeys = [
     'type',
-    'cron_expression',
     'enabled',
+    'cron_expression',
     'webhook_reply',
+    'webhook_response_config',
     'cron_cursor_job_id',
   ].sort();
 

@@ -78,7 +78,11 @@ export interface Trigger extends Step {
 
   enabled?: boolean;
 
-  webhook_reply?: string;
+  webhook_reply?: 'before_start' | 'after_completion';
+  webhook_response_config?: {
+    error_code?: number;
+    success_code?: number;
+  };
   cron_cursor_job_id?: string;
 
   /** Allow arbitrary properties on trigger nodes (as configuration options) */

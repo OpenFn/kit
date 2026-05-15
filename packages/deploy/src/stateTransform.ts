@@ -164,6 +164,13 @@ function mergeTriggers(
           if (specTrigger.type === 'webhook' && specTrigger.webhook_reply) {
             trigger.webhook_reply = specTrigger.webhook_reply;
           }
+          if (
+            specTrigger.type === 'webhook' &&
+            specTrigger.webhook_response_config
+          ) {
+            trigger.webhook_response_config =
+              specTrigger.webhook_response_config;
+          }
 
           if (specTrigger.type === 'cron') {
             trigger.cron_expression = specTrigger.cron_expression;
@@ -201,6 +208,13 @@ function mergeTriggers(
 
         if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
           trigger.webhook_reply = specTrigger!.webhook_reply;
+        }
+        if (
+          specTrigger!.type === 'webhook' &&
+          specTrigger!.webhook_response_config
+        ) {
+          trigger.webhook_response_config =
+            specTrigger!.webhook_response_config;
         }
 
         if (specTrigger!.type === 'cron') {

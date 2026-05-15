@@ -193,10 +193,7 @@ test('should convert a state file to a project and back again', async (t) => {
   t.is(project.openfn?.uuid, state.id);
   t.is(project.name, state.name);
 
-  // TODO: this hack is needed right now to serialize the state as json
-  project.config.formats.project = 'json';
-
-  const newState = project.serialize('state');
+  const newState = project.serialize('state', { format: 'json' });
   t.deepEqual(newState, state);
 });
 

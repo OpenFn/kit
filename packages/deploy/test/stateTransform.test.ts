@@ -639,6 +639,125 @@ test('toNextState omits webhook_reply on existing trigger when not specified', (
   t.false('webhook_reply' in result.workflows.w.triggers.t);
 });
 
+test('toNextState sets webhook_response_config when specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'webhook',
+            webhook_response_config: { success_code: 200, error_code: 400 },
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.deepEqual(result.workflows.w.triggers.t.webhook_response_config, {
+    success_code: 200,
+    error_code: 400,
+  });
+});
+
+test('toNextState omits webhook_response_config when not specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_response_config' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets webhook_response_config on existing trigger', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'webhook',
+            webhook_response_config: { success_code: 201, error_code: 500 },
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.id, triggerId);
+  t.deepEqual(result.workflows.w.triggers.t.webhook_response_config, {
+    success_code: 201,
+    error_code: 500,
+  });
+});
+
+test('toNextState omits webhook_response_config on existing trigger when not specified', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_response_config' in result.workflows.w.triggers.t);
+});
+
 test('toNextState sets cron_cursor_job_id on existing trigger', (t) => {
   const triggerId = 'aaa-bbb-ccc';
   const jobId = 'job-uuid-111';
@@ -663,10 +782,18 @@ test('toNextState sets cron_cursor_job_id on existing trigger', (t) => {
       w: {
         name: 'workflow',
         jobs: {
-          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
         },
         triggers: {
-          t: { type: 'cron', cron_expression: '0 * * * *', cron_cursor_job: 'job-a' },
+          t: {
+            type: 'cron',
+            cron_expression: '0 * * * *',
+            cron_cursor_job: 'job-a',
+          },
         },
         edges: {},
       },
@@ -702,7 +829,11 @@ test('toNextState omits cron_cursor_job_id on existing trigger when not specifie
       w: {
         name: 'workflow',
         jobs: {
-          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
         },
         triggers: {
           t: { type: 'cron', cron_expression: '0 * * * *' },
