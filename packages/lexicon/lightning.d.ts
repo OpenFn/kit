@@ -1,5 +1,6 @@
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 import { LegacyJob, State } from './core';
+import { Channel } from './portability';
 
 export const API_VERSION: number;
 
@@ -294,15 +295,6 @@ export namespace Provisioner {
   export type Collection = {
     id: string;
     name: string;
-    delete?: boolean;
-  };
-
-  export type Channel = {
-    id: string;
-    name: string;
-    destination_url: string;
-    enabled: boolean;
-    destination_credential_id: string | null;
     delete?: boolean;
   };
 

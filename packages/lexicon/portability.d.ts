@@ -99,3 +99,12 @@ export interface Job extends Step {
   expression?: string;
   configuration?: object | string;
 }
+
+export type Channel = {
+  id: string;
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential_id?: string;
+  delete?: boolean;
+};

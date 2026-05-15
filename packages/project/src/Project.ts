@@ -76,7 +76,7 @@ export class Project {
 
   collections: any;
 
-  channels: any;
+  channels: l.Channel[];
 
   credentials: Credential[];
 
