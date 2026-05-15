@@ -1,5 +1,6 @@
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 import { LegacyJob, State } from './core';
+import { Channel } from './portability';
 
 export const API_VERSION: number;
 
@@ -251,6 +252,8 @@ export namespace Provisioner {
     //collections: Record<string | symbol, Collection>;
     // should be an array of something?
     collections: any[];
+
+    channels?: Channel[];
 
     // serverside metadata
     inserted_at?: string;

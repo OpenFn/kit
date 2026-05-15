@@ -14,6 +14,16 @@ const project: ProjectSpec = {
   schema_version: '4.0',
   credentials: [{ owner: 'admin@openfn.org', name: 'secret-squirrel' }],
   collections: ['nut-stash'],
+  channels: [
+    {
+      id: 'proxy',
+      name: 'My Proxy',
+      destination_url: 'https://proxy.openfn.org',
+      enabled: true,
+      delete: false,
+      destination_credential_id: 'secret',
+    },
+  ],
   workflows: [
     {
       id: 'wf-webhook',
@@ -131,6 +141,13 @@ schema_version: '4.0'
 description: Everything including the kitchen sink
 collections:
   - nut-stash
+channels:
+  - id: proxy
+    name: My Proxy
+    destination_url: https://proxy.openfn.org
+    enabled: true
+    delete: false
+    destination_credential_id: secret
 credentials:
   - owner: admin@openfn.org
     name: secret-squirrel

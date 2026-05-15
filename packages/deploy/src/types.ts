@@ -117,12 +117,29 @@ export type CollectionState = {
   delete?: boolean;
 };
 
+export type ChannelSpec = {
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential: string | null;
+};
+
+export type ChannelState = {
+  id: string;
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential_id: string | null;
+  delete?: boolean;
+};
+
 export interface ProjectSpec {
   name: string;
   description: string;
   workflows: Record<string | symbol, WorkflowSpec>;
   credentials: Record<string | symbol, CredentialSpec>;
   collections: Record<string | symbol, CollectionSpec>;
+  channels: Record<string | symbol, ChannelSpec>;
 }
 
 export interface WorkflowState {
@@ -146,6 +163,7 @@ export interface ProjectState {
   workflows: Record<string | symbol, WorkflowState>;
   project_credentials: Record<string | symbol, CredentialState>;
   collections: Record<string | symbol, CollectionState>;
+  channels: Record<string | symbol, ChannelState>;
 }
 
 export interface ProjectPayload {
@@ -153,6 +171,7 @@ export interface ProjectPayload {
   name: string;
   description: string;
   collections?: Concrete<CollectionState>[];
+  channels?: Concrete<ChannelState>[];
   project_credentials: Concrete<CredentialState>[];
   workflows: {
     id: string;

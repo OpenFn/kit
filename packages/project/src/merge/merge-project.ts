@@ -169,11 +169,12 @@ export function merge(
             target.credentials
           ),
           collections: source.collections ?? target.collections,
+          channels: source.channels ?? target.channels,
         };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
-    baseMerge(target, source, ['collections'], assigns as any)
+    baseMerge(target, source, ['collections', 'channels'], assigns as any)
   );
 }
 

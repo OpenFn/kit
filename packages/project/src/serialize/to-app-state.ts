@@ -34,7 +34,7 @@ export default function (
   } = project.openfn ?? {};
 
   const state = omitBy(
-    pick(project, ['name', 'description', 'collections']),
+    pick(project, ['name', 'description', 'collections', 'channels']),
     isNil
   ) as Provisioner.Project;
 

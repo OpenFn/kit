@@ -129,6 +129,12 @@ export async function parseAndValidate(
         }
       }
 
+      if (pair.key && pair.key.value === 'channels') {
+        if (pair.value.value === null) {
+          return doc.createPair('channels', {});
+        }
+      }
+
       if (pair.key && pair.key.value === 'jobs') {
         if (pair.value.value === null) {
           errors.push({
