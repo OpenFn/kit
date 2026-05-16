@@ -34,6 +34,24 @@ export default (
     }
   }
 
+  // TODO naming
+  class FancyPromise extends Promise {
+    constructor(resolve, reject) {
+      super(resolve, reject);
+    }
+    reject(e: any) {
+      console.log(' >>> custom reject!!');
+      if (!e || !(e instanceof Error)) {
+        // Force all promise objects to be errors
+        // This allows us to track positions
+        const error = new Error();
+        Object.assign(error, e);
+        return super.reject(error);
+      }
+      return super.reject(e);
+    }
+  }
+
   const context = vm.createContext(
     freezeAll(
       {
@@ -48,6 +66,7 @@ export default (
         setTimeout,
         state, // TODO will be dropped as a global one day, see https://github.com/OpenFn/kit/issues/17
         Buffer: SafeBuffer,
+        Promise: FancyPromise,
       },
       { state: true }
     ),
