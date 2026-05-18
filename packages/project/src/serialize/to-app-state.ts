@@ -34,7 +34,7 @@ export default function (
   } = project.openfn ?? {};
 
   const state = omitBy(
-    pick(project, ['name', 'description', 'collections']),
+    pick(project, ['name', 'description', 'collections', 'channels']),
     isNil
   ) as Provisioner.Project;
 
@@ -117,10 +117,12 @@ export const mapWorkflow = (
 
     if (s.type) {
       isTrigger = true;
+
+      const { type, id, next, openfn, ...rest } = s;
       node = {
+        ...rest,
         type: s.type ?? 'webhook', // this is mostly for tests
-        enabled: s.enabled,
-        ...renameKeys(s.openfn, { uuid: 'id' }),
+        ...renameKeys(openfn, { uuid: 'id' }),
       } as Provisioner.Trigger;
       wfState.triggers[node.type] = node;
     } else {

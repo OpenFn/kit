@@ -1,21 +1,20 @@
-import * as l from '@openfn/lexicon';
-
 import test from 'ava';
 import mapUUIDs from '../../src/merge/map-uuids';
 import generateWorkflow from '../../src/gen/generator';
 import Workflow from '../../src/Workflow';
 
-const gen = (src) => generateWorkflow(src, { uuidSeed: 1 });
+const gen = (src: string) => generateWorkflow(src, { uuidSeed: 1 });
 
 let idgen = 0;
 
-const createSingleNode = (name, uuid) =>
+const createSingleNode = (name: string, uuid?: string | number) =>
   new Workflow({
     id: `wf-${++idgen}}`,
     steps: [
       {
         id: name,
         name,
+        // @ts-ignore
         openfn: { uuid: uuid ?? crypto.randomUUID() },
       },
     ],

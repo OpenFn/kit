@@ -61,7 +61,7 @@ test('import from a v1 state as JSON', async (t) => {
   // make a few basic assertions about the project
   t.is(proj.id, 'my-workflow');
   t.is(proj.name, 'My Workflow');
-  t.is(proj.openfn.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
+  t.is(proj.openfn!.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
   t.is(proj.options.retention_policy, 'retain_all');
 
   t.is(proj.workflows.length, 1);
@@ -73,7 +73,7 @@ test('import from a v1 state as YAML', async (t) => {
   // make a few basic assertions about the project
   t.is(proj.id, 'aaa');
   t.is(proj.name, 'aaa');
-  t.is(proj.openfn.uuid, '1234');
+  t.is(proj.openfn!.uuid, '1234');
   t.is(proj.options.retention_policy, 'retain_all');
 
   t.is(proj.workflows.length, 1);
@@ -94,12 +94,13 @@ test('import a legacy v2 project (cli.version === 2) as JSON', async (t) => {
 });
 
 test('import from a v2 project as JSON', async (t) => {
+  // @ts-ignore
   const proj = await Project.from('project', v2.json, { alias: 'main' });
 
   t.is(proj.id, 'my-project');
   t.is(proj.name, 'My Project');
   t.is(proj.cli.alias, 'main');
-  t.is(proj.sandbox.parentId, 'abcd');
+  t.is(proj.sandbox!.parentId, 'abcd');
   t.is(proj.options.env, 'dev');
   t.is(proj.options.color, 'red');
   t.is(proj.openfn!.uuid, '1234');
@@ -153,6 +154,7 @@ test('import from a v2 project as JSON', async (t) => {
 });
 
 test('import from a v2 project with alias', async (t) => {
+  // @ts-ignore
   const proj = await Project.from('project', v2.json, { alias: 'staging' });
 
   t.is(proj.id, 'my-project');
@@ -167,7 +169,7 @@ test('import from a v2 project as YAML', async (t) => {
   t.is(proj.cli.alias, 'main');
   t.is(proj.openfn!.uuid, '1234');
   t.is(proj.openfn!.endpoint, 'https://app.openfn.org');
-  t.is(proj.sandbox.parentId, 'abcd');
+  t.is(proj.sandbox!.parentId, 'abcd');
   t.is(proj.options.env, 'dev');
   t.is(proj.options.color, 'red');
 

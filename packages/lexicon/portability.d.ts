@@ -24,6 +24,8 @@ export interface ProjectSpec {
   credentials?: Credential[];
 
   collections?: string[];
+
+  channels?: Channel[];
 }
 
 export interface WorkflowSpec {
@@ -78,11 +80,12 @@ export interface Trigger extends Step {
 
   enabled?: boolean;
 
-  webhook_reply?: string;
+  webhook_reply?: 'before_start' | 'after_completion';
+  webhook_response_config?: {
+    error_code?: number;
+    success_code?: number;
+  };
   cron_cursor_job_id?: string;
-
-  /** Allow arbitrary properties on trigger nodes (as configuration options) */
-  [option: string]: any;
 }
 
 // TODO credential should just be an id string in the near future
@@ -96,3 +99,12 @@ export interface Job extends Step {
   expression?: string;
   configuration?: object | string;
 }
+
+export type Channel = {
+  id: string;
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential_id?: string;
+  delete?: boolean;
+};

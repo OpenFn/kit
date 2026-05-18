@@ -1,5 +1,6 @@
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 import { LegacyJob, State } from './core';
+import { Channel } from './portability';
 
 export const API_VERSION: number;
 
@@ -252,6 +253,8 @@ export namespace Provisioner {
     // should be an array of something?
     collections: any[];
 
+    channels?: Channel[];
+
     // serverside metadata
     inserted_at?: string;
     updated_at?: string;
@@ -285,6 +288,8 @@ export namespace Provisioner {
     inserted_at?: string;
     updated_at?: string;
     deleted_at: string | null;
+
+    positions?: Record<string, { x: number; y: number }>;
   }
 
   export type Collection = {
@@ -309,10 +314,18 @@ export namespace Provisioner {
     delete?: boolean;
   };
 
+  export type WebhookResponseConfig = {
+    error_code: number | null;
+    success_code: number | null;
+  };
+
   export type Trigger = {
     id: string;
     type: string;
     cron_expression?: string;
+    cron_cursor_job_id?: string | null;
+    webhook_reply?: 'before_start' | 'after_completion';
+    webhook_response_config?: WebhookResponseConfig | null;
     delete?: boolean;
     enabled?: boolean;
     kafka_configuration?: KafkaConfiguration;

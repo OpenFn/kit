@@ -27,6 +27,8 @@ export const json: SerializedProject = {
           name: 'b',
           id: 'b',
           configuration: 'admin@openfn.org|My Credential',
+          // TODO it's unclear why we have a type error here??
+          // @ts-ignore
           openfn: { uuid: 3 },
           expression: 'fn()',
           adaptor: 'common',
@@ -35,6 +37,8 @@ export const json: SerializedProject = {
           id: 'trigger',
           openfn: { uuid: 2 },
           type: 'webhook',
+          // TODO it's unclear why we have a type error here??
+          // @ts-ignore
           next: { b: { openfn: { uuid: 4 } } },
         },
       ],

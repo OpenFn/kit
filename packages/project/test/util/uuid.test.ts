@@ -7,7 +7,7 @@ let idGen = 0;
 
 // builders
 const b = {
-  step: (id, props: Parital<Step> = {}) => ({
+  step: (id: string, props: Partial<Step> = {}) => ({
     id,
     openfn: { uuid: ++idGen },
     ...props,
@@ -37,6 +37,7 @@ test('getUuidForStep: should return null if there are no steps', (t) => {
 });
 
 test('getUuidForStep: should return null if a matching step does not exist', (t) => {
+  // @ts-ignore
   const proj = b.project([b.step('a'), b.step('b')]);
 
   const result = getUuidForStep(proj, 'w', 'z');
@@ -45,6 +46,7 @@ test('getUuidForStep: should return null if a matching step does not exist', (t)
 
 test('getUuidForStep: should get a UUID for a step', (t) => {
   const target = b.step('b');
+  // @ts-ignore
   const proj = b.project([b.step('a'), target, b.step('c')]);
 
   const result = getUuidForStep(proj, 'w', 'b');
@@ -54,7 +56,7 @@ test('getUuidForStep: should get a UUID for a step', (t) => {
 test("getUuidForEdge: throw if workflow doesn't exist", (t) => {
   const proj = b.project();
 
-  t.throws(() => getUuidForStep(proj, 'xxx', 'a', 'b'));
+  t.throws(() => getUuidForStep(proj, 'xxx', 'a'));
 });
 
 test('getUuidForEdge: should return null if there are no steps', (t) => {
@@ -68,6 +70,7 @@ test('getUuidForEdge: should return null if no edge exists', (t) => {
   const x = b.step('x', {
     next: {
       y: {
+        // @ts-ignore
         condition: true,
         openfn: {
           uuid: 'x-y',
@@ -76,6 +79,7 @@ test('getUuidForEdge: should return null if no edge exists', (t) => {
     },
   });
   const y = b.step('y');
+  // @ts-ignore
   const proj = b.project([x, y]);
 
   const result = getUuidForEdge(proj, 'w', 'a', 'b');
@@ -86,6 +90,7 @@ test('getUuidForEdge: should get a UUID for an edge', (t) => {
   const x = b.step('x', {
     next: {
       y: {
+        // @ts-ignore
         condition: true,
         openfn: {
           uuid: 'x-y',
@@ -94,6 +99,7 @@ test('getUuidForEdge: should get a UUID for an edge', (t) => {
     },
   });
   const y = b.step('y');
+  // @ts-ignore
   const proj = b.project([x, y]);
 
   const result = getUuidForEdge(proj, 'w', 'x', 'y');

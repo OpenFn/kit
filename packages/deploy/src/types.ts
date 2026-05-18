@@ -38,6 +38,11 @@ export type SpecKafkaConfiguration = {
   connect_timeout: number;
 };
 
+export type WebhookResponseConfig = {
+  error_code: number | null;
+  success_code: number | null;
+};
+
 export type WebhookReply = 'before_start' | 'after_completion';
 
 export type SpecTrigger = {
@@ -45,6 +50,7 @@ export type SpecTrigger = {
   cron_expression?: string;
   cron_cursor_job?: string;
   webhook_reply?: WebhookReply;
+  webhook_response_config?: WebhookResponseConfig | null;
   enabled?: boolean;
   kafka_configuration?: SpecKafkaConfiguration;
 };
@@ -55,6 +61,7 @@ export type StateTrigger = {
   cron_expression?: string;
   cron_cursor_job_id?: string | null;
   webhook_reply?: WebhookReply;
+  webhook_response_config?: WebhookResponseConfig | null;
   delete?: boolean;
   enabled?: boolean;
   kafka_configuration?: StateKafkaConfiguration;
@@ -110,12 +117,29 @@ export type CollectionState = {
   delete?: boolean;
 };
 
+export type ChannelSpec = {
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential: string | null;
+};
+
+export type ChannelState = {
+  id: string;
+  name: string;
+  destination_url: string;
+  enabled: boolean;
+  destination_credential_id: string | null;
+  delete?: boolean;
+};
+
 export interface ProjectSpec {
   name: string;
   description: string;
   workflows: Record<string | symbol, WorkflowSpec>;
   credentials: Record<string | symbol, CredentialSpec>;
   collections: Record<string | symbol, CollectionSpec>;
+  channels: Record<string | symbol, ChannelSpec>;
 }
 
 export interface WorkflowState {
@@ -139,6 +163,7 @@ export interface ProjectState {
   workflows: Record<string | symbol, WorkflowState>;
   project_credentials: Record<string | symbol, CredentialState>;
   collections: Record<string | symbol, CollectionState>;
+  channels: Record<string | symbol, ChannelState>;
 }
 
 export interface ProjectPayload {
@@ -146,6 +171,7 @@ export interface ProjectPayload {
   name: string;
   description: string;
   collections?: Concrete<CollectionState>[];
+  channels?: Concrete<ChannelState>[];
   project_credentials: Concrete<CredentialState>[];
   workflows: {
     id: string;

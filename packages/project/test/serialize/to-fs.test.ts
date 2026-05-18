@@ -58,6 +58,7 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
               id: 'step1',
               next: {
                 step2: {
+                  // @ts-ignore
                   condition: true,
                   openfn: {
                     // should be excluded!
@@ -121,6 +122,7 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
           steps: [
             {
               ...step,
+              // @ts-ignore
               foo: 'bar',
             },
           ],
@@ -268,10 +270,11 @@ test('extractWorkflow: single simple workflow with custom root', (t) => {
         },
       ],
     },
+    // @ts-ignore
     config
   );
 
-  const { path, content } = extractWorkflow(project, 'my-workflow');
+  const { path } = extractWorkflow(project, 'my-workflow');
 
   t.is(path, 'openfn/wfs/my-workflow/my-workflow.json');
 });

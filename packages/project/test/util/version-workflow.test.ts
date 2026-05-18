@@ -1,7 +1,6 @@
 import test from 'ava';
 import { generateHash, parse } from '../../src/util/version';
 import Project, { generateWorkflow } from '../../src';
-import Workflow from '../../src/Workflow';
 
 // this is an actual lightning workflow state, copied verbatim
 // todo already out of data as the version will change soon
@@ -62,6 +61,7 @@ test('match lightning version', async (t) => {
   const [expected] = example.version_history;
 
   // load the project from v1 state
+  // @ts-ignore
   const proj = await Project.from('state', {
     workflows: [example],
   });

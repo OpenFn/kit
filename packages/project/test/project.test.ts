@@ -193,10 +193,7 @@ test('should convert a state file to a project and back again', async (t) => {
   t.is(project.openfn?.uuid, state.id);
   t.is(project.name, state.name);
 
-  // TODO: this hack is needed right now to serialize the state as json
-  project.config.formats.project = 'json';
-
-  const newState = project.serialize('state');
+  const newState = project.serialize('state', { format: 'json' });
   t.deepEqual(newState, state);
 });
 
@@ -219,10 +216,10 @@ test('should merge two projects', (t) => {
   const result = Project.merge(staging, main);
 
   t.is(result.name, 'a');
-  const mergedStep = result.workflows[0].get('a');
+  const mergedStep: any = result.workflows[0].get('a');
 
   t.is(mergedStep.expression, 'b()');
-  t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn.uuid);
+  t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn!.uuid);
 });
 
 test('should return UUIDs for everything', async (t) => {

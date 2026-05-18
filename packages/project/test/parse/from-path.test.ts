@@ -18,7 +18,7 @@ test.serial('should load a v1 state json', async (t) => {
   const project = await fromPath('/p1/main@openfn.org.json');
 
   t.is(project.name, proj.name);
-  t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
+  t.deepEqual(project.openfn!.uuid, proj.openfn!.uuid);
 
   // TODO this isn't quite right for a few reasons
   // will investigate later
@@ -27,12 +27,13 @@ test.serial('should load a v1 state json', async (t) => {
 
 test.serial('should load a v1 state yaml', async (t) => {
   mock({
+    // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
   const project = await fromPath('/p1/main@openfn.org.yaml');
 
   t.is(project.name, proj.name);
-  t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
+  t.deepEqual(project.openfn!.uuid, proj.openfn!.uuid);
 
   // TODO this isn't quite right for a few reasons
   // will investigate later
@@ -46,7 +47,7 @@ test.serial('should load a v2 project yaml', async (t) => {
   const project = await fromPath('/p1/main@openfn.org.yaml');
 
   t.is(project.id, proj.id);
-  t.deepEqual(project.openfn.uuid, '1234');
+  t.deepEqual(project.openfn!.uuid, '1234');
   t.is(project.workflows.length, 1);
 });
 
@@ -57,12 +58,13 @@ test.serial('should load a v2 project json', async (t) => {
   const project = await fromPath('/p1/main@openfn.org.json');
 
   t.is(project.id, proj.id);
-  t.deepEqual(project.openfn.uuid, '1234');
+  t.deepEqual(project.openfn!.uuid, '1234');
   t.is(project.workflows.length, 1);
 });
 
 test.serial('should use workspace config', async (t) => {
   mock({
+    // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
   const config = {
@@ -89,7 +91,7 @@ test.serial('should use workspace config', async (t) => {
     x: 1234,
   });
 
-  t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
+  t.deepEqual(project.openfn!.uuid, proj.openfn!.uuid);
 });
 
 test('extractAliasFromFilename: should extract alias from alias@domain.yaml format', (t) => {

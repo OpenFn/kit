@@ -1,11 +1,11 @@
 import * as l from '@openfn/lexicon';
 import test from 'ava';
 import { Project } from '../../src/Project';
-import generateWorkflow, { generateProject } from '../../src/gen/generator';
+import generateWorkflow from '../../src/gen/generator';
 
 import * as v2 from '../fixtures/sample-v2-project';
 
-const createProject = (props: Partial<l.Project> = {}) => {
+const createProject = (props: Partial<l.ProjectState> = {}) => {
   const proj = new Project({
     id: 'my-project',
     name: 'My Project',
@@ -86,7 +86,7 @@ test('should exclude null values in yaml', (t) => {
   });
 
   // force some null values into the workflow structure
-  proj.workflows[0].steps[1].openfn.keychain_credential_id = null;
+  proj.workflows[0].steps[1].openfn!.keychain_credential_id = null;
 
   const yaml = proj.serialize('project', { format: 'yaml' });
   t.deepEqual(yaml, v2.yaml);
@@ -95,9 +95,35 @@ test('should exclude null values in yaml', (t) => {
 test('should include sandboxy metadata', (t) => {
   const proj = createProject({});
 
-  const json = proj.serialize('project', { format: 'json' });
+  const json: any = proj.serialize('project', { format: 'json' });
 
   t.is(json.sandbox.parentId, 'abcd');
   t.is(json.options.env, 'dev');
   t.is(json.options.color, 'red');
+});
+
+test('should include channels in serialized project', (t) => {
+  const channels = [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  // @ts-ignore - channels is opaque (any) on Project
+  const proj = createProject({ channels });
+
+  const json = proj.serialize('project', { format: 'json' });
+
+  t.deepEqual((json as any).channels, channels);
+});
+
+test('should omit channels from serialized project when unset', (t) => {
+  const proj = createProject();
+
+  const json = proj.serialize('project', { format: 'json' });
+
+  t.false('channels' in (json as any));
 });

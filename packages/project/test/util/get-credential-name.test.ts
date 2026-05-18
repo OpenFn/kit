@@ -1,9 +1,9 @@
 import test from 'ava';
 import getCredentialName, { parse } from '../../src/util/get-credential-name';
-import { Credential } from '../../src/Project';
+import { CredentialState } from '@openfn/lexicon';
 
 test('should generate a credential name', (t) => {
-  const cred: Credential = {
+  const cred: CredentialState = {
     uuid: '<uuid>',
     owner: 'admin@openfn.org',
     name: 'my credential',

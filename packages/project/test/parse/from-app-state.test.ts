@@ -54,6 +54,29 @@ test('should create a Project from prov state with collections', (t) => {
   t.deepEqual(project.collections, []);
 });
 
+test('should create a Project from prov state with channels', (t) => {
+  const channels = [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  const stateWithChannels: any = { ...state, channels };
+
+  const project = fromAppState(stateWithChannels, meta);
+
+  t.deepEqual(project.channels, channels);
+});
+
+test('project channels is undefined when missing from state', (t) => {
+  const project = fromAppState(state, meta);
+
+  t.is(project.channels, undefined);
+});
+
 test('should create a Project from prov state with sandbox stuff', (t) => {
   const stateWithSandbox = {
     ...state,
@@ -63,7 +86,7 @@ test('should create a Project from prov state with sandbox stuff', (t) => {
   };
   const project = fromAppState(stateWithSandbox, meta, { format: 'json' });
 
-  t.is(project.sandbox.parentId, 'abc');
+  t.is(project.sandbox!.parentId, 'abc');
   t.is(project.options.env, 'dev');
   t.is(project.options.color, 'red');
 });
@@ -81,14 +104,18 @@ test('should create a Project from prov state with positions', (t) => {
   // the provisioner right now doesn't include positions
   // - but one day it will, and Project needs to be able to sync it
   newState.workflows['my-workflow'].positions = {
-    x: 1,
-    y: 1,
+    step1: {
+      x: 1,
+      y: 1,
+    },
   };
   const project = fromAppState(newState, meta);
 
-  t.deepEqual(project.workflows[0].openfn.positions, {
-    x: 1,
-    y: 1,
+  t.deepEqual(project.workflows[0].openfn!.positions, {
+    step1: {
+      x: 1,
+      y: 1,
+    },
   });
 });
 
@@ -161,6 +188,7 @@ test('mapWorkflow: map a cron trigger', (t) => {
         id: '1234',
         type: 'cron',
         cron_expression: '0 1 0 0',
+        cron_cursor_job_id: 'x',
         enabled: true,
       },
     },
@@ -174,15 +202,30 @@ test('mapWorkflow: map a cron trigger', (t) => {
     type: 'cron',
     next: {},
     enabled: true,
+    cron_expression: '0 1 0 0',
+    cron_cursor_job_id: 'x',
     openfn: {
       uuid: '1234',
-      cron_expression: '0 1 0 0',
     },
   });
 });
 
 test('mapWorkflow: map a webhook trigger', (t) => {
-  const mapped = mapWorkflow(state.workflows['my-workflow']);
+  const mapped = mapWorkflow({
+    ...state.workflows['my-workflow'],
+    triggers: {
+      webhook: {
+        id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+        type: 'webhook',
+        enabled: true,
+        webhook_reply: 'before_start',
+        webhook_response_config: {
+          success_code: 202,
+          error_code: 500,
+        },
+      },
+    },
+  });
 
   const [trigger] = mapped.steps;
 
@@ -190,6 +233,11 @@ test('mapWorkflow: map a webhook trigger', (t) => {
     id: 'webhook',
     type: 'webhook',
     enabled: true,
+    webhook_reply: 'before_start',
+    webhook_response_config: {
+      success_code: 202,
+      error_code: 500,
+    },
     next: {
       'transform-data': {
         condition: 'always',
@@ -387,7 +435,7 @@ test('mapEdge: map conditions', (t) => {
 // TODO the workflow yaml is not a project yaml
 // so this test doesn't work
 // I'll need to pull the project yaml, with uuids, to get this to work
-test.skip('mapWorkflow: map edge conditions', (t) => {
+test.skip('mapWorkflow: map edge conditions', () => {
   // TODO for yaml like this:
   const yaml = `
 workflows:
@@ -439,12 +487,10 @@ workflows:
           condition_expression: state.ok == 22
 
 `;
-  const project = fromAppState(yaml, meta, {
+  fromAppState(yaml, meta, {
     format: 'yaml',
   });
-  console.log(project.workflows['my-workflow'].steps);
-  const { next } = project.workflows['my-workflow'].steps[1];
-  console.log({ next });
+  // const { next } = project.workflows['my-workflow'].steps[1];
   // make sure that the condition_types get mapped to condition
   // also make sure that custom conditions work (both ways)
 });

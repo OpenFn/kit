@@ -2,7 +2,7 @@ import mock from 'mock-fs';
 import { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
 
-const gen = (uuid: any, alias: string, id: string, domain: string) =>
+const gen = (uuid: any, _alias: string, id: string, _domain: string) =>
   jsonToYaml({
     id,
     name: id.toUpperCase(),
@@ -287,6 +287,7 @@ test('load project meta', (t) => {
 test('load v2 projects with multiple matching ids', (t) => {
   const ws = new Workspace('/ws4');
 
+  // @ts-ignore
   t.is(ws.projects.length, 3);
 });
 

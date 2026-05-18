@@ -1,5 +1,7 @@
 import test from 'ava';
 import { randomUUID } from 'node:crypto';
+import type { CredentialState } from '@openfn/lexicon';
+
 import Project from '../../src';
 import {
   merge,
@@ -7,16 +9,15 @@ import {
   replaceCredentials,
 } from '../../src/merge/merge-project';
 import { generateWorkflow } from '../../src/gen/generator';
-import { Credential } from '../../src/Project';
 
 let idgen = 0;
 
 // go over each node in a workflow and add a new uuid
 // does not mutate
-const assignUUIDs = (workflow, generator = randomUUID) => ({
+const assignUUIDs = (workflow: any, generator: any = randomUUID) => ({
   id: 'wf',
   ...workflow,
-  steps: workflow.steps.map((s) => {
+  steps: workflow.steps.map((s: any) => {
     const step = {
       ...s,
       openfn: {
@@ -25,7 +26,7 @@ const assignUUIDs = (workflow, generator = randomUUID) => ({
     };
     if (s.next) {
       // TODO this reduction isn't quite right
-      step.next = Object.keys(s.next).reduce((obj, key) => {
+      step.next = Object.keys(s.next).reduce((obj: any, key) => {
         obj[key] = {
           condition: true,
           openfn: {
@@ -39,7 +40,7 @@ const assignUUIDs = (workflow, generator = randomUUID) => ({
   }),
 });
 
-const createProject = (workflow, id = 'a', extra = {}) =>
+const createProject = (workflow: any, id = 'a', extra = {}) =>
   new Project({
     id,
     name: id,
@@ -50,7 +51,7 @@ const createProject = (workflow, id = 'a', extra = {}) =>
     ...extra,
   });
 
-const createStep = (id, props) => ({
+const createStep = (id: string) => ({
   id,
   adaptor: 'common',
   expression: 'fn(s => s)',
@@ -80,12 +81,11 @@ test('Preserve the name and UUID of the target project', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
-  const step = result.workflows[0].steps[0];
+  const result: any = merge(staging, main);
 
   // Ensure that the result has the name and UUID of main
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 });
 
 // In this test,two projects with the same credential "id"
@@ -134,7 +134,7 @@ test('Merge new credentials into the target', (t) => {
   });
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
 
   t.deepEqual(result.credentials, [
     // Keep the original credential
@@ -149,6 +149,69 @@ test('Merge new credentials into the target', (t) => {
       owner: 'admin@openfn.org',
     },
   ]);
+});
+
+test('replace mode: source channels override target channels', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-target',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+  const sourceChannels = [
+    {
+      id: 'chan-source',
+      name: 'source-channel',
+      destination_url: 'https://source.example.com',
+      enabled: false,
+      destination_credential_id: null,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  const source = createProject(wf_b, 'b', { channels: sourceChannels });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, sourceChannels);
+});
+
+test('replace mode: target channels preserved when source has none', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-target',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, targetChannels);
 });
 
 test('replace mode: replace the name and UUID of the target project', (t) => {
@@ -171,12 +234,11 @@ test('replace mode: replace the name and UUID of the target project', (t) => {
   const local = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(local, remote, { mode: REPLACE_MERGE });
-  const step = result.workflows[0].steps[0];
+  const result: any = merge(local, remote, { mode: REPLACE_MERGE });
 
   // Ensure that the result has the name and UUID of local
   t.is(result.name, 'b');
-  t.is(result.openfn.uuid, local.openfn.uuid);
+  t.is(result.openfn.uuid, local.openfn!.uuid);
 });
 
 test('merge a simple change between single-step workflows with preserved uuids', (t) => {
@@ -204,13 +266,13 @@ test('merge a simple change between single-step workflows with preserved uuids',
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   const step = result.workflows[0].steps[0];
 
   // The resulting project should basically be main but with a different adaptor
 
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 
   t.is(step.adaptor, wf_b.steps[0].adaptor);
   t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
@@ -243,7 +305,7 @@ test('merge with history (prefers source history)', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
 
   t.deepEqual(result.workflows[0].history, ['a', 'b']);
 });
@@ -273,13 +335,13 @@ test('merge a simple change between single-step workflows with preserved numeric
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   const step = result.workflows[0].steps[0];
 
   // The resulting project should basically be main but with a different adaptor
 
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 
   t.is(step.adaptor, wf_b.steps[0].adaptor);
   t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
@@ -310,12 +372,12 @@ test('merge a new step into an existing workflow', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
 
   // The resulting project should have:
   const [x, y] = result.workflows[0].steps;
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 
   t.deepEqual(x, wf_a.steps[0]);
   t.deepEqual(y, wf_b.steps[1]);
@@ -353,11 +415,11 @@ test('merge with an edge and no changes', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   // console.log(JSON.stringify(result.workflow, null, 2));
 
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 
   const step = result.workflows[0].steps[0];
   // The step and edge should be totally unchanged
@@ -398,11 +460,11 @@ test('merge with a change to an edge condition', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   // console.log(JSON.stringify(result.workflow, null, 2));
 
   t.is(result.name, 'a');
-  t.is(result.openfn.uuid, main.openfn.uuid);
+  t.is(result.openfn.uuid, main.openfn!.uuid);
 
   const step = result.workflows[0].steps[0];
   t.deepEqual(step.next.y.openfn, wf_a.steps[0].next.y.openfn);
@@ -434,7 +496,7 @@ test('remove a step from an existing workflow', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
 
   // The resulting project should have no steps
   t.is(result.workflows[0].steps.length, 0);
@@ -465,7 +527,7 @@ test('merge an id change in a single step with preserved uuids', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
 
   // The resulting project should have:
   const step = result.workflows[0].steps[0];
@@ -480,7 +542,7 @@ test('merge an id change in a single step with preserved uuids', (t) => {
 test('should merge two projects and preserve edge id', (t) => {
   const source = generateWorkflow(`a-b`).set('a-b', {
     condition: true,
-  });
+  } as any);
   const target = generateWorkflow(`a-b`);
 
   t.not(source.getUUID('a-b'), target.getUUID('a-b'));
@@ -489,7 +551,9 @@ test('should merge two projects and preserve edge id', (t) => {
     createProject(target.workflow)
   );
 
+  // @ts-ignore
   const resultEdge = result.workflows[0].steps[0].next['b'];
+
   // preserve edge condition from source
   t.is(resultEdge.condition, true);
   // preserve edge id from target
@@ -512,7 +576,7 @@ test('merge a new workflow', (t) => {
   t.is(main.workflows.length, 1);
   t.is(staging.workflows.length, 2);
 
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   t.is(result.workflows.length, 2);
 });
 
@@ -532,7 +596,7 @@ test('merge a new workflow with onlyUpdated: true', (t) => {
   t.is(main.workflows.length, 1);
   t.is(staging.workflows.length, 2);
 
-  const result = merge(staging, main, { onlyUpdated: true });
+  const result: any = merge(staging, main, { onlyUpdated: true });
   t.is(result.workflows.length, 2);
 });
 
@@ -552,7 +616,7 @@ test('remove a workflow', (t) => {
   t.is(main.workflows.length, 2);
   t.is(staging.workflows.length, 1);
 
-  const result = merge(staging, main);
+  const result: any = merge(staging, main);
   t.is(result.workflows.length, 1);
 });
 
@@ -572,7 +636,7 @@ test('remove a workflow with onlyUpdated: true', (t) => {
   t.is(main.workflows.length, 2);
   t.is(staging.workflows.length, 1);
 
-  const result = merge(staging, main, { onlyUpdated: true });
+  const result: any = merge(staging, main, { onlyUpdated: true });
   t.is(result.workflows.length, 1);
 });
 
@@ -656,13 +720,9 @@ test('id match: preserve target uuid', (t) => {
 
   t.is(result.workflows.length, 1);
   // we expect every thing in target to be overridden except the uuid
+  // @ts-ignore
   t.is(result.workflows[0].openfn.uuid, target.openfn.uuid);
 });
-// should preserve UUID if id changes
-
-// should generate a UUID if name, adaptor and expression fail
-
-// should generate a UUID if change is ambiguous
 
 test('options: no mappings & removeUnmapped=false', (t) => {
   const source_project = createProject([
@@ -825,12 +885,12 @@ test('options: onlyUpdated with no changed workflows', (t) => {
     generateWorkflow('@id a a-b', { history: true }),
     generateWorkflow('@id b x-y', { history: true }),
   ]);
-  const target = createProject([
+  const target: any = createProject([
     generateWorkflow('@id a a-b', { history: true }),
     generateWorkflow('@id b x-y', { history: true }),
   ]);
 
-  const result = merge(source, target, {
+  const result: any = merge(source, target, {
     onlyUpdated: true,
     mode: 'replace',
   });
@@ -858,13 +918,15 @@ test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
   ]);
 
   // Scribble on both workflows
+  // @ts-ignore
   target.workflows[0].jam = 'jar';
+  // @ts-ignore
   target.workflows[1].jam = 'jar';
 
   // change the source
   source.workflows[0].steps[0].expression = 'fn()';
 
-  const result = merge(source, target, {
+  const result: any = merge(source, target, {
     onlyUpdated: true,
 
     // Set this to mode replace and use UUIDs as a proxy for
@@ -887,7 +949,7 @@ test.todo('options: only changed and 1 workflow');
 test.todo('options: only changed, and 1 changed, 1 unchanged workflow');
 
 test('replaceCredentials: preserves target credentials with their UUIDs', (t) => {
-  const targetCreds: Credential[] = [
+  const targetCreds: CredentialState[] = [
     { uuid: 'target-uuid-1', name: 'cred1', owner: 'user1' },
     { uuid: 'target-uuid-2', name: 'cred2', owner: 'user1' },
   ];
@@ -900,10 +962,10 @@ test('replaceCredentials: preserves target credentials with their UUIDs', (t) =>
 });
 
 test('replaceCredentials: adds new credentials from source without their UUIDs', (t) => {
-  const sourceCreds: Credential[] = [
+  const sourceCreds: CredentialState[] = [
     { uuid: 'source-uuid-1', name: 'newcred', owner: 'user1' },
   ];
-  const targetCreds: Credential[] = [
+  const targetCreds: CredentialState[] = [
     { uuid: 'target-uuid-1', name: 'existingcred', owner: 'user1' },
   ];
 
@@ -921,10 +983,10 @@ test('replaceCredentials: adds new credentials from source without their UUIDs',
 });
 
 test('replaceCredentials: does not duplicate credentials with same name/owner', (t) => {
-  const sourceCreds: Credential[] = [
+  const sourceCreds: CredentialState[] = [
     { uuid: 'source-uuid-1', name: 'samecred', owner: 'user1' },
   ];
-  const targetCreds: Credential[] = [
+  const targetCreds: CredentialState[] = [
     { uuid: 'target-uuid-1', name: 'samecred', owner: 'user1' },
   ];
 
@@ -938,10 +1000,10 @@ test('replaceCredentials: does not duplicate credentials with same name/owner', 
 });
 
 test('replaceCredentials: treats credentials with different owners as different', (t) => {
-  const sourceCreds: Credential[] = [
+  const sourceCreds: CredentialState[] = [
     { uuid: 'source-uuid-1', name: 'cred1', owner: 'user2' },
   ];
-  const targetCreds: Credential[] = [
+  const targetCreds: CredentialState[] = [
     { uuid: 'target-uuid-1', name: 'cred1', owner: 'user1' },
   ];
 
@@ -955,12 +1017,12 @@ test('replaceCredentials: treats credentials with different owners as different'
 });
 
 test('replaceCredentials: handles multiple new and existing credentials', (t) => {
-  const sourceCreds: Credential[] = [
+  const sourceCreds: CredentialState[] = [
     { uuid: 'source-uuid-1', name: 'existing', owner: 'user1' },
     { uuid: 'source-uuid-2', name: 'new1', owner: 'user1' },
     { uuid: 'source-uuid-3', name: 'new2', owner: 'user2' },
   ];
-  const targetCreds: Credential[] = [
+  const targetCreds: CredentialState[] = [
     { uuid: 'target-uuid-1', name: 'existing', owner: 'user1' },
     { uuid: 'target-uuid-2', name: 'old', owner: 'user1' },
   ];

@@ -130,6 +130,46 @@ test('allow empty workflows', async (t) => {
   });
 });
 
+test('allows null channels by converting to empty map', async (t) => {
+  const doc = `
+    name: project-name
+    channels:
+    workflows:
+      workflow-one:
+        name: workflow one
+  `;
+
+  const result = await parseAndValidate(doc, 'spec.yaml');
+
+  t.is(result.errors.length, 0);
+  t.deepEqual(result.doc.channels, {});
+});
+
+test('parses channels with destination_credential', async (t) => {
+  const doc = `
+    name: project-name
+    channels:
+      webhook-out:
+        name: webhook-out
+        destination_url: https://example.com/hook
+        enabled: true
+        destination_credential: my-cred
+    workflows:
+      workflow-one:
+        name: workflow one
+  `;
+
+  const result = await parseAndValidate(doc, 'spec.yaml');
+
+  t.is(result.errors.length, 0);
+  t.deepEqual(result.doc.channels!['webhook-out'], {
+    name: 'webhook-out',
+    destination_url: 'https://example.com/hook',
+    enabled: true,
+    destination_credential: 'my-cred',
+  });
+});
+
 test('adds the file content into the job body from the specified path', async (t) => {
   // Step 1: Create a temporary file that the YAML will reference
   const fileContent = 'fn(state => state.data);';

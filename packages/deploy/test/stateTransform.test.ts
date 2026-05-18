@@ -92,6 +92,7 @@ test('toNextState adding a job', (t) => {
     description: 'my test project',
     project_credentials: {},
     collections: {},
+    channels: {},
   });
 });
 
@@ -131,6 +132,7 @@ test('toNextState deleting a credential', (t) => {
         delete: true,
       },
     },
+    channels: {},
   });
 });
 
@@ -159,6 +161,7 @@ test('toNextState with empty state', (t) => {
     description: 'some helpful description',
     project_credentials: {},
     collections: {},
+    channels: {},
     workflows: {
       'workflow-one': {
         id: jp.query(result, '$..workflows["workflow-one"].id')[0],
@@ -219,6 +222,7 @@ test('toNextState with no changes', (t) => {
     description: 'for the humans',
     project_credentials: {},
     collections: {},
+    channels: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -335,6 +339,7 @@ test('toNextState with a new job', (t) => {
     description: 'some other description',
     project_credentials: {},
     collections: {},
+    channels: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -639,6 +644,125 @@ test('toNextState omits webhook_reply on existing trigger when not specified', (
   t.false('webhook_reply' in result.workflows.w.triggers.t);
 });
 
+test('toNextState sets webhook_response_config when specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'webhook',
+            webhook_response_config: { success_code: 200, error_code: 400 },
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.deepEqual(result.workflows.w.triggers.t.webhook_response_config, {
+    success_code: 200,
+    error_code: 400,
+  });
+});
+
+test('toNextState omits webhook_response_config when not specified', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_response_config' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets webhook_response_config on existing trigger', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'webhook',
+            webhook_response_config: { success_code: 201, error_code: 500 },
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.id, triggerId);
+  t.deepEqual(result.workflows.w.triggers.t.webhook_response_config, {
+    success_code: 201,
+    error_code: 500,
+  });
+});
+
+test('toNextState omits webhook_response_config on existing trigger when not specified', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: triggerId, type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('webhook_response_config' in result.workflows.w.triggers.t);
+});
+
 test('toNextState sets cron_cursor_job_id on existing trigger', (t) => {
   const triggerId = 'aaa-bbb-ccc';
   const jobId = 'job-uuid-111';
@@ -663,10 +787,18 @@ test('toNextState sets cron_cursor_job_id on existing trigger', (t) => {
       w: {
         name: 'workflow',
         jobs: {
-          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
         },
         triggers: {
-          t: { type: 'cron', cron_expression: '0 * * * *', cron_cursor_job: 'job-a' },
+          t: {
+            type: 'cron',
+            cron_expression: '0 * * * *',
+            cron_cursor_job: 'job-a',
+          },
         },
         edges: {},
       },
@@ -702,7 +834,11 @@ test('toNextState omits cron_cursor_job_id on existing trigger when not specifie
       w: {
         name: 'workflow',
         jobs: {
-          'job-a': { name: 'job a', adaptor: '@openfn/language-http', body: 'fn()' },
+          'job-a': {
+            name: 'job a',
+            adaptor: '@openfn/language-http',
+            body: 'fn()',
+          },
         },
         triggers: {
           t: { type: 'cron', cron_expression: '0 * * * *' },
@@ -824,6 +960,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
     name: 'project',
     project_credentials: {},
     collections: {},
+    channels: {},
     workflows: {
       a: {
         id: 'wf-a',
@@ -875,4 +1012,265 @@ test('toProjectPayload drops empty collections key', (t) => {
   const payload = toProjectPayload(projectState);
 
   t.deepEqual(payload, expectedPayload);
+});
+
+test('toNextState adding a channel', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {},
+    channels: {
+      'webhook-out': {
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential: null,
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+
+  const channel = result.channels['webhook-out'];
+  t.truthy(channel.id);
+  t.is(channel.name, 'webhook-out');
+  t.is(channel.destination_url, 'https://example.com/hook');
+  t.is(channel.enabled, true);
+  t.is(channel.destination_credential_id, null);
+});
+
+test('toNextState updating a channel preserves id', (t) => {
+  const channelId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {},
+    channels: {
+      'webhook-out': {
+        id: channelId,
+        name: 'webhook-out',
+        destination_url: 'https://old.example.com/hook',
+        enabled: true,
+        destination_credential_id: null,
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {},
+    channels: {
+      'webhook-out': {
+        name: 'webhook-out',
+        destination_url: 'https://new.example.com/hook',
+        enabled: false,
+        destination_credential: null,
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+
+  t.is(result.channels['webhook-out'].id, channelId);
+  t.is(
+    result.channels['webhook-out'].destination_url,
+    'https://new.example.com/hook'
+  );
+  t.is(result.channels['webhook-out'].enabled, false);
+});
+
+test('toNextState deleting a channel', (t) => {
+  const channelId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {},
+    channels: {
+      'webhook-out': {
+        id: channelId,
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential_id: null,
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {},
+    channels: {},
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+
+  t.deepEqual(result.channels['webhook-out'], {
+    id: channelId,
+    delete: true,
+  });
+});
+
+test('toNextState resolves channel destination_credential to id', (t) => {
+  const state = {
+    workflows: {},
+    project_credentials: {
+      'me-auth': {
+        id: 'cred-id-123',
+        name: 'auth',
+        owner: 'me',
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {},
+    credentials: {
+      'me-auth': { name: 'auth', owner: 'me' },
+    },
+    channels: {
+      'webhook-out': {
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential: 'me-auth',
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+
+  t.is(
+    result.channels['webhook-out'].destination_credential_id,
+    'cred-id-123'
+  );
+});
+
+test('toNextState throws when channel references unknown credential', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {},
+    channels: {
+      'webhook-out': {
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential: 'missing',
+      },
+    },
+  };
+
+  t.throws(() => mergeSpecIntoState(state, spec), {
+    message: 'Could not find a credential with name: missing',
+  });
+});
+
+test('getStateFromProjectPayload reads channels', (t) => {
+  const project = {
+    id: 'xyz',
+    name: 'project',
+    workflows: [],
+    project_credentials: [],
+    channels: [
+      {
+        id: 'chan-1',
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential_id: null,
+      },
+    ],
+  };
+
+  const state = getStateFromProjectPayload(project);
+
+  t.deepEqual(state.channels, {
+    'webhook-out': {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  });
+});
+
+test('toProjectPayload drops empty channels key', (t) => {
+  const projectState = {
+    ...lightningProjectState,
+    channels: {},
+  };
+
+  const payload = toProjectPayload(projectState);
+
+  t.false('channels' in payload);
+});
+
+test('toProjectPayload includes channels when non-empty', (t) => {
+  const projectState = {
+    ...lightningProjectState,
+    channels: {
+      'webhook-out': {
+        id: 'chan-1',
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential_id: null,
+      },
+    },
+  };
+
+  const payload = toProjectPayload(projectState);
+
+  t.deepEqual(payload.channels, [
+    {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://example.com/hook',
+      enabled: true,
+      destination_credential_id: null,
+    },
+  ]);
+});
+
+test('mergeProjectIntoState preserves channels from payload', (t) => {
+  const state = {
+    id: 'p-1',
+    name: 'p',
+    description: '',
+    workflows: {},
+    project_credentials: {},
+    collections: {},
+    channels: {
+      'webhook-out': {
+        id: 'chan-1',
+        name: 'webhook-out',
+        destination_url: 'https://example.com/hook',
+        enabled: true,
+        destination_credential_id: null,
+      },
+    },
+  };
+  const payload: ProjectPayload = {
+    id: 'p-1',
+    name: 'p',
+    description: '',
+    workflows: [],
+    project_credentials: [],
+    channels: [
+      {
+        id: 'chan-1',
+        name: 'webhook-out',
+        destination_url: 'https://updated.example.com/hook',
+        enabled: false,
+        destination_credential_id: null,
+      },
+    ],
+  };
+
+  const result = mergeProjectPayloadIntoState(state, payload);
+
+  t.deepEqual(result.channels, {
+    'webhook-out': {
+      id: 'chan-1',
+      name: 'webhook-out',
+      destination_url: 'https://updated.example.com/hook',
+      enabled: false,
+      destination_credential_id: null,
+    },
+  });
 });
