@@ -1,5 +1,18 @@
 # @openfn/project
 
+## 0.17.0
+
+### Minor Changes
+
+- 757f009: Add support for channels
+
+### Patch Changes
+
+- 757f009: Support more trigger keys
+- Updated dependencies [757f009]
+- Updated dependencies [757f009]
+  - @openfn/lexicon@2.2.0
+
 ## 0.16.0
 
 ### Minor Changes

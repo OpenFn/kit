@@ -1,5 +1,22 @@
 # @openfn/cli
 
+## 1.36.0
+
+### Minor Changes
+
+- 757f009: Add support for channels
+- 757f009: Support webhook responses in sync & deploy
+
+### Patch Changes
+
+- Updated dependencies [757f009]
+- Updated dependencies [757f009]
+- Updated dependencies [757f009]
+- Updated dependencies [757f009]
+  - @openfn/lexicon@2.2.0
+  - @openfn/project@0.17.0
+  - @openfn/deploy@0.13.0
+
 ## 1.35.3
 
 ### Patch Changes

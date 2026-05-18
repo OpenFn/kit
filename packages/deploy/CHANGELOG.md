@@ -1,5 +1,12 @@
 # @openfn/deploy
 
+## 0.13.0
+
+### Minor Changes
+
+- 757f009: Add support for channels
+- 757f009: Add support for webhook_response_config
+
 ## 0.12.0
 
 ### Minor Changes
