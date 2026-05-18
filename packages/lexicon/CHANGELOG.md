@@ -1,5 +1,12 @@
 # lexicon
 
+## 2.2.0
+
+### Minor Changes
+
+- aade583: Add support for channels
+- d43bab9: Support `cron_cursor_job_id`, `webhook_reply` and `webhook_response_config` in Provisioner types
+
 ## 2.1.0
 
 ### Minor Changes
