@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.25.1
+
+### Patch Changes
+
+- Add workaround for rare event duplication
+
 ## 1.25.0
 
 ### Minor Changes
