@@ -22,6 +22,20 @@ export default async function onStepComplete(
   const step_id = state.activeStep as string;
   const job_id = state.activeJob as string;
 
+  if (!step_id) {
+    // Runs are lost in production now because sometimes the step-complete
+    // event gets triggered twice. In this case, the second one does not
+    // have an activeStep on the state object, so will send with
+    // step_id null. And lightning will complain (rightly!) and refuse
+    // to listen to subsequent events on the run (wrongly!)
+    // This is hard to diagnose in the wild so as a temporary measure,
+    // we're going to abort with a strong warning
+    context.logger?.warn(
+      `DUPLICATE_EVENT_ERROR: Run ${context.id} received two step:complete events for the same step. The second event has been suppressed to prevent a lost run.`
+    );
+    return;
+  }
+
   if (!state.dataclips) {
     state.dataclips = {};
   }
