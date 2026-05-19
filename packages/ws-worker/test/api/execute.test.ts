@@ -206,6 +206,7 @@ test('jobError should trigger step:complete with a reason and default state', as
   let stepCompleteEvent: any;
 
   const state = createRunState({ id: 'run-23' } as ExecutionPlan);
+  state.activeStep = 'a';
 
   const channel = mockChannel({
     [STEP_COMPLETE]: (evt) => {
