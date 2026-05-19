@@ -4,7 +4,7 @@
  * Config is supplied via environment variables:
  *   REPO_DIR        - path to the shared tmpdir
  *   SPECIFIER       - package specifier to install
- *   WORKER_MODE     - one of: race | stale | per-alias | fail | double-check | partial
+ *   WORKER_MODE     - one of: race | double-check | partial | default
  *   INSTALL_DELAY   - ms to sleep inside installFn (default 0)
  *   INSTALL_FAIL    - if '1', installFn throws
  *   INSTALL_NOOP    - if '1', installFn resolves immediately without seeding pkg
@@ -23,7 +23,7 @@
 
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { createMockLogger } from '@openfn/logger';
+import { createMockLogger, Logger } from '@openfn/logger';
 import { getAliasedName } from '@openfn/runtime';
 import { createLockedHandlers } from '../../src/util/repo-lock.js';
 
@@ -66,7 +66,7 @@ async function main() {
 
   // In double-check mode the installFn waits for a 'proceed' message so the
   // parent can guarantee ordering: A holds lock -> B queues -> A finishes -> B skips.
-  let installFn: (specifier: string, repoDir: string, logger: any) => Promise<void>;
+  let installFn: (specifier: string, repoDir: string, logger: Logger) => Promise<void>;
 
   if (workerMode === 'double-check') {
     // Child A: acquire lock, signal parent, wait for 'proceed', then complete.

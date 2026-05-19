@@ -13,7 +13,7 @@ const STALE_MS = 5 * 60_000;
 const MAX_LOCK_WAIT_MS = STALE_MS + 60_000; // 6 min
 const LOCK_INTERVAL_MS = 2_000;
 const LOCK_RETRY_OPTIONS = {
-  retries: MAX_LOCK_WAIT_MS / LOCK_INTERVAL_MS, // 180 × 2s = 360s
+  retries: MAX_LOCK_WAIT_MS / LOCK_INTERVAL_MS,
   factor: 1,
   minTimeout: LOCK_INTERVAL_MS,
   maxTimeout: LOCK_INTERVAL_MS,
@@ -40,12 +40,10 @@ const fileExists = async (p: string) => {
 
 const ensureLockTarget = async (target: string) => {
   await mkdir(path.dirname(target), { recursive: true });
-  if (!(await fileExists(target))) {
-    try {
-      await writeFile(target, '', { flag: 'wx' });
-    } catch (e: any) {
-      if (e.code !== 'EEXIST') throw e;
-    }
+  try {
+    await writeFile(target, '', { flag: 'wx' });
+  } catch (e: any) {
+    if (e.code !== 'EEXIST') throw e;
   }
 };
 
@@ -85,12 +83,11 @@ export const createLockedHandlers = (
   ): Promise<boolean> => {
     await ensureDirs;
     const alias = getAliasedName(specifier);
-    const sentinel = sentinelPath(repoDir, alias);
-    const pkg = nodeModulesPkgPath(repoDir, alias);
-    if ((await fileExists(sentinel)) && (await fileExists(pkg))) {
-      return true;
-    }
-    return false;
+    const [hasSentinel, hasPkg] = await Promise.all([
+      fileExists(sentinelPath(repoDir, alias)),
+      fileExists(nodeModulesPkgPath(repoDir, alias)),
+    ]);
+    return hasSentinel && hasPkg;
   };
 
   const handleInstall = async (
@@ -101,6 +98,7 @@ export const createLockedHandlers = (
     await ensureDirs;
     const alias = getAliasedName(specifier);
     const sentinel = sentinelPath(repoDir, alias);
+    const pkg = nodeModulesPkgPath(repoDir, alias);
     const target = lockTargetPath(repoDir, alias);
 
     await ensureLockTarget(target);
@@ -126,8 +124,11 @@ export const createLockedHandlers = (
     logger.debug(`acquired install lock for ${specifier}`);
 
     try {
-      const pkg = nodeModulesPkgPath(repoDir, alias);
-      if ((await fileExists(sentinel)) && (await fileExists(pkg))) {
+      const [hasSentinel, hasPkg] = await Promise.all([
+        fileExists(sentinel),
+        fileExists(pkg),
+      ]);
+      if (hasSentinel && hasPkg) {
         logger.debug(
           `another worker installed ${specifier} while waiting for lock; skipping install`
         );
@@ -147,5 +148,3 @@ export const createLockedHandlers = (
 
   return { handleInstall, handleIsInstalled };
 };
-
-export default createLockedHandlers;
