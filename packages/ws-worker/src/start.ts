@@ -5,6 +5,7 @@ import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
 import getDefaultWorkloopConfig from './util/get-default-workloop-config';
+import { createLockedHandlers } from './util/repo-lock';
 
 const args = cli(process.argv);
 
@@ -108,7 +109,7 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
-  const engineOptions = {
+  const engineOptions: any = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
     maxWorkers: effectiveCapacity,
@@ -119,6 +120,20 @@ if (args.mock) {
     profile: args.profile,
     profilePollInterval: args.profilePollIntervalMs,
   };
+
+  if (args.repoLock) {
+    if (args.repoDir) {
+      logger.info(
+        'Repo lock enabled: coordinating adaptor installs via filesystem lock at',
+        args.repoDir
+      );
+      engineOptions.autoinstall = createLockedHandlers(args.repoDir);
+    } else {
+      logger.warn(
+        'WARNING: --repo-lock set but --repo-dir is not; ignoring repo lock'
+      );
+    }
+  }
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);
 

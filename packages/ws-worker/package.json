@@ -36,6 +36,7 @@
     "koa": "^2.16.4",
     "koa-logger": "^3.2.1",
     "phoenix": "1.7.10",
+    "proper-lockfile": "^4.1.2",
     "ws": "^8.19.0"
   },
   "devDependencies": {
@@ -45,6 +46,7 @@
     "@types/node": "^18.19.130",
     "@types/nodemon": "1.19.3",
     "@types/phoenix": "^1.6.7",
+    "@types/proper-lockfile": "^4.1.4",
     "@types/yargs": "^17.0.35",
     "ava": "5.3.1",
     "nodemon": "3.1.14",
