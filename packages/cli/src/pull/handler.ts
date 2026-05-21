@@ -42,6 +42,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
           project: options.projectId,
           force: true,
           endpoint: config.endpoint,
+          apiKey: config.apiKey,
           createCredentials: false,
         },
         logger
