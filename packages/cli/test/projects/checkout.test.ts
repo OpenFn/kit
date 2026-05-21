@@ -621,7 +621,7 @@ test.serial('checkout: creates credentials.yaml', async (t) => {
       command: 'project-checkout',
       project: 'main-project',
       workspace: '/ws2',
-      createCredentials: false,
+      createCredentials: true,
     },
     logger
   );
