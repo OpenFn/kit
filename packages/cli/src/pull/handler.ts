@@ -28,7 +28,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     );
     if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
       // override endpoint with one from openfn.yaml
-      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8')) ?? {};
       if (config?.project?.endpoint) {
         config.endpoint = config.project.endpoint;
       }
@@ -42,6 +42,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
           project: options.projectId,
           force: true,
           endpoint: config.endpoint,
+          createCredentials: false,
         },
         logger
       );

@@ -131,7 +131,6 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       logger?.warn('WARNING! No content for file', f);
     }
   }
-  console.log({ options });
   if (options.createCredentials) {
     createProjectCredentials(workspacePath, switchProject, logger);
   }
