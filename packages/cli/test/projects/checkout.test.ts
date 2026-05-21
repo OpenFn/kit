@@ -561,7 +561,7 @@ test.serial(
             triggers: [],
             edges: [],
           },
-      ],
+        ],
       }),
     });
 
@@ -580,6 +580,106 @@ test.serial(
   }
 );
 
+test.serial('checkout: creates credentials.yaml', async (t) => {
+  mock({
+    '/ws2/workflows': {},
+    '/ws2/openfn.yaml': jsonToYaml({
+      project: { id: 'main-project' },
+    }),
+    '/ws2/.projects/main-project@server.yaml': jsonToYaml({
+      id: '<uuid:main>',
+      name: 'Main Project',
+      project_credentials: [
+        {
+          id: 'cred-uuid',
+          name: 'my-credential',
+          owner: 'alice',
+        },
+      ],
+      workflows: [
+        {
+          name: 'My Workflow',
+          jobs: [
+            {
+              name: 'Run Job',
+              body: 'fn(s => s)',
+              adaptor: '@openfn/language-http@latest',
+              project_credential_id: 'cred-uuid',
+            },
+          ],
+          triggers: [],
+          edges: [],
+        },
+      ],
+    }),
+  });
+
+  t.false(fs.existsSync('/ws2/credentials.yaml'));
+
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'main-project',
+      workspace: '/ws2',
+      createCredentials: false,
+    },
+    logger
+  );
+
+  t.true(fs.existsSync('/ws2/credentials.yaml'));
+
+  const creds = yamlToJson(fs.readFileSync('/ws2/credentials.yaml', 'utf8'));
+  t.deepEqual(creds, { 'alice|my-credential': {} });
+});
+
+test.serial('checkout: do not create credentials.yaml', async (t) => {
+  mock({
+    '/ws2/workflows': {},
+    '/ws2/openfn.yaml': jsonToYaml({
+      project: { id: 'main-project' },
+    }),
+    '/ws2/.projects/main-project@server.yaml': jsonToYaml({
+      id: '<uuid:main>',
+      name: 'Main Project',
+      project_credentials: [
+        {
+          id: 'cred-uuid',
+          name: 'my-credential',
+          owner: 'alice',
+        },
+      ],
+      workflows: [
+        {
+          name: 'My Workflow',
+          jobs: [
+            {
+              name: 'Run Job',
+              body: 'fn(s => s)',
+              adaptor: '@openfn/language-http@latest',
+              project_credential_id: 'cred-uuid',
+            },
+          ],
+          triggers: [],
+          edges: [],
+        },
+      ],
+    }),
+  });
+
+  t.false(fs.existsSync('/ws2/credentials.yaml'));
+
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'main-project',
+      workspace: '/ws2',
+      createCredentials: false,
+    },
+    logger
+  );
+
+  t.false(fs.existsSync('/ws2/credentials.yaml'));
+});
 test.serial(
   'checkout: removes workflow directory when workflow is deleted on server',
   async (t) => {

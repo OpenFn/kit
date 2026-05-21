@@ -19,10 +19,16 @@ import { createProjectCredentials } from './create-credentials';
 
 export type CheckoutOptions = Pick<
   Opts,
-  'command' | 'project' | 'workspace' | 'log' | 'clean' | 'force'
+  | 'command'
+  | 'project'
+  | 'workspace'
+  | 'log'
+  | 'clean'
+  | 'force'
+  | 'createCredentials'
 >;
 
-const options = [o.log, po.workspace, po.clean, o.force];
+const options = [o.log, po.workspace, po.clean, o.force, po.creds];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -125,8 +131,10 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       logger?.warn('WARNING! No content for file', f);
     }
   }
-
-  createProjectCredentials(workspacePath, switchProject, logger);
+  console.log({ options });
+  if (options.createCredentials) {
+    createProjectCredentials(workspacePath, switchProject, logger);
+  }
 
   logger?.success(`Expanded project to ${workspacePath}`);
 };
