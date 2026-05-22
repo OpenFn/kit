@@ -46,21 +46,28 @@ export const withInstallLock = async (
 
   logger.debug(`acquiring install lock for ${alias}`);
   let release: () => Promise<void>;
+
+  const lockOpts = { stale: STALE_MS, update: UPDATE_MS, realpath: false };
+
   try {
-    release = await lockfile.lock(target, {
-      retries: LOCK_RETRY_OPTIONS,
-      stale: STALE_MS,
-      update: UPDATE_MS,
-      realpath: false,
-    });
+    release = await lockfile.lock(target, { ...lockOpts, retries: 0 });
   } catch (e: any) {
-    if (e.code === 'ELOCKED') {
-      throw new Error(
-        `Lock acquisition timed out after ${MAX_LOCK_WAIT_MS / 1000}s waiting for ${alias}; another worker likely still installing (lock: ${target})`
-      );
+    if (e.code !== 'ELOCKED') throw e;
+
+    logger.info(`waiting for install lock on \`${alias}\` (another worker is installing)`);
+
+    try {
+      release = await lockfile.lock(target, { ...lockOpts, retries: LOCK_RETRY_OPTIONS });
+    } catch (e2: any) {
+      if (e2.code === 'ELOCKED') {
+        throw new Error(
+          `Lock acquisition timed out after ${MAX_LOCK_WAIT_MS / 1000}s waiting for ${alias}; another worker likely still installing (lock: ${target})`
+        );
+      }
+      throw e2;
     }
-    throw e;
   }
+
   logger.debug(`acquired install lock for ${alias}`);
 
   try {
