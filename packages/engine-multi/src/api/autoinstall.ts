@@ -257,7 +257,9 @@ export const isInstalled = async (
     if (!dependencies.hasOwnProperty(alias)) {
       return false;
     }
-    return fileExists(path.join(repoDir, 'node_modules', alias, 'package.json'));
+    return fileExists(
+      path.join(repoDir, 'node_modules', alias, 'package.json')
+    );
   }
 };
 
