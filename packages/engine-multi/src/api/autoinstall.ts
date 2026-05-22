@@ -24,8 +24,6 @@ export type AutoinstallOptions = {
   versionLookup?: (specifier: string) => Promise<string>;
 };
 
-const pending: Record<string, Promise<void>> = {};
-
 let busy = false;
 
 const queue: Array<{ adaptors: string[]; callback: (err?: any) => void }> = [];
@@ -92,8 +90,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
           duration,
         });
       } catch (e: any) {
-        delete pending[a];
-
         logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
         logger.error(e);
         const duration = Date.now() - startTime;
