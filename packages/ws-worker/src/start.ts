@@ -108,7 +108,7 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
-  const lockRepo = !args.noRepoLock;
+  const lockRepo = args.repoLock !== false;
   if (lockRepo && !args.repoDir) {
     logger.warn(
       'WARNING: repo lock is enabled but --repo-dir is not set; lock will be a no-op'

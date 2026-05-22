@@ -77,6 +77,34 @@ test('cli should handle boolean options correctly', (t) => {
   t.is(args.mock, true);
 });
 
+test('cli should default repoLock to true', (t) => {
+  const args = cli('pnpm start'.split(' '));
+  t.is(args.repoLock, true);
+});
+
+test('cli should disable repoLock when --no-repo-lock is passed', (t) => {
+  const args = cli('pnpm start --no-repo-lock'.split(' '));
+  t.is(args.repoLock, false);
+});
+
+test('cli should disable repoLock when WORKER_NO_REPO_LOCK=true', (t) => {
+  process.env.WORKER_NO_REPO_LOCK = 'true';
+  const args = cli('pnpm start'.split(' '));
+  t.is(args.repoLock, false);
+});
+
+test('cli should keep repoLock enabled when WORKER_NO_REPO_LOCK=false', (t) => {
+  process.env.WORKER_NO_REPO_LOCK = 'false';
+  const args = cli('pnpm start'.split(' '));
+  t.is(args.repoLock, true);
+});
+
+test('cli flag should override WORKER_NO_REPO_LOCK env var', (t) => {
+  process.env.WORKER_NO_REPO_LOCK = 'true';
+  const args = cli('pnpm start --repo-lock'.split(' '));
+  t.is(args.repoLock, true);
+});
+
 test('cli should configure sentry directly', (t) => {
   const argv = 'pnpm start --sentry-dsn abc --sentry-env local'.split(' ');
   const args = cli(argv);
