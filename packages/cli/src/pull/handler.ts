@@ -27,10 +27,10 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       'openfn.yaml'
     );
     if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
-      // override endpoint with one from openfn.yaml
-      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8')) ?? {};
-      if (config?.project?.endpoint) {
-        config.endpoint = config.project.endpoint;
+      // default endpoint to one from openfn.yaml
+      const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+      if (!config.endpoint && v2config?.project?.endpoint) {
+        config.endpoint = v2config.project.endpoint;
       }
 
       logger.always(
@@ -42,12 +42,13 @@ async function pullHandler(options: PullOptions, logger: Logger) {
           project: options.projectId,
           force: true,
           endpoint: config.endpoint,
-          apiKey: config.apiKey,
+          apiKey: config.apiKey ?? undefined,
           createCredentials: false,
         },
         logger
       );
     }
+
     if (process.env['OPENFN_API_KEY']) {
       logger.info('Using OPENFN_API_KEY environment variable');
       config.apiKey = process.env['OPENFN_API_KEY'];
