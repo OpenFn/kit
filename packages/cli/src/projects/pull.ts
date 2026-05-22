@@ -24,6 +24,7 @@ export type PullOptions = Pick<
   | 'confirm'
   | 'snapshots'
   | 'force'
+  | 'createCredentials'
 >;
 
 const options = [
@@ -32,6 +33,7 @@ const options = [
   o2.alias,
   o2.env,
   o2.workspace,
+  o2.creds,
 
   // general options
   o.apiKey,

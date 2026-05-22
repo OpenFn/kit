@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.36.1
+
+### Patch Changes
+
+- 68463d8: When running legacy deploy with an openfn.yaml file (ie, github sync), do not generate credentials.yaml by default"
+
 ## 1.36.0
 
 ### Minor Changes

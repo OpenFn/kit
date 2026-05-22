@@ -11,6 +11,7 @@ export type Opts = BaseOpts & {
   project?: string;
   format?: 'yaml' | 'json' | 'state';
   clean?: boolean;
+  createCredentials?: boolean;
 };
 
 // project specific options
@@ -36,6 +37,16 @@ export const clean: CLIOption = {
     description: 'Clean the working dir before checking out the new project',
     default: false,
     boolean: true,
+  },
+};
+
+export const creds: CLIOption = {
+  name: 'create-credentials',
+  yargs: {
+    boolean: true,
+    default: true,
+    description:
+      'Create a credentials.yaml file and intialize with empty values',
   },
 };
 

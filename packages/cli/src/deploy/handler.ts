@@ -41,10 +41,10 @@ async function deployHandler(
       'openfn.yaml'
     );
     if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
-      // override endpoint with one from openfn.yaml
-      const config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
-      if (config?.project?.endpoint) {
-        config.endpoint = config.project.endpoint;
+      // default endpoint to one from openfn.yaml
+      const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+      if (!config.endpoint && v2config?.project?.endpoint) {
+        config.endpoint = v2config.project.endpoint;
       }
 
       logger.always(
@@ -55,6 +55,7 @@ async function deployHandler(
           ...options,
           force: true,
           endpoint: config.endpoint,
+          apiKey: config.apiKey ?? undefined,
         },
         logger
       );
