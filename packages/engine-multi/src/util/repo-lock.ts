@@ -41,7 +41,6 @@ export const withInstallLock = async (
   const locksDir = path.join(repoDir, '.locks');
   const target = path.join(locksDir, `${alias}.lock`);
 
-  await mkdir(locksDir, { recursive: true });
   await ensureLockTarget(target);
 
   logger.debug(`acquiring install lock for ${alias}`);
