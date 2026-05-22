@@ -32,6 +32,12 @@ export const withInstallLock = async (
   logger: Logger,
   fn: () => Promise<void>
 ): Promise<void> => {
+  // Defence-in-depth: refuse aliases that could escape the .locks directory.
+  // Upstream whitelist filtering should make this unreachable.
+  if (alias.includes('..') || path.isAbsolute(alias)) {
+    throw new Error(`Invalid alias for install lock: ${alias}`);
+  }
+
   const locksDir = path.join(repoDir, '.locks');
   const target = path.join(locksDir, `${alias}.lock`);
 
