@@ -435,13 +435,22 @@ importers:
       json-stream-stringify:
         specifier: ^3.1.6
         version: 3.1.6
+      proper-lockfile:
+        specifier: ^4.1.2
+        version: 4.1.2
     devDependencies:
       '@types/node':
         specifier: ^18.19.130
         version: 18.19.130
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
       ava:
         specifier: 5.3.1
         version: 5.3.1
+      esmock:
+        specifier: ^2.7.5
+        version: 2.7.5
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -759,9 +768,6 @@ importers:
       phoenix:
         specifier: 1.7.10
         version: 1.7.10
-      proper-lockfile:
-        specifier: ^4.1.2
-        version: 4.1.2
       ws:
         specifier: ^8.19.0
         version: 8.19.0
@@ -784,15 +790,15 @@ importers:
       '@types/phoenix':
         specifier: ^1.6.7
         version: 1.6.7
-      '@types/proper-lockfile':
-        specifier: ^4.1.4
-        version: 4.1.4
       '@types/yargs':
         specifier: ^17.0.35
         version: 17.0.35
       ava:
         specifier: 5.3.1
         version: 5.3.1
+      esmock:
+        specifier: ^2.7.5
+        version: 2.7.5
       nodemon:
         specifier: 3.1.14
         version: 3.1.14
@@ -2883,6 +2889,10 @@ packages:
   esm@3.2.25:
     resolution: {integrity: sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA==}
     engines: {node: '>=6'}
+
+  esmock@2.7.5:
+    resolution: {integrity: sha512-jKwL7yYpVOERalCllSnPur59s9M0gV5BKijtmOKclqDMuhqdS7DT/a7cODjz6w1XusE0wAaHBTrK+zgab/ENgw==}
+    engines: {node: '>=14.16.0'}
 
   esprima@1.2.5:
     resolution: {integrity: sha512-S9VbPDU0adFErpDai3qDkjq8+G05ONtKzcyNrPKg/ZKa+tf879nX2KexNU95b31UoTJjRLInNBHHHjFPoCd7lQ==}
@@ -6487,6 +6497,8 @@ snapshots:
 
   esm@3.2.25:
     optional: true
+
+  esmock@2.7.5: {}
 
   esprima@1.2.5: {}
 

@@ -1,31 +1,36 @@
 /**
- * Worker script for cross-process repo-lock tests.
+ * Worker script for cross-process repo-lock tests in engine-multi.
  *
- * Config is supplied via environment variables:
+ * Drives `withInstallLock` directly (the new public lock surface) rather than
+ * any wrapping handler. The install marker is `node_modules/<alias>/package.json`
+ * — npm's per-package extraction is atomic so its presence is sufficient proof
+ * of a successful install.
+ *
+ * Config (env vars):
  *   REPO_DIR        - path to the shared tmpdir
  *   SPECIFIER       - package specifier to install
  *   WORKER_MODE     - one of: race | double-check | partial | default
- *   INSTALL_DELAY   - ms to sleep inside installFn (default 0)
- *   INSTALL_FAIL    - if '1', installFn throws
- *   INSTALL_NOOP    - if '1', installFn resolves immediately without seeding pkg
+ *   INSTALL_DELAY   - ms to sleep inside the install fn (default 0)
+ *   INSTALL_FAIL    - if '1', the install fn throws
+ *   INSTALL_NOOP    - if '1', resolves without seeding node_modules
  *
- * IPC messages the worker sends to parent:
- *   { event: 'ready' }                        - worker is alive and module loaded
- *   { event: 'install-start', t: Date.now() } - installFn just started
- *   { event: 'lock-acquired' }                - inside the lock, before calling installFn
- *   { event: 'lock-attempting', t: Date.now() } - about to call handleInstall (entering lock path)
- *   { event: 'done', installCount, skipped?, wasInstalled?, error? }
+ * IPC out -> parent:
+ *   { event: 'ready' }                                  - module loaded
+ *   { event: 'install-start', t }                       - inside install fn
+ *   { event: 'lock-acquired' }                          - inside lock, before work (double-check)
+ *   { event: 'lock-attempting', t }                     - about to acquire lock
+ *   { event: 'done', installCount, skipped?, wasInstalled?, installedAfter?, error? }
  *
- * IPC messages the worker expects from parent (for barriers):
- *   { event: 'go' }      - start the handleInstall call (race scenario)
- *   { event: 'proceed' } - complete the installFn (double-check scenario)
+ * IPC in <- parent:
+ *   { event: 'go' }      - start the lock attempt (race)
+ *   { event: 'proceed' } - complete the install fn (double-check)
  */
 
 import path from 'node:path';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { createMockLogger, Logger } from '@openfn/logger';
+import { mkdir, writeFile, stat } from 'node:fs/promises';
+import { createMockLogger } from '@openfn/logger';
 import { getAliasedName } from '@openfn/runtime';
-import { createLockedHandlers } from '../../src/util/repo-lock.js';
+import { withInstallLock } from '../../src/util/repo-lock.js';
 
 const repoDir = process.env.REPO_DIR!;
 const specifier = process.env.SPECIFIER!;
@@ -41,7 +46,6 @@ const send = (msg: Record<string, unknown>) => {
   if (process.send) process.send(msg);
 };
 
-// Wait for a specific IPC message from the parent.
 const waitForMessage = (eventName: string): Promise<void> =>
   new Promise((resolve) => {
     const handler = (msg: any) => {
@@ -59,21 +63,26 @@ const seedModule = async () => {
   await writeFile(path.join(dir, 'package.json'), '{}');
 };
 
+const moduleInstalled = async () => {
+  try {
+    await stat(path.join(repoDir, 'node_modules', alias, 'package.json'));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
   let installCount = 0;
 
-  // In double-check mode the installFn waits for a 'proceed' message so the
-  // parent can guarantee ordering: A holds lock -> B queues -> A finishes -> B skips.
-  let installFn: (specifier: string, repoDir: string, logger: Logger) => Promise<void>;
+  let installFn: () => Promise<void>;
 
   if (workerMode === 'double-check') {
-    // Child A: acquire lock, signal parent, wait for 'proceed', then complete.
+    // Acquire lock, signal parent, wait for 'proceed', then complete.
     installFn = async () => {
       installCount++;
-      // Register the listener before signalling the parent so 'proceed' cannot
-      // arrive before the handler is attached.
       const proceedPromise = waitForMessage('proceed');
       send({ event: 'lock-acquired' });
       await proceedPromise;
@@ -94,44 +103,43 @@ async function main() {
     };
   }
 
-  const { handleInstall, handleIsInstalled } = createLockedHandlers(
-    repoDir,
-    installFn
-  );
+  // Wrap fn with the same double-check pattern autoinstall uses inside the lock:
+  // re-check installed state before running the install fn.
+  const lockedInstall = async () => {
+    await withInstallLock(repoDir, alias, logger, async () => {
+      if (await moduleInstalled()) {
+        return;
+      }
+      await installFn();
+    });
+  };
 
-  // Build the barrier promise BEFORE sending 'ready' so that if the parent
-  // replies instantly the message isn't missed before the listener is attached.
   const goPromise = workerMode === 'race' ? waitForMessage('go') : null;
 
-  // Signal parent that the module is imported and we are ready.
   send({ event: 'ready' });
 
-  // In race mode, wait for the parent's 'go' before calling handleInstall.
-  // This ensures all workers start as close together as possible.
   if (goPromise) {
     await goPromise;
   }
 
   if (workerMode === 'partial') {
-    // Scenario 6: check handleIsInstalled, then install, then check again.
-    const wasInstalled = await handleIsInstalled(specifier, repoDir, logger);
+    const wasInstalled = await moduleInstalled();
     send({ event: 'lock-attempting', t: Date.now() });
     try {
-      await handleInstall(specifier, repoDir, logger);
+      await lockedInstall();
     } catch (e: any) {
       send({ event: 'done', wasInstalled, installCount, error: e.message });
       return;
     }
-    const installedAfter = await handleIsInstalled(specifier, repoDir, logger);
+    const installedAfter = await moduleInstalled();
     send({ event: 'done', wasInstalled, installCount, installedAfter });
     return;
   }
 
-  // Signal parent that this worker is about to enter the lock path.
   send({ event: 'lock-attempting', t: Date.now() });
 
   try {
-    await handleInstall(specifier, repoDir, logger);
+    await lockedInstall();
     const skipped = installCount === 0;
     send({ event: 'done', installCount, skipped });
   } catch (e: any) {

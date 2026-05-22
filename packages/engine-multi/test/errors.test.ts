@@ -15,8 +15,9 @@ test.before(async () => {
     logger,
     repoDir: path.resolve('./test/__repo__'),
     autoinstall: {
-      // disable autoinstall
-      handleIsInstalled: async () => true,
+      // Fixture repo has the helper adaptor pre-installed; skip repo validation
+      // so autoinstall never tries to rewrite the fixture's package.json.
+      skipRepoValidation: true,
     },
     maxWorkers: 1,
     memoryLimitMb: 200,

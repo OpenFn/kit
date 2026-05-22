@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { stat } from 'node:fs/promises';
 import {
   ensureRepo,
   getAliasedName,
@@ -13,16 +15,12 @@ import type { Logger } from '@openfn/logger';
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
 import ExecutionContext from '../classes/ExecutionContext';
+import { withInstallLock } from '../util/repo-lock';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
   skipRepoValidation?: boolean;
-  handleInstall?(fn: string, repoDir: string, logger: Logger): Promise<void>;
-  handleIsInstalled?(
-    fn: string,
-    repoDir: string,
-    logger: Logger
-  ): Promise<boolean>;
+  lockRepo?: boolean;
   versionLookup?: (specifier: string) => Promise<string>;
 };
 
@@ -60,16 +58,31 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     adaptors: string[],
     onComplete: (err?: any) => void
   ) => {
-    // Check whether we still need to do any work
+    const useLock = autoinstallOptions.lockRepo !== false;
+
     for (const a of adaptors) {
       const { name, version } = getNameAndVersion(a);
-      if (await isInstalledFn(a, repoDir, logger)) {
+      if (await isInstalled(a, repoDir, logger)) {
         continue;
       }
 
       const startTime = Date.now();
       try {
-        await installFn(a, repoDir, logger);
+        if (useLock) {
+          // Re-check inside the lock so we skip work a peer worker
+          // completed while we were waiting.
+          await withInstallLock(repoDir, getAliasedName(a), logger, async () => {
+            if (await isInstalled(a, repoDir, logger)) {
+              logger.debug(
+                `another worker installed ${a} while waiting for lock; skipping`
+              );
+              return;
+            }
+            await install(a, repoDir, logger);
+          });
+        } else {
+          await install(a, repoDir, logger);
+        }
 
         const duration = Date.now() - startTime;
         logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
@@ -103,8 +116,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   const { repoDir, whitelist } = options;
   const autoinstallOptions = options.autoinstall || {};
 
-  const installFn = autoinstallOptions?.handleInstall || install;
-  const isInstalledFn = autoinstallOptions?.handleIsInstalled || isInstalled;
   const versionlookup = autoinstallOptions?.versionLookup || getLatestVersion;
 
   let didValidateRepo = false;
@@ -166,7 +177,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       version: v,
     };
 
-    if (!(await isInstalledFn(resolvedAdaptorName, repoDir, logger))) {
+    if (!(await isInstalled(resolvedAdaptorName, repoDir, logger))) {
       adaptorsToLoad.push(resolvedAdaptorName);
     }
   }
@@ -210,9 +221,17 @@ export default autoinstall;
 const install = (specifier: string, repoDir: string, logger: Logger) =>
   runtimeInstall([specifier], repoDir, logger);
 
-// The actual isInstalled function is not unit tested
-// TODO this should probably all be handled (and tested) in @openfn/runtime
-const isInstalled = async (
+const fileExists = async (p: string) => {
+  try {
+    await stat(p);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Exported for unit testing
+export const isInstalled = async (
   specifier: string,
   repoDir: string,
   logger: Logger
@@ -232,7 +251,10 @@ const isInstalled = async (
   const pkg = await loadRepoPkg(repoDir);
   if (pkg) {
     const { dependencies } = pkg;
-    return dependencies.hasOwnProperty(alias);
+    if (!dependencies.hasOwnProperty(alias)) {
+      return false;
+    }
+    return fileExists(path.join(repoDir, 'node_modules', alias, 'package.json'));
   }
 };
 
