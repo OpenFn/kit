@@ -42,24 +42,7 @@ async function deployHandler(
       'openfn.yaml'
     );
     if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
-      // default endpoint to one from openfn.yaml
-      const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
-      if (!config.endpoint && v2config?.project?.endpoint) {
-        config.endpoint = v2config.project.endpoint;
-      }
-
-      logger.always(
-        'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy). Set PREFER_LEGACY_SYNC to disable this.'
-      );
-      return beta.handler(
-        {
-          ...options,
-          force: true,
-          endpoint: config.endpoint,
-          apiKey: config.apiKey ?? undefined,
-        },
-        logger
-      );
+      return redirectTov2(v2ConfigPath, options, config, logger);
     }
 
     if (options.confirm === false) {
@@ -123,5 +106,32 @@ function mergeOverrides(
 function pickFirst<T>(...args: (T | null | undefined)[]): T {
   return args.find((arg) => arg !== undefined && arg !== null) as T;
 }
+
+const redirectTov2 = async (
+  v2ConfigPath: string,
+  options: DeployOptions,
+  config: DeployConfig,
+  logger: Logger
+) => {
+  logger.always(
+    'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy). Set PREFER_LEGACY_SYNC to disable this.'
+  );
+
+  // default endpoint to one from openfn.yaml
+  const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+  if (!config.endpoint && v2config?.project?.endpoint) {
+    config.endpoint = v2config.project.endpoint;
+  }
+
+  return beta.handler(
+    {
+      ...options,
+      force: true,
+      endpoint: config.endpoint,
+      apiKey: config.apiKey ?? undefined,
+    },
+    logger
+  );
+};
 
 export default deployHandler;
