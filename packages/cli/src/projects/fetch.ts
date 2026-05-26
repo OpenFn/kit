@@ -93,7 +93,7 @@ const fetchV1 = async (options: FetchOptions, logger: Logger) => {
   const config = loadAppAuthConfig(options, logger);
 
   const { data } = await fetchProject(
-    options.endpoint ?? localProject?.openfn?.endpoint!,
+    config.endpoint ?? localProject?.openfn?.endpoint!,
     config.apiKey,
     localProject?.uuid ?? options.project!,
     logger
@@ -265,7 +265,10 @@ export async function fetchRemoteProject(
     );
   }
 
-  const projectEndpoint = localProject?.openfn?.endpoint ?? config.endpoint;
+  // TODO this resolution is pretty awkward. The problem is we don't
+  // know if config.endpoint comes from an env var or explicit option
+  const projectEndpoint =
+    options.endpoint ?? localProject?.openfn?.endpoint ?? config.endpoint;
 
   const { data } = await fetchProject(
     projectEndpoint,

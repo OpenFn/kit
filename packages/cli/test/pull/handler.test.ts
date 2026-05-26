@@ -36,7 +36,7 @@ test.before(() => {
     .persist();
 });
 
-const options: PullOptions = {
+const options: Partial<PullOptions> = {
   beta: false,
   command: 'pull',
   configPath: '/tmp/config.json',
@@ -62,6 +62,48 @@ project:
     t.true(fs.existsSync('/tmp/.projects/main@app.openfn.org.yaml'));
 
     t.truthy(logger._find('always', /Detected openfn.yaml file/i));
+  }
+);
+
+test.serial(
+  'openfn yaml endpoint preferred to config.json endpoint',
+  async (t) => {
+    const logger = createMockLogger('', { level: 'debug' });
+    mockfs({
+      ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "DOES_NOT_EXIST"}`,
+      ['/tmp/openfn.yaml']: `
+project:
+  endpoint: ${ENDPOINT}`,
+    });
+
+    // This would throw if the config.json endpoint is used
+    await pullHandler(options, logger);
+
+    t.pass();
+  }
+);
+
+test.serial(
+  'CLI endpoint preferred to openfn.yaml and config.json endpoints',
+  async (t) => {
+    const logger = createMockLogger('', { level: 'debug' });
+    mockfs({
+      ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "DOES_NOT_EXIST"}`,
+      ['/tmp/openfn.yaml']: `
+project:
+  endpoint: INVALID_URL`,
+    });
+
+    // This would throw if any config endpoint is used
+    await pullHandler(
+      {
+        ...options,
+        endpoint: ENDPOINT,
+      } as any,
+      logger
+    );
+
+    t.pass();
   }
 );
 

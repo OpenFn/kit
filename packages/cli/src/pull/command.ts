@@ -8,8 +8,10 @@ import * as po from '../projects/options';
 export type PullOptions = Required<
   Pick<
     Opts & POpts,
+    | 'apiKey'
     | 'beta'
     | 'command'
+    | 'endpoint'
     | 'log'
     | 'logJson'
     | 'statePath'

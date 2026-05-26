@@ -34,6 +34,7 @@ async function deployHandler(
   }
 
   try {
+    console.log({ options });
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
     const v2ConfigPath = path.join(
@@ -55,7 +56,7 @@ async function deployHandler(
           ...options,
           force: true,
           endpoint: config.endpoint,
-          // Do not pass explicit api key here - it breaks GH sync
+          apiKey: config.apiKey ?? undefined,
         },
         logger
       );
