@@ -148,7 +148,6 @@ const syncProjects = async (
     // TODO should we prefer endpoint over alias?
     // maybe if it's explicitly passed?
     const endpoint = trackedProject.openfn?.endpoint ?? config.endpoint;
-
     const { data } = await fetchProject(
       endpoint,
       config.apiKey,
@@ -162,7 +161,7 @@ const syncProjects = async (
 
     logger.info('Downloaded latest version of project at ', endpoint);
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     throw e;
     // If fetch failed because of compatiblity with the local project, what do we do?
     // Well, actually I don't think I want this fetch to write to disk yet
