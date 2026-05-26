@@ -266,23 +266,32 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Track the remote we want to target
   // If the user passed a project alias, we need to use that
   // Otherwise just sync with the local project
-  const tracker = ws.get(options.project ?? localProject.uuid!);
+  let tracker;
+  if (!options.new) {
+    tracker = ws.get(options.project ?? localProject.uuid!);
+    if (!tracker) {
+      console.log('FOUND TRACKER');
+      console.log(options.project ?? localProject.uuid);
+      // Is this really an error? Unlikely to happen I thuink
+      console.log(
+        `ERROR: Failed to find tracked remote project ${
+          options.project ?? localProject.uuid!
+        } locally`
+      );
+      console.log('To deploy a new project, add --new to the command');
+      // TODO can we automate the fetch bit?
+      // If it's a UUID it should be ok?
+      console.log(
+        'You may need to fetch the project before you can safely deploy'
+      );
 
-  if (!tracker) {
-    // Is this really an error? Unlikely to happen I thuink
-    console.log(
-      `ERROR: Failed to find tracked remote project ${
-        options.project ?? localProject.uuid!
-      } locally`
-    );
-    console.log('To deploy a new project, add --new to the command');
-    // TODO can we automate the fetch bit?
-    // If it's a UUID it should be ok?
-    console.log(
-      'You may need to fetch the project before you can safely deploy'
-    );
-
-    throw new Error('Failed to find remote project locally');
+      throw new Error('Failed to find remote project locally');
+    }
+  } else {
+    // reset all metadata
+    localProject.openfn = {
+      endpoint: config.endpoint,
+    };
   }
 
   // Choose the target endpoint we want to deploy to
@@ -291,16 +300,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Otherwise fallback to to the auto-loaded config (probably coming from env)
   let endpoint: string =
     options.endpoint ??
-    tracker.openfn?.endpoint ??
+    tracker?.openfn?.endpoint ??
     config.endpoint ??
     DEFAULT_ENDPOINT;
-
-  if (options.new) {
-    // reset all metadata
-    localProject.openfn = {
-      endpoint: config.endpoint,
-    };
-  }
 
   // generate a credential map
   localProject.credentials = localProject.buildCredentialMap();
