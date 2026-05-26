@@ -8,6 +8,8 @@ import * as o2 from '../projects/options';
 export type DeployOptions = Required<
   Pick<
     Opts & POpts,
+    | 'endpoint'
+    | 'apiKey'
     | 'beta'
     | 'command'
     | 'configPath'

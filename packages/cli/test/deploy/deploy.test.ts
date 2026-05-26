@@ -88,6 +88,91 @@ test.serial('sets the exit code to 1', async (t) => {
   process.exitCode = origExitCode;
 });
 
+test.serial(
+  'redirects to beta handler when openfn.yaml exists in cwd',
+  async (t) => {
+    t.plan(3);
+    mockfs({
+      ['./config.json']: `{"apiKey": "123"}`,
+      ['./project.yaml']: `{"apiKey": "123"}`,
+      ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
+    });
+
+    await deployHandler(options, logger, mockDeploy, async (args: any) => {
+      t.is(args.force, true);
+      t.is(args.endpoint, 'https://from-yaml.org');
+      t.truthy(logger._find('always', /Detected openfn.yaml file/i));
+    });
+  }
+);
+
+test.serial('does not redirect when PREFER_LEGACY_SYNC is set', async (t) => {
+  t.plan(1);
+  mockfs({
+    ['./config.json']: `{"apiKey": "123", "endpoint": "https://api.example.com"}`,
+    ['./project.yaml']: `{"apiKey": "123"}`,
+    ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
+  });
+  process.env.PREFER_LEGACY_SYNC = '1';
+
+  await deployHandler(options, logger, mockDeploy, async (args: any) => {
+    t.fail('called beta handler');
+  });
+
+  delete process.env.PREFER_LEGACY_SYNC;
+  t.pass();
+});
+
+test.serial('CLI endpoint preferred over openfn.yaml endpoint', async (t) => {
+  t.plan(1);
+  mockfs({
+    ['./config.json']: `{"apiKey": "123"}`,
+    ['./project.yaml']: `{"apiKey": "123"}`,
+    ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
+  });
+
+  await deployHandler(
+    { ...options, endpoint: 'https://from-cli.org' } as any,
+    logger,
+    mockDeploy,
+    async (args: any) => {
+      t.is(args.endpoint, 'https://from-cli.org');
+    }
+  );
+});
+
+test.serial(
+  'openfn.yaml endpoint preferred over config.json endpoint',
+  async (t) => {
+    mockfs({
+      ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
+      ['./project.yaml']: `{"apiKey": "123"}`,
+      ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
+    });
+
+    await deployHandler(options, logger, mockDeploy, async (args: any) => {
+      t.is(args.endpoint, 'https://from-yaml.org');
+    });
+  }
+);
+
+test.serial('CLI apiKey preferred over config.json apiKey', async (t) => {
+  mockfs({
+    ['./config.json']: `{"apiKey": "from-config"}`,
+    ['./project.yaml']: `{"apiKey": "from-config"}`,
+    ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
+  });
+
+  await deployHandler(
+    { ...options, apiKey: 'from-cli' } as any,
+    logger,
+    mockDeploy,
+    async (args: any) => {
+      t.is(args.apiKey, 'from-cli');
+    }
+  );
+});
+
 test.serial('catches DeployErrors', async (t) => {
   const origExitCode = process.exitCode;
 
