@@ -323,7 +323,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
       config,
       ws,
       localProject,
-      tracker,
+      tracker!,
       logger
     );
     if (!syncResult) {
