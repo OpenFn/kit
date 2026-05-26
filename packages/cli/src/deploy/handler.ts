@@ -55,7 +55,7 @@ async function deployHandler(
           ...options,
           force: true,
           endpoint: config.endpoint,
-          apiKey: config.apiKey ?? undefined,
+          // Do not pass explicit api key here - it breaks GH sync
         },
         logger
       );

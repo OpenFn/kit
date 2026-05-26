@@ -42,8 +42,8 @@ async function pullHandler(options: PullOptions, logger: Logger) {
           project: options.projectId,
           force: true,
           endpoint: config.endpoint,
-          apiKey: config.apiKey ?? undefined,
           createCredentials: false,
+          // Do not pass explicit api key here - it breaks GH sync
         },
         logger
       );
