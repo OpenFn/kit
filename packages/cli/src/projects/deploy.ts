@@ -148,7 +148,7 @@ const syncProjects = async (
     // TODO should we prefer endpoint over alias?
     // maybe if it's explicitly passed?
     const endpoint = trackedProject.openfn?.endpoint ?? config.endpoint;
-
+    console.log({ config });
     const { data } = await fetchProject(
       endpoint,
       config.apiKey,

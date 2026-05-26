@@ -118,16 +118,15 @@ const redirectTov2 = async (
 
   // default endpoint to one from openfn.yaml
   const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
-  if (!config.endpoint && v2config?.project?.endpoint) {
-    config.endpoint = v2config.project.endpoint;
-  }
+  const endpoint =
+    options.endpoint ?? v2config?.project?.endpoint ?? config.endpoint;
 
   return beta.handler(
     {
       ...options,
       force: true,
-      endpoint: config.endpoint,
-      apiKey: config.apiKey ?? undefined,
+      endpoint,
+      apiKey: options.apiKey ?? config.apiKey ?? undefined,
     },
     logger
   );

@@ -121,7 +121,7 @@ export async function fetchProject(
 ): Promise<{ data: Provisioner.Project | null }> {
   const url = getLightningUrl(endpoint, projectId, snapshots);
   logger?.info(`Checking ${url} for existing project`);
-
+  console.log({ apiKey });
   try {
     const response = await fetch(url, {
       headers: {
