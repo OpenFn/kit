@@ -14,23 +14,27 @@ import { yamlToJson } from '@openfn/project';
 import fs from 'node:fs/promises';
 
 export type DeployFn = typeof deploy;
+export type BetaHandlerFn = typeof beta.handler;
 
 const actualDeploy: DeployFn = deploy;
+const actualBetaHandler: BetaHandlerFn = beta.handler;
 
-// Flexible `deployFn` interface for testing.
+// Flexible `deployFn` / `betaHandler` interfaces for testing.
 async function deployHandler<F extends (...args: any) => any>(
   options: DeployOptions,
   logger: Logger,
-  deployFn: F
+  deployFn: F,
+  betaHandler?: BetaHandlerFn
 ): Promise<ReturnType<typeof deployFn>>;
 
 async function deployHandler(
   options: DeployOptions,
   logger: Logger,
-  deployFn = actualDeploy
+  deployFn = actualDeploy,
+  betaHandler: BetaHandlerFn = actualBetaHandler
 ) {
   if (options.beta) {
-    return beta.handler(options as any, logger);
+    return betaHandler(options as any, logger);
   }
 
   try {
@@ -41,7 +45,7 @@ async function deployHandler(
       'openfn.yaml'
     );
     if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
-      return redirectTov2(v2ConfigPath, options, config, logger);
+      return redirectTov2(v2ConfigPath, options, config, logger, betaHandler);
     }
 
     if (options.confirm === false) {
@@ -110,7 +114,8 @@ const redirectTov2 = async (
   v2ConfigPath: string,
   options: DeployOptions,
   config: DeployConfig,
-  logger: Logger
+  logger: Logger,
+  betaHandler: BetaHandlerFn = actualBetaHandler
 ) => {
   logger.always(
     'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy). Set PREFER_LEGACY_SYNC to disable this.'
@@ -121,7 +126,7 @@ const redirectTov2 = async (
   const endpoint =
     options.endpoint ?? v2config?.project?.endpoint ?? config.endpoint;
 
-  return beta.handler(
+  return betaHandler(
     {
       ...options,
       force: true,
