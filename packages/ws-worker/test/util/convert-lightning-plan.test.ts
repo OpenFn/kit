@@ -618,7 +618,7 @@ test('Use local paths: resolves @local against a single existing root', (t) => {
   });
 });
 
-test('Use local paths: walks colon-separated roots in order, first match wins', (t) => {
+test('Use local paths: walks comma-separated roots in order, first match wins', (t) => {
   const privateRoot = makeMonorepo(['publicschema']);
   const canonicalRoot = makeMonorepo(['common', 'publicschema']);
 
@@ -633,7 +633,7 @@ test('Use local paths: walks colon-separated roots in order, first match wins', 
   };
 
   const { plan } = convertPlan(run as LightningPlan, {
-    monorepoPath: `${privateRoot}:${canonicalRoot}`,
+    monorepoPath: `${privateRoot},${canonicalRoot}`,
   });
   const [, a, b] = plan.workflow.steps as any[];
 
@@ -658,7 +658,7 @@ test('Use local paths: ignores roots that do not contain the adaptor', (t) => {
   };
 
   const { plan } = convertPlan(run as LightningPlan, {
-    monorepoPath: `${emptyRoot}:${realRoot}`,
+    monorepoPath: `${emptyRoot},${realRoot}`,
   });
   const [, a] = plan.workflow.steps as any[];
 
@@ -676,7 +676,7 @@ test('Use local paths: trims whitespace and drops empty segments', (t) => {
   };
 
   const { plan } = convertPlan(run as LightningPlan, {
-    monorepoPath: `  :  ${root}  : `,
+    monorepoPath: `  ,  ${root}  , `,
   });
   const [, a] = plan.workflow.steps as any[];
 
@@ -695,13 +695,13 @@ test('Use local paths: falls back to the first root when no root has the adaptor
   };
 
   const { plan } = convertPlan(run as LightningPlan, {
-    monorepoPath: `${rootA}:${rootB}`,
+    monorepoPath: `${rootA},${rootB}`,
   });
   const [, a] = plan.workflow.steps as any[];
 
   // The candidate path under the first root is surfaced even though the
   // adaptor is missing, so the runtime emits a clean "missing adaptor"
-  // error instead of crashing on a malformed colon-joined path.
+  // error instead of crashing on a malformed joined path.
   t.is(a.linker.mystery.path, path.resolve(rootA, 'packages', 'mystery'));
 });
 

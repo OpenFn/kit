@@ -51,14 +51,15 @@ export default (
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
   const { collectionsVersion, monorepoPath } = options;
 
-  // monorepoPath is a colon-separated list of monorepo roots, mirroring how
+  // monorepoPath is a comma-separated list of monorepo roots, mirroring how
   // Lightning's AdaptorRegistry parses OPENFN_ADAPTORS_REPO. A single path
   // (the common case) just becomes a one-element list. Order is precedence:
   // when a `packages/<shortName>` directory exists in more than one root, the
   // earlier entry wins, so a private adaptor repo can be listed before the
-  // canonical OpenFn monorepo to override individual adaptors locally.
+  // canonical OpenFn monorepo to override individual adaptors locally. Comma
+  // (rather than ':') keeps Windows drive-letter paths like `c:/repo` usable.
   const monorepoRoots = (monorepoPath ?? '')
-    .split(':')
+    .split(',')
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
@@ -73,10 +74,9 @@ export default (
     }
     // Fall back to the first root's resolved candidate path. The directory
     // does not exist, but this surfaces a recognisable "missing local
-    // adaptor" path to the runtime instead of an unresolved colon-joined
-    // string. It also preserves the single-path behaviour from before
-    // multi-root support was added (the path was returned without an
-    // existence check).
+    // adaptor" path to the runtime instead of an unresolved joined string.
+    // It also preserves the single-path behaviour from before multi-root
+    // support was added (the path was returned without an existence check).
     return path.resolve(monorepoRoots[0], 'packages', shortName);
   };
 
