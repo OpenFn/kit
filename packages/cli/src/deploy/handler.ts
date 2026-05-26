@@ -34,6 +34,7 @@ async function deployHandler(
   }
 
   try {
+    console.log({ options });
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
     const v2ConfigPath = path.join(
