@@ -26,27 +26,9 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       options.workspace || process.cwd(),
       'openfn.yaml'
     );
-    if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
-      // default endpoint to one from openfn.yaml
-      const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
-      if (!config.endpoint && v2config?.project?.endpoint) {
-        config.endpoint = v2config.project.endpoint;
-      }
 
-      logger.always(
-        'Detected openfn.yaml file - switching to v2 pull (openfn project pull). Set PREFER_LEGACY_SYNC to disable this.'
-      );
-      return beta(
-        {
-          ...options,
-          project: options.projectId,
-          force: true,
-          endpoint: config.endpoint,
-          apiKey: config.apiKey ?? undefined,
-          createCredentials: false,
-        },
-        logger
-      );
+    if (!process.env.PREFER_LEGACY_SYNC && (await fileExists(v2ConfigPath))) {
+      return redirectTov2(v2ConfigPath, options, config, logger);
     }
 
     if (process.env['OPENFN_API_KEY']) {
@@ -178,5 +160,33 @@ function mergeOverrides(
 function pickFirst<T>(...args: (T | null | undefined)[]): T {
   return args.find((arg) => arg !== undefined && arg !== null) as T;
 }
+
+const redirectTov2 = async (
+  v2ConfigPath: string,
+  options: PullOptions,
+  config: DeployConfig,
+  logger: Logger
+) => {
+  logger.always(
+    'Detected openfn.yaml file - switching to v2 pull (openfn project pull). Set PREFER_LEGACY_SYNC to disable this.'
+  );
+
+  // default endpoint to one from openfn.yaml
+  const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+
+  const endpoint =
+    options.endpoint ?? v2config?.project?.endpoint ?? config.endpoint;
+  return beta(
+    {
+      ...options,
+      endpoint,
+      project: options.projectId,
+      force: true,
+      apiKey: options.apiKey ?? config.apiKey ?? undefined,
+      createCredentials: false,
+    },
+    logger
+  );
+};
 
 export default pullHandler;

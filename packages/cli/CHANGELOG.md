@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.36.2
+
+### Patch Changes
+
+- 8ebd5c9: Fix an issue where pull and deploy do not track the endpoint argument properly when redirecting to v2
+
 ## 1.36.1
 
 ### Patch Changes
