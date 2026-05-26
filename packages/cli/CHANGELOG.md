@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.36.3
+
+### Patch Changes
+
+- 393b324: sync v2: fix an issue deploying a new project
+- d405328: Fix endpoint tracing on deploy command
+
 ## 1.36.2
 
 ### Patch Changes
