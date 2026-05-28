@@ -194,6 +194,94 @@ test.serial(
   }
 );
 
+test.serial(
+  '--workflows errors when an id is not in the local project',
+  async (t) => {
+    await setup(projectYaml);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            confirm: false,
+            workflows: ['nope-not-a-real-workflow'],
+          } as any,
+          logger
+        ),
+      { message: /nope-not-a-real-workflow/ }
+    );
+  }
+);
+
+test.serial(
+  '--workflows force-pushes a locally-unchanged workflow over a diverged remote when --force is set',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    await setup(projectYaml);
+
+    // Local is unchanged. Modify remote so it diverges.
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    // Without --workflows, change-detection would say "nothing to deploy".
+    // With --workflows + --force, we should revert the remote to local.
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflows: ['my-workflow'],
+        force: true,
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Updated project at/));
+
+    // The remote should have been overwritten with the local body
+    const transformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
+    t.is(transformData.body, 'fn()');
+  }
+);
+
+test.serial(
+  '--workflows still errors on divergence without --force',
+  async (t) => {
+    await setup(projectYaml);
+
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            confirm: false,
+            workflows: ['my-workflow'],
+          } as any,
+          logger
+        ),
+      { message: /PROJECTS_DIVERGED/ }
+    );
+  }
+);
+
 test('printRichDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
 

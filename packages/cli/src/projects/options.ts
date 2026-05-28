@@ -8,6 +8,7 @@ export type Opts = BaseOpts & {
   workspace?: string;
   removeUnmapped?: boolean | undefined;
   workflowMappings?: Record<string, string> | undefined;
+  workflows?: string[];
   project?: string;
   format?: 'yaml' | 'json' | 'state';
   clean?: boolean;
@@ -83,6 +84,20 @@ export const workflowMappings: CLIOption = {
     coerce: getCLIOptionObject,
     description:
       'A manual object mapping of which workflows in source and target should be matched for a merge.',
+  },
+};
+
+export const workflows: CLIOption = {
+  name: 'workflows',
+  yargs: {
+    array: true,
+    description:
+      'Restrict merge/deploy to the given workflow ids. Listed workflows are force-included from the source and will overwrite the target/remote even if unchanged locally. Mutually exclusive with --workflow-mappings.',
+  },
+  ensure: (opts: any) => {
+    if (opts.workflows?.length) {
+      opts.workflows = Array.from(new Set(opts.workflows));
+    }
   },
 };
 
