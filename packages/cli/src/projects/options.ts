@@ -8,7 +8,7 @@ export type Opts = BaseOpts & {
   workspace?: string;
   removeUnmapped?: boolean | undefined;
   workflowMappings?: Record<string, string> | undefined;
-  workflows?: string[];
+  workflow?: string[];
   project?: string;
   format?: 'yaml' | 'json' | 'state';
   clean?: boolean;
@@ -87,17 +87,19 @@ export const workflowMappings: CLIOption = {
   },
 };
 
-export const workflows: CLIOption = {
-  name: 'workflows',
+export const workflow: CLIOption = {
+  name: 'workflow',
   yargs: {
+    alias: ['w'],
     array: true,
     description:
-      'Restrict merge/deploy to the given workflow ids. Listed workflows are force-included from the source and will overwrite the target/remote even if unchanged locally. Mutually exclusive with --workflow-mappings.',
+      'Restrict merge/deploy to the given workflow ids. Pass multiple times to include multiple workflows. Listed workflows are force-included from the source and will overwrite the target/remote even if unchanged locally. Mutually exclusive with --workflow-mappings.',
   },
   ensure: (opts: any) => {
-    if (opts.workflows?.length) {
-      opts.workflows = Array.from(new Set(opts.workflows));
+    if (opts.workflow?.length) {
+      opts.workflow = Array.from(new Set(opts.workflow));
     }
+    delete opts.w;
   },
 };
 
@@ -115,7 +117,6 @@ export const outputPath: CLIOption = {
 export const workspace: CLIOption = {
   name: 'workspace',
   yargs: {
-    alias: ['w'],
     description: 'Path to the project workspace (ie, path to openfn.yaml)',
   },
   ensure: (opts: any) => {

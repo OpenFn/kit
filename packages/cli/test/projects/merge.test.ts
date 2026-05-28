@@ -373,7 +373,7 @@ const mockMultiWorkflowWorkspace = () => {
 };
 
 test.serial(
-  '--workflows merges only the listed workflow, leaving other target workflows untouched',
+  '--workflow merges only the listed workflow, leaving other target workflows untouched',
   async (t) => {
     mockMultiWorkflowWorkspace();
 
@@ -384,7 +384,7 @@ test.serial(
         project: 'my-sandbox',
         removeUnmapped: false,
         workflowMappings: {},
-        workflows: ['workflow-1'],
+        workflow: ['workflow-1'],
       },
       logger
     );
@@ -406,7 +406,7 @@ test.serial(
 );
 
 test.serial(
-  '--workflows errors when an id is not in the source project',
+  '--workflow errors when an id is not in the source project',
   async (t) => {
     mockMultiWorkflowWorkspace();
 
@@ -417,7 +417,7 @@ test.serial(
         project: 'my-sandbox',
         removeUnmapped: false,
         workflowMappings: {},
-        workflows: ['workflow-1', 'does-not-exist'],
+        workflow: ['workflow-1', 'does-not-exist'],
       },
       logger
     );
@@ -429,7 +429,7 @@ test.serial(
 );
 
 test.serial(
-  '--workflows and --workflow-mappings are mutually exclusive',
+  '--workflow and --workflow-mappings are mutually exclusive',
   async (t) => {
     mockMultiWorkflowWorkspace();
 
@@ -440,7 +440,7 @@ test.serial(
         project: 'my-sandbox',
         removeUnmapped: false,
         workflowMappings: { 'workflow-1': 'workflow-1' },
-        workflows: ['workflow-1'],
+        workflow: ['workflow-1'],
       },
       logger
     );

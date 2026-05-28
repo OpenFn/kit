@@ -17,12 +17,12 @@ export type MergeOptions = Required<
     'command' | 'project' | 'workspace' | 'removeUnmapped' | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force' | 'outputPath' | 'workflows'> & { base?: string };
+  Pick<Opts, 'log' | 'force' | 'outputPath' | 'workflow'> & { base?: string };
 
 const options = [
   po.removeUnmapped,
   po.workflowMappings,
-  po.workflows,
+  po.workflow,
   po.workspace,
   o.log,
   // custom output because we don't want defaults or anything
@@ -112,14 +112,14 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   }
 
   let workflowMappings = options.workflowMappings;
-  if (options.workflows?.length) {
+  if (options.workflow?.length) {
     if (workflowMappings && Object.keys(workflowMappings).length) {
       logger.error(
-        '--workflows and --workflow-mappings are mutually exclusive'
+        '--workflow and --workflow-mappings are mutually exclusive'
       );
       return;
     }
-    const missing = options.workflows.filter(
+    const missing = options.workflow.filter(
       (id) => !sourceProject.workflows.some((w) => w.id === id)
     );
     if (missing.length) {
@@ -129,7 +129,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
       return;
     }
     workflowMappings = Object.fromEntries(
-      options.workflows.map((id) => [id, id])
+      options.workflow.map((id) => [id, id])
     );
   }
 

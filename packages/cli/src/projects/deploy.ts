@@ -46,7 +46,7 @@ export type DeployOptions = Pick<
   name?: string;
   alias?: string;
   jsonDiff?: boolean;
-  workflows?: string[];
+  workflow?: string[];
 };
 
 const options = [
@@ -58,7 +58,7 @@ const options = [
   o2.name,
   o2.alias,
   o2.jsonDiff,
-  o2.workflows,
+  o2.workflow,
 
   // general options
   o.apiKey,
@@ -177,8 +177,8 @@ const syncProjects = async (
   }
 
   let mergeCandidates: string[];
-  if (options.workflows?.length) {
-    const missing = options.workflows.filter(
+  if (options.workflow?.length) {
+    const missing = options.workflow.filter(
       (id) => !localProject.workflows.some((w) => w.id === id)
     );
     if (missing.length) {
@@ -189,9 +189,9 @@ const syncProjects = async (
       );
     }
     logger.info(
-      `--workflows passed: forcing deploy of ${options.workflows.join(', ')}`
+      `--workflow passed: forcing deploy of ${options.workflow.join(', ')}`
     );
-    mergeCandidates = options.workflows;
+    mergeCandidates = options.workflow;
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
   }
@@ -258,10 +258,10 @@ const syncProjects = async (
     mode: localProject.uuid === remoteProject.uuid ? 'replace' : 'sandbox',
     force: true,
   };
-  if (options.workflows?.length) {
-    // If workflows is passed, force-include exactly the listed workflows via workflowMappings
+  if (options.workflow?.length) {
+    // If --workflow is passed, force-include exactly the listed workflows via workflowMappings
     mergeOptions.workflowMappings = Object.fromEntries(
-      options.workflows.map((id) => [id, id])
+      options.workflow.map((id) => [id, id])
     );
   } else {
     // Otherwise only merge locally updated workflows

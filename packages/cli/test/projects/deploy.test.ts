@@ -11,7 +11,13 @@ import {
   hasRemoteDiverged,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
-import { myProject_yaml, myProject_v1, UUID } from './fixtures';
+import {
+  myProject_yaml,
+  myProject_v1,
+  UUID,
+  two_workflows_yaml as twowfs,
+  TWO_WORKFLOWS_UUID,
+} from './fixtures';
 import { checkout } from '../../src/projects';
 
 let server: any;
@@ -21,6 +27,7 @@ const ENDPOINT = `http://localhost:${port}`;
 
 // quick fix to the fixture yaml, otherwise the deploy code kicks off
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
+const two_workflows_yaml = twowfs.replace('https://app.openfn.org', ENDPOINT);
 
 const mockFs = (paths: Record<string, string>) => {
   const pnpm = path.resolve('../../node_modules/.pnpm');
@@ -195,7 +202,37 @@ test.serial(
 );
 
 test.serial(
-  '--workflows errors when an id is not in the local project',
+  'Passing --workflow only updates the requested workflows',
+  async (t) => {
+    await server.addProject(two_workflows_yaml);
+    await setup(two_workflows_yaml);
+
+    // Change both workflows locally
+    await writeFile('/ws/workflows/workflow-a/job-a.js', 'modifiedA()');
+    await writeFile('/ws/workflows/workflow-b/job-b.js', 'modifiedB()');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflow: ['workflow-a'],
+      } as any,
+      logger
+    );
+
+    const remoteProject = server.state.projects[TWO_WORKFLOWS_UUID];
+    t.is(
+      remoteProject.workflows['workflow-a'].jobs['job-a'].body,
+      'modifiedA()'
+    );
+    t.is(remoteProject.workflows['workflow-b'].jobs['job-b'].body, 'fn()');
+  }
+);
+
+test.serial(
+  '--workflow errors when an id is not in the local project',
   async (t) => {
     await setup(projectYaml);
 
@@ -207,7 +244,7 @@ test.serial(
             apiKey: 'test-api-key',
             workspace: '/ws',
             confirm: false,
-            workflows: ['nope-not-a-real-workflow'],
+            workflow: ['nope-not-a-real-workflow'],
           } as any,
           logger
         ),
@@ -216,8 +253,9 @@ test.serial(
   }
 );
 
+// TODO check this langauge and behaviour
 test.serial(
-  '--workflows force-pushes a locally-unchanged workflow over a diverged remote when --force is set',
+  '--workflow force-pushes a locally-unchanged workflow over a diverged remote when --force is set',
   async (t) => {
     t.truthy(server.state.projects[UUID]);
     await setup(projectYaml);
@@ -229,15 +267,15 @@ test.serial(
     modified.jobs['transform-data'].body = 'each()';
     server.updateWorkflow(UUID, modified);
 
-    // Without --workflows, change-detection would say "nothing to deploy".
-    // With --workflows + --force, we should revert the remote to local.
+    // Without --workflow, change-detection would say "nothing to deploy"
+    // With --workflow + --force, we should revert the remote to local
     await deploy(
       {
         endpoint: ENDPOINT,
         apiKey: 'test-api-key',
         workspace: '/ws',
         confirm: false,
-        workflows: ['my-workflow'],
+        workflow: ['my-workflow'],
         force: true,
       } as any,
       logger
@@ -255,7 +293,7 @@ test.serial(
 );
 
 test.serial(
-  '--workflows still errors on divergence without --force',
+  '--workflow still errors on divergence without --force',
   async (t) => {
     await setup(projectYaml);
 
@@ -273,7 +311,7 @@ test.serial(
             apiKey: 'test-api-key',
             workspace: '/ws',
             confirm: false,
-            workflows: ['my-workflow'],
+            workflow: ['my-workflow'],
           } as any,
           logger
         ),
