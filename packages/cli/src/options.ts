@@ -46,7 +46,7 @@ export type Opts = {
   keepUnsupported?: boolean;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
-  monorepoPath?: string;
+  monorepoPath?: string[];
   only?: string; // only run this workflow node
   operation?: string;
   outputPath?: string;
@@ -587,7 +587,16 @@ export const useAdaptorsMonorepo: CLIOption = {
   },
   ensure: (opts) => {
     if (opts.useAdaptorsMonorepo) {
-      opts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
+      const repo = process.env.OPENFN_ADAPTORS_REPO;
+      // OPENFN_ADAPTORS_REPO is a comma-separated list of monorepo roots
+      // (a single path is just a one-element list)
+      opts.monorepoPath = repo
+        ? repo
+            .split(',')
+            .map((p) => p.trim())
+            .filter((p) => p.length > 0)
+            .map((p) => nodePath.resolve(p))
+        : ['ERR'];
     }
   },
 };
