@@ -188,9 +188,6 @@ const syncProjects = async (
         }: ${missing.join(', ')}`
       );
     }
-    logger.info(
-      `--workflow passed: forcing deploy of ${options.workflow.join(', ')}`
-    );
     mergeCandidates = options.workflow;
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);

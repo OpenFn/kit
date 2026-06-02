@@ -253,22 +253,51 @@ test.serial(
   }
 );
 
-// TODO check this langauge and behaviour
 test.serial(
-  '--workflow force-pushes a locally-unchanged workflow over a diverged remote when --force is set',
+  '--workflow only actually updates a workflow if it has changed',
   async (t) => {
     t.truthy(server.state.projects[UUID]);
     await setup(projectYaml);
 
-    // Local is unchanged. Modify remote so it diverges.
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflow: ['my-workflow'],
+      } as any,
+      logger
+    );
+
+    // TODO better to check that there is no post request tbh
+    t.truthy(logger._find('success', /Nothing to deploy/));
+  }
+);
+
+test.serial(
+  '--workflow will overwrite a newer version on the target if --force is included',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    await setup(projectYaml);
+
+    // Assert that the original remote code is fn()
+    const ogTransformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs['fn()-data'];
+    t.is(ogTransformData.body, 'fn()');
+
+    // Modify the remote
     const modified = JSON.parse(
       JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
     );
     modified.jobs['transform-data'].body = 'each()';
     server.updateWorkflow(UUID, modified);
 
-    // Without --workflow, change-detection would say "nothing to deploy"
-    // With --workflow + --force, we should revert the remote to local
+    const changedTransformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs['fn()-data'];
+    t.is(changedTransformData.body, 'each()');
+
+    // Force push local (which will revert the remote changed)
     await deploy(
       {
         endpoint: ENDPOINT,
@@ -284,11 +313,11 @@ test.serial(
     t.truthy(logger._find('success', /Updated project at/));
 
     // The remote should have been overwritten with the local body
-    const transformData =
+    const mergedTransformData =
       server.state.projects[UUID].workflows['my-workflow'].jobs[
         'transform-data'
       ];
-    t.is(transformData.body, 'fn()');
+    t.is(mergedTransformData.body, 'fn()');
   }
 );
 
