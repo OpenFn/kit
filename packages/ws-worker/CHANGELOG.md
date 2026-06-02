@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.26.0
+
+### Minor Changes
+
+- ff1b1b6: `OPENFN_ADAPTORS_REPO` now supports multiple comma-separated paths.
+
 ## 1.25.1
 
 ### Patch Changes

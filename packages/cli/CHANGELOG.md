@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.37.0
+
+### Minor Changes
+
+- ff1b1b6: `OPENFN_ADAPTORS_REPO` now supports multiple comma-separated paths.
+
 ## 1.36.3
 
 ### Patch Changes
