@@ -1,3 +1,4 @@
+import path from 'node:path';
 import test from 'ava';
 import { useAdaptorsMonorepo, Opts } from '../../../src/options';
 
@@ -41,7 +42,19 @@ test('monorepoPath is set with a value from OPENFN_ADAPTORS_REPO', (t) => {
 
   useAdaptorsMonorepo.ensure!(opts);
 
-  t.is(opts.monorepoPath, 'a/b/c');
+  t.deepEqual(opts.monorepoPath, [path.resolve('a/b/c')]);
+  delete process.env.OPENFN_ADAPTORS_REPO;
+});
+
+test('monorepoPath is set with multiple comma-separated paths', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c, d/e/f';
+  const opts = {
+    useAdaptorsMonorepo: true,
+  } as Opts;
+
+  useAdaptorsMonorepo.ensure!(opts);
+
+  t.deepEqual(opts.monorepoPath, [path.resolve('a/b/c'), path.resolve('d/e/f')]);
   delete process.env.OPENFN_ADAPTORS_REPO;
 });
 
@@ -54,5 +67,5 @@ test('monorepoPath is set to an error value if OPENFN_ADAPTORS_REPO is not set',
 
   useAdaptorsMonorepo.ensure!(opts);
 
-  t.is(opts.monorepoPath, 'ERR');
+  t.deepEqual(opts.monorepoPath, ['ERR']);
 });

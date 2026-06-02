@@ -331,7 +331,7 @@ test.serial('xplan: map to monorepo', async (t) => {
     workflowPath: 'test/wf.json',
     expandAdaptors: true,
     plan: {},
-    monorepoPath: '/repo/',
+    monorepoPath: ['/repo/'],
   } as Partial<Opts>;
 
   const plan = createPlan([
@@ -344,6 +344,7 @@ test.serial('xplan: map to monorepo', async (t) => {
 
   mock({
     'test/wf.json': JSON.stringify(plan),
+    '/repo/packages/common': {},
   });
 
   const result = await loadPlan(opts as Opts, logger);

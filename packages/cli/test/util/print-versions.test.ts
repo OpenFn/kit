@@ -93,7 +93,7 @@ test('print version of adaptor with monorepo', async (t) => {
   const logger = createMockLogger('', { level: 'info' });
   await printVersions(logger, {
     adaptors: ['@openfn/language-http@1.0.0'],
-    monorepoPath: '.',
+    monorepoPath: ['.'],
   });
 
   const last = logger._parse(logger._last);
@@ -128,7 +128,7 @@ test('print version of adaptor with path even if monorepo is set', async (t) => 
   const logger = createMockLogger('', { level: 'info' });
   await printVersions(logger, {
     adaptors: ['@openfn/language-http=/repo/http'],
-    monorepoPath: '.',
+    monorepoPath: ['.'],
   });
 
   const last = logger._parse(logger._last);

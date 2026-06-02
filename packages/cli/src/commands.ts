@@ -97,7 +97,7 @@ const parse = async (options: Opts, log?: Logger) => {
   const { monorepoPath } = options;
   if (monorepoPath) {
     // TODO how does this occur?
-    if (monorepoPath === 'ERR') {
+    if (monorepoPath[0] === 'ERR') {
       logger.error(
         'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
