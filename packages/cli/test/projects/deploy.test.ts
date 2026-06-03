@@ -19,6 +19,7 @@ import {
   TWO_WORKFLOWS_UUID,
 } from './fixtures';
 import { checkout } from '../../src/projects';
+import { readFileSync } from 'node:fs';
 
 let server: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
@@ -30,9 +31,14 @@ const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
 const two_workflows_yaml = twowfs.replace('https://app.openfn.org', ENDPOINT);
 
 const mockFs = (paths: Record<string, string>) => {
-  const pnpm = path.resolve('../../node_modules/.pnpm');
+  // ensure this path is available to pnpm (needed by deps for some reason??)
+  // Note: loading all of pnpm takes ~7 seconds per test
+  // this workaround cuts out that delay entirely
+  const iconv = path.resolve(
+    '../../node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite/encodings'
+  );
   mock({
-    [pnpm]: mock.load(pnpm, {}),
+    [iconv]: mock.load(iconv, {}),
     ...paths,
   });
 };
@@ -283,7 +289,9 @@ test.serial(
 
     // Assert that the original remote code is fn()
     const ogTransformData =
-      server.state.projects[UUID].workflows['my-workflow'].jobs['fn()-data'];
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
     t.is(ogTransformData.body, 'fn()');
 
     // Modify the remote
@@ -294,7 +302,9 @@ test.serial(
     server.updateWorkflow(UUID, modified);
 
     const changedTransformData =
-      server.state.projects[UUID].workflows['my-workflow'].jobs['fn()-data'];
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
     t.is(changedTransformData.body, 'each()');
 
     // Force push local (which will revert the remote changed)
