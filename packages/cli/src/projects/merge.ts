@@ -114,9 +114,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   let workflowMappings = options.workflowMappings;
   if (options.workflow?.length) {
     if (workflowMappings && Object.keys(workflowMappings).length) {
-      logger.error(
-        '--workflow and --workflow-mappings are mutually exclusive'
-      );
+      logger.error('--workflow and --workflow-mappings are mutually exclusive');
       return;
     }
     const missing = options.workflow.filter(
@@ -124,7 +122,9 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     );
     if (missing.length) {
       logger.error(
-        `The following workflows were not found in source project ${sourceProject.id}: ${missing.join(', ')}`
+        `The following workflows were not found in source project ${
+          sourceProject.id
+        }: ${missing.join(', ')}`
       );
       return;
     }
