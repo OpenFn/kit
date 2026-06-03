@@ -101,6 +101,8 @@ const DEFAULT_PORT = 2222;
 const MIN_BACKOFF = 1000;
 const MAX_BACKOFF = 1000 * 30;
 
+const IGNORED_ERROR_PATTERNS: RegExp[] = [/OAuth token has expired/i];
+
 // TODO move out into another file, make testable, test in isolation
 function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   logger.debug('Connecting to Lightning at', options.lightning);
@@ -247,6 +249,17 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     Sentry.init({
       environment: options.sentryEnv,
       dsn: options.sentryDsn,
+      debug: true,
+      beforeSend(event, hint) {
+        const error = hint.originalException as Error | undefined;
+        const message = error?.message ?? event.message ?? '';
+
+        if (IGNORED_ERROR_PATTERNS.some((pattern) => pattern.test(message))) {
+          return null;
+        }
+
+        return event;
+      },
     });
     Sentry.setupKoaErrorHandler(app);
   }
