@@ -249,7 +249,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     Sentry.init({
       environment: options.sentryEnv,
       dsn: options.sentryDsn,
-      debug: true,
       beforeSend(event, hint) {
         const error = hint.originalException as Error | undefined;
         const message = error?.message ?? event.message ?? '';
