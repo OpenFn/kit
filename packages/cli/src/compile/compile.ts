@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import compile, {
   preloadAdaptorExports,
   Options,
@@ -5,6 +7,7 @@ import compile, {
 } from '@openfn/compiler';
 import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
+import { Workspace } from '@openfn/project';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
@@ -140,6 +143,11 @@ export const loadTransformOptions = async (
     logger: log || createLogger(COMPILER, opts as any),
     trace: opts.trace,
   };
+
+  if (opts.test && opts.strip !== false) {
+    // Strip top-level operation calls instead of moving them to the export array
+    options['top-level-operations'] = { strip: true } as any;
+  }
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
   if (opts.adaptors?.length && opts.ignoreImports != true) {
@@ -178,4 +186,83 @@ export const loadTransformOptions = async (
   }
 
   return options;
+};
+
+// Compile all steps across all workflows in the current project.
+// Writes one .js file per step to compiledDir/<workflow-id>/<step-id>.js
+export const compileProject = async (
+  opts: CompileOptions,
+  log: Logger,
+  cwd = process.cwd()
+): Promise<string[]> => {
+  // validate=false suppresses warnings when workspace config has no extra metadata
+  const workspace = new Workspace(cwd, log as any, false);
+  const project = await workspace.getCheckedOutProject();
+
+  if (!project) {
+    log.error(
+      'No project found. Run from a directory containing openfn.yaml, or provide a path.'
+    );
+    process.exit(1);
+  }
+
+  const wsConfig = workspace.getConfig() as any;
+  const compiledDir = path.resolve(
+    cwd,
+    opts.outputPath ?? (opts.test ? wsConfig.dirs?.tests ?? 'tests' : wsConfig.dirs?.compiled ?? 'compiled')
+  );
+
+  log.info(`Compiling project to ${compiledDir}`);
+
+  const outPaths: string[] = [];
+  const stalePaths: string[] = [];
+
+  for (const workflow of project.workflows) {
+    for (const step of workflow.steps) {
+      const expression = (step as any).expression;
+      if (!expression || typeof expression !== 'string') continue;
+
+      const adaptor: string | undefined =
+        (step as any).adaptor ?? (step as any).adaptors?.[0];
+      const stepOpts: CompileOptions = {
+        ...opts,
+        adaptors: adaptor ? [adaptor] : opts.adaptors ?? [],
+      };
+
+      const { code } = await compileJob(
+        expression,
+        stepOpts,
+        log,
+        (step as any).name ?? step.id
+      );
+
+      const outPath = path.join(compiledDir, workflow.id, `${step.id}.js`);
+
+      if (opts.test && opts.strip !== false && !/^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(code)) {
+        log.info(`  ${workflow.id}/${step.id} — skipped (no exportable code after stripping)`);
+        stalePaths.push(outPath);
+        continue;
+      }
+
+      await fs.mkdir(path.dirname(outPath), { recursive: true });
+      await fs.writeFile(outPath, code);
+
+      outPaths.push(outPath);
+      log.success(`  ${workflow.id}/${step.id} → ${outPath}`);
+    }
+  }
+
+  // Remove stale step files left over from a previous run with different flags.
+  // Only deletes files at exact step paths — user-added files with other names are untouched.
+  for (const stalePath of stalePaths) {
+    try {
+      await fs.unlink(stalePath);
+      log.info(`  Removed stale ${stalePath}`);
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+  }
+
+  log.success(`Compiled ${outPaths.length} step(s) to ${compiledDir}`);
+  return outPaths;
 };

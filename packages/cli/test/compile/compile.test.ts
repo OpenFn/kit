@@ -7,6 +7,7 @@ import compile, {
   stripVersionSpecifier,
   loadTransformOptions,
   resolveSpecifierPath,
+  compileProject,
 } from '../../src/compile/compile';
 import { CompileOptions } from '../../src/compile/command';
 import { mockFs, resetMockFs } from '../util';
@@ -342,3 +343,149 @@ test.serial('loadTransformOptions: ignore some imports', async (t) => {
 });
 
 // TODO test exception if the module can't be found
+
+test.serial('loadTransformOptions: test flag sets strip mode', async (t) => {
+  const opts = { test: true } as CompileOptions;
+  const result = await loadTransformOptions(opts, mockLog);
+  t.deepEqual(result['top-level-operations'], { strip: true });
+});
+
+test.serial('loadTransformOptions: --no-strip disables strip mode', async (t) => {
+  const opts = { test: true, strip: false } as CompileOptions;
+  const result = await loadTransformOptions(opts, mockLog);
+  t.falsy(result['top-level-operations']);
+});
+
+test.serial(
+  'loadTransformOptions: test flag does not affect other options',
+  async (t) => {
+    const opts = { test: true } as CompileOptions;
+    const result = await loadTransformOptions(opts, mockLog);
+    t.falsy(result['add-imports']);
+  }
+);
+
+test.serial(
+  'compileProject: compiles all workflow steps and writes output files',
+  async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
+    const recastPath = `${pnpm}/recast@0.21.5`;
+    const sourceMapPath = `${pnpm}/source-map@0.7.6`;
+
+    mock({
+      [recastPath]: mock.load(recastPath, {}),
+      [sourceMapPath]: mock.load(sourceMapPath, {}),
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+    });
+
+    const outPaths = await compileProject(
+      {} as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].endsWith('compiled/wf1/step-a.js'));
+
+    const { default: nodeFsPromises } = await import('node:fs/promises');
+    const code = await nodeFsPromises.readFile(outPaths[0], 'utf-8');
+    t.true(code.includes('export default [x()]'));
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compileProject: removes stale step files skipped in current run',
+  async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
+    const recastPath = `${pnpm}/recast@0.21.5`;
+    const sourceMapPath = `${pnpm}/source-map@0.7.6`;
+
+    // step-b has no exported code and will be skipped in strip mode.
+    // Pre-populate a stale file at its expected output path.
+    mock({
+      [recastPath]: mock.load(recastPath, {}),
+      [sourceMapPath]: mock.load(sourceMapPath, {}),
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "export const helper = () => {}; fn();"
+  - id: step-b
+    expression: "fn();"
+`,
+      // stale file from a previous --no-strip run
+      '/proj/tests/wf1/step-b.js': 'export default [fn()];',
+      // user-added test file — must not be touched
+      '/proj/tests/wf1/step-b.test.js': 'import { } from "./step-b.js";',
+    });
+
+    await compileProject(
+      { test: true } as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    const { default: nodeFsPromises } = await import('node:fs/promises');
+
+    // Stale step file should be gone
+    await t.throwsAsync(() => nodeFsPromises.readFile('/proj/tests/wf1/step-b.js'), {
+      code: 'ENOENT',
+    });
+
+    // User test file must still exist
+    const userFile = await nodeFsPromises.readFile('/proj/tests/wf1/step-b.test.js', 'utf-8');
+    t.truthy(userFile);
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compileProject: respects outputPath as the compiled directory',
+  async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
+    const recastPath = `${pnpm}/recast@0.21.5`;
+    const sourceMapPath = `${pnpm}/source-map@0.7.6`;
+
+    mock({
+      [recastPath]: mock.load(recastPath, {}),
+      [sourceMapPath]: mock.load(sourceMapPath, {}),
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+    });
+
+    const outPaths = await compileProject(
+      { outputPath: '/out' } as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].startsWith('/out/'));
+
+    mock.restore();
+  }
+);

@@ -66,8 +66,11 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   timeout?: number; // ms
+  test?: boolean;
+  strip?: boolean;
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
+  watch?: boolean;
   workflow: string;
   workflowName?: string;
   validate?: boolean;
@@ -629,6 +632,35 @@ export const validate: CLIOption = {
     boolean: true,
     default: false,
     description: 'Validate workflows before executing',
+  },
+};
+
+export const testFlag: CLIOption = {
+  name: 'test',
+  yargs: {
+    boolean: true,
+    description:
+      'Compile for unit testing: writes output to disk and strips adaptor operation calls by default',
+    default: false,
+  },
+};
+
+export const stripFlag: CLIOption = {
+  name: 'strip',
+  yargs: {
+    boolean: true,
+    description:
+      'Used with --test: strip adaptor operation calls from compiled output (default). Pass --no-strip to keep them.',
+  },
+};
+
+export const watchFlag: CLIOption = {
+  name: 'watch',
+  yargs: {
+    alias: ['w'],
+    boolean: true,
+    description: 'Watch source files and recompile on change',
+    default: false,
   },
 };
 

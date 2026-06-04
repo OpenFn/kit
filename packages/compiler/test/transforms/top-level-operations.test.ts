@@ -217,6 +217,180 @@ test('should only take the top of a nested operation call (and preserve its argu
 
 // TODO Does nothing if the export statement is wrong
 
+test('strip: removes top-level operations instead of moving them to exports', (t) => {
+  const ast = createProgramWithExports([
+    createOperationStatement('get'),
+    createOperationStatement('fn'),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  });
+
+  // Only the export default [] remains
+  t.is(body.length, 1);
+  t.true(n.ExportDefaultDeclaration.check(body[0]));
+
+  // Export array is empty — operations were stripped, not moved
+  const arr = (body[0] as n.ExportDefaultDeclaration).declaration as n.ArrayExpression;
+  t.is(arr.elements.length, 0);
+});
+
+test('strip: removes non-exported top-level declarations', (t) => {
+  // A non-exported const should be dropped — nothing exports it
+  const ast = createProgramWithExports([
+    b.variableDeclaration('const', [
+      b.variableDeclarator(b.identifier('x'), b.literal(42)),
+    ]),
+    createOperationStatement('get'),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  });
+
+  // Only export default [] remains — non-exported const is removed
+  t.is(body.length, 1);
+  t.true(n.ExportDefaultDeclaration.check(body[0]));
+  const arr = (body[0] as n.ExportDefaultDeclaration).declaration as n.ArrayExpression;
+  t.is(arr.elements.length, 0);
+});
+
+test('strip: keeps exported const declarations', (t) => {
+  const ast = createProgramWithExports([
+    b.exportNamedDeclaration(
+      b.variableDeclaration('const', [
+        b.variableDeclarator(b.identifier('helper'), b.literal(42)),
+      ]),
+      []
+    ),
+    createOperationStatement('get'),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  });
+
+  // export const helper + export default []
+  t.is(body.length, 2);
+  t.true(n.ExportNamedDeclaration.check(body[0]));
+  t.true(n.ExportDefaultDeclaration.check(body[1]));
+});
+
+test('strip: keeps non-exported declarations that exported functions depend on', (t) => {
+  // export function uses a local helper — the helper should be kept
+  const localHelper = b.variableDeclaration('const', [
+    b.variableDeclarator(
+      b.identifier('fmt'),
+      b.arrowFunctionExpression([b.identifier('d')], b.identifier('d'))
+    ),
+  ]);
+  const exportedFn = b.exportNamedDeclaration(
+    b.functionDeclaration(
+      b.identifier('formatDate'),
+      [b.identifier('date')],
+      b.blockStatement([
+        b.returnStatement(b.callExpression(b.identifier('fmt'), [b.identifier('date')])),
+      ])
+    ),
+    []
+  );
+
+  const ast = createProgramWithExports([
+    localHelper,
+    exportedFn,
+    createOperationStatement('get'),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  });
+
+  // const fmt + export function formatDate + export default []
+  t.is(body.length, 3);
+  t.true(n.VariableDeclaration.check(body[0]));
+  t.true(n.ExportNamedDeclaration.check(body[1]));
+  t.true(n.ExportDefaultDeclaration.check(body[2]));
+});
+
+test('strip: drops unreferenced non-exported declarations', (t) => {
+  // localUnused is not referenced by any export — should be dropped
+  const localUnused = b.variableDeclaration('const', [
+    b.variableDeclarator(b.identifier('unused'), b.literal(99)),
+  ]);
+  const exportedFn = b.exportNamedDeclaration(
+    b.functionDeclaration(
+      b.identifier('greet'),
+      [],
+      b.blockStatement([b.returnStatement(b.stringLiteral('hi'))])
+    ),
+    []
+  );
+
+  const ast = createProgramWithExports([
+    localUnused,
+    exportedFn,
+    createOperationStatement('fn'),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  });
+
+  // Only export function greet + export default [] — unused const is gone
+  t.is(body.length, 2);
+  t.true(n.ExportNamedDeclaration.check(body[0]));
+  t.true(n.ExportDefaultDeclaration.check(body[1]));
+});
+
+test('strip: removes injected _defer import from @openfn/runtime', (t) => {
+  // Simulate AST after the promises transform has injected the _defer import
+  const deferImport = b.importDeclaration(
+    [b.importSpecifier(b.identifier('defer'), b.identifier('_defer'))],
+    b.stringLiteral('@openfn/runtime')
+  );
+  const ast = b.program([
+    deferImport,
+    createOperationStatement('get'),
+    b.exportDefaultDeclaration(b.arrayExpression([])),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  }) as n.Program;
+
+  // The _defer import should be gone — only export default [] remains
+  t.is(body.length, 1);
+  t.true(n.ExportDefaultDeclaration.check(body[0]));
+});
+
+test('strip: keeps other @openfn/runtime specifiers when removing _defer', (t) => {
+  // If an import has _defer plus other specifiers, only _defer should be removed
+  const mixedImport = b.importDeclaration(
+    [
+      b.importSpecifier(b.identifier('defer'), b.identifier('_defer')),
+      b.importSpecifier(b.identifier('execute'), b.identifier('execute')),
+    ],
+    b.stringLiteral('@openfn/runtime')
+  );
+  const ast = b.program([
+    mixedImport,
+    createOperationStatement('get'),
+    b.exportDefaultDeclaration(b.arrayExpression([])),
+  ]);
+
+  const { body } = transform(ast, [visitors], {
+    'top-level-operations': { strip: true },
+  }) as n.Program;
+
+  // Import should remain but without _defer
+  t.is(body.length, 2);
+  t.true(n.ImportDeclaration.check(body[0]));
+  const imp = body[0] as n.ImportDeclaration;
+  t.is(imp.specifiers?.length, 1);
+  t.is((imp.specifiers![0] as n.ImportSpecifier).imported.name, 'execute');
+});
+
 test('appends an operations map to simple operation', (t) => {
   // We have to parse source here rather than building an AST so that we get positional information
   const { program } = parse(`fn(); export default [];`);

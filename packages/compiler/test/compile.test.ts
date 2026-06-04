@@ -278,3 +278,53 @@ test('respect ignore list when exports not provided', (t) => {
   const { code: result } = compile(source, options);
   t.is(result, expected);
 });
+
+test('strip mode: removes top-level operations, keeps exported JS', (t) => {
+  const source = [
+    'export const formatDate = (d) => d.toISOString();',
+    'get("/api");',
+    'fn(state => ({ ...state, date: formatDate(state.data.date) }));',
+  ].join('\n');
+
+  const { code: result } = compile(source, {
+    'top-level-operations': { strip: true },
+  });
+
+  t.true(result.includes('export const formatDate'));
+  t.false(result.includes('get('));
+  t.false(result.includes('fn(state'));
+  t.true(result.includes('export default []'));
+});
+
+test('strip mode: removes non-exported declarations', (t) => {
+  const source = [
+    'const formatDate = (d) => d.toISOString();',
+    'get("/api");',
+  ].join('\n');
+
+  const { code: result } = compile(source, {
+    'top-level-operations': { strip: true },
+  });
+
+  // non-exported const is dropped by tree-shaking
+  t.false(result.includes('const formatDate'));
+  t.false(result.includes('get('));
+  t.true(result.includes('export default []'));
+});
+
+test('strip mode: keeps import statements', (t) => {
+  const source = [
+    'import { dateFns } from "@openfn/language-common";',
+    'export const formatDate = (d) => dateFns.format(d);',
+    'get("/api");',
+    'export default [];',
+  ].join('\n');
+
+  const { code: result } = compile(source, {
+    'top-level-operations': { strip: true },
+  });
+
+  t.true(result.includes('import { dateFns }'));
+  t.true(result.includes('export const formatDate'));
+  t.false(result.includes('get('));
+});

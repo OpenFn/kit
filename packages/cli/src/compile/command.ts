@@ -18,7 +18,10 @@ export type CompileOptions = Pick<
   | 'path'
   | 'useAdaptorsMonorepo'
   | 'globals'
+  | 'test'
+  | 'strip'
   | 'trace'
+  | 'watch'
 > & {
   workflow?: Opts['workflow'];
   repoDir?: string;
@@ -36,22 +39,24 @@ const options = [
   }),
   o.outputPath,
   o.repoDir,
+  o.testFlag,
+  o.stripFlag,
   o.trace,
   o.useAdaptorsMonorepo,
+  o.watchFlag,
   o.workflow,
 ];
 
 const compileCommand: yargs.CommandModule<CompileOptions> = {
   command: 'compile [path]',
   describe:
-    'Compile an openfn job or workflow and print or save the resulting JavaScript.',
+    'Compile an openfn job, workflow, or whole project and print or save the resulting JavaScript.',
   handler: ensure('compile', options),
   builder: (yargs) =>
     build(options, yargs)
       .positional('path', {
         describe:
-          'The path to load the job or workflow from (a .js or .json file or a dir containing a job.js file)',
-        demandOption: true,
+          'Path to a .js expression, .json/.yaml workflow, or a project directory. Omit to compile all workflows in the current project.',
       })
       .example(
         'compile foo/job.js',
@@ -59,7 +64,27 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
       )
       .example(
         'compile foo/workflow.json -o foo/workflow-compiled.json',
-        'Compiles the workflow at foo/work.json and prints the result to -o foo/workflow-compiled.json'
+        'Compiles the workflow and writes to the given path'
+      )
+      .example(
+        'compile',
+        'Compiles all workflows in the current project and writes JS files to tests/'
+      )
+      .example(
+        'compile foo/job.js --test',
+        'Strips adaptor operation calls and writes to tests/ (for unit testing)'
+      )
+      .example(
+        'compile foo/job.js --test --no-strip',
+        'Compiles for testing without stripping operation calls'
+      )
+      .example(
+        'compile foo/job.js --watch',
+        'Watches the file and recompiles on every change'
+      )
+      .example(
+        'compile --test --watch',
+        'Compiles all workflows in strip mode and recompiles on change'
       ),
 };
 
