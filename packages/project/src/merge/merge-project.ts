@@ -16,21 +16,21 @@ export const REPLACE_MERGE = 'replace';
 export class UnsafeMergeError extends Error {}
 
 export type MergeProjectOptions = {
-  workflowMappings: Record<string, string>; // <source, target>
-  removeUnmapped: boolean;
-  force: boolean;
+  workflowMappings?: Record<string, string>; // <source, target>
+  removeUnmapped?: boolean;
+  force?: boolean;
 
   /**
    * If mode is sandbox, basically only content will be merged and all metadata/settings/options/config is ignored
    * If mode is replace, all properties on the source will override the target (including UUIDs, name)
    */
-  mode: typeof SANDBOX_MERGE | typeof REPLACE_MERGE;
+  mode?: typeof SANDBOX_MERGE | typeof REPLACE_MERGE;
 
   /**
    * If true, only workflows that have changed in the source
    * will be merged.
    */
-  onlyUpdated: boolean;
+  onlyUpdated?: boolean;
 };
 
 const defaultOptions: MergeProjectOptions = {
@@ -54,7 +54,7 @@ const defaultOptions: MergeProjectOptions = {
 export function merge(
   source: Project,
   target: Project,
-  opts?: Partial<MergeProjectOptions>
+  opts?: MergeProjectOptions
 ) {
   const options = defaultsDeep(
     opts,

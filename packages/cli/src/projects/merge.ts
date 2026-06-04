@@ -17,11 +17,12 @@ export type MergeOptions = Required<
     'command' | 'project' | 'workspace' | 'removeUnmapped' | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
+  Pick<Opts, 'log' | 'force' | 'outputPath' | 'workflow'> & { base?: string };
 
 const options = [
   po.removeUnmapped,
   po.workflowMappings,
+  po.workflow,
   po.workspace,
   o.log,
   // custom output because we don't want defaults or anything
@@ -109,6 +110,29 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     logger.error('The checked out project has no id');
     return;
   }
+
+  let workflowMappings = options.workflowMappings;
+  if (options.workflow?.length) {
+    if (workflowMappings && Object.keys(workflowMappings).length) {
+      logger.error('--workflow and --workflow-mappings are mutually exclusive');
+      return;
+    }
+    const missing = options.workflow.filter(
+      (id) => !sourceProject.workflows.some((w) => w.id === id)
+    );
+    if (missing.length) {
+      logger.error(
+        `The following workflows were not found in source project ${
+          sourceProject.id
+        }: ${missing.join(', ')}`
+      );
+      return;
+    }
+    workflowMappings = Object.fromEntries(
+      options.workflow.map((id) => [id, id])
+    );
+  }
+
   const finalPath =
     options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
@@ -117,7 +141,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   }
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
-    workflowMappings: options.workflowMappings,
+    workflowMappings,
     force: options.force,
   });
 

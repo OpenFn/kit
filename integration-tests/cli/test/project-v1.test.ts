@@ -108,7 +108,9 @@ workflows:
 const projectsPath = path.resolve(TMP_DIR);
 
 test.before(async () => {
-  // await rm(TMP_DIR, { recursive: true });
+  try {
+    await rm(TMP_DIR, { recursive: true });
+  } catch (e) {}
   await mkdir(`${TMP_DIR}/.projects`, { recursive: true });
 
   await writeFile(`${TMP_DIR}/openfn.yaml`, '');
@@ -120,7 +122,7 @@ test.before(async () => {
 });
 
 test.serial('list available projects', async (t) => {
-  const { stdout } = await run(`openfn projects -w ${projectsPath}`);
+  const { stdout } = await run(`openfn projects --workspace ${projectsPath}`);
 
   t.regex(stdout, /hello-world/);
   t.regex(stdout, /8dbc4349-52b4-4bf2-be10-fdf06da52c46/);
@@ -130,7 +132,7 @@ test.serial('list available projects', async (t) => {
 
 // checkout a project from a yaml file
 test.serial('Checkout a project', async (t) => {
-  await run(`openfn checkout hello-world -w ${projectsPath}`);
+  await run(`openfn checkout hello-world --workspace ${projectsPath}`);
 
   // check workflow.yaml
   const workflowYaml = await readFile(
@@ -167,7 +169,7 @@ steps:
 // note: order of tests is important here
 test.serial('execute a workflow from the checked out project', async (t) => {
   // cheeky bonus test of checkout by alias
-  await run(`openfn checkout main -w ${projectsPath}`);
+  await run(`openfn checkout main --workspace ${projectsPath}`);
 
   // execute a workflow
   const { stdout } = await run(
@@ -191,7 +193,9 @@ test.serial('merge a project', async (t) => {
   t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
-  await run(`openfn merge hello-world-staging -w ${projectsPath} --force`);
+  await run(
+    `openfn merge hello-world-staging --workspace ${projectsPath} --force`
+  );
 
   // Check the step is updated
   const merged = await readStep();
