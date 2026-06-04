@@ -356,6 +356,7 @@ test.serial('loadTransformOptions: --no-strip disables strip mode', async (t) =>
   t.falsy(result['top-level-operations']);
 });
 
+
 test.serial(
   'loadTransformOptions: test flag does not affect other options',
   async (t) => {

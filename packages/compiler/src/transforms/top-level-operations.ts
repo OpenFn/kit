@@ -145,7 +145,6 @@ function visitor(programPath: ExtendedProgram, _logger: any, options: Partial<To
       programPath.node.body = body.filter(
         node =>
           n.ImportDeclaration.check(node) ||
-          n.ExportDefaultDeclaration.check(node) ||
           needed.has(node as namedTypes.Statement)
       );
     }

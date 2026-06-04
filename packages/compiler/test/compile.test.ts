@@ -293,7 +293,7 @@ test('strip mode: removes top-level operations, keeps exported JS', (t) => {
   t.true(result.includes('export const formatDate'));
   t.false(result.includes('get('));
   t.false(result.includes('fn(state'));
-  t.true(result.includes('export default []'));
+  t.false(result.includes('export default []'));
 });
 
 test('strip mode: removes non-exported declarations', (t) => {
@@ -306,10 +306,10 @@ test('strip mode: removes non-exported declarations', (t) => {
     'top-level-operations': { strip: true },
   });
 
-  // non-exported const is dropped by tree-shaking
+  // non-exported const is dropped by tree-shaking; export default [] is also gone
   t.false(result.includes('const formatDate'));
   t.false(result.includes('get('));
-  t.true(result.includes('export default []'));
+  t.false(result.includes('export default []'));
 });
 
 test('strip mode: keeps import statements', (t) => {

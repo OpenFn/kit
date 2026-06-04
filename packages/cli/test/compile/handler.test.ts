@@ -68,17 +68,10 @@ test('hasExportableCode: returns true for exported const', (t) => {
   t.true(hasExportableCode("export const VALUE = 42;\nexport default [];"));
 });
 
-test('hasExportableCode: returns false when only imports and export default []', (t) => {
-  t.false(hasExportableCode("import { get } from '@openfn/language-http';\nexport default [];"));
+test('hasExportableCode: returns false when only imports', (t) => {
+  t.false(hasExportableCode("import { get } from '@openfn/language-http';"));
 });
 
-test('hasExportableCode: returns false for empty export default []', (t) => {
-  t.false(hasExportableCode('export default [];'));
-});
-
-test('hasExportableCode: returns false for export default with operations (no-strip output)', (t) => {
-  // With --no-strip, operations land in export default [...] which has no declarations.
-  // The skip check must not run in this case — this is tested at the handler level,
-  // but the function itself should return false for this shape.
-  t.false(hasExportableCode("import { post } from '@openfn/language-http';\nexport default [post('/endpoint')];"));
+test('hasExportableCode: returns false for empty string', (t) => {
+  t.false(hasExportableCode(''));
 });

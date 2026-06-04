@@ -75,9 +75,10 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
         'Strips adaptor operation calls and writes to tests/ (for unit testing)'
       )
       .example(
-        'compile foo/job.js --test --no-strip',
-        'Compiles for testing without stripping operation calls'
+        'compile --test --no-strip',
+        'Compiles entire project to tests/ without removing any code'
       )
+
       .example(
         'compile foo/job.js --watch',
         'Watches the file and recompiles on every change'

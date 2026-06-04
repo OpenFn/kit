@@ -227,17 +227,11 @@ test('strip: removes top-level operations instead of moving them to exports', (t
     'top-level-operations': { strip: true },
   });
 
-  // Only the export default [] remains
-  t.is(body.length, 1);
-  t.true(n.ExportDefaultDeclaration.check(body[0]));
-
-  // Export array is empty — operations were stripped, not moved
-  const arr = (body[0] as n.ExportDefaultDeclaration).declaration as n.ArrayExpression;
-  t.is(arr.elements.length, 0);
+  // Nothing remains — operations and export default [] are both removed
+  t.is(body.length, 0);
 });
 
 test('strip: removes non-exported top-level declarations', (t) => {
-  // A non-exported const should be dropped — nothing exports it
   const ast = createProgramWithExports([
     b.variableDeclaration('const', [
       b.variableDeclarator(b.identifier('x'), b.literal(42)),
@@ -249,11 +243,8 @@ test('strip: removes non-exported top-level declarations', (t) => {
     'top-level-operations': { strip: true },
   });
 
-  // Only export default [] remains — non-exported const is removed
-  t.is(body.length, 1);
-  t.true(n.ExportDefaultDeclaration.check(body[0]));
-  const arr = (body[0] as n.ExportDefaultDeclaration).declaration as n.ArrayExpression;
-  t.is(arr.elements.length, 0);
+  // Nothing remains — non-exported const and export default [] are both removed
+  t.is(body.length, 0);
 });
 
 test('strip: keeps exported const declarations', (t) => {
@@ -271,14 +262,12 @@ test('strip: keeps exported const declarations', (t) => {
     'top-level-operations': { strip: true },
   });
 
-  // export const helper + export default []
-  t.is(body.length, 2);
+  // Only export const helper — export default [] is removed
+  t.is(body.length, 1);
   t.true(n.ExportNamedDeclaration.check(body[0]));
-  t.true(n.ExportDefaultDeclaration.check(body[1]));
 });
 
 test('strip: keeps non-exported declarations that exported functions depend on', (t) => {
-  // export function uses a local helper — the helper should be kept
   const localHelper = b.variableDeclaration('const', [
     b.variableDeclarator(
       b.identifier('fmt'),
@@ -306,15 +295,13 @@ test('strip: keeps non-exported declarations that exported functions depend on',
     'top-level-operations': { strip: true },
   });
 
-  // const fmt + export function formatDate + export default []
-  t.is(body.length, 3);
+  // const fmt + export function formatDate — no export default []
+  t.is(body.length, 2);
   t.true(n.VariableDeclaration.check(body[0]));
   t.true(n.ExportNamedDeclaration.check(body[1]));
-  t.true(n.ExportDefaultDeclaration.check(body[2]));
 });
 
 test('strip: drops unreferenced non-exported declarations', (t) => {
-  // localUnused is not referenced by any export — should be dropped
   const localUnused = b.variableDeclaration('const', [
     b.variableDeclarator(b.identifier('unused'), b.literal(99)),
   ]);
@@ -337,14 +324,12 @@ test('strip: drops unreferenced non-exported declarations', (t) => {
     'top-level-operations': { strip: true },
   });
 
-  // Only export function greet + export default [] — unused const is gone
-  t.is(body.length, 2);
+  // Only export function greet — unused const and export default [] are gone
+  t.is(body.length, 1);
   t.true(n.ExportNamedDeclaration.check(body[0]));
-  t.true(n.ExportDefaultDeclaration.check(body[1]));
 });
 
 test('strip: removes injected _defer import from @openfn/runtime', (t) => {
-  // Simulate AST after the promises transform has injected the _defer import
   const deferImport = b.importDeclaration(
     [b.importSpecifier(b.identifier('defer'), b.identifier('_defer'))],
     b.stringLiteral('@openfn/runtime')
@@ -359,13 +344,11 @@ test('strip: removes injected _defer import from @openfn/runtime', (t) => {
     'top-level-operations': { strip: true },
   }) as n.Program;
 
-  // The _defer import should be gone — only export default [] remains
-  t.is(body.length, 1);
-  t.true(n.ExportDefaultDeclaration.check(body[0]));
+  // Everything stripped — body is empty
+  t.is(body.length, 0);
 });
 
 test('strip: keeps other @openfn/runtime specifiers when removing _defer', (t) => {
-  // If an import has _defer plus other specifiers, only _defer should be removed
   const mixedImport = b.importDeclaration(
     [
       b.importSpecifier(b.identifier('defer'), b.identifier('_defer')),
@@ -383,8 +366,8 @@ test('strip: keeps other @openfn/runtime specifiers when removing _defer', (t) =
     'top-level-operations': { strip: true },
   }) as n.Program;
 
-  // Import should remain but without _defer
-  t.is(body.length, 2);
+  // Only the filtered import remains — _defer removed, execute kept, export default [] gone
+  t.is(body.length, 1);
   t.true(n.ImportDeclaration.check(body[0]));
   const imp = body[0] as n.ImportDeclaration;
   t.is(imp.specifiers?.length, 1);

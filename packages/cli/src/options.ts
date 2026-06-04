@@ -640,7 +640,7 @@ export const testFlag: CLIOption = {
   yargs: {
     boolean: true,
     description:
-      'Compile for unit testing: writes output to disk and strips adaptor operation calls by default',
+      'Compile for unit testing: strips adaptor operation calls and writes output to tests/',
     default: false,
   },
 };
@@ -650,9 +650,11 @@ export const stripFlag: CLIOption = {
   yargs: {
     boolean: true,
     description:
-      'Used with --test: strip adaptor operation calls from compiled output (default). Pass --no-strip to keep them.',
+      'Used with --test: strip operation calls from compiled output. Use --no-strip to keep them.',
+    default: true,
   },
 };
+
 
 export const watchFlag: CLIOption = {
   name: 'watch',
