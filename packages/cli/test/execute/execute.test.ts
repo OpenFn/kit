@@ -418,6 +418,54 @@ test.serial('.cli-cache has a gitignore', async (t) => {
   t.is(gitignore, '*');
 });
 
+// Regression test for https://github.com/OpenFn/kit/issues/669
+// Running a .js expression (not a workflow JSON) with caching enabled must not crash.
+test.serial('cache steps when running a .js expression', async (t) => {
+  mockFs({
+    '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
+    '/.cli-cache/': {},
+  });
+
+  const options = {
+    ...defaultOptions,
+    expressionPath: '/job.js',
+    baseDir: '/',
+    cacheSteps: true,
+  };
+
+  const result = await handler(options, logger);
+  t.is(result.x, 1);
+
+  // A cache file was written (name is a generated id, so glob via readdir)
+  const files = await fs.readdir('/.cli-cache/workflow');
+  t.is(files.length, 1);
+  t.true(files[0].endsWith('.json'));
+
+  const cached = JSON.parse(
+    await fs.readFile(`/.cli-cache/workflow/${files[0]}`, 'utf8')
+  );
+  t.is(cached.x, 1);
+});
+
+test.serial('.cli-cache gitignore is written when caching a .js expression', async (t) => {
+  mockFs({
+    '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
+    '/.cli-cache/': {},
+  });
+
+  const options = {
+    ...defaultOptions,
+    expressionPath: '/job.js',
+    baseDir: '/',
+    cacheSteps: true,
+  };
+
+  await handler(options, logger);
+
+  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+  t.is(gitignore, '*');
+});
+
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
     workflow: {
