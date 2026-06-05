@@ -423,7 +423,6 @@ test.serial('.cli-cache has a gitignore', async (t) => {
 test.serial('cache steps when running a .js expression', async (t) => {
   mockFs({
     '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
-    '/.cli-cache/': {},
   });
 
   const options = {
@@ -436,13 +435,14 @@ test.serial('cache steps when running a .js expression', async (t) => {
   const result = await handler(options, logger);
   t.is(result.x, 1);
 
-  // A cache file was written (name is a generated id, so glob via readdir)
-  const files = await fs.readdir('/.cli-cache/workflow');
+  // workflow name is derived from the filename: 'job'
+  // step id is a generated uuid, so list the directory
+  const files = await fs.readdir('/.cli-cache/job');
   t.is(files.length, 1);
   t.true(files[0].endsWith('.json'));
 
   const cached = JSON.parse(
-    await fs.readFile(`/.cli-cache/workflow/${files[0]}`, 'utf8')
+    await fs.readFile(`/.cli-cache/job/${files[0]}`, 'utf8')
   );
   t.is(cached.x, 1);
 });
@@ -450,7 +450,6 @@ test.serial('cache steps when running a .js expression', async (t) => {
 test.serial('.cli-cache gitignore is written when caching a .js expression', async (t) => {
   mockFs({
     '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
-    '/.cli-cache/': {},
   });
 
   const options = {
