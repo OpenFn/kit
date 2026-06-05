@@ -419,7 +419,6 @@ test.serial('.cli-cache has a gitignore', async (t) => {
 });
 
 // Regression test for https://github.com/OpenFn/kit/issues/669
-// Running a .js expression (not a workflow JSON) with caching enabled must not crash.
 test.serial('cache steps when running a .js expression', async (t) => {
   mockFs({
     '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
@@ -447,7 +446,7 @@ test.serial('cache steps when running a .js expression', async (t) => {
   t.is(cached.x, 1);
 });
 
-test.serial('.cli-cache gitignore is written when caching a .js expression', async (t) => {
+test.serial('.cli-cache has a gitignore when caching a .js expression', async (t) => {
   mockFs({
     '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
   });
