@@ -16,7 +16,9 @@ import type { CompileOptions } from './command';
 export type CompiledJob = { code: string; map?: SourceMapWithOperations };
 
 export const hasExportableCode = (code: string): boolean =>
-  /^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(code);
+  /^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(
+    code
+  );
 
 export default async function (
   job: ExecutionPlan,
@@ -217,7 +219,10 @@ export const compileProject = async (
 
   const compiledDir = opts.outputStdout
     ? null
-    : path.resolve(cwd, opts.outputPath ?? wsConfig.dirs?.compiled ?? 'compiled');
+    : path.resolve(
+        cwd,
+        opts.outputPath ?? wsConfig.dirs?.compiled ?? 'compiled'
+      );
 
   if (compiledDir) {
     log.info(`Compiling project to ${compiledDir}`);
@@ -260,7 +265,9 @@ export const compileProject = async (
         const stalePath = compiledDir
           ? path.join(compiledDir, workflow.id, `${step.id}.js`)
           : null;
-        log.info(`  ${workflow.id}/${step.id} — skipped (no exportable code after stripping)`);
+        log.info(
+          `  ${workflow.id}/${step.id} — skipped (no exportable code after stripping)`
+        );
         if (stalePath) stalePaths.push(stalePath);
         continue;
       }

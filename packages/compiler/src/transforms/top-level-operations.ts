@@ -19,7 +19,11 @@ export type TopLevelOpsOptions = {
   wrap?: boolean; // TODO
 };
 
-function visitor(programPath: ExtendedProgram, _logger: any, _options: Partial<TopLevelOpsOptions> = {}) {
+function visitor(
+  programPath: ExtendedProgram,
+  _logger: any,
+  _options: Partial<TopLevelOpsOptions> = {}
+) {
   const operations: Array<{ line: number; name: string; order: number }> = [];
   const children = programPath.node.body;
   const rem = [];

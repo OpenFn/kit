@@ -87,10 +87,7 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
         'compile foo/job.js --watch',
         'Watches the file and recompiles on every change'
       )
-      .example(
-        'compile --watch',
-        'Compiles all workflows on change'
-      ),
+      .example('compile --watch', 'Compiles all workflows on change'),
 };
 
 export default compileCommand;

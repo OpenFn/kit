@@ -18,15 +18,24 @@ import type { Transformer } from '../transform';
 
 // Recursively collect all Identifier names referenced in a node.
 // Conservative: includes property names in member expressions (avoids false negatives).
-export const collectRefs = (node: any, refs = new Set<string>()): Set<string> => {
+export const collectRefs = (
+  node: any,
+  refs = new Set<string>()
+): Set<string> => {
   if (!node || typeof node !== 'object') return refs;
   if (Array.isArray(node)) {
-    node.forEach(item => collectRefs(item, refs));
+    node.forEach((item) => collectRefs(item, refs));
     return refs;
   }
   if (n.Identifier.check(node)) refs.add(node.name);
   for (const key of Object.keys(node)) {
-    if (key === 'type' || key === 'loc' || key === 'comments' || key === 'tokens') continue;
+    if (
+      key === 'type' ||
+      key === 'loc' ||
+      key === 'comments' ||
+      key === 'tokens'
+    )
+      continue;
     collectRefs(node[key], refs);
   }
   return refs;
@@ -83,7 +92,7 @@ function visitor(
 
   // Bare (non-export, non-import) top-level statements — candidates for tree-shaking
   const nonExported = body.filter(
-    node =>
+    (node) =>
       !n.ImportDeclaration.check(node) &&
       !n.ExportNamedDeclaration.check(node) &&
       !n.ExportDefaultDeclaration.check(node)
@@ -92,7 +101,7 @@ function visitor(
   const declMap = buildDeclMap(nonExported);
 
   // Seed tree-shaking from all named export declarations
-  const exportSeeds = body.filter(node =>
+  const exportSeeds = body.filter((node) =>
     n.ExportNamedDeclaration.check(node)
   ) as n.Statement[];
 
@@ -101,7 +110,7 @@ function visitor(
 
   // Keep imports, named exports, and their transitive non-exported dependencies
   programPath.node.body = body.filter(
-    node =>
+    (node) =>
       n.ImportDeclaration.check(node) ||
       n.ExportNamedDeclaration.check(node) ||
       needed.has(node as n.Statement)

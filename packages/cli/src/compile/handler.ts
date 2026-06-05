@@ -71,7 +71,12 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
     logger.info(`${changedPath} changed, recompiling...`);
     try {
       if (options.workflowName) {
-        await compileProject(options, logger, process.cwd(), options.workflowName);
+        await compileProject(
+          options,
+          logger,
+          process.cwd(),
+          options.workflowName
+        );
       } else if (!options.path) {
         await compileProject(options, logger);
       } else {
