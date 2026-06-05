@@ -77,7 +77,6 @@ const compileJob = async (
   }
 };
 
-// Find every expression in the job and run the compiler on it
 const compileWorkflow = async (
   plan: ExecutionPlan,
   opts: CompileOptions,
@@ -118,7 +117,6 @@ export const stripVersionSpecifier = (specifier: string) => {
   return specifier;
 };
 
-// Take a module path as provided by the CLI and convert it into a path
 export const resolveSpecifierPath = async (
   pattern: string,
   repoDir: string | undefined,
@@ -127,7 +125,6 @@ export const resolveSpecifierPath = async (
   const [specifier, path] = pattern.split('=');
 
   if (path) {
-    // given an explicit path, just load it.
     log.debug(`Resolved ${specifier} to path: ${path}`);
     return path;
   }
@@ -139,7 +136,6 @@ export const resolveSpecifierPath = async (
   return null;
 };
 
-// Mutate the opts object to write export information for the add-imports transformer
 export const loadTransformOptions = async (
   opts: CompileOptions,
   log: Logger
@@ -151,19 +147,16 @@ export const loadTransformOptions = async (
 
   if (opts.exportsOnly) {
     options['exports-only'] = true;
-    // Disable transformers that produce output not needed for unit testing
+    // ensure-exports and top-level-operations produce output incompatible with exports-only mode
     options['ensure-exports'] = false;
     options['top-level-operations'] = false;
   }
-  // If an adaptor is passed in, we need to look up its declared exports
-  // and pass them along to the compiler
   if (opts.adaptors?.length && opts.ignoreImports != true) {
     const adaptorsConfig = [];
     for (const adaptorInput of opts.adaptors) {
       let exports;
       const [specifier] = adaptorInput.split('=');
 
-      // Preload exports from a path, optionally logging errors in case of a failure
       log.debug(`Trying to preload types for ${specifier}`);
       const path = await resolveSpecifierPath(adaptorInput, opts.repoDir, log);
       if (path) {
@@ -195,9 +188,6 @@ export const loadTransformOptions = async (
   return options;
 };
 
-// Compile all steps across all workflows in the current project.
-// Writes one .js file per step to compiledDir/<workflow-id>/<step-id>.js.
-// Pass workflowFilter to compile a single workflow by id or name.
 export const compileProject = async (
   opts: CompileOptions,
   log: Logger,
@@ -284,8 +274,7 @@ export const compileProject = async (
     }
   }
 
-  // Remove stale step files left over from a previous run with different flags.
-  // Only deletes files at exact step paths — user-added files with other names are untouched.
+  // Only deletes exact step paths — user-added files alongside them are untouched.
   for (const stalePath of stalePaths) {
     try {
       await fs.unlink(stalePath);

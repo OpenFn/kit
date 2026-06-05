@@ -1,23 +1,11 @@
-/*
- * Strip all non-exported top-level code.
- *
- * Keeps: import declarations and named export declarations.
- * Drops: expression statements (operations), export default, and bare
- *        top-level declarations that are not referenced by any kept export.
- *
- * Non-exported declarations that are transitively referenced by a kept
- * export declaration are preserved (tree-shaking).
- *
- * This transformer is designed to run before all others (order: 0).
- * It is a no-op unless explicitly enabled via options['exports-only'] = true.
- */
+// Strips all non-exported top-level code (operations, export default, bare declarations).
+// Runs before all other transformers (order: 0). No-op unless options === true.
 
 import { namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
-// Recursively collect all Identifier names referenced in a node.
-// Conservative: includes property names in member expressions (avoids false negatives).
+// Conservative: includes member expression property names to avoid false negatives.
 export const collectRefs = (
   node: any,
   refs = new Set<string>()
@@ -41,7 +29,6 @@ export const collectRefs = (
   return refs;
 };
 
-// Build a map from declared name → statement for non-export top-level declarations.
 export const buildDeclMap = (
   nodes: n.Statement[]
 ): Map<string, n.Statement> => {
@@ -60,7 +47,6 @@ export const buildDeclMap = (
   return map;
 };
 
-// Transitively collect all declarations that the seed nodes depend on.
 export const collectDeps = (
   seeds: n.Statement[],
   declMap: Map<string, n.Statement>
@@ -85,12 +71,10 @@ function visitor(
   _logger: any,
   options: boolean | {} = {}
 ) {
-  // Only run when explicitly enabled
   if (options !== true) return;
 
   const body = programPath.node.body;
 
-  // Bare (non-export, non-import) top-level statements — candidates for tree-shaking
   const nonExported = body.filter(
     (node) =>
       !n.ImportDeclaration.check(node) &&
@@ -99,16 +83,11 @@ function visitor(
   ) as n.Statement[];
 
   const declMap = buildDeclMap(nonExported);
-
-  // Seed tree-shaking from all named export declarations
   const exportSeeds = body.filter((node) =>
     n.ExportNamedDeclaration.check(node)
   ) as n.Statement[];
-
-  // Transitively collect non-exported declarations that exports depend on
   const needed = collectDeps(exportSeeds, declMap);
 
-  // Keep imports, named exports, and their transitive non-exported dependencies
   programPath.node.body = body.filter(
     (node) =>
       n.ImportDeclaration.check(node) ||

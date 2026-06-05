@@ -5,8 +5,6 @@
 import { namedTypes as n, namedTypes } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
-// Note that the validator should complain if it see anything other than export default []
-// What is the relationship between the validator and the compiler?
 
 export type ExtendedProgram = NodePath<
   namedTypes.Program & {
@@ -48,12 +46,10 @@ function visitor(
     }
     programPath.node.body = rem;
   } else {
-    // error! there isn't an appropriate export statement
-    // What do we do?
+    // no export default [] — nothing to move operations into
   }
   programPath.node.operations = operations;
 
-  // if not (for now) we should cancel traversal
   return true;
 }
 
