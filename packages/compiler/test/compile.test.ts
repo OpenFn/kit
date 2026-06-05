@@ -279,16 +279,20 @@ test('respect ignore list when exports not provided', (t) => {
   t.is(result, expected);
 });
 
-test('strip mode: removes top-level operations, keeps exported JS', (t) => {
+const exportsOnlyOpts = {
+  'exports-only': true,
+  'ensure-exports': false,
+  'top-level-operations': false,
+} as const;
+
+test('exports-only: removes top-level operations, keeps exported JS', (t) => {
   const source = [
     'export const formatDate = (d) => d.toISOString();',
     'get("/api");',
     'fn(state => ({ ...state, date: formatDate(state.data.date) }));',
   ].join('\n');
 
-  const { code: result } = compile(source, {
-    'top-level-operations': { strip: true },
-  });
+  const { code: result } = compile(source, exportsOnlyOpts);
 
   t.true(result.includes('export const formatDate'));
   t.false(result.includes('get('));
@@ -296,23 +300,21 @@ test('strip mode: removes top-level operations, keeps exported JS', (t) => {
   t.false(result.includes('export default []'));
 });
 
-test('strip mode: removes non-exported declarations', (t) => {
+test('exports-only: removes non-exported declarations', (t) => {
   const source = [
     'const formatDate = (d) => d.toISOString();',
     'get("/api");',
   ].join('\n');
 
-  const { code: result } = compile(source, {
-    'top-level-operations': { strip: true },
-  });
+  const { code: result } = compile(source, exportsOnlyOpts);
 
-  // non-exported const is dropped by tree-shaking; export default [] is also gone
+  // non-exported const is dropped; no export default []
   t.false(result.includes('const formatDate'));
   t.false(result.includes('get('));
   t.false(result.includes('export default []'));
 });
 
-test('strip mode: keeps import statements', (t) => {
+test('exports-only: keeps import statements', (t) => {
   const source = [
     'import { dateFns } from "@openfn/language-common";',
     'export const formatDate = (d) => dateFns.format(d);',
@@ -320,9 +322,7 @@ test('strip mode: keeps import statements', (t) => {
     'export default [];',
   ].join('\n');
 
-  const { code: result } = compile(source, {
-    'top-level-operations': { strip: true },
-  });
+  const { code: result } = compile(source, exportsOnlyOpts);
 
   t.true(result.includes('import { dateFns }'));
   t.true(result.includes('export const formatDate'));

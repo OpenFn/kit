@@ -10,28 +10,31 @@ OpenFn job expressions are not valid JavaScript out of the box — top-level ada
 
 ## Compiling for Tests
 
-The `--test` flag writes compiled output to `tests/` by default. By default it also strips adaptor operation calls, keeping only explicitly exported code. Pass `--no-strip` to keep everything.
+`openfn compile` writes compiled output to `compiled/` by default. Use `--exports-only` to also strip adaptor operation calls, keeping only explicitly exported code.
 
 ```bash
-# Compile a single step (strips operations, writes to tests/)
-openfn compile workflows/my-workflow/step-a.js --test
+# Compile all workflows in the project (full compilation, preserves operations)
+openfn compile
 
-# Compile to a specific file
-openfn compile workflows/my-workflow/step-a.js --test -o tests/step-a.js
+# Compile all workflows, stripping operation calls (useful for unit testing)
+openfn compile --exports-only
 
-# Compile all workflows in the project
-openfn compile --test
+# Compile a single workflow by name
+openfn compile my-workflow
 
-# Compile without stripping — keeps operations and all declarations
-openfn compile --test --no-strip
+# Compile a single workflow to a custom directory
+openfn compile my-workflow -o tests/
+
+# Compile a single job expression (prints to stdout)
+openfn compile workflows/my-workflow/step-a.js --exports-only
 
 # Watch mode: recompile whenever source files change
-openfn compile --test --watch
+openfn compile --exports-only --watch
 ```
 
-## What survives compilation (strip mode)
+## What `--exports-only` keeps
 
-By default `--test` strips the code. Only explicitly exported declarations survive:
+`--exports-only` strips operation calls. Only explicitly exported declarations survive:
 
 - `export const myHelper = ...` ✓
 - `export function parseSms() {}` ✓
@@ -44,9 +47,9 @@ If an exported function depends on a non-exported local declaration, that depend
 
 Steps with no exportable code (nothing is exported after stripping) are skipped — no file is written.
 
-## What `--no-strip` keeps
+## Full compilation (no `--exports-only`)
 
-With `--no-strip`, the full compiled output is written — all declarations are preserved and operations are kept in `export default [op1, op2, ...]`:
+Without `--exports-only`, the full compiled output is written — all declarations are preserved and operations are kept in `export default [op1, op2, ...]`:
 
 ```js
 import { post } from '@openfn/language-http';
@@ -74,7 +77,7 @@ fn((state) => ({
 }));
 ```
 
-**Compiled** (`tests/dhis2-sync/transform.js`) after `openfn compile --test`:
+**Compiled** (`compiled/dhis2-sync/transform.js`) after `openfn compile --exports-only`:
 
 ```js
 import { dateFns } from '@openfn/language-dhis2';
@@ -88,7 +91,7 @@ The operation is stripped. `formatDate` survives because it is explicitly export
 
 ```js
 // test/transform.test.js
-import { formatDate } from '../tests/dhis2-sync/transform.js';
+import { formatDate } from '../compiled/dhis2-sync/transform.js';
 
 test('formats a date correctly', () => {
   const result = formatDate(new Date('2024-01-15'));
@@ -98,12 +101,12 @@ test('formats a date correctly', () => {
 
 ## Project-wide Compilation
 
-Running `openfn compile --test` with no path compiles every step in every workflow in the current project directory (must contain `openfn.yaml`).
+Running `openfn compile` with no path compiles every step in every workflow in the current project directory (must contain `openfn.yaml`).
 
 Output layout:
 
 ```
-tests/
+compiled/
   my-workflow/
     step-a.js
     step-b.js
@@ -114,7 +117,7 @@ tests/
 Override the output directory with `-o <dir>`:
 
 ```bash
-openfn compile --test -o dist/tests
+openfn compile --exports-only -o tests/
 ```
 
 Configure default directories in `openfn.yaml`:
@@ -122,15 +125,14 @@ Configure default directories in `openfn.yaml`:
 ```yaml
 dirs:
   workflows: workflows
-  compiled: compiled # used by openfn compile (without --test)
-  tests: tests # used by openfn compile --test
+  compiled: compiled # used by openfn compile
 ```
 
 ### Stale file cleanup
 
-After each project-wide run in strip mode, any step file that was skipped (no exportable code) is automatically deleted from `tests/` if it exists from a previous run. Only files at exact step paths (`tests/<workflow-id>/<step-id>.js`) are touched — files you have added at other paths (e.g. `tests/my-workflow/helpers.js`) are never removed.
+After each project-wide run with `--exports-only`, any step file that was skipped (no exportable code) is automatically deleted from `compiled/` if it exists from a previous run. Only files at exact step paths (`compiled/<workflow-id>/<step-id>.js`) are touched — files you have added at other paths (e.g. `compiled/my-workflow/helpers.js`) are never removed.
 
-There is no option to wipe the entire `tests/` directory. To do a full reset, delete it manually before running `openfn compile --test`.
+There is no option to wipe the entire `compiled/` directory. To do a full reset, delete it manually before running `openfn compile`.
 
 ## Recommended Setup
 
@@ -139,8 +141,8 @@ There is no option to wipe the entire `tests/` directory. To do a full reset, de
 ```json
 {
   "scripts": {
-    "compile": "openfn compile --test",
-    "compile:watch": "openfn compile --test --watch",
+    "compile": "openfn compile --exports-only",
+    "compile:watch": "openfn compile --exports-only --watch",
     "test": "node --test test/**/*.test.js"
   }
 }
@@ -148,7 +150,8 @@ There is no option to wipe the entire `tests/` directory. To do a full reset, de
 
 ## Notes
 
-- In strip mode, only `export const` and `export function` declarations survive — non-exported helpers are dropped unless referenced by an export
+- In `--exports-only` mode, only `export const` and `export function` declarations survive — non-exported helpers are dropped unless referenced by an export
 - Import statements are always preserved
-- `--no-strip` keeps all code including operations in `export default [...]`
+- Without `--exports-only`, all code including operations is kept in `export default [...]`
 - Watch mode reruns compilation on any source change, making the edit → test cycle fast
+- Use `-O` to print compiled output to stdout instead of writing to disk

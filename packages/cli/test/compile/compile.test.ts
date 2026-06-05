@@ -8,6 +8,7 @@ import compile, {
   loadTransformOptions,
   resolveSpecifierPath,
   compileProject,
+  hasExportableCode,
 } from '../../src/compile/compile';
 import { CompileOptions } from '../../src/compile/command';
 import { mockFs, resetMockFs } from '../util';
@@ -344,27 +345,43 @@ test.serial('loadTransformOptions: ignore some imports', async (t) => {
 
 // TODO test exception if the module can't be found
 
-test.serial('loadTransformOptions: test flag sets strip mode', async (t) => {
-  const opts = { test: true } as CompileOptions;
+test.serial('loadTransformOptions: --exports-only enables exports-only transformer', async (t) => {
+  const opts = { exportsOnly: true } as CompileOptions;
   const result = await loadTransformOptions(opts, mockLog);
-  t.deepEqual(result['top-level-operations'], { strip: true });
+  t.is(result['exports-only'], true);
+  t.is(result['ensure-exports'], false);
+  t.is(result['top-level-operations'], false);
 });
-
-test.serial('loadTransformOptions: --no-strip disables strip mode', async (t) => {
-  const opts = { test: true, strip: false } as CompileOptions;
-  const result = await loadTransformOptions(opts, mockLog);
-  t.falsy(result['top-level-operations']);
-});
-
 
 test.serial(
-  'loadTransformOptions: test flag does not affect other options',
+  'loadTransformOptions: --exports-only does not affect other options',
   async (t) => {
-    const opts = { test: true } as CompileOptions;
+    const opts = { exportsOnly: true } as CompileOptions;
     const result = await loadTransformOptions(opts, mockLog);
     t.falsy(result['add-imports']);
   }
 );
+
+// hasExportableCode
+test('hasExportableCode: returns true for const declaration', (t) => {
+  t.true(hasExportableCode("import x from 'y';\nconst helper = () => {};\nexport default [];"));
+});
+
+test('hasExportableCode: returns true for function declaration', (t) => {
+  t.true(hasExportableCode("function formatDate(d) { return d; }\nexport default [];"));
+});
+
+test('hasExportableCode: returns true for exported const', (t) => {
+  t.true(hasExportableCode("export const VALUE = 42;\nexport default [];"));
+});
+
+test('hasExportableCode: returns false when only imports', (t) => {
+  t.false(hasExportableCode("import { get } from '@openfn/language-http';"));
+});
+
+test('hasExportableCode: returns false for empty string', (t) => {
+  t.false(hasExportableCode(''));
+});
 
 test.serial(
   'compileProject: compiles all workflow steps and writes output files',
@@ -406,13 +423,13 @@ steps:
 );
 
 test.serial(
-  'compileProject: removes stale step files skipped in current run',
+  'compileProject: removes stale step files skipped in --exports-only run',
   async (t) => {
     const pnpm = path.resolve('../../node_modules/.pnpm');
     const recastPath = `${pnpm}/recast@0.21.5`;
     const sourceMapPath = `${pnpm}/source-map@0.7.6`;
 
-    // step-b has no exported code and will be skipped in strip mode.
+    // step-b has no exported code and will be skipped in --exports-only mode.
     // Pre-populate a stale file at its expected output path.
     mock({
       [recastPath]: mock.load(recastPath, {}),
@@ -429,14 +446,14 @@ steps:
   - id: step-b
     expression: "fn();"
 `,
-      // stale file from a previous --no-strip run
-      '/proj/tests/wf1/step-b.js': 'export default [fn()];',
-      // user-added test file — must not be touched
-      '/proj/tests/wf1/step-b.test.js': 'import { } from "./step-b.js";',
+      // stale file from a previous run without --exports-only
+      '/proj/compiled/wf1/step-b.js': 'export default [fn()];',
+      // user-added file — must not be touched
+      '/proj/compiled/wf1/step-b.test.js': 'import { } from "./step-b.js";',
     });
 
     await compileProject(
-      { test: true } as CompileOptions,
+      { exportsOnly: true } as CompileOptions,
       mockLog,
       '/proj'
     );
@@ -444,12 +461,12 @@ steps:
     const { default: nodeFsPromises } = await import('node:fs/promises');
 
     // Stale step file should be gone
-    await t.throwsAsync(() => nodeFsPromises.readFile('/proj/tests/wf1/step-b.js'), {
+    await t.throwsAsync(() => nodeFsPromises.readFile('/proj/compiled/wf1/step-b.js'), {
       code: 'ENOENT',
     });
 
-    // User test file must still exist
-    const userFile = await nodeFsPromises.readFile('/proj/tests/wf1/step-b.test.js', 'utf-8');
+    // User file must still exist
+    const userFile = await nodeFsPromises.readFile('/proj/compiled/wf1/step-b.test.js', 'utf-8');
     t.truthy(userFile);
 
     mock.restore();

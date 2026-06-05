@@ -15,6 +15,9 @@ import type { CompileOptions } from './command';
 
 export type CompiledJob = { code: string; map?: SourceMapWithOperations };
 
+export const hasExportableCode = (code: string): boolean =>
+  /^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(code);
+
 export default async function (
   job: ExecutionPlan,
   opts: CompileOptions,
@@ -144,9 +147,11 @@ export const loadTransformOptions = async (
     trace: opts.trace,
   };
 
-  if (opts.test && opts.strip !== false) {
-    // Strip top-level operation calls instead of moving them to the export array
-    options['top-level-operations'] = { strip: true } as any;
+  if (opts.exportsOnly) {
+    options['exports-only'] = true;
+    // Disable transformers that produce output not needed for unit testing
+    options['ensure-exports'] = false;
+    options['top-level-operations'] = false;
   }
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
@@ -189,11 +194,13 @@ export const loadTransformOptions = async (
 };
 
 // Compile all steps across all workflows in the current project.
-// Writes one .js file per step to compiledDir/<workflow-id>/<step-id>.js
+// Writes one .js file per step to compiledDir/<workflow-id>/<step-id>.js.
+// Pass workflowFilter to compile a single workflow by id or name.
 export const compileProject = async (
   opts: CompileOptions,
   log: Logger,
-  cwd = process.cwd()
+  cwd = process.cwd(),
+  workflowFilter?: string
 ): Promise<string[]> => {
   // validate=false suppresses warnings when workspace config has no extra metadata
   const workspace = new Workspace(cwd, log as any, false);
@@ -207,17 +214,30 @@ export const compileProject = async (
   }
 
   const wsConfig = workspace.getConfig() as any;
-  const compiledDir = path.resolve(
-    cwd,
-    opts.outputPath ?? (opts.test ? wsConfig.dirs?.tests ?? 'tests' : wsConfig.dirs?.compiled ?? 'compiled')
-  );
 
-  log.info(`Compiling project to ${compiledDir}`);
+  const compiledDir = opts.outputStdout
+    ? null
+    : path.resolve(cwd, opts.outputPath ?? wsConfig.dirs?.compiled ?? 'compiled');
+
+  if (compiledDir) {
+    log.info(`Compiling project to ${compiledDir}`);
+  }
+
+  let workflows = project.workflows;
+  if (workflowFilter) {
+    workflows = workflows.filter(
+      (wf: any) => wf.id === workflowFilter || wf.name === workflowFilter
+    );
+    if (workflows.length === 0) {
+      log.error(`Workflow '${workflowFilter}' not found in project.`);
+      process.exit(1);
+    }
+  }
 
   const outPaths: string[] = [];
   const stalePaths: string[] = [];
 
-  for (const workflow of project.workflows) {
+  for (const workflow of workflows) {
     for (const step of workflow.steps) {
       const expression = (step as any).expression;
       if (!expression || typeof expression !== 'string') continue;
@@ -236,19 +256,24 @@ export const compileProject = async (
         (step as any).name ?? step.id
       );
 
-      const outPath = path.join(compiledDir, workflow.id, `${step.id}.js`);
-
-      if (opts.test && opts.strip !== false && !/^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(code)) {
+      if (opts.exportsOnly && !hasExportableCode(code)) {
+        const stalePath = compiledDir
+          ? path.join(compiledDir, workflow.id, `${step.id}.js`)
+          : null;
         log.info(`  ${workflow.id}/${step.id} — skipped (no exportable code after stripping)`);
-        stalePaths.push(outPath);
+        if (stalePath) stalePaths.push(stalePath);
         continue;
       }
 
-      await fs.mkdir(path.dirname(outPath), { recursive: true });
-      await fs.writeFile(outPath, code);
-
-      outPaths.push(outPath);
-      log.success(`  ${workflow.id}/${step.id} → ${outPath}`);
+      if (opts.outputStdout) {
+        log.success(`// ${workflow.id}/${step.id}\n\n` + code);
+      } else {
+        const outPath = path.join(compiledDir!, workflow.id, `${step.id}.js`);
+        await fs.mkdir(path.dirname(outPath), { recursive: true });
+        await fs.writeFile(outPath, code);
+        outPaths.push(outPath);
+        log.success(`  ${workflow.id}/${step.id} → ${outPath}`);
+      }
     }
   }
 
@@ -263,6 +288,8 @@ export const compileProject = async (
     }
   }
 
-  log.success(`Compiled ${outPaths.length} step(s) to ${compiledDir}`);
+  if (!opts.outputStdout) {
+    log.success(`Compiled ${outPaths.length} step(s) to ${compiledDir}`);
+  }
   return outPaths;
 };

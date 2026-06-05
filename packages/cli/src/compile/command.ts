@@ -1,13 +1,14 @@
 import yargs from 'yargs';
 import { Opts } from '../options';
 import * as o from '../options';
-import { build, ensure, override } from '../util/command-builders';
+import { build, ensure } from '../util/command-builders';
 
 export type CompileOptions = Pick<
   Opts,
   | 'adaptors'
   | 'command'
   | 'expandAdaptors'
+  | 'exportsOnly'
   | 'ignoreImports'
   | 'expressionPath'
   | 'logJson'
@@ -18,10 +19,9 @@ export type CompileOptions = Pick<
   | 'path'
   | 'useAdaptorsMonorepo'
   | 'globals'
-  | 'test'
-  | 'strip'
   | 'trace'
   | 'watch'
+  | 'workflowName'
 > & {
   workflow?: Opts['workflow'];
   repoDir?: string;
@@ -30,17 +30,14 @@ export type CompileOptions = Pick<
 const options = [
   o.expandAdaptors, // order important
   o.adaptors,
+  o.exportsOnly,
   o.ignoreImports,
   o.inputPath,
   o.log,
   o.logJson,
-  override(o.outputStdout, {
-    default: true,
-  }),
+  o.outputStdout,
   o.outputPath,
   o.repoDir,
-  o.testFlag,
-  o.stripFlag,
   o.trace,
   o.useAdaptorsMonorepo,
   o.watchFlag,
@@ -68,24 +65,31 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
       )
       .example(
         'compile',
-        'Compiles all workflows in the current project and writes JS files to tests/'
+        'Compiles all workflows in the current project and writes JS files to compiled/'
       )
       .example(
-        'compile foo/job.js --test',
-        'Strips adaptor operation calls and writes to tests/ (for unit testing)'
+        'compile my-workflow',
+        'Compiles a single workflow by name and writes JS files to compiled/'
       )
       .example(
-        'compile --test --no-strip',
-        'Compiles entire project to tests/ without removing any code'
+        'compile my-workflow -O',
+        'Compiles a workflow and prints to stdout'
       )
-
+      .example(
+        'compile foo/job.js --exports-only',
+        'Strips adaptor operation calls, keeping only exported declarations'
+      )
+      .example(
+        'compile --exports-only',
+        'Compiles entire project to compiled/ stripping operation calls'
+      )
       .example(
         'compile foo/job.js --watch',
         'Watches the file and recompiles on every change'
       )
       .example(
-        'compile --test --watch',
-        'Compiles all workflows in strip mode and recompiles on change'
+        'compile --watch',
+        'Compiles all workflows on change'
       ),
 };
 

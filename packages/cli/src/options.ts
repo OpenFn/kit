@@ -66,8 +66,7 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   timeout?: number; // ms
-  test?: boolean;
-  strip?: boolean;
+  exportsOnly?: boolean;
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   watch?: boolean;
@@ -635,26 +634,15 @@ export const validate: CLIOption = {
   },
 };
 
-export const testFlag: CLIOption = {
-  name: 'test',
+export const exportsOnly: CLIOption = {
+  name: 'exports-only',
   yargs: {
     boolean: true,
     description:
-      'Compile for unit testing: strips adaptor operation calls and writes output to tests/',
+      'Strip adaptor operation calls, exporting only constants and functions',
     default: false,
   },
 };
-
-export const stripFlag: CLIOption = {
-  name: 'strip',
-  yargs: {
-    boolean: true,
-    description:
-      'Used with --test: strip operation calls from compiled output. Use --no-strip to keep them.',
-    default: true,
-  },
-};
-
 
 export const watchFlag: CLIOption = {
   name: 'watch',

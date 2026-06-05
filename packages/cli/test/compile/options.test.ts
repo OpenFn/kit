@@ -15,7 +15,7 @@ test('correct default options', (t) => {
   t.is(options.expandAdaptors, true);
   t.is(options.expressionPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
-  t.is(options.outputStdout, true);
+  t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.falsy(options.useAdaptorsMonorepo);
 });
