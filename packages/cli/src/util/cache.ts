@@ -13,7 +13,7 @@ export const CACHE_DIR = '.cli-cache';
 export const getCachePath = (
   options: Pick<Opts, 'baseDir' | 'cachePath'>,
   workflowName?: string,
-  stepId?: string,
+  stepId?: string
 ) => {
   const { baseDir, cachePath } = options;
   if (cachePath) {
@@ -26,9 +26,9 @@ export const getCachePath = (
   // path.resolve throws on undefined, so filter it out; when workflowName
   // is absent the path resolves to the bare CACHE_DIR root.
   const basePath = path.resolve(
-    ...([baseDir ?? process.cwd(), CACHE_DIR, workflowName].filter(
-      Boolean,
-    ) as string[]),
+    ...[baseDir ?? process.cwd(), CACHE_DIR, workflowName].filter(
+      Boolean
+    ) as string[]
   );
 
   if (stepId) {
@@ -55,7 +55,7 @@ export const saveToCache = async (
   stepId: string,
   output: any,
   options: Pick<Opts, 'baseDir' | 'cachePath' | 'cacheSteps'>,
-  logger: Logger,
+  logger: Logger
 ) => {
   if (options.cacheSteps) {
     const cachePath = getCachePath(options, plan.workflow.name, stepId);
@@ -73,7 +73,7 @@ export const saveToCache = async (
 export const clearCache = async (
   plan: ExecutionPlan,
   options: Pick<Opts, 'baseDir' | 'cachePath'>,
-  logger: Logger,
+  logger: Logger
 ) => {
   const cacheDir = getCachePath(options, plan.workflow?.name);
 
