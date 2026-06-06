@@ -223,7 +223,7 @@ test.serial(
 
     await handler(options, logger);
     t.truthy(logger._find('debug', /credential map not found/i));
-  }
+  },
 );
 
 test.serial('run a workflow with state', async (t) => {
@@ -285,7 +285,7 @@ test.serial(
     t.regex(err.message, /typeerror: cannot read properties of undefined/i);
     t.is(err.pos.line, 2);
     t.is(err.pos.column, 23);
-  }
+  },
 );
 
 test.serial(
@@ -314,11 +314,11 @@ test.serial(
     t.truthy(result.errors);
     t.regex(
       result.errors.x.message,
-      /typeerror: cannot read properties of undefined/i
+      /typeerror: cannot read properties of undefined/i,
     );
     t.is(result.errors.x.pos.line, 2);
     t.is(result.errors.x.pos.column, 23);
-  }
+  },
 );
 
 test.serial(
@@ -348,11 +348,11 @@ test.serial(
     t.truthy(result.errors);
     t.regex(
       result.errors.x.message,
-      /typeerror: cannot read properties of undefined/i
+      /typeerror: cannot read properties of undefined/i,
     );
     t.is(result.errors.x.pos.line, 2);
     t.is(result.errors.x.pos.column, 23);
-  }
+  },
 );
 
 test.serial('run a workflow with cached steps', async (t) => {
@@ -441,28 +441,31 @@ test.serial('cache steps when running a .js expression', async (t) => {
   t.true(files[0].endsWith('.json'));
 
   const cached = JSON.parse(
-    await fs.readFile(`/.cli-cache/job/${files[0]}`, 'utf8')
+    await fs.readFile(`/.cli-cache/job/${files[0]}`, 'utf8'),
   );
   t.is(cached.x, 1);
 });
 
-test.serial('.cli-cache has a gitignore when caching a .js expression', async (t) => {
-  mockFs({
-    '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
-  });
+test.serial(
+  '.cli-cache has a gitignore when caching a .js expression',
+  async (t) => {
+    mockFs({
+      '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
+    });
 
-  const options = {
-    ...defaultOptions,
-    expressionPath: '/job.js',
-    baseDir: '/',
-    cacheSteps: true,
-  };
+    const options = {
+      ...defaultOptions,
+      expressionPath: '/job.js',
+      baseDir: '/',
+      cacheSteps: true,
+    };
 
-  await handler(options, logger);
+    await handler(options, logger);
 
-  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
-  t.is(gitignore, '*');
-});
+    const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+    t.is(gitignore, '*');
+  },
+);
 
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
