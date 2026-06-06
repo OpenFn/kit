@@ -16,6 +16,7 @@ import {
   updateForkedFrom,
 } from './util';
 import { createProjectCredentials } from './create-credentials';
+import abort from '../util/abort';
 
 export type CheckoutOptions = Pick<
   Opts,
@@ -71,34 +72,32 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       `Project with id ${projectIdentifier} not found in the workspace`
     );
   }
+  logger?.info(`Checking out ${switchProject.alias}`);
 
   // get the current state of the checked out project
   try {
     const localProject = await Project.from('fs', {
       root: options.workspace || '.',
     });
-    logger?.success(`Loaded local project ${localProject.alias}`);
+    logger?.info(
+      `Loaded currently checked out project ${localProject.alias} to check for divergence`
+    );
     const changed = await findLocallyChangedWorkflows(
       workspace,
       localProject,
       'assume-ok'
     );
     if (changed.length && !options.force) {
-      logger?.break();
-      logger?.warn(
-        'WARNING: detected changes on your currently checked-out project'
+      const err = {
+        details: `Changes may be lost by checking out ${localProject.alias} right now`,
+        // TODO how can users save changes? Not really possible right now
+        fix: 'Pass --force or -f to override this warning and continue',
+      };
+      abort(
+        logger!,
+        `${switchProject.alias} has diverged from ${localProject.alias}!`,
+        err
       );
-      logger?.warn(
-        `Changes may be lost by checking out ${localProject.alias} right now`
-      );
-      logger?.warn(`Pass --force or -f to override this warning and continue`);
-      // TODO log to run with force
-      // TODO need to implement a save function
-      const e = new Error(
-        `The currently checked out project has diverged! Changes may be lost`
-      );
-      delete e.stack;
-      throw e;
     }
   } catch (e: any) {
     if (e.message.match('ENOENT')) {
