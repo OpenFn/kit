@@ -26,9 +26,9 @@ export const getCachePath = (
   // path.resolve throws on undefined, so filter it out; when workflowName
   // is absent the path resolves to the bare CACHE_DIR root.
   const basePath = path.resolve(
-    ...[baseDir ?? process.cwd(), CACHE_DIR, workflowName].filter(
+    ...([baseDir ?? process.cwd(), CACHE_DIR, workflowName].filter(
       Boolean
-    ) as string[]
+    ) as string[])
   );
 
   if (stepId) {
