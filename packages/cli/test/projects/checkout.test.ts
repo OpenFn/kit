@@ -722,3 +722,167 @@ test.serial(
     t.true(fs.existsSync('/ws5/workflows/workflow-a'));
   }
 );
+
+const main = `id: sandboxing
+name: sandboxing
+schema_version: '4.0'
+collections: []
+channels: []
+credentials:
+  - uuid: 8c675997-117b-4e8a-a65e-1ddea0d0e525
+    name: name
+    owner: editor@openfn.org
+openfn:
+  uuid: 44c0c920-5635-4984-ade2-b95fb24cbaf0
+  endpoint: http://localhost:4000
+  inserted_at: 2025-10-15T11:29:36Z
+  updated_at: 2026-03-17T11:59:53Z
+options:
+  env: main
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - name: A
+    steps:
+      - id: aaa
+        name: aaa
+        expression: // abc
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 7b6a6de4-eed2-4204-8ac0-4da8fa64206c
+        next:
+          bbb:
+            disabled: false
+            condition: on_job_success
+            openfn:
+              uuid: 64f1b20f-bfdf-4626-87de-403008cfb05d
+      - id: bbb
+        name: bbb
+        expression: '2'
+        adaptor: '@openfn/language-common@3.3.1'
+        openfn:
+          uuid: 832f5560-69c5-4eae-89cc-823b93af82c8
+      - id: webhook
+        type: webhook
+        enabled: true
+        webhook_reply: before_start
+        openfn:
+          uuid: 16ddedbb-1d70-44b7-8653-26f8dc802757
+        next:
+          aaa:
+            disabled: false
+            condition: always
+            openfn:
+              uuid: eccb03ef-990d-4ca7-877b-5452bbc8f63b
+    history:
+      - app:0a97362c97b3
+      - app:8eb248f07744
+    openfn:
+      uuid: 4b2c13aa-2497-421a-9bb2-783309254130
+      updated_at: 2026-05-14T10:25:36Z
+      inserted_at: 2026-05-14T10:25:10Z
+      lock_version: 6
+    id: a
+    start: webhook
+`;
+const staging = `id: joe-2
+name: joe-2
+schema_version: '4.0'
+cli:
+  forked_from:
+    a: cli:145ff1ae62e5
+collections: []
+channels: []
+credentials: []
+openfn:
+  uuid: 7c478de6-4c82-427d-aad2-875b1b9eccb8
+  endpoint: http://localhost:4000
+  alias: staging
+  inserted_at: 2026-05-26T16:27:05Z
+  updated_at: 2026-05-26T16:27:05Z
+options:
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - name: A
+    steps:
+      - id: aaa
+        name: aaa
+        expression: // 2
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 8227ae53-81f8-447f-bb93-213d5721f884
+        next:
+          bbb:
+            disabled: false
+            condition: on_job_success
+            openfn:
+              uuid: 474d6861-bb47-4fad-953d-a7762751bae0
+      - id: bbb
+        name: bbb
+        expression: '2'
+        adaptor: '@openfn/language-http@7.2.11'
+        openfn:
+          uuid: 862bec16-ef94-4438-b307-8594a70276fe
+      - id: webhook
+        type: webhook
+        enabled: false
+        webhook_reply: before_start
+        openfn:
+          uuid: d7dfdd68-ecb8-4adc-90cf-8a4ed8cc0235
+        next:
+          aaa:
+            disabled: false
+            condition: always
+            openfn:
+              uuid: 067cab97-bef8-4d70-b484-5d013d27142b
+    history:
+      - cli:145ff1ae62e5
+    openfn:
+      uuid: 9746c1d9-1499-4413-9edc-c23577e9308e
+      inserted_at: 2026-05-26T16:27:05Z
+      updated_at: 2026-05-26T16:27:05Z
+      lock_version: 1
+    id: a
+    start: webhook
+`;
+
+// is this "check out unrelated projects" ?
+// which case its project a and project b, not main and staging
+// unrelated projects should not throw a divergence warning if not changed
+// note that there seem to be no divergence tests in this file
+// so probably I need a basic divergence test too
+test.serial.only('local issue', async (t) => {
+  mock({
+    '/tmp/openfn.yaml': '',
+    '/tmp/.projects/main@server.yaml': main,
+    '/tmp/.projects/staging@server.yaml': staging,
+  });
+
+  // first checkout main to set up the file system
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'main',
+      workspace: '/tmp',
+    },
+    logger
+  );
+  console.log('main ok');
+  logger._reset();
+
+  // now checkout staging
+  // this throws, which reproduces my issue
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'staging',
+      workspace: '/tmp',
+    },
+    logger
+  );
+});
+
+// TODO: unrelated projects should throw a divergence warning if changed
