@@ -723,8 +723,12 @@ test.serial(
   }
 );
 
-const main = `id: sandboxing
-name: sandboxing
+/**
+ * Using projects foo and bar here which come from a real issue
+ * Keeping those exact state files to keep diversity in the tests
+ */
+const foo = `id: foo
+name: foo
 schema_version: '4.0'
 collections: []
 channels: []
@@ -786,8 +790,8 @@ workflows:
     id: a
     start: webhook
 `;
-const staging = `id: joe-2
-name: joe-2
+const bar = `id: bar
+name: bar
 schema_version: '4.0'
 cli:
   forked_from:
@@ -849,40 +853,96 @@ workflows:
     start: webhook
 `;
 
-// is this "check out unrelated projects" ?
-// which case its project a and project b, not main and staging
-// unrelated projects should not throw a divergence warning if not changed
-// note that there seem to be no divergence tests in this file
-// so probably I need a basic divergence test too
-test.serial.only('local issue', async (t) => {
-  mock({
-    '/tmp/openfn.yaml': '',
-    '/tmp/.projects/main@server.yaml': main,
-    '/tmp/.projects/staging@server.yaml': staging,
-  });
+test.serial.only(
+  'Checkout unrelated bar from unrelated project foo without divergence warning',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
 
-  // first checkout main to set up the file system
-  await checkoutHandler(
-    {
-      command: 'project-checkout',
-      project: 'main',
-      workspace: '/tmp',
-    },
-    logger
-  );
-  console.log('main ok');
-  logger._reset();
+    // first checkout foo to set up the file system
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'foo',
+        workspace: '/tmp',
+      },
+      logger
+    );
 
-  // now checkout staging
-  // this throws, which reproduces my issue
-  await checkoutHandler(
-    {
-      command: 'project-checkout',
-      project: 'staging',
-      workspace: '/tmp',
-    },
-    logger
-  );
-});
+    // assert that staging was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'foo');
+
+    let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// abc');
+
+    // now checkout bar
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// 2');
+  }
+);
+
+test.serial.only(
+  'Checkout unrelated foo from unrelated project bar without divergence warning',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
+
+    // first checkout bar to set up the file system
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// 2');
+
+    // now checkout foo
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'foo',
+        workspace: '/tmp',
+      },
+      logger
+    );
+
+    // assert that staging was checked out ok
+    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'foo');
+
+    expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// abc');
+  }
+);
 
 // TODO: unrelated projects should throw a divergence warning if changed

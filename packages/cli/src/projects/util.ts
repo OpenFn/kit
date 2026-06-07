@@ -259,6 +259,8 @@ export const updateForkedFrom = (proj: Project) => {
   return proj;
 };
 
+// Compare a project to its version hashed when forked
+// This tells us whether the project was edited since it was created
 export const findLocallyChangedWorkflows = async (
   workspace: Workspace,
   project: Project,
