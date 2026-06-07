@@ -50,7 +50,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const { project: _, ...config } = workspace.getConfig() as any;
 
   const localProject = await workspace.getCheckedOutProject(
-    workspace.activeProject.alias
+    workspace.activeProject.alias ?? null
   );
   // get the project
   let switchProject;
@@ -80,7 +80,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
         `Loaded currently checked out project ${localProject.alias} to check for untracked changes`
       );
       // TODO is alias robust here? Should we get by alias and domain?
-      const tracked = workspace.get(localProject.alias);
+      const tracked = workspace.get(localProject.alias ?? localProject.id);
       const changed = hasUntrackedChanges(localProject, tracked);
       if (changed.length && !options.force) {
         const err = {
@@ -157,6 +157,7 @@ const hasUntrackedChanges = (
     if (!trackedWorkflow) {
       // this is a new workflow added locally
       changedWorkflows.push(workflow.id);
+      continue;
     }
 
     const trackedHash = trackedWorkflow!.getVersionHash();

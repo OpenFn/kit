@@ -241,52 +241,55 @@ test.serial(
   }
 );
 
-test.serial('checkout: switching to and back between projects', async (t) => {
-  // before checkout. my-project is active and expanded
-  const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.activeProject!.id, 'my-project');
+test.serial.only(
+  'checkout: switching to and back between projects',
+  async (t) => {
+    // before checkout. my-project is active and expanded
+    const bcheckout = new Workspace('/ws');
+    t.is(bcheckout.activeProject!.id, 'my-project');
 
-  // 1. switch from my-project to my-staging
-  await checkoutHandler(
-    { command: 'project-checkout', project: 'my-staging', workspace: '/ws' },
-    logger
-  );
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Expanded project to /ws');
+    // 1. switch from my-project to my-staging
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-staging', workspace: '/ws' },
+      logger
+    );
+    const { message } = logger._parse(logger._last);
+    t.is(message, 'Expanded project to /ws');
 
-  // after checkout. my-staging is active and expanded
-  const acheckout = new Workspace('/ws');
-  t.is(acheckout.activeProject!.id, 'my-staging');
+    // after checkout. my-staging is active and expanded
+    const acheckout = new Workspace('/ws');
+    t.is(acheckout.activeProject!.id, 'my-staging');
 
-  // check if files where well expanded
-  t.deepEqual(
-    fs.readdirSync('/ws/workflows').sort(),
-    ['simple-workflow', 'another-workflow'].sort()
-  );
+    // check if files where well expanded
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows').sort(),
+      ['simple-workflow', 'another-workflow'].sort()
+    );
 
-  // 2. switch back from my-project to my-project
-  await checkoutHandler(
-    {
-      command: 'project-checkout',
-      project: 'my-project',
-      workspace: '/ws',
-      clean: true,
-    },
-    logger
-  );
-  const { message: lastMsg } = logger._parse(logger._last);
-  t.is(lastMsg, 'Expanded project to /ws');
+    // 2. switch back from my-project to my-project
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'my-project',
+        workspace: '/ws',
+        clean: true,
+      },
+      logger
+    );
+    const { message: lastMsg } = logger._parse(logger._last);
+    t.is(lastMsg, 'Expanded project to /ws');
 
-  // after checkout. my-project is active and expanded
-  const fcheckout = new Workspace('/ws');
-  t.is(fcheckout.activeProject!.id, 'my-project');
+    // after checkout. my-project is active and expanded
+    const fcheckout = new Workspace('/ws');
+    t.is(fcheckout.activeProject!.id, 'my-project');
 
-  // check if files where well expanded
-  t.deepEqual(
-    fs.readdirSync('/ws/workflows').sort(),
-    ['simple-workflow-main', 'another-workflow-main'].sort()
-  );
-});
+    // check if files where well expanded
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows').sort(),
+      ['simple-workflow-main', 'another-workflow-main'].sort()
+    );
+  }
+);
 
 test.serial('checkout: switch with id', async (t) => {
   const before = new Workspace('/ws');
@@ -853,7 +856,7 @@ workflows:
     start: webhook
 `;
 
-test.serial.only(
+test.serial(
   'Checkout unrelated bar from unrelated project foo without divergence warning',
   async (t) => {
     mock({
@@ -899,7 +902,7 @@ test.serial.only(
   }
 );
 
-test.serial.only(
+test.serial(
   'Checkout unrelated foo from unrelated project bar without divergence warning',
   async (t) => {
     mock({
@@ -945,4 +948,46 @@ test.serial.only(
   }
 );
 
-// TODO: unrelated projects should throw a divergence warning if changed
+test.serial(
+  'If the checked out project has diverged from the tracked version, show a divergence warning on checkout',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    // Now make a change - on checkout, this change will be lost (it is not saved anywhere)
+    fs.writeFileSync('/tmp/workflows/a/aaa.js', 'foobar');
+
+    // now try to checkout foo
+    await t.throwsAsync(
+      () =>
+        checkoutHandler(
+          {
+            command: 'project-checkout',
+            project: 'foo',
+            workspace: '/tmp',
+          },
+          logger
+        ),
+      {
+        message: 'main has diverged from staging!',
+      }
+    );
+  }
+);
