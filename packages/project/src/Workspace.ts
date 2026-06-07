@@ -123,10 +123,13 @@ export class Workspace {
     );
   }
 
-  async getCheckedOutProject() {
+  async getCheckedOutProject(alias: string | null = null) {
     return await Project.from('fs', {
       root: this.root,
       config: this.config,
+      // The checked out project can't meaningfully be said to have an alias
+      // But we can force one if it makes sense from context
+      alias: alias,
     }).catch((e) => {
       if (e.code === 'ENOENT') return undefined;
       throw e;
