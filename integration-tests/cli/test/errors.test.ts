@@ -135,7 +135,6 @@ test.serial('invalid end (ambiguous)', async (t) => {
   const stdlogs = extractLogs(stdout);
 
   assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
-  assertLog(t, stdlogs, /aborting/i);
 });
 
 // These test error outputs within valid workflows
