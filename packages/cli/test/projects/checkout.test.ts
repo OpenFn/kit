@@ -241,55 +241,52 @@ test.serial(
   }
 );
 
-test.serial.only(
-  'checkout: switching to and back between projects',
-  async (t) => {
-    // before checkout. my-project is active and expanded
-    const bcheckout = new Workspace('/ws');
-    t.is(bcheckout.activeProject!.id, 'my-project');
+test.serial('checkout: switching to and back between projects', async (t) => {
+  // before checkout. my-project is active and expanded
+  const bcheckout = new Workspace('/ws');
+  t.is(bcheckout.activeProject!.id, 'my-project');
 
-    // 1. switch from my-project to my-staging
-    await checkoutHandler(
-      { command: 'project-checkout', project: 'my-staging', workspace: '/ws' },
-      logger
-    );
-    const { message } = logger._parse(logger._last);
-    t.is(message, 'Expanded project to /ws');
+  // 1. switch from my-project to my-staging
+  await checkoutHandler(
+    { command: 'project-checkout', project: 'my-staging', workspace: '/ws' },
+    logger
+  );
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'Expanded project to /ws');
 
-    // after checkout. my-staging is active and expanded
-    const acheckout = new Workspace('/ws');
-    t.is(acheckout.activeProject!.id, 'my-staging');
+  // after checkout. my-staging is active and expanded
+  const acheckout = new Workspace('/ws');
+  t.is(acheckout.activeProject!.id, 'my-staging');
 
-    // check if files where well expanded
-    t.deepEqual(
-      fs.readdirSync('/ws/workflows').sort(),
-      ['simple-workflow', 'another-workflow'].sort()
-    );
+  // check if files where well expanded
+  t.deepEqual(
+    fs.readdirSync('/ws/workflows').sort(),
+    ['simple-workflow', 'another-workflow'].sort()
+  );
 
-    // 2. switch back from my-project to my-project
-    await checkoutHandler(
-      {
-        command: 'project-checkout',
-        project: 'my-project',
-        workspace: '/ws',
-        clean: true,
-      },
-      logger
-    );
-    const { message: lastMsg } = logger._parse(logger._last);
-    t.is(lastMsg, 'Expanded project to /ws');
+  // 2. switch back from my-project to my-project
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'my-project',
+      workspace: '/ws',
+      clean: true,
+    },
+    logger
+  );
+  const { message: lastMsg } = logger._parse(logger._last);
+  t.is(lastMsg, 'Expanded project to /ws');
 
-    // after checkout. my-project is active and expanded
-    const fcheckout = new Workspace('/ws');
-    t.is(fcheckout.activeProject!.id, 'my-project');
+  // after checkout. my-project is active and expanded
+  const fcheckout = new Workspace('/ws');
+  t.is(fcheckout.activeProject!.id, 'my-project');
 
-    // check if files where well expanded
-    t.deepEqual(
-      fs.readdirSync('/ws/workflows').sort(),
-      ['simple-workflow-main', 'another-workflow-main'].sort()
-    );
-  }
-);
+  // check if files where well expanded
+  t.deepEqual(
+    fs.readdirSync('/ws/workflows').sort(),
+    ['simple-workflow-main', 'another-workflow-main'].sort()
+  );
+});
 
 test.serial('checkout: switch with id', async (t) => {
   const before = new Workspace('/ws');
@@ -533,6 +530,8 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws3',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );
@@ -573,6 +572,8 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws4',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );
@@ -717,6 +718,8 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws5',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );

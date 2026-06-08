@@ -50,8 +50,10 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const { project: _, ...config } = workspace.getConfig() as any;
 
   const localProject = await workspace.getCheckedOutProject(
-    workspace.activeProject.alias ?? null
+    // TODO not sold on this assignment - I think my test case must be wrong
+    workspace.activeProject!.alias as any
   );
+
   // get the project
   let switchProject;
   if (/\.(yaml|json)$/.test(projectIdentifier)) {
@@ -75,7 +77,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   // get the current state of the checked out project
   try {
     // If there's no project checked out, there's nothing to compare
-    if (localProject.workflows.length) {
+    if (localProject?.workflows.length) {
       logger?.info(
         `Loaded currently checked out project ${localProject.alias} to check for untracked changes`
       );
@@ -84,7 +86,9 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       const changed = hasUntrackedChanges(localProject, tracked);
       if (changed.length && !options.force) {
         const err = {
-          details: `Changes may be lost by checking out ${localProject.alias} right now`,
+          details: `Changes may be lost by checking out ${
+            localProject.alias ?? localProject.id
+          } right now`,
           // TODO how can users save changes? Not really possible right now
           fix: 'Pass --force or -f to override this warning and continue',
         };

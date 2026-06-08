@@ -19,7 +19,7 @@ export type FromFsConfig = {
   root: string;
   config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
-  alias?: string;
+  alias?: string | null;
   name?: string;
 };
 
