@@ -51,7 +51,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
 
   const localProject = await workspace.getCheckedOutProject(
     // TODO not sold on this assignment - I think my test case must be wrong
-    workspace.activeProject!.alias as any
+    workspace.activeProject?.alias as any
   );
 
   // get the project
