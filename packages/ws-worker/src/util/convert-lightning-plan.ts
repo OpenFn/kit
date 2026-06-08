@@ -71,7 +71,6 @@ export default (
     for (const root of monorepoRoots) {
       const candidate = path.resolve(root, 'packages', shortName);
       if (fs.existsSync(path.join(candidate, 'package.json'))) {
-        console.log(' >>>> found ', candidate);
         return candidate;
       }
     }
@@ -84,7 +83,6 @@ export default (
   };
 
   const appendLocalVersions = (job: Job) => {
-    console.log({ monorepoRoots });
     if (monorepoRoots.length && job.adaptors!) {
       for (const adaptor of job.adaptors) {
         const { name, version } = getNameAndVersion(adaptor);
@@ -97,7 +95,6 @@ export default (
               path: localPath,
               version: 'local',
             };
-            console.log(job);
           }
         }
       }

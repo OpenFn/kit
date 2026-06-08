@@ -268,7 +268,6 @@ export const findLocallyChangedWorkflows = async (
 ) => {
   // Check openfn.yaml for the forked_from versions
   const { forked_from } = workspace.activeProject ?? {};
-  console.log({ forked_from });
   // If there are no forked_from references, we have no baseline
   // so assume everything has changed
   if (!forked_from || Object.keys(forked_from).length === 0) {

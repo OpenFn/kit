@@ -87,8 +87,6 @@ test.serial('throw an AbortError if a job is uncompilable', async (t) => {
     message: 'Failed to compile job',
   });
 
-  console.log(logger._history);
-
   t.assert(logger._find('error', /unexpected token/i));
   t.assert(logger._find('always', /check the syntax of the job expression/i));
 });
