@@ -50,8 +50,8 @@ const options = [
 
 const command: yargs.CommandModule = {
   command: 'merge <project>',
-  describe:
-    'Merges the currently checked-out project into the target project, and checks out the result. Does not update the remote project or local project.yaml file',
+  describe: false,
+  //describe: 'Merges the currently checked-out project into the target project, and checks out the result. Does not update the remote project or local project.yaml file',
   handler: ensure('project-merge', options),
   builder: (yargs) => build(options, yargs),
 };
