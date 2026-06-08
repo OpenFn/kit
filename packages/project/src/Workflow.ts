@@ -208,7 +208,6 @@ class Workflow {
       this.workflow.history?.concat(this.getVersionHash()) ?? [];
     const targetHistory =
       target.workflow.history?.concat(target.getVersionHash()) ?? [];
-
     const targetHead = targetHistory[targetHistory.length - 1];
     return thisHistory.indexOf(targetHead) > -1;
   }

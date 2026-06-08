@@ -84,6 +84,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       // TODO is alias robust here? Should we get by alias and domain?
       const tracked = workspace.get(localProject.alias ?? localProject.id);
       const changed = hasUntrackedChanges(localProject, tracked);
+      logger?.debug(changed);
       if (changed.length && !options.force) {
         const err = {
           details: `Changes may be lost by checking out ${
@@ -144,29 +145,29 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
 const hasUntrackedChanges = (
   activeProject: Project,
   tracked?: Project | null
-): string[] => {
+) => {
   if (!tracked) {
     // if there's no tracking we can't compare
     // should we log a warning then?
     return [];
   }
 
-  const changedWorkflows: string[] = [];
+  const changedWorkflows: Array<{
+    id: string;
+    type: 'new' | 'changed' | 'removed';
+  }> = [];
 
   // Check for changed and added workflows
   for (const workflow of activeProject.workflows) {
-    const currentHash = workflow.getVersionHash();
-
     const trackedWorkflow = tracked.getWorkflow(workflow.id);
     if (!trackedWorkflow) {
       // this is a new workflow added locally
-      changedWorkflows.push(workflow.id);
+      changedWorkflows.push({ id: workflow.id, type: 'new' });
       continue;
     }
 
-    const trackedHash = trackedWorkflow!.getVersionHash();
-    if (!versionsEqual(currentHash, trackedHash)) {
-      changedWorkflows.push(workflow.id);
+    if (!tracked.canMergeInto(activeProject)) {
+      changedWorkflows.push({ id: workflow.id, type: 'changed' });
     }
   }
 
@@ -174,7 +175,7 @@ const hasUntrackedChanges = (
   for (const workflow of tracked.workflows) {
     const localWorkflow = activeProject.getWorkflow(workflow.id);
     if (!localWorkflow) {
-      changedWorkflows.push(workflow.id);
+      changedWorkflows.push({ id: workflow.id, type: 'removed' });
     }
   }
 

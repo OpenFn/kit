@@ -171,6 +171,8 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
       workspace: workspacePath,
       project: options.outputPath ? finalPath : final.id,
       log: options.log,
+      // after the merge, we have to force the output to be checked out, ignoring divergence
+      force: true,
     },
     logger
   );
