@@ -6,6 +6,7 @@ import { RUN_COMPLETE } from '../events';
 import { Context, onJobError } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
 import { sendEvent } from '../util/send-event';
+import { getIgnoredErrorSeverity } from '../util/ignored-errors';
 
 export default async function onRunError(
   context: Context,
@@ -16,6 +17,9 @@ export default async function onRunError(
   try {
     // Ok, let's try that, let's just generate a reason from the event
     const reason = calculateJobExitReason('', { data: {} }, event);
+    const severityOverride = getIgnoredErrorSeverity(reason.error_message);
+    if (severityOverride) reason.reason = severityOverride;
+
     // If there's a job still running, make sure it gets marked complete
     if (state.activeJob) {
       await onJobError(context, { error: event });
