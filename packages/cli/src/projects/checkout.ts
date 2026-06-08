@@ -10,11 +10,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import {
-  findLocallyChangedWorkflows,
-  tidyWorkflowDir,
-  updateForkedFrom,
-} from './util';
+import { tidyWorkflowDir, updateForkedFrom } from './util';
 import { createProjectCredentials } from './create-credentials';
 import abort from '../util/abort';
 
@@ -53,7 +49,11 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   // TODO: try to retain the endpoint for the projects
   const { project: _, ...config } = workspace.getConfig() as any;
 
-  const currentProject = await workspace.getCheckedOutProject();
+  const localProject = await workspace.getCheckedOutProject(
+    // TODO not sold on this assignment - I think my test case must be wrong
+    workspace.activeProject?.alias as any
+  );
+
   // get the project
   let switchProject;
   if (/\.(yaml|json)$/.test(projectIdentifier)) {
@@ -76,28 +76,29 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
 
   // get the current state of the checked out project
   try {
-    const localProject = await Project.from('fs', {
-      root: options.workspace || '.',
-    });
-    logger?.info(
-      `Loaded currently checked out project ${localProject.alias} to check for divergence`
-    );
-    const changed = await findLocallyChangedWorkflows(
-      workspace,
-      localProject,
-      'assume-ok'
-    );
-    if (changed.length && !options.force) {
-      const err = {
-        details: `Changes may be lost by checking out ${localProject.alias} right now`,
-        // TODO how can users save changes? Not really possible right now
-        fix: 'Pass --force or -f to override this warning and continue',
-      };
-      abort(
-        logger!,
-        `${switchProject.alias} has diverged from ${localProject.alias}!`,
-        err
+    // If there's no project checked out, there's nothing to compare
+    if (localProject?.workflows.length) {
+      logger?.info(
+        `Loaded currently checked out project ${localProject.alias} to check for untracked changes`
       );
+      // TODO is alias robust here? Should we get by alias and domain?
+      const tracked = workspace.get(localProject.alias ?? localProject.id);
+      const changed = hasUntrackedChanges(localProject, tracked);
+      logger?.debug(changed);
+      if (changed.length && !options.force) {
+        const err = {
+          details: `Changes may be lost by checking out ${
+            localProject.alias ?? localProject.id
+          } right now`,
+          // TODO how can users save changes? Not really possible right now
+          fix: 'Pass --force or -f to override this warning and continue',
+        };
+        abort(
+          logger!,
+          `${switchProject.alias} has diverged from ${localProject.alias}!`,
+          err
+        );
+      }
     }
   } catch (e: any) {
     if (e.message.match('ENOENT')) {
@@ -112,7 +113,7 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
   } else {
-    await tidyWorkflowDir(currentProject, switchProject, false, workspacePath);
+    await tidyWorkflowDir(localProject, switchProject, false, workspacePath);
   }
 
   // write the forked from map
@@ -135,4 +136,48 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
 
   logger?.success(`Expanded project to ${workspacePath}`);
+};
+
+// This function will tell us if the active/checked out project
+// has any changes compared to the tracked state file
+// It implies that changes will be lost on checkout
+// (later, users can save a project to an arbitrary save file and so this may not be true)
+const hasUntrackedChanges = (
+  activeProject: Project,
+  tracked?: Project | null
+) => {
+  if (!tracked) {
+    // if there's no tracking we can't compare
+    // should we log a warning then?
+    return [];
+  }
+
+  const changedWorkflows: Array<{
+    id: string;
+    type: 'new' | 'changed' | 'removed';
+  }> = [];
+
+  // Check for changed and added workflows
+  for (const workflow of activeProject.workflows) {
+    const trackedWorkflow = tracked.getWorkflow(workflow.id);
+    if (!trackedWorkflow) {
+      // this is a new workflow added locally
+      changedWorkflows.push({ id: workflow.id, type: 'new' });
+      continue;
+    }
+
+    if (!tracked.canMergeInto(activeProject)) {
+      changedWorkflows.push({ id: workflow.id, type: 'changed' });
+    }
+  }
+
+  // Check for removed workflows
+  for (const workflow of tracked.workflows) {
+    const localWorkflow = activeProject.getWorkflow(workflow.id);
+    if (!localWorkflow) {
+      changedWorkflows.push({ id: workflow.id, type: 'removed' });
+    }
+  }
+
+  return changedWorkflows;
 };

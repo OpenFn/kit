@@ -193,10 +193,9 @@ test.serial('merge a project', async (t) => {
   t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
-  await run(
-    `openfn merge hello-world-staging --workspace ${projectsPath} --force`
+  const { stdout } = await run(
+    `openfn merge hello-world-staging --workspace ${projectsPath} --force --log debug`
   );
-
   // Check the step is updated
   const merged = await readStep();
   t.is(merged, "log('hello world')");

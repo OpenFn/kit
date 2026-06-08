@@ -259,6 +259,8 @@ export const updateForkedFrom = (proj: Project) => {
   return proj;
 };
 
+// Compare a project to its version hashed when forked
+// This tells us whether the project was edited since it was created
 export const findLocallyChangedWorkflows = async (
   workspace: Workspace,
   project: Project,
@@ -266,7 +268,6 @@ export const findLocallyChangedWorkflows = async (
 ) => {
   // Check openfn.yaml for the forked_from versions
   const { forked_from } = workspace.activeProject ?? {};
-
   // If there are no forked_from references, we have no baseline
   // so assume everything has changed
   if (!forked_from || Object.keys(forked_from).length === 0) {

@@ -48,6 +48,13 @@ export class Workspace {
       }
     }
     this.config = buildConfig(context.workspace);
+
+    // TODO: work out the alias of the active project
+    //       and make sure it's written
+    // tbh as activeProject is just the metadata in openfn.yaml,
+    // it's not super reliable
+    // Actually would it not be better to find the ACTUAL project and just
+    // reference that?
     this.activeProject = context.project;
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
@@ -123,10 +130,13 @@ export class Workspace {
     );
   }
 
-  async getCheckedOutProject() {
+  async getCheckedOutProject(alias?: string | null) {
     return await Project.from('fs', {
       root: this.root,
       config: this.config,
+      // The checked out project can't meaningfully be said to have an alias
+      // But we can force one if it makes sense from context
+      alias: alias ?? null,
     }).catch((e) => {
       if (e.code === 'ENOENT') return undefined;
       throw e;
