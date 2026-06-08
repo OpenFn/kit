@@ -174,12 +174,13 @@ steps:
 
 test.serial('execute a workflow from the checked out project', async (t) => {
   // cheeky bonus test of checkout by alias
-  await run(`openfn checkout main --workspace ${TMP_DIR}`);
+  await run(`openfn checkout main --workspace ${TMP_DIR} --force`);
 
   // execute a workflow
-  await run(
+  const { stdout } = await run(
     `openfn hello-workflow  -o ${TMP_DIR}/output.json  --workspace ${TMP_DIR}`
   );
+  console.log(stdout);
 
   const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
   const finalState = JSON.parse(output);

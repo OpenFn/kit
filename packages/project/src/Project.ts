@@ -36,7 +36,7 @@ type UUIDMap = {
 
 type CLIMeta = {
   version?: number;
-  alias?: string;
+  alias?: string | null;
   forked_from?: Record<string, string>;
 };
 
@@ -169,11 +169,11 @@ export class Project {
   }
 
   /** Local alias for the project. Comes from the file name. Not shared with Lightning. */
-  get alias() {
-    return this.cli.alias ?? 'main';
+  get alias(): string | null {
+    return this.cli.alias ?? null;
   }
 
-  set alias(value: string) {
+  set alias(value: string | null) {
     this.cli ??= {};
     this.cli.alias = value;
   }

@@ -135,7 +135,7 @@ test('throw for invalid workspace directory', async (t) => {
   await t.throwsAsync(
     () => list({ command: 'projects', workspace: '/invalid' }, logger),
     {
-      message: 'No OpenFn projects found',
+      message: 'No OpenFn projects found at /invalid',
     }
   );
   // const { message } = logger._parse(logger._last);
@@ -146,7 +146,7 @@ test('throw if dir is not a workspace', async (t) => {
   await t.throwsAsync(
     () => list({ command: 'projects', workspace: '/no-ws' }, logger),
     {
-      message: 'No OpenFn projects found',
+      message: 'No OpenFn projects found at /no-ws',
     }
   );
 });
