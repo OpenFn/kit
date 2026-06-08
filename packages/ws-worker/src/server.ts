@@ -30,6 +30,7 @@ import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import parseWorkloops from './util/parse-workloops';
 import getDefaultWorkloopConfig from './util/get-default-workloop-config';
+import { matchesIgnoredError } from './util/ignored-errors';
 
 const exec = promisify(_exec);
 
@@ -100,8 +101,6 @@ type SocketAndChannel = {
 const DEFAULT_PORT = 2222;
 const MIN_BACKOFF = 1000;
 const MAX_BACKOFF = 1000 * 30;
-
-const IGNORED_ERROR_PATTERNS: RegExp[] = [/OAuth token has expired/i];
 
 // TODO move out into another file, make testable, test in isolation
 function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
@@ -253,7 +252,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const error = hint.originalException as Error | undefined;
         const message = error?.message ?? event.message ?? '';
 
-        if (IGNORED_ERROR_PATTERNS.some((pattern) => pattern.test(message))) {
+        if (matchesIgnoredError(message)) {
           return null;
         }
 
