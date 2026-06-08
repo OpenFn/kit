@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import Project, { versionsEqual, Workspace } from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import path from 'path';
 import fs from 'fs';
 import { rimraf } from 'rimraf';
