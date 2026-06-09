@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.2.1
+
+### Patch Changes
+
+- 25e01c9: Allow project.alias to be null
+
 ## 2.2.0
 
 ### Minor Changes

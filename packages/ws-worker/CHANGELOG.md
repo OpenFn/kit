@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.26.1
+
+### Patch Changes
+
+- 8b912fa: Add the ability to ignore and override errors messsages before reporting to sentry
+- Updated dependencies [25e01c9]
+  - @openfn/lexicon@2.2.1
+
 ## 1.26.0
 
 ### Minor Changes

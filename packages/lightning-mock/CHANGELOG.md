@@ -1,5 +1,15 @@
 # @openfn/lightning-mock
 
+## 2.4.19
+
+### Patch Changes
+
+- 25e01c9: Ensure that projects added as JSON are deeply cloned, preventing scribbles
+- Updated dependencies [25e01c9]
+- Updated dependencies [25e01c9]
+  - @openfn/lexicon@2.2.1
+  - @openfn/project@0.17.1
+
 ## 2.4.18
 
 ### Patch Changes
