@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import { Logger } from '../util/logger';
 import request from './request';
@@ -94,6 +94,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
       null,
       options.pretty ? 2 : undefined
     );
+    await mkdir(path.dirname(options.outputPath!), { recursive: true });
     await writeFile(options.outputPath!, content);
     logger.always(`Wrote items to ${options.outputPath}`);
   } else {

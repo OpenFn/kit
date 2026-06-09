@@ -1,4 +1,5 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import type { CompileOptions } from './command';
 import type { Logger } from '../util/logger';
 
@@ -22,6 +23,7 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
   if (options.outputStdout) {
     logger.success('Result:\n\n' + result);
   } else {
+    await mkdir(dirname(options.outputPath!), { recursive: true });
     await writeFile(options.outputPath!, result as string);
     logger.success(`Compiled to ${options.outputPath}`);
   }
