@@ -1,5 +1,23 @@
 # @openfn/cli
 
+## 1.38.0
+
+### Minor Changes
+
+- 25e01c9: Allow users to specifiy which workflows to deploy or merge by passing `-w`.
+
+  NOTE: the `-w` alias has been repurposed from `--workspace` to `--workflow`. This may affect your local development environment. If so, just expand `-w` to `--workspace`.
+
+### Patch Changes
+
+- 4bf5394: Write the .gitignore file for cli cache to the cache root. This means the command will generate more ignore files, but prevents them getting generated at the system root
+- 8180b70: Ensure output path exists on compile and collections commands
+- 25e01c9: Fix an issue on checkout where incorrect divergence warnings can be shown
+- Updated dependencies [25e01c9]
+- Updated dependencies [25e01c9]
+  - @openfn/lexicon@2.2.1
+  - @openfn/project@0.17.1
+
 ## 1.37.0
 
 ### Minor Changes

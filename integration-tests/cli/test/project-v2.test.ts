@@ -131,7 +131,7 @@ test.before(async () => {
 });
 
 test.serial('list available projects', async (t) => {
-  const { stdout } = await run(`openfn projects -w ${TMP_DIR}`);
+  const { stdout } = await run(`openfn projects --workspace ${TMP_DIR}`);
   t.regex(stdout, /sandboxing-simple/);
   t.regex(stdout, /a272a529-716a-4de7-a01c-a082916c6d23/);
   t.regex(stdout, /staging/);
@@ -139,7 +139,7 @@ test.serial('list available projects', async (t) => {
 });
 
 test.serial('Checkout a project', async (t) => {
-  await run(`openfn checkout staging -w ${TMP_DIR}`);
+  await run(`openfn checkout staging --workspace ${TMP_DIR}`);
 
   // check workflow.yaml
   const workflowYaml = await readFile(
@@ -174,12 +174,13 @@ steps:
 
 test.serial('execute a workflow from the checked out project', async (t) => {
   // cheeky bonus test of checkout by alias
-  await run(`openfn checkout main -w ${TMP_DIR}`);
+  await run(`openfn checkout main --workspace ${TMP_DIR} --force`);
 
   // execute a workflow
-  await run(
+  const { stdout } = await run(
     `openfn hello-workflow  -o ${TMP_DIR}/output.json  --workspace ${TMP_DIR}`
   );
+  console.log(stdout);
 
   const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
   const finalState = JSON.parse(output);
@@ -189,7 +190,7 @@ test.serial('execute a workflow from the checked out project', async (t) => {
 test.serial(
   'execute a workflow from the checked out project with a credential map',
   async (t) => {
-    await run(`openfn checkout main --log debug -w ${TMP_DIR}`);
+    await run(`openfn checkout main --log debug --workspace ${TMP_DIR}`);
 
     // Modify the checked out workflow code
     await writeFile(
@@ -248,7 +249,7 @@ test.serial(
     // Important: the collection value MUST be as string
     server.collections.upsert('stuff', 'x', JSON.stringify({ id: 'x' }));
 
-    await run(`openfn checkout main --log debug -w ${TMP_DIR}`);
+    await run(`openfn checkout main --log debug --workspace ${TMP_DIR}`);
 
     // Modify the checked out workflow code
     await writeFile(
@@ -313,7 +314,7 @@ workspace:
 );
 
 test.serial('merge a project', async (t) => {
-  await run(`openfn checkout main -w ${TMP_DIR}`);
+  await run(`openfn checkout main --workspace ${TMP_DIR}`);
 
   const readStep = () =>
     readFile(
@@ -326,7 +327,9 @@ test.serial('merge a project', async (t) => {
   t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
-  const { stdout } = await run(`openfn merge staging -w ${TMP_DIR} --force`);
+  const { stdout } = await run(
+    `openfn merge staging --workspace ${TMP_DIR} --force`
+  );
 
   // Check the step is updated
   const merged = await readStep();

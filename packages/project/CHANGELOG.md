@@ -1,5 +1,13 @@
 # @openfn/project
 
+## 0.17.1
+
+### Patch Changes
+
+- 25e01c9: Set the correct alias on the checked out project
+- Updated dependencies [25e01c9]
+  - @openfn/lexicon@2.2.1
+
 ## 0.17.0
 
 ### Minor Changes

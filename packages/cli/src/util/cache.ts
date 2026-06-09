@@ -8,7 +8,8 @@ import type { Logger } from './logger';
 
 export const CACHE_DIR = '.cli-cache';
 
-// TODO this is all a bit over complicated tbh
+// When called without workflowName/stepId, returns the CACHE_DIR root.
+// This is used directly in saveToCache to locate the .gitignore.
 export const getCachePath = (
   options: Pick<Opts, 'baseDir' | 'cachePath'>,
   workflowName?: string,
@@ -24,7 +25,8 @@ export const getCachePath = (
 
   const basePath = path.resolve(
     baseDir ?? process.cwd(),
-    `${CACHE_DIR}/${workflowName}`
+    CACHE_DIR,
+    workflowName ?? ''
   );
 
   if (stepId) {
@@ -33,50 +35,45 @@ export const getCachePath = (
   return basePath;
 };
 
-const ensureGitIgnore = (options: any, cachePath: string) => {
+const ensureGitIgnore = (options: any, cacheRoot: string, logger?: Logger) => {
   if (!options._hasGitIgnore) {
-    // Find the root cache folder
-    let root = cachePath;
-    while (root.length > 1 && !root.endsWith(CACHE_DIR)) {
-      root = path.dirname(root);
-    }
-    // From the root cache, look for a .gitignore
-    const ignorePath = path.resolve(root, '.gitignore');
+    const ignorePath = path.join(cacheRoot, '.gitignore');
     try {
       fs.accessSync(ignorePath);
     } catch (e) {
-      // doesn't exist!
+      logger?.debug('Creating .gitignore at ', ignorePath);
       fs.writeFileSync(ignorePath, '*');
     }
+    options._hasGitIgnore = true;
   }
-  options._hasGitIgnore = true;
 };
 
 export const saveToCache = async (
   plan: ExecutionPlan,
   stepId: string,
   output: any,
-  options: Pick<Opts, 'baseDir' | 'cacheSteps'>,
+  options: Pick<Opts, 'baseDir' | 'cachePath' | 'cacheSteps'>,
   logger: Logger
 ) => {
   if (options.cacheSteps) {
-    const cachePath = await getCachePath(options, plan.workflow.name, stepId);
+    const cachePath = getCachePath(options, plan.workflow.name, stepId);
     // Note that this is sync because other execution order gets messed up
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
 
-    ensureGitIgnore(options, path.dirname(cachePath));
+    // getCachePath with no workflowName returns the CACHE_DIR root
+    ensureGitIgnore(options, getCachePath(options));
 
-    logger.info(`Writing ${stepId} output to ${cachePath}`);
+    logger.info(`Writing cached ${stepId} output to ${cachePath}`);
     fs.writeFileSync(cachePath, JSON.stringify(output));
   }
 };
 
 export const clearCache = async (
   plan: ExecutionPlan,
-  options: Pick<Opts, 'baseDir'>,
+  options: Pick<Opts, 'baseDir' | 'cachePath'>,
   logger: Logger
 ) => {
-  const cacheDir = await getCachePath(options, plan.workflow?.name);
+  const cacheDir = getCachePath(options, plan.workflow?.name);
 
   try {
     await rmdir(cacheDir, { recursive: true });

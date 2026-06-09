@@ -530,6 +530,8 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws3',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );
@@ -570,6 +572,8 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws4',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );
@@ -714,11 +718,279 @@ test.serial(
         command: 'project-checkout',
         project: 'main-project',
         workspace: '/ws5',
+        // the project on-disk has diverged from the statefile, so we need to force it through
+        force: true,
       },
       logger
     );
 
     t.false(fs.existsSync('/ws5/workflows/workflow-b'));
     t.true(fs.existsSync('/ws5/workflows/workflow-a'));
+  }
+);
+
+/**
+ * Using projects foo and bar here which come from a real issue
+ * Keeping those exact state files to keep diversity in the tests
+ */
+const foo = `id: foo
+name: foo
+schema_version: '4.0'
+collections: []
+channels: []
+credentials:
+  - uuid: 8c675997-117b-4e8a-a65e-1ddea0d0e525
+    name: name
+    owner: editor@openfn.org
+openfn:
+  uuid: 44c0c920-5635-4984-ade2-b95fb24cbaf0
+  endpoint: http://localhost:4000
+  inserted_at: 2025-10-15T11:29:36Z
+  updated_at: 2026-03-17T11:59:53Z
+options:
+  env: main
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - name: A
+    steps:
+      - id: aaa
+        name: aaa
+        expression: // abc
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 7b6a6de4-eed2-4204-8ac0-4da8fa64206c
+        next:
+          bbb:
+            disabled: false
+            condition: on_job_success
+            openfn:
+              uuid: 64f1b20f-bfdf-4626-87de-403008cfb05d
+      - id: bbb
+        name: bbb
+        expression: '2'
+        adaptor: '@openfn/language-common@3.3.1'
+        openfn:
+          uuid: 832f5560-69c5-4eae-89cc-823b93af82c8
+      - id: webhook
+        type: webhook
+        enabled: true
+        webhook_reply: before_start
+        openfn:
+          uuid: 16ddedbb-1d70-44b7-8653-26f8dc802757
+        next:
+          aaa:
+            disabled: false
+            condition: always
+            openfn:
+              uuid: eccb03ef-990d-4ca7-877b-5452bbc8f63b
+    history:
+      - app:0a97362c97b3
+      - app:8eb248f07744
+    openfn:
+      uuid: 4b2c13aa-2497-421a-9bb2-783309254130
+      updated_at: 2026-05-14T10:25:36Z
+      inserted_at: 2026-05-14T10:25:10Z
+      lock_version: 6
+    id: a
+    start: webhook
+`;
+const bar = `id: bar
+name: bar
+schema_version: '4.0'
+cli:
+  forked_from:
+    a: cli:145ff1ae62e5
+collections: []
+channels: []
+credentials: []
+openfn:
+  uuid: 7c478de6-4c82-427d-aad2-875b1b9eccb8
+  endpoint: http://localhost:4000
+  alias: staging
+  inserted_at: 2026-05-26T16:27:05Z
+  updated_at: 2026-05-26T16:27:05Z
+options:
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - name: A
+    steps:
+      - id: aaa
+        name: aaa
+        expression: // 2
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 8227ae53-81f8-447f-bb93-213d5721f884
+        next:
+          bbb:
+            disabled: false
+            condition: on_job_success
+            openfn:
+              uuid: 474d6861-bb47-4fad-953d-a7762751bae0
+      - id: bbb
+        name: bbb
+        expression: '2'
+        adaptor: '@openfn/language-http@7.2.11'
+        openfn:
+          uuid: 862bec16-ef94-4438-b307-8594a70276fe
+      - id: webhook
+        type: webhook
+        enabled: false
+        webhook_reply: before_start
+        openfn:
+          uuid: d7dfdd68-ecb8-4adc-90cf-8a4ed8cc0235
+        next:
+          aaa:
+            disabled: false
+            condition: always
+            openfn:
+              uuid: 067cab97-bef8-4d70-b484-5d013d27142b
+    history:
+      - cli:145ff1ae62e5
+    openfn:
+      uuid: 9746c1d9-1499-4413-9edc-c23577e9308e
+      inserted_at: 2026-05-26T16:27:05Z
+      updated_at: 2026-05-26T16:27:05Z
+      lock_version: 1
+    id: a
+    start: webhook
+`;
+
+test.serial(
+  'Checkout unrelated bar from unrelated project foo without divergence warning',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
+
+    // first checkout foo to set up the file system
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'foo',
+        workspace: '/tmp',
+      },
+      logger
+    );
+
+    // assert that staging was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'foo');
+
+    let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// abc');
+
+    // now checkout bar
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// 2');
+  }
+);
+
+test.serial(
+  'Checkout unrelated foo from unrelated project bar without divergence warning',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
+
+    // first checkout bar to set up the file system
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// 2');
+
+    // now checkout foo
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'foo',
+        workspace: '/tmp',
+      },
+      logger
+    );
+
+    // assert that staging was checked out ok
+    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'foo');
+
+    expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
+    t.is(expression, '// abc');
+  }
+);
+
+test.serial(
+  'If the checked out project has diverged from the tracked version, show a divergence warning on checkout',
+  async (t) => {
+    mock({
+      '/tmp/openfn.yaml': '',
+      '/tmp/.projects/main@server.yaml': foo,
+      '/tmp/.projects/staging@server.yaml': bar,
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'bar',
+        workspace: '/tmp',
+      },
+      logger
+    );
+    logger._reset();
+
+    // assert that main was checked out ok
+    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
+    t.is(openfn.project.id, 'bar');
+
+    // Now make a change - on checkout, this change will be lost (it is not saved anywhere)
+    fs.writeFileSync('/tmp/workflows/a/aaa.js', 'foobar');
+
+    // now try to checkout foo
+    await t.throwsAsync(
+      () =>
+        checkoutHandler(
+          {
+            command: 'project-checkout',
+            project: 'foo',
+            workspace: '/tmp',
+          },
+          logger
+        ),
+      {
+        message: 'main has diverged from staging!',
+      }
+    );
   }
 );

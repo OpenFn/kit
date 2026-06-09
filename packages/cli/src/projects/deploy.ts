@@ -1,5 +1,9 @@
 import yargs from 'yargs';
-import Project, { versionsEqual, Workspace } from '@openfn/project';
+import Project, {
+  MergeProjectOptions,
+  versionsEqual,
+  Workspace,
+} from '@openfn/project';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -42,6 +46,7 @@ export type DeployOptions = Pick<
   name?: string;
   alias?: string;
   jsonDiff?: boolean;
+  workflow?: string[];
 };
 
 const options = [
@@ -53,6 +58,7 @@ const options = [
   o2.name,
   o2.alias,
   o2.jsonDiff,
+  o2.workflow,
 
   // general options
   o.apiKey,
@@ -170,14 +176,26 @@ const syncProjects = async (
     // this will actually happen later
   }
 
-  const locallyChangedWorkflows = await findLocallyChangedWorkflows(
-    ws,
-    localProject
-  );
+  let mergeCandidates: string[];
+  if (options.workflow?.length) {
+    const missing = options.workflow.filter(
+      (id) => !localProject.workflows.some((w) => w.id === id)
+    );
+    if (missing.length) {
+      throw new Error(
+        `The following workflows were not found in local project ${
+          localProject.id
+        }: ${missing.join(', ')}`
+      );
+    }
+    mergeCandidates = options.workflow;
+  } else {
+    mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
+  }
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = locallyChangedWorkflows.length
-    ? remoteProject.diff(localProject, locallyChangedWorkflows)
+  const diffs = mergeCandidates.length
+    ? remoteProject.diff(localProject, mergeCandidates)
     : [];
 
   if (!diffs.length) {
@@ -203,7 +221,7 @@ const syncProjects = async (
     const divergentWorkflows = hasRemoteDiverged(
       localProject,
       remoteProject!,
-      locallyChangedWorkflows
+      mergeCandidates
     );
     if (divergentWorkflows) {
       logger.warn(
@@ -231,16 +249,24 @@ const syncProjects = async (
   }
 
   logger.info('Merging changes into remote project');
-  // TODO I would like to log which workflows are being updated
-  const merged = Project.merge(localProject, remoteProject!, {
+  const mergeOptions: MergeProjectOptions = {
     // If pushing the same project, we use a replace strategy
     // Otherwise, use the sandbox strategy to preserve UUIDs
     mode: localProject.uuid === remoteProject.uuid ? 'replace' : 'sandbox',
     force: true,
-    onlyUpdated: true,
-  });
+  };
+  if (options.workflow?.length) {
+    // If --workflow is passed, force-include exactly the listed workflows via workflowMappings
+    mergeOptions.workflowMappings = Object.fromEntries(
+      options.workflow.map((id) => [id, id])
+    );
+  } else {
+    // Otherwise only merge locally updated workflows
+    mergeOptions.onlyUpdated = true;
+  }
+  const merged = Project.merge(localProject, remoteProject!, mergeOptions);
 
-  return { merged, remoteProject, locallyChangedWorkflows };
+  return { merged, remoteProject, locallyChangedWorkflows: mergeCandidates };
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {

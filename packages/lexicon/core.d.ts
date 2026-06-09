@@ -94,7 +94,7 @@ export interface LocalMeta {
   This only affects how a state file ondisk is parsed */
   version?: number;
   /** Shorthand identifier used by CLI commands */
-  alias?: string;
+  alias?: string | null;
   [key: string]: any;
 }
 
