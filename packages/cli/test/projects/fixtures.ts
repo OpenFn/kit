@@ -103,3 +103,72 @@ workflows:
       lock_version: 1
     id: my-workflow
     start: webhook`;
+
+export const TWO_WORKFLOWS_UUID = '4b09ddf1-35f4-4e40-9aa9-0d80c086dd9e';
+
+export const two_workflows_yaml = `id: my-project
+name: My Project
+schema_version: '4.0'
+description: ''
+collections: []
+credentials: []
+openfn:
+  uuid: ${TWO_WORKFLOWS_UUID}
+  endpoint: https://app.openfn.org
+  inserted_at: 2025-04-23T11:15:59Z
+  updated_at: 2025-04-23T11:15:59Z
+options:
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - id: workflow-a
+    name: Workflow A
+    steps:
+      - id: job-a
+        name: Job A
+        expression: fn()
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 3d4727b6-4052-4f58-a834-3a03e433ff1d
+      - id: trigger-a
+        type: webhook
+        enabled: true
+        openfn:
+          uuid: 1b1c1dd5-e8d9-432f-aeaf-4e09397cac98
+        next:
+          job-a:
+            condition: always
+            openfn:
+              uuid: 1118353a-6015-40f9-8e57-51801a65bcfc
+    openfn:
+      uuid: 4584df01-cab4-4182-974d-6a75b13c7b97
+      inserted_at: 2025-04-23T11:19:32Z
+      updated_at: 2025-04-23T11:19:32Z
+      lock_version: 1
+    start: trigger-a
+  - id: workflow-b
+    name: Workflow B
+    steps:
+      - id: job-b
+        name: Job B
+        expression: fn()
+        adaptor: '@openfn/language-common@latest'
+        openfn:
+          uuid: 37e6e616-3840-4d71-b63c-a736ebc208b7
+      - id: trigger-b
+        type: webhook
+        enabled: true
+        openfn:
+          uuid: d65ed915-7f39-428b-af57-57ed2ecf507e
+        next:
+          job-b:
+            condition: always
+            openfn:
+              uuid: 4b291d27-c055-40cd-b82d-210644338715
+    openfn:
+      uuid: fc5eeff6-537b-4667-841b-4d17c70dfab9
+      inserted_at: 2025-04-23T11:19:32Z
+      updated_at: 2025-04-23T11:19:32Z
+      lock_version: 1
+    start: trigger-b`;

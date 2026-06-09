@@ -72,7 +72,10 @@ const setupDevAPI = (
       project = proj.serialize('state', {
         format: 'json',
       }) as Provisioner.Project_v1;
+    } else {
+      project = JSON.parse(JSON.stringify(project));
     }
+    // @ts-ignore
     state.projects[project.id] = project;
   };
 

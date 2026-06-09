@@ -16,24 +16,24 @@ interface CLIFriendlyError extends Error {
 export default (
   logger: Logger,
   reason: string,
-  error?: CLIFriendlyError,
+  error?: Partial<CLIFriendlyError>,
   help?: string
 ) => {
   const e = new AbortError(reason);
   logger.break();
   logger.error(reason);
   if (error) {
-    logger.error(error.message);
-    logger.break();
+    if (error.message) {
+      logger.error(error.message);
+      logger.break();
+    }
 
     if (error.details) {
-      logger.error('ERROR DETAILS:');
       logger.error(error.details);
       logger.break();
     }
     if (error.fix) {
-      logger.error('FIX HINT:');
-      logger.error(error.fix);
+      logger.always(error.fix);
       logger.break();
     }
   }
@@ -41,7 +41,7 @@ export default (
     logger.always(help);
   }
   logger.break();
-  logger.error('Critical error: aborting command');
+  // logger.error('Critical error: aborting command');
 
   process.exitCode = 1;
 

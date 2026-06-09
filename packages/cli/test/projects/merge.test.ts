@@ -321,3 +321,132 @@ test.serial('merge with custom base', async (t) => {
   t.is(merged.workflows[0].steps[1].name, 'Job X');
   t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
 });
+
+// Multi-workflow fixtures used by --workflows tests
+const buildWorkflow = (id: string, jobId: string, jobName: string) => ({
+  name: id,
+  id,
+  jobs: [{ id: jobId, name: jobName }],
+  triggers: [{ type: 'cron', enabled: true, id: `${id}-trigger` }],
+  edges: [
+    {
+      id: `${id}-edge`,
+      target_job_id: jobId,
+      enabled: true,
+      source_trigger_id: `${id}-trigger`,
+      condition_type: 'always',
+    },
+  ],
+});
+
+const multiSandbox = {
+  id: '<uuid:sandbox>',
+  name: 'My Sandbox',
+  workflows: [
+    buildWorkflow('workflow-1', 'job-x', 'Job X (from sandbox)'),
+    buildWorkflow('workflow-2', 'job-y', 'Job Y (from sandbox)'),
+  ],
+};
+
+const multiMain = {
+  id: '<uuid:main>',
+  name: 'My Project',
+  workflows: [
+    buildWorkflow('workflow-1', 'job-a', 'Job A (from main)'),
+    buildWorkflow('workflow-2', 'job-b', 'Job B (from main)'),
+  ],
+};
+
+const mockMultiWorkflowWorkspace = () => {
+  mock({
+    '/ws/workflows': {},
+    '/ws/openfn.yaml': jsonToYaml({
+      project: { id: 'my-project', name: 'My Project' },
+      workspace: {
+        dirs: { workflows: 'workflows' },
+        formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+      },
+    }),
+    '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml(multiSandbox),
+    '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml(multiMain),
+  });
+};
+
+test.serial(
+  '--workflow merges only the listed workflow, leaving other target workflows untouched',
+  async (t) => {
+    mockMultiWorkflowWorkspace();
+
+    await mergeHandler(
+      {
+        command: 'project-merge',
+        workspace: '/ws',
+        project: 'my-sandbox',
+        removeUnmapped: false,
+        workflowMappings: {},
+        workflow: ['workflow-1'],
+      },
+      logger
+    );
+
+    const merged = await Project.from(
+      'path',
+      '/ws/.projects/project@app.openfn.org.yaml'
+    );
+
+    const wf1 = merged.workflows.find((w) => w.id === 'workflow-1')!;
+    const wf2 = merged.workflows.find((w) => w.id === 'workflow-2')!;
+
+    // workflow-1 was merged from sandbox (Job X overlaid)
+    t.truthy(wf1.steps.find((s) => s.name === 'Job X (from sandbox)'));
+    // workflow-2 was NOT touched - still has Job B from main, not Job Y from sandbox
+    t.truthy(wf2.steps.find((s) => s.name === 'Job B (from main)'));
+    t.falsy(wf2.steps.find((s) => s.name === 'Job Y (from sandbox)'));
+  }
+);
+
+test.serial(
+  '--workflow errors when an id is not in the source project',
+  async (t) => {
+    mockMultiWorkflowWorkspace();
+
+    await mergeHandler(
+      {
+        command: 'project-merge',
+        workspace: '/ws',
+        project: 'my-sandbox',
+        removeUnmapped: false,
+        workflowMappings: {},
+        workflow: ['workflow-1', 'does-not-exist'],
+      },
+      logger
+    );
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'error');
+    t.regex(message as string, /does-not-exist/);
+  }
+);
+
+test.serial(
+  '--workflow and --workflow-mappings are mutually exclusive',
+  async (t) => {
+    mockMultiWorkflowWorkspace();
+
+    await mergeHandler(
+      {
+        command: 'project-merge',
+        workspace: '/ws',
+        project: 'my-sandbox',
+        removeUnmapped: false,
+        workflowMappings: { 'workflow-1': 'workflow-1' },
+        workflow: ['workflow-1'],
+      },
+      logger
+    );
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'error');
+    t.regex(message as string, /mutually exclusive/);
+  }
+);

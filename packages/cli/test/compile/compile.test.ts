@@ -89,7 +89,6 @@ test.serial('throw an AbortError if a job is uncompilable', async (t) => {
 
   t.assert(logger._find('error', /unexpected token/i));
   t.assert(logger._find('always', /check the syntax of the job expression/i));
-  t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
 test.serial(
@@ -111,7 +110,6 @@ test.serial(
 
     t.assert(logger._find('error', /unexpected token/i));
     t.assert(logger._find('always', /check the syntax of the job expression/i));
-    t.assert(logger._find('error', /critical error: aborting command/i));
   }
 );
 

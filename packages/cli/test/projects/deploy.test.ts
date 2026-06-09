@@ -11,8 +11,15 @@ import {
   hasRemoteDiverged,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
-import { myProject_yaml, myProject_v1, UUID } from './fixtures';
+import {
+  myProject_yaml,
+  myProject_v1,
+  UUID,
+  two_workflows_yaml as twowfs,
+  TWO_WORKFLOWS_UUID,
+} from './fixtures';
 import { checkout } from '../../src/projects';
+import { readFileSync } from 'node:fs';
 
 let server: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
@@ -21,11 +28,17 @@ const ENDPOINT = `http://localhost:${port}`;
 
 // quick fix to the fixture yaml, otherwise the deploy code kicks off
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
+const two_workflows_yaml = twowfs.replace('https://app.openfn.org', ENDPOINT);
 
 const mockFs = (paths: Record<string, string>) => {
-  const pnpm = path.resolve('../../node_modules/.pnpm');
+  // ensure this path is available to pnpm (needed by deps for some reason??)
+  // Note: loading all of pnpm takes ~7 seconds per test
+  // this workaround cuts out that delay entirely
+  const iconv = path.resolve(
+    '../../node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite/encodings'
+  );
   mock({
-    [pnpm]: mock.load(pnpm, {}),
+    [iconv]: mock.load(iconv, {}),
     ...paths,
   });
 };
@@ -191,6 +204,158 @@ test.serial(
 
     const noop = logger._find('success', /Nothing to deploy/i);
     t.truthy(noop);
+  }
+);
+
+test.serial(
+  'Passing --workflow only updates the requested workflows',
+  async (t) => {
+    await server.addProject(two_workflows_yaml);
+    await setup(two_workflows_yaml);
+
+    // Change both workflows locally
+    await writeFile('/ws/workflows/workflow-a/job-a.js', 'modifiedA()');
+    await writeFile('/ws/workflows/workflow-b/job-b.js', 'modifiedB()');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflow: ['workflow-a'],
+      } as any,
+      logger
+    );
+
+    const remoteProject = server.state.projects[TWO_WORKFLOWS_UUID];
+    t.is(
+      remoteProject.workflows['workflow-a'].jobs['job-a'].body,
+      'modifiedA()'
+    );
+    t.is(remoteProject.workflows['workflow-b'].jobs['job-b'].body, 'fn()');
+  }
+);
+
+test.serial(
+  '--workflow errors when an id is not in the local project',
+  async (t) => {
+    await setup(projectYaml);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            confirm: false,
+            workflow: ['nope-not-a-real-workflow'],
+          } as any,
+          logger
+        ),
+      { message: /nope-not-a-real-workflow/ }
+    );
+  }
+);
+
+test.serial(
+  '--workflow only actually updates a workflow if it has changed',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    await setup(projectYaml);
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflow: ['my-workflow'],
+      } as any,
+      logger
+    );
+
+    // TODO better to check that there is no post request tbh
+    t.truthy(logger._find('success', /Nothing to deploy/));
+  }
+);
+
+test.serial(
+  '--workflow will overwrite a newer version on the target if --force is included',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    await setup(projectYaml);
+
+    // Assert that the original remote code is fn()
+    const ogTransformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
+    t.is(ogTransformData.body, 'fn()');
+
+    // Modify the remote
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    const changedTransformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
+    t.is(changedTransformData.body, 'each()');
+
+    // Force push local (which will revert the remote changed)
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        workflow: ['my-workflow'],
+        force: true,
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Updated project at/));
+
+    // The remote should have been overwritten with the local body
+    const mergedTransformData =
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ];
+    t.is(mergedTransformData.body, 'fn()');
+  }
+);
+
+test.serial(
+  '--workflow still errors on divergence without --force',
+  async (t) => {
+    await setup(projectYaml);
+
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            confirm: false,
+            workflow: ['my-workflow'],
+          } as any,
+          logger
+        ),
+      { message: /PROJECTS_DIVERGED/ }
+    );
   }
 );
 

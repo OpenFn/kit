@@ -23,3 +23,5 @@ export {
 } from './util/version';
 
 export { mapWorkflow } from './parse/from-app-state';
+
+export type { MergeProjectOptions } from './merge/merge-project';

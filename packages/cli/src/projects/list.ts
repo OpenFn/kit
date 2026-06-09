@@ -7,6 +7,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
+import abort from '../util/abort';
 
 export type ProjectListOptions = Pick<Opts, 'log' | 'workspace'>;
 
@@ -34,7 +35,9 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
     // eg, this will happen if there's no openfn.yaml file
     // basically we need the workspace to return a reason
     // (again, I'm thinking of removing the validation entirely)
-    throw new Error('No OpenFn projects found');
+    abort(logger, `No OpenFn projects found at ${options.workspace}`, {
+      fix: 'Run this command from a folder with an openfn.yaml file, or pass --workspace to set the workspace root',
+    });
   }
 
   logger.always(`Available openfn projects\n\n${workspace
