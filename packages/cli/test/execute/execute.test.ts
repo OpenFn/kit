@@ -418,6 +418,24 @@ test.serial('.cli-cache has a gitignore', async (t) => {
   t.is(gitignore, '*');
 });
 
+test.serial('.cli-cache writes a .gitignore', async (t) => {
+  mockFs({
+    '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
+  });
+
+  const options = {
+    ...defaultOptions,
+    expressionPath: '/job.js',
+    baseDir: '/',
+    cacheSteps: true,
+  };
+
+  await handler(options, logger);
+
+  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+  t.is(gitignore, '*');
+});
+
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
     workflow: {
