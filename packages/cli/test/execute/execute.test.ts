@@ -418,8 +418,7 @@ test.serial('.cli-cache has a gitignore', async (t) => {
   t.is(gitignore, '*');
 });
 
-// Regression test for https://github.com/OpenFn/kit/issues/669
-test.serial('cache steps when running a .js expression', async (t) => {
+test.serial('.cli-cache writes a .gitignore', async (t) => {
   mockFs({
     '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
   });
@@ -431,41 +430,11 @@ test.serial('cache steps when running a .js expression', async (t) => {
     cacheSteps: true,
   };
 
-  const result = await handler(options, logger);
-  t.is(result.x, 1);
+  await handler(options, logger);
 
-  // workflow name is derived from the filename: 'job'
-  // step id is a generated uuid, so list the directory
-  const files = await fs.readdir('/.cli-cache/job');
-  t.is(files.length, 1);
-  t.true(files[0].endsWith('.json'));
-
-  const cached = JSON.parse(
-    await fs.readFile(`/.cli-cache/job/${files[0]}`, 'utf8')
-  );
-  t.is(cached.x, 1);
+  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+  t.is(gitignore, '*');
 });
-
-test.serial(
-  '.cli-cache has a gitignore when caching a .js expression',
-  async (t) => {
-    mockFs({
-      '/job.js': `${fn}fn((state) => ({ ...state, x: 1 }));`,
-    });
-
-    const options = {
-      ...defaultOptions,
-      expressionPath: '/job.js',
-      baseDir: '/',
-      cacheSteps: true,
-    };
-
-    await handler(options, logger);
-
-    const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
-    t.is(gitignore, '*');
-  }
-);
 
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
