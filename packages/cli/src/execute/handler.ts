@@ -15,7 +15,7 @@ import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
-import { clearCache, getCachePath } from '../util/cache';
+import { clearCache } from '../util/cache';
 import fuzzyMatchStep from '../util/fuzzy-match-step';
 import abort from '../util/abort';
 import validatePlan from '../util/validate-plan';
