@@ -30,6 +30,7 @@ import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import parseWorkloops from './util/parse-workloops';
 import getDefaultWorkloopConfig from './util/get-default-workloop-config';
+import { matchesIgnoredError } from './util/ignored-errors';
 
 const exec = promisify(_exec);
 
@@ -247,6 +248,16 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     Sentry.init({
       environment: options.sentryEnv,
       dsn: options.sentryDsn,
+      beforeSend(event, hint) {
+        const error = hint.originalException as Error | undefined;
+        const message = error?.message ?? event.message ?? '';
+
+        if (matchesIgnoredError(message)) {
+          return null;
+        }
+
+        return event;
+      },
     });
     Sentry.setupKoaErrorHandler(app);
   }
