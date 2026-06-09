@@ -35,13 +35,13 @@ export const getCachePath = (
   return basePath;
 };
 
-const ensureGitIgnore = (options: any, cacheRoot: string) => {
+const ensureGitIgnore = (options: any, cacheRoot: string, logger?: Logger) => {
   if (!options._hasGitIgnore) {
     const ignorePath = path.join(cacheRoot, '.gitignore');
     try {
       fs.accessSync(ignorePath);
     } catch (e) {
-      // doesn't exist!
+      logger?.debug('Creating .gitignore at ', ignorePath);
       fs.writeFileSync(ignorePath, '*');
     }
     options._hasGitIgnore = true;
@@ -63,7 +63,7 @@ export const saveToCache = async (
     // getCachePath with no workflowName returns the CACHE_DIR root
     ensureGitIgnore(options, getCachePath(options));
 
-    logger.info(`Writing ${stepId} output to ${cachePath}`);
+    logger.info(`Writing cached ${stepId} output to ${cachePath}`);
     fs.writeFileSync(cachePath, JSON.stringify(output));
   }
 };

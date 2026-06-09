@@ -175,15 +175,6 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   try {
     const result = await execute(finalPlan, state, options, logger);
 
-    if (options.cacheSteps) {
-      logger.success(
-        `Cached output written to ${getCachePath(
-          options,
-          plan.workflow.name
-        )} (see info logs for details)`
-      );
-    }
-
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result?.errors) {
