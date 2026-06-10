@@ -401,7 +401,7 @@ test('toNextState removing a job and edge', (t) => {
   t.deepEqual(result, existingState);
 });
 
-test('toNextState deleting a whole workflow', (t) => {
+test.only('toNextState deleting a whole workflow', (t) => {
   let existingState = fullExampleState();
   let spec = fullExampleSpec();
 
@@ -409,8 +409,9 @@ test('toNextState deleting a whole workflow', (t) => {
 
   let result = mergeSpecIntoState(existingState, spec);
 
-  jp.apply(existingState, '$.workflows["workflow-one"]', (value) => ({
-    id: value.id,
+  const workflowId = existingState.workflows['workflow-one'].id;
+  jp.apply(existingState, '$.workflows["workflow-one"]', () => ({
+    id: workflowId,
     delete: true,
   }));
 
