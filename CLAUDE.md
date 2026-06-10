@@ -37,11 +37,27 @@ The repository has three main packages: **CLI**, **Runtime**, and **Worker**. Th
 
 The **Compiler** transforms job DSL code into standard ES modules with imports and operation arrays.
 
+## Working with Projects
+
+A **workspace** holds one or more local **projects** that sync with Lightning. The CLI `project` subcommand (package: `@openfn/project`) is the most actively-developed area of the repo; handlers live in `packages/cli/src/projects/`. Sync uses Lightning's v2 endpoint.
+
+```bash
+openfn project list                # List projects in the current workspace
+openfn project pull [project]      # Pull from Lightning to the filesystem (fetch + checkout)
+openfn project fetch [project]     # Download project state without expanding it
+openfn project checkout <project>  # Switch the active project in the workspace
+openfn project deploy [project]    # Deploy the checked-out project to Lightning
+openfn project clean               # Delete the workflows folder and re-checkout the active project
+openfn project version [workflow]  # Show the version hash of a workflow
+```
+
+New subcommands follow the existing pattern in `packages/cli/src/projects/` (`list.ts` is the simplest reference).
+
 ## Development Setup
 
 ### Prerequisites
 
-- Node.js 18+ (use `asdf`)
+- Node.js 24 (pinned in `.tool-versions`; `package.json` engines still allows `>=18`). Use `asdf`.
 - pnpm (enable with `corepack enable`)
 
 ### Common Commands
@@ -51,6 +67,7 @@ The **Compiler** transforms job DSL code into standard ES modules with imports a
 pnpm install             # Install dependencies
 pnpm build              # Build all packages
 pnpm test               # Run all tests
+pnpm format             # Format all packages with Prettier
 pnpm changeset          # Add a changeset for your PR
 
 # CLI
@@ -68,18 +85,22 @@ curl -X POST http://localhost:2222/claim  # Manual claim
 
 ### Environment Variables
 
+**CLI:**
 - `OPENFN_REPO_DIR` - CLI adaptor storage
 - `OPENFN_ADAPTORS_REPO` - Local adaptors monorepo path
 - `OPENFN_API_KEY` - API key for Lightning deployment
 - `OPENFN_ENDPOINT` - Lightning URL (default: app.openfn.org)
+
+**Worker:**
 - `WORKER_SECRET` - Worker authentication secret
+- Many other `WORKER_*` vars (capacity, port, backoff, max payload, Sentry DSN, …) — see `packages/ws-worker/src/util/cli.ts`.
 
 ## Repository Structure
 
 ```
 packages/
 ├── cli/          # CLI entry: cli.ts, commands.ts, projects/, options.ts
-├── runtime/      # Runtime entry: index.ts, runtime.ts, util/linker
+├── runtime/      # Runtime entry: index.ts, runtime.ts, modules/linker
 ├── ws-worker/    # Worker entry: start.ts, server.ts, api/, events/
 ├── compiler/     # Job DSL compiler
 ├── engine-multi/ # Multi-process wrapper
@@ -109,15 +130,16 @@ cd packages/cli && pnpm test:watch  # Watch mode
 
 The [.claude](.claude) folder contains detailed guides:
 
-- **[command-refactor.md](.claude/command-refactor.md)** - Refactoring CLI commands into project subcommand structure
-- **[event-processor.md](.claude/event-processor.md)** - Worker event processing architecture (batching, ordering)
+- **[event-processor.md](.claude/event-processor.md)** - Worker event processing deep-dive (ordering, batching) — companion to `packages/ws-worker/CLAUDE.md`
+
+Key packages also carry their own `CLAUDE.md` (runtime, engine-multi, ws-worker), auto-loaded when you work in them.
 
 ## Code Standards
 
 - **Formatting**: Use Prettier (`pnpm format`)
 - **TypeScript**: Required for all new code
-- **TypeSync**: Run `pnpm typesync` after modifying dependencies
-- **Tests**: Write tests and run `pnpm build` before testing (tests run against `dist/`)
+- **TypeSync**: Run `pnpm _typesync` after modifying dependencies
+- **Tests**: Each package's tests run against its own `src/` via `@swc-node/register` (no build of the package under test needed). BUT workspace `@openfn/*` deps resolve to their built `dist/`, and `engine-multi` runs its worker processes from `dist/` — so run `pnpm build` first when tests cross packages or use the engine. When unsure, build.
 - **Independence**: Keep packages loosely coupled where possible
 
 ## Architecture Principles

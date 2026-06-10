@@ -106,25 +106,14 @@ Bugs in one handler don't cascade to other events, but partial state may be visi
 
 ## Integration Points
 
-### Initialization (execute.ts)
+### Initialization
 
-```
-eventProcessor(engine, context, {
-  [WORKFLOW_START]: handleRunStart,
-  [JOB_START]: handleStepStart,
-  [JOB_COMPLETE]: handleStepComplete,
-  [JOB_ERROR]: onJobError,
-  [WORKFLOW_LOG]: handleRunLog,
-  [WORKFLOW_COMPLETE]: handleRunComplete,
-  [WORKFLOW_ERROR]: handleRunError,
-}, {
-  batch: options.batchLogs ? { [WORKFLOW_LOG]: true } : {},
-  batchInterval: options.batchInterval,
-  batchLimit: options.batchLimit,
-})
-```
+The processor is created before the workflow starts (so no events are missed), and is given:
 
-Processor set up before workflow starts, ensuring no events missed.
+- a map of engine event name → handler (workflow start/complete/error, job/step start/complete/error, log)
+- batching options: which event types batch (currently only logs, and only when `batchLogs` is enabled), a batch size limit and interval, and a per-event fallback timeout
+
+The exact option shape changes over time — read `src/api/execute.ts` for the current call, and `src/api/process-events.ts` for the loop itself.
 
 ### Websocket Layer (send-event.ts)
 
@@ -172,12 +161,10 @@ Processor set up before workflow starts, ensuring no events missed.
 
 5. **No explicit teardown**: Relies on engine event emitter lifecycle; queue drains naturally when workflow completes
 
-## Critical Implementation Details
+## Where to Look
 
-- Active batch tracked with `activeBatch` variable (event name or null)
-- Batch events stored in `batch` array, cleared after send
-- Batch timeout stored in `batchTimeout`, cleared when batch sends
-- Queue implemented as array, items are `{name, event}` objects
-- Processing triggered by `enqueue` when queue length becomes 1
-- Recursive `next()` call after queue shift creates continuous flow
-- Event handlers imported from events directory, mapped explicitly in execute function
+Core loop: `src/api/process-events.ts`. Websocket send wrapper: `src/util/send-event.ts`. Handlers: `src/events/`.
+
+- The queue is an array of `{name, event}`; processing kicks off when the first item lands and drains one item at a time.
+- An open batch accumulates matching events (peek-ahead) and flushes on size limit, interval timeout, or arrival of a non-matching event.
+- Exact variable names and default values shift over time — trust the behavioural rules above and read the source for specifics.
