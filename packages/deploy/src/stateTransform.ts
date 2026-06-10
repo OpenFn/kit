@@ -21,7 +21,6 @@ import {
   assignIfTruthy,
 } from './utils';
 import { DeployError } from './deployError';
-import { Logger } from '@openfn/logger/dist';
 
 function stringifyJobBody(body: SpecJobBody): string {
   if (typeof body === 'object') {
@@ -301,7 +300,6 @@ function mergeEdges(
 export function mergeSpecIntoState(
   oldState: ProjectState,
   spec: ProjectSpec,
-  logger?: Logger
 ): ProjectState {
   const nextCredentials = Object.fromEntries(
     splitZip(oldState.project_credentials || {}, spec.credentials || {}).map(
@@ -462,14 +460,7 @@ export function mergeSpecIntoState(
         }
 
         if (!specWorkflow && !isEmpty(stateWorkflow || {})) {
-          logger?.error('Critical error! Cannot continue');
-          logger?.error(
-            'Workflow found in project state but not spec:',
-            stateWorkflow?.name
-              ? `${stateWorkflow.name} (${stateWorkflow?.id})`
-              : stateWorkflow?.id
-          );
-          process.exit(1);
+          return [workflowKey, { id: stateWorkflow!.id, delete: true }];
         }
 
         return [
