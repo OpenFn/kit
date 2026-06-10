@@ -299,7 +299,7 @@ function mergeEdges(
 // Prepare the next state, based on the current state and the spec.
 export function mergeSpecIntoState(
   oldState: ProjectState,
-  spec: ProjectSpec,
+  spec: ProjectSpec
 ): ProjectState {
   const nextCredentials = Object.fromEntries(
     splitZip(oldState.project_credentials || {}, spec.credentials || {}).map(
@@ -647,16 +647,16 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   // the server expects lists of jobs, triggers, and edges, so we need to
   // convert the keyed objects into lists.
 
-  const workflows: ProjectPayload['workflows'] = Object.values(
-    state.workflows
-  ).map((workflow) => {
-    return {
-      ...workflow,
-      jobs: Object.values(workflow.jobs),
-      triggers: Object.values(workflow.triggers),
-      edges: Object.values(workflow.edges),
-    };
-  });
+  const workflows: ProjectPayload['workflows'] = Object.values(state.workflows)
+    .filter((workflow) => !workflow.delete)
+    .map((workflow) => {
+      return {
+        ...workflow,
+        jobs: Object.values(workflow.jobs),
+        triggers: Object.values(workflow.triggers),
+        edges: Object.values(workflow.edges),
+      };
+    });
 
   const project_credentials: ProjectPayload['project_credentials'] =
     Object.values(state.project_credentials);
