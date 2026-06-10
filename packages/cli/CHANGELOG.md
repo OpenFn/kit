@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.38.1
+
+### Patch Changes
+
+- Updated dependencies [97dabc4]
+  - @openfn/deploy@0.13.1
+
 ## 1.38.0
 
 ### Minor Changes
