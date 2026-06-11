@@ -21,7 +21,6 @@ import {
   assignIfTruthy,
 } from './utils';
 import { DeployError } from './deployError';
-import { Logger } from '@openfn/logger/dist';
 
 function stringifyJobBody(body: SpecJobBody): string {
   if (typeof body === 'object') {
@@ -300,8 +299,7 @@ function mergeEdges(
 // Prepare the next state, based on the current state and the spec.
 export function mergeSpecIntoState(
   oldState: ProjectState,
-  spec: ProjectSpec,
-  logger?: Logger
+  spec: ProjectSpec
 ): ProjectState {
   const nextCredentials = Object.fromEntries(
     splitZip(oldState.project_credentials || {}, spec.credentials || {}).map(
@@ -462,14 +460,7 @@ export function mergeSpecIntoState(
         }
 
         if (!specWorkflow && !isEmpty(stateWorkflow || {})) {
-          logger?.error('Critical error! Cannot continue');
-          logger?.error(
-            'Workflow found in project state but not spec:',
-            stateWorkflow?.name
-              ? `${stateWorkflow.name} (${stateWorkflow?.id})`
-              : stateWorkflow?.id
-          );
-          process.exit(1);
+          return [workflowKey, { id: stateWorkflow!.id, delete: true }];
         }
 
         return [
@@ -656,16 +647,16 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   // the server expects lists of jobs, triggers, and edges, so we need to
   // convert the keyed objects into lists.
 
-  const workflows: ProjectPayload['workflows'] = Object.values(
-    state.workflows
-  ).map((workflow) => {
-    return {
-      ...workflow,
-      jobs: Object.values(workflow.jobs),
-      triggers: Object.values(workflow.triggers),
-      edges: Object.values(workflow.edges),
-    };
-  });
+  const workflows: ProjectPayload['workflows'] = Object.values(state.workflows)
+    .filter((workflow) => !workflow.delete)
+    .map((workflow) => {
+      return {
+        ...workflow,
+        jobs: Object.values(workflow.jobs),
+        triggers: Object.values(workflow.triggers),
+        edges: Object.values(workflow.edges),
+      };
+    });
 
   const project_credentials: ProjectPayload['project_credentials'] =
     Object.values(state.project_credentials);

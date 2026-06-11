@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.13.1
+
+### Patch Changes
+
+- 97dabc4: Ensure that workflows can be removed in v1 sync
+
 ## 0.13.0
 
 ### Minor Changes

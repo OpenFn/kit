@@ -401,6 +401,22 @@ test('toNextState removing a job and edge', (t) => {
   t.deepEqual(result, existingState);
 });
 
+test('toNextState deleting a whole workflow', (t) => {
+  let existingState = fullExampleState();
+  let spec = fullExampleSpec();
+
+  delete spec.workflows['workflow-one'];
+
+  let result = mergeSpecIntoState(existingState, spec);
+
+  jp.apply(existingState, '$.workflows["workflow-one"]', (value) => ({
+    id: value.id,
+    delete: true,
+  }));
+
+  t.deepEqual(result, existingState);
+});
+
 test('toNextState with for kafka trigger', (t) => {
   const state = { workflows: {} };
   const spec = {
@@ -1133,10 +1149,7 @@ test('toNextState resolves channel destination_credential to id', (t) => {
 
   const result = mergeSpecIntoState(state, spec);
 
-  t.is(
-    result.channels['webhook-out'].destination_credential_id,
-    'cred-id-123'
-  );
+  t.is(result.channels['webhook-out'].destination_credential_id, 'cred-id-123');
 });
 
 test('toNextState throws when channel references unknown credential', (t) => {
