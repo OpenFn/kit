@@ -401,7 +401,7 @@ test('toNextState removing a job and edge', (t) => {
   t.deepEqual(result, existingState);
 });
 
-test.only('toNextState deleting a whole workflow', (t) => {
+test('toNextState deleting a whole workflow', (t) => {
   let existingState = fullExampleState();
   let spec = fullExampleSpec();
 
