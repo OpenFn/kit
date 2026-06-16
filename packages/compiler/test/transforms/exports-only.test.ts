@@ -2,10 +2,44 @@ import test from 'ava';
 import { print } from 'recast';
 import parse from '../../src/parse';
 import transform from '../../src/transform';
-import visitors from '../../src/transforms/exports-only';
+import visitors, { hasExportableCode } from '../../src/transforms/exports-only';
 
 const compile = (source: string, options = {}) =>
   print(transform(parse(source), [visitors], options)).code.trim();
+
+// --- hasExportableCode ---
+
+test('hasExportableCode: true for export const', (t) => {
+  t.true(hasExportableCode('export const x = 1;'));
+});
+
+test('hasExportableCode: true for export function', (t) => {
+  t.true(hasExportableCode('export function foo() {}'));
+});
+
+test('hasExportableCode: true for export let', (t) => {
+  t.true(hasExportableCode('export let x = 1;'));
+});
+
+test('hasExportableCode: true for export var', (t) => {
+  t.true(hasExportableCode('export var x = 1;'));
+});
+
+test('hasExportableCode: true for export class', (t) => {
+  t.true(hasExportableCode('export class Foo {}'));
+});
+
+test('hasExportableCode: false for import only', (t) => {
+  t.false(hasExportableCode("import { get } from '@openfn/language-http';"));
+});
+
+test('hasExportableCode: false for empty string', (t) => {
+  t.false(hasExportableCode(''));
+});
+
+test('hasExportableCode: false for operations only', (t) => {
+  t.false(hasExportableCode('fn();\nget();'));
+});
 
 test('is a no-op when options is not true', (t) => {
   const before = `fn();

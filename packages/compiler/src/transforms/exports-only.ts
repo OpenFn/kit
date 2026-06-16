@@ -1,9 +1,14 @@
-// Strips all non-exported top-level code (operations, export default, bare declarations).
-// Runs before all other transformers (order: 0). No-op unless options === true.
+/*
+ * Strips all non-exported top-level code (operations, export default, bare declarations).
+ */
 
 import { namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
+
+// Returns true if compiled output contains any declarations worth importing in tests.
+export const hasExportableCode = (code: string): boolean =>
+  /^\s*export\s+(const|let|var|function|class)\s/m.test(code);
 
 function visitor(
   programPath: NodePath<n.Program>,

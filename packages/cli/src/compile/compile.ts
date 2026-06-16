@@ -4,6 +4,7 @@ import compile, {
   preloadAdaptorExports,
   Options,
   getExports,
+  hasExportableCode,
 } from '@openfn/compiler';
 import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
@@ -14,11 +15,6 @@ import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
 export type CompiledJob = { code: string; map?: SourceMapWithOperations };
-
-export const hasExportableCode = (code: string): boolean =>
-  /^\s*(export\s+(const|let|var|function|class)|const|let|var|function|class)\s/m.test(
-    code
-  );
 
 export default async function (
   job: ExecutionPlan,
@@ -232,43 +228,42 @@ export const compileProject = async (
   const outPaths: string[] = [];
   const stalePaths: string[] = [];
 
-  for (const workflow of workflows) {
-    for (const step of workflow.steps) {
-      if (!step.expression) continue;
+  const allSteps = workflows.flatMap((wf: any) =>
+    wf.steps
+      .filter((step: any) => step.expression)
+      .map((step: any) => ({ workflow: wf, step }))
+  );
 
-      const adaptor = step.adaptor;
-      const stepOpts: CompileOptions = {
-        ...opts,
-        adaptors: adaptor ? [adaptor] : opts.adaptors ?? [],
-      };
+  for (const { workflow, step } of allSteps) {
+    const stepOpts: CompileOptions = {
+      ...opts,
+      adaptors: step.adaptor ? [step.adaptor] : opts.adaptors ?? [],
+    };
 
-      const { code } = await compileJob(
-        step.expression,
-        stepOpts,
-        log,
-        step.name ?? step.id
-      );
+    const { code } = await compileJob(
+      step.expression,
+      stepOpts,
+      log,
+      step.name ?? step.id
+    );
 
-      if (opts.exportsOnly && !hasExportableCode(code)) {
-        const stalePath = compiledDir
-          ? path.join(compiledDir, workflow.id, `${step.id}.js`)
-          : null;
-        log.info(
-          `  ${workflow.id}/${step.id} — skipped (no exportable code after stripping)`
-        );
-        if (stalePath) stalePaths.push(stalePath);
-        continue;
-      }
+    const stepId = `${workflow.id}/${step.id}`;
 
-      if (opts.outputStdout) {
-        log.success(`// ${workflow.id}/${step.id}\n\n` + code);
-      } else {
-        const outPath = path.join(compiledDir!, workflow.id, `${step.id}.js`);
-        await fs.mkdir(path.dirname(outPath), { recursive: true });
-        await fs.writeFile(outPath, code);
-        outPaths.push(outPath);
-        log.success(`  ${workflow.id}/${step.id} → ${outPath}`);
-      }
+    if (opts.exportsOnly && !hasExportableCode(code)) {
+      log.debug(`  ${stepId} — skipped (no exportable code)`);
+      if (compiledDir)
+        stalePaths.push(path.join(compiledDir, workflow.id, `${step.id}.js`));
+      continue;
+    }
+
+    if (opts.outputStdout) {
+      log.success(`// ${stepId}\n\n` + code);
+    } else {
+      const outPath = path.join(compiledDir!, workflow.id, `${step.id}.js`);
+      await fs.mkdir(path.dirname(outPath), { recursive: true });
+      await fs.writeFile(outPath, code);
+      outPaths.push(outPath);
+      log.success(`  ${stepId} → ${outPath}`);
     }
   }
 
