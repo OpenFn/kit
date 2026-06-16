@@ -126,12 +126,6 @@ dirs:
   compiled: compiled # used by openfn compile
 ```
 
-### Stale file cleanup
-
-After each project-wide run with `--exports-only`, any step file that was skipped (no exportable code) is automatically deleted from `compiled/` if it exists from a previous run. Only files at exact step paths (`compiled/<workflow-id>/<step-id>.js`) are touched — files you have added at other paths (e.g. `compiled/my-workflow/helpers.js`) are never removed.
-
-There is no option to wipe the entire `compiled/` directory. To do a full reset, delete it manually before running `openfn compile`.
-
 ## Recommended Setup
 
 **`package.json`** (in your OpenFn project):

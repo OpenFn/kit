@@ -226,7 +226,6 @@ export const compileProject = async (
   }
 
   const outPaths: string[] = [];
-  const stalePaths: string[] = [];
 
   const allSteps = workflows.flatMap((wf: any) =>
     wf.steps
@@ -251,8 +250,6 @@ export const compileProject = async (
 
     if (opts.exportsOnly && !hasExportableCode(code)) {
       log.debug(`  ${stepId} — skipped (no exportable code)`);
-      if (compiledDir)
-        stalePaths.push(path.join(compiledDir, workflow.id, `${step.id}.js`));
       continue;
     }
 
@@ -264,16 +261,6 @@ export const compileProject = async (
       await fs.writeFile(outPath, code);
       outPaths.push(outPath);
       log.success(`  ${stepId} → ${outPath}`);
-    }
-  }
-
-  // Only deletes exact step paths — user-added files alongside them are untouched.
-  for (const stalePath of stalePaths) {
-    try {
-      await fs.unlink(stalePath);
-      log.info(`  Removed stale ${stalePath}`);
-    } catch (e: any) {
-      if (e.code !== 'ENOENT') throw e;
     }
   }
 

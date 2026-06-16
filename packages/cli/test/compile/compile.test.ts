@@ -404,14 +404,12 @@ steps:
 );
 
 test.serial(
-  'compileProject: removes stale step files skipped in --exports-only run',
+  'compileProject: skips steps with no exportable code in --exports-only run',
   async (t) => {
     const pnpm = path.resolve('../../node_modules/.pnpm');
     const recastPath = `${pnpm}/recast@0.21.5`;
     const sourceMapPath = `${pnpm}/source-map@0.7.6`;
 
-    // step-b has no exported code and will be skipped in --exports-only mode.
-    // Pre-populate a stale file at its expected output path.
     mock({
       [recastPath]: mock.load(recastPath, {}),
       [sourceMapPath]: mock.load(sourceMapPath, {}),
@@ -427,34 +425,17 @@ steps:
   - id: step-b
     expression: "fn();"
 `,
-      // stale file from a previous run without --exports-only
-      '/proj/compiled/wf1/step-b.js': 'export default [fn()];',
-      // user-added file — must not be touched
-      '/proj/compiled/wf1/step-b.test.js': 'import { } from "./step-b.js";',
     });
 
-    await compileProject(
+    const outPaths = await compileProject(
       { exportsOnly: true } as CompileOptions,
       mockLog,
       '/proj'
     );
 
-    const { default: nodeFsPromises } = await import('node:fs/promises');
-
-    // Stale step file should be gone
-    await t.throwsAsync(
-      () => nodeFsPromises.readFile('/proj/compiled/wf1/step-b.js'),
-      {
-        code: 'ENOENT',
-      }
-    );
-
-    // User file must still exist
-    const userFile = await nodeFsPromises.readFile(
-      '/proj/compiled/wf1/step-b.test.js',
-      'utf-8'
-    );
-    t.truthy(userFile);
+    // Only step-a has exportable code — step-b should not be written
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].endsWith('step-a.js'));
 
     mock.restore();
   }
