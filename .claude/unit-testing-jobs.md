@@ -41,8 +41,6 @@ openfn compile --exports-only --watch
 - `const helper = ...` (not exported) ✗ — dropped
 - `fn(state => ...)` (operation call) ✗ — stripped
 
-If an exported function depends on a non-exported local declaration, that dependency is kept automatically.
-
 `export default` is removed in strip mode — it is only needed by the runtime, not for unit testing.
 
 Steps with no exportable code (nothing is exported after stripping) are skipped — no file is written.
@@ -150,7 +148,7 @@ There is no option to wipe the entire `compiled/` directory. To do a full reset,
 
 ## Notes
 
-- In `--exports-only` mode, only `export const` and `export function` declarations survive — non-exported helpers are dropped unless referenced by an export
+- In `--exports-only` mode, only `export const` and `export function` declarations survive — non-exported helpers are always dropped
 - Import statements are always preserved
 - Without `--exports-only`, all code including operations is kept in `export default [...]`
 - Watch mode reruns compilation on any source change, making the edit → test cycle fast

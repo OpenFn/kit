@@ -234,21 +234,19 @@ export const compileProject = async (
 
   for (const workflow of workflows) {
     for (const step of workflow.steps) {
-      const expression = (step as any).expression;
-      if (!expression || typeof expression !== 'string') continue;
+      if (!step.expression) continue;
 
-      const adaptor: string | undefined =
-        (step as any).adaptor ?? (step as any).adaptors?.[0];
+      const adaptor = step.adaptor;
       const stepOpts: CompileOptions = {
         ...opts,
         adaptors: adaptor ? [adaptor] : opts.adaptors ?? [],
       };
 
       const { code } = await compileJob(
-        expression,
+        step.expression,
         stepOpts,
         log,
-        (step as any).name ?? step.id
+        step.name ?? step.id
       );
 
       if (opts.exportsOnly && !hasExportableCode(code)) {

@@ -38,7 +38,7 @@ const doCompile = async (options: CompileOptions, logger: Logger) => {
   }
 };
 
-const compileHandler = async (options: CompileOptions, logger: Logger) => {
+const runCompile = async (options: CompileOptions, logger: Logger) => {
   if (options.workflowName) {
     await compileProject(options, logger, process.cwd(), options.workflowName);
   } else if (!options.path) {
@@ -47,6 +47,10 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
     assertPath(options.path);
     await doCompile(options, logger);
   }
+};
+
+const compileHandler = async (options: CompileOptions, logger: Logger) => {
+  await runCompile(options, logger);
 
   if (!options.watch) return;
 
@@ -61,18 +65,7 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
   watcher.on('change', async (changedPath: string) => {
     logger.info(`${changedPath} changed, recompiling...`);
     try {
-      if (options.workflowName) {
-        await compileProject(
-          options,
-          logger,
-          process.cwd(),
-          options.workflowName
-        );
-      } else if (!options.path) {
-        await compileProject(options, logger);
-      } else {
-        await doCompile(options, logger);
-      }
+      await runCompile(options, logger);
     } catch (e) {
       logger.error('Compilation error:', e);
     }
