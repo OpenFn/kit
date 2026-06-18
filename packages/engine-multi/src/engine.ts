@@ -74,6 +74,7 @@ export type EngineOptions = {
   logger: Logger;
   maxWorkers?: number;
   memoryLimitMb?: number;
+  stateLimitMb?: number;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
   repoDir: string;
@@ -169,7 +170,7 @@ const createEngine = async (
       callWorker,
       options: {
         ...options,
-        stateLimitMb: opts.stateLimitMb,
+        stateLimitMb: opts.stateLimitMb ?? options.stateLimitMb,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
         runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,

@@ -111,6 +111,7 @@ if (args.mock) {
   const engineOptions = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
+    stateLimitMb: args.stateMemory,
     maxWorkers: effectiveCapacity,
     statePropsToRemove: args.statePropsToRemove,
     runTimeoutMs: args.maxRunDurationSeconds * 1000,

@@ -62,6 +62,7 @@ test('cli should set default values for unspecified options', (t) => {
   t.falsy(args.sentryDsn);
   t.deepEqual(args.statePropsToRemove, ['configuration', 'response']);
   t.is(args.runMemory, 500);
+  t.is(args.stateMemory, undefined);
   t.is(args.maxRunDurationSeconds, 300);
   t.is(args.engineValidationRetries, 3);
   t.is(args.engineValidationTimeoutMs, 5000);
