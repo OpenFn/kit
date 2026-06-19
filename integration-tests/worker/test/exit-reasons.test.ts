@@ -226,6 +226,92 @@ test.serial('kill: oom (large, kill vm)', async (t) => {
   t.is(error_message, 'Run exceeded maximum memory usage');
 });
 
+test.serial('kill: state exceeds the configured state limit', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-common@latest',
+        // ~2mb string for a 1mb limit
+        body: `fn((s) => {
+          s.data = new Array(2 * 1024 * 1024).fill('a').join('');
+          return s;
+        })`,
+      },
+    ],
+    options: {
+      state_limit_mb: 1,
+    },
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+  t.is(reason, 'kill');
+  t.is(error_type, 'StateTooLargeError');
+  t.regex(error_message, /State exceeds the limit of 1mb/);
+});
+
+test.serial(
+  'kill: state limit is enforced between jobs (downstream job does not run)',
+  async (t) => {
+    const jobOne = {
+      id: crypto.randomUUID(),
+      adaptor: '@openfn/language-common@latest',
+      // ~2mb state, over the 1mb limit set below
+      body: `fn((s) => {
+        s.data = new Array(2 * 1024 * 1024).fill('a').join('');
+        return s;
+      })`,
+    };
+
+    // not expected to run because the first job is expected to trigger state size crash
+    const jobTwo = {
+      id: crypto.randomUUID(),
+      adaptor: '@openfn/language-common@latest',
+      body: `fn(() => ({ data: 'ok' }))`,
+    };
+
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [jobOne, jobTwo],
+      edges: [
+        {
+          id: crypto.randomUUID(),
+          source_job_id: jobOne.id,
+          target_job_id: jobTwo.id,
+          condition: 'always',
+        },
+      ],
+      options: {
+        state_limit_mb: 1,
+      },
+    };
+
+    const startedJobs: string[] = [];
+    const unsubscribe = lightning.onSocketEvent(
+      'step:start',
+      attempt.id,
+      (evt) => {
+        if (evt.runId === attempt.id) {
+          startedJobs.push(evt.payload.job_id);
+        }
+      },
+      false
+    );
+
+    const result = await run(attempt);
+    unsubscribe();
+
+    const { reason, error_type, error_message } = result;
+    t.is(reason, 'kill');
+    t.is(error_type, 'StateTooLargeError');
+    t.regex(error_message, /State exceeds the limit of 1mb/);
+
+    t.deepEqual(startedJobs, [jobOne.id]);
+  }
+);
+
 test.serial('crash: process.exit() triggered by postgres', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
