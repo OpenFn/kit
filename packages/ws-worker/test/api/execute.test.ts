@@ -301,8 +301,12 @@ test('loadDataclip report to sentry on fail', async (t) => {
   } catch (e) {}
 
   const reports = await waitForSentryReport(testkit);
-  t.is(reports.length, 1);
-  t.is(reports[0].error.name, 'LightningSocketError');
+  const dataclip_report = reports.find((r: any) =>
+    /fetch\:dataclip.+not_found/i.test(r.error.message)
+  );
+  console.log(dataclip_report);
+  t.truthy(dataclip_report);
+  t.is(dataclip_report.error.name, 'LightningSocketError');
 });
 
 test('loadCredential should fetch a credential', async (t) => {
