@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.3.0
+
+### Minor Changes
+
+- 8ebc086: Add support for state memory limit via worker
+
 ## 2.2.1
 
 ### Patch Changes

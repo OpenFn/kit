@@ -1,5 +1,18 @@
 # @openfn/integration-tests-worker
 
+## 1.1.0
+
+### Minor Changes
+
+- 8ebc086: Add support for state memory limit via worker
+
+### Patch Changes
+
+- Updated dependencies [8ebc086]
+  - @openfn/engine-multi@1.12.0
+  - @openfn/ws-worker@1.27.0
+  - @openfn/lightning-mock@2.4.20
+
 ## 1.0.96
 
 ### Patch Changes
