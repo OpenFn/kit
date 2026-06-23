@@ -123,6 +123,25 @@ test('convert a single job with options', (t) => {
   });
 });
 
+test('convert a single job with state_limit_mb', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+    options: {
+      run_memory_limit_mb: 500,
+      state_limit_mb: 50,
+    },
+  };
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.deepEqual(options, {
+    memoryLimitMb: 500,
+    stateLimitMb: 50,
+  });
+});
+
 test('convert a single job with log_payload_limit_mb', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'w',

@@ -91,7 +91,7 @@ const prepareFinalState = async (
   if (isNullState(state)) return undefined;
   if (state) {
     try {
-      await ensureStateSize(state, stateLimit_mb);
+      await ensureStateSize(state, stateLimit_mb, logger);
     } catch (e: any) {
       logger.error('Critical error processing state: ', e.message);
       throw e;

@@ -146,6 +146,9 @@ export default (
     if ('run_memory_limit_mb' in run.options) {
       engineOpts.memoryLimitMb = run.options.run_memory_limit_mb;
     }
+    if ('state_limit_mb' in run.options) {
+      engineOpts.stateLimitMb = run.options.state_limit_mb;
+    }
     if ('sanitize' in run.options) {
       engineOpts.sanitize = run.options.sanitize;
     }

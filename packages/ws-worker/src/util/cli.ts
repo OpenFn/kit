@@ -38,6 +38,7 @@ type Args = {
   profilePollIntervalMs?: number;
   repoDir?: string;
   runMemory?: number;
+  stateMemory?: number;
   secret?: string;
   sentryDsn?: string;
   sentryEnv?: string;
@@ -91,6 +92,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_MAX_LOG_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
     WORKER_MAX_RUN_MEMORY_MB,
+    WORKER_MAX_STATE_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
     WORKER_PORT,
     WORKER_PROFILE_POLL_INTERVAL_MS,
@@ -219,6 +221,11 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY_MB',
       type: 'number',
     })
+    .option('state-memory', {
+      description:
+        'Maximum size of the state object returned by each step, in mb. Defaults to 25% of run-memory. Env: WORKER_MAX_STATE_MEMORY_MB',
+      type: 'number',
+    })
     .option('payload-memory', {
       description:
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
@@ -326,6 +333,12 @@ export default function parseArgs(argv: string[]): Args {
       ['configuration', 'response']
     ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
+    // No default: when unset the engine derives the limit from run-memory (25%)
+    stateMemory:
+      args.stateMemory ??
+      (WORKER_MAX_STATE_MEMORY_MB
+        ? parseInt(WORKER_MAX_STATE_MEMORY_MB, 10)
+        : undefined),
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
     logPayloadMemory: setArg(
       args.logPayloadMemory,

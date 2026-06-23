@@ -50,7 +50,7 @@ const execute = async (context: ExecutionContext) => {
       // This must be fairly high to prevent crashes
       stateLimitMb:
         options.stateLimitMb ??
-        Math.max((options.memoryLimitMb ?? 1000) * 0.25),
+        Math.max(50, options.memoryLimitMb ?? 1000 * 0.15),
     } as RunOptions;
 
     logger.debug(

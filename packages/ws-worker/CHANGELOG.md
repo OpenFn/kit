@@ -1,5 +1,18 @@
 # ws-worker
 
+## 1.27.0
+
+### Minor Changes
+
+- 8ebc086: Add support for state memory limit via worker
+- reduce default size of state objects
+
+### Patch Changes
+
+- Updated dependencies [8ebc086]
+  - @openfn/engine-multi@1.12.0
+  - @openfn/lexicon@2.3.0
+
 ## 1.26.1
 
 ### Patch Changes
