@@ -90,13 +90,6 @@ const prepareFinalState = async (
 ) => {
   if (isNullState(state)) return undefined;
   if (state) {
-    try {
-      await ensureStateSize(state, stateLimit_mb, logger);
-    } catch (e: any) {
-      logger.error('Critical error processing state: ', e.message);
-      throw e;
-    }
-
     if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
       // tbh this should happen higher up in the stack but it causes havoc in unit testing
@@ -115,8 +108,16 @@ const prepareFinalState = async (
         `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
       );
 
-    return clone(state);
+    try {
+      // TODO we're now using this function to
+      // safely serialize
+      return ensureStateSize(state, stateLimit_mb, logger);
+    } catch (e: any) {
+      logger.error('Critical error processing state: ', e.message);
+      throw e;
+    }
   }
+
   return state;
 };
 // The job handler is responsible for preparing the job

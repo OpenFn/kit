@@ -106,3 +106,34 @@ test('handle Set in state', async (t) => {
   };
   await t.notThrowsAsync(() => ensureStateSize(state, 2 / 1024));
 });
+
+test('returns the state object', async (t) => {
+  const state = { data: 'hello', count: 42 };
+  const result = await ensureStateSize(state, 2 / 1024);
+  t.deepEqual(result, { data: 'hello', count: 42 });
+});
+
+test('circular references become [Circular] in the result', async (t) => {
+  const state: any = { data: 'test' };
+  state.self = state;
+  const result: any = await ensureStateSize(state, 2 / 1024);
+  t.is(result.self, '[Circular]');
+});
+
+test('functions are stripped from the result', async (t) => {
+  const state = { data: 'test', fn: () => 'hello' };
+  const result: any = await ensureStateSize(state, 2 / 1024);
+  t.false('fn' in result);
+});
+
+test('undefined values are stripped from the result', async (t) => {
+  const state = { data: 'test', undef: undefined };
+  const result: any = await ensureStateSize(state, 2 / 1024);
+  t.false('undef' in result);
+});
+
+test('promises are stripped from the result', async (t) => {
+  const state = { data: 'test', promise: new Promise((r) => r(null)) };
+  const result: any = await ensureStateSize(state, 2 / 1024);
+  t.false('promise' in result);
+});
