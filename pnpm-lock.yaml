@@ -668,6 +668,9 @@ importers:
       source-map:
         specifier: ^0.7.6
         version: 0.7.6
+      stream-json:
+        specifier: ^3.4.0
+        version: 3.4.0
     devDependencies:
       '@openfn/compiler':
         specifier: workspace:^
@@ -4011,8 +4014,16 @@ packages:
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
 
+  stream-chain@4.2.5:
+    resolution: {integrity: sha512-Wtyq3bNE3ggLR0v2vftqvuhltym3WbZAkZpfIrkr5F/6vpeUmWmwTgXa16zD87gpahwJ/Qulq3zVfUlgIc0J2A==}
+    engines: {node: '>=22'}
+
   stream-json@1.9.1:
     resolution: {integrity: sha512-uWkjJ+2Nt/LO9Z/JyKZbMusL8Dkh97uUBTv3AJQ74y07lVahLY4eEFsPsE97pxYBwr8nnjMAIch5eqI0gPShyw==}
+
+  stream-json@3.4.0:
+    resolution: {integrity: sha512-7NEiOhtS0W7ZrwnqJc/fugsGQMdpNJng+v1s2xLTrmfBN2vcYDyBglCK2+eITif0VkHLXnTdALgQI9TnZMBhYA==}
+    engines: {node: '>=22'}
 
   stream-shift@1.0.3:
     resolution: {integrity: sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ==}
@@ -7641,9 +7652,15 @@ snapshots:
 
   stream-chain@2.2.5: {}
 
+  stream-chain@4.2.5: {}
+
   stream-json@1.9.1:
     dependencies:
       stream-chain: 2.2.5
+
+  stream-json@3.4.0:
+    dependencies:
+      stream-chain: 4.2.5
 
   stream-shift@1.0.3: {}
 
