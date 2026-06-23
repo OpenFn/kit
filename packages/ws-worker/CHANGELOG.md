@@ -5,6 +5,7 @@
 ### Minor Changes
 
 - 8ebc086: Add support for state memory limit via worker
+- Reduce support size of state objects
 
 ### Patch Changes
 

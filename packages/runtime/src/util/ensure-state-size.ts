@@ -28,6 +28,5 @@ export default async (value: any, limit_mb: number = 500) => {
         throw new StateTooLargeError(limit_mb);
       }
     }
-    // todo log the size of state
   }
 };
