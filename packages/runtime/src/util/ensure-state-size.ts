@@ -25,6 +25,7 @@ export default async (value: any, limit_mb: number = 500, logger?: Logger) => {
     const limitBytes = limit_mb * 1024 * 1024;
     let size_bytes = 0;
 
+    const start = Date.now();
     const source = new JsonStreamStringify(value, replacer, 0, true);
 
     const sizeGuard = new Transform({
@@ -66,12 +67,15 @@ export default async (value: any, limit_mb: number = 500, logger?: Logger) => {
       }
       throw e;
     }
+    const duration = Date.now() - start;
 
     if (size_bytes < 1024 * 1024) {
-      logger?.debug(`State object serializes to less than 1mb`);
+      logger?.debug(`State object serializes to less than 1mb (${duration}ms)`);
     } else {
       logger?.debug(
-        `State object serializes to ${(size_bytes / 1024 / 1024).toFixed(2)}mb`
+        `State object serializes to ${(size_bytes / 1024 / 1024).toFixed(
+          2
+        )}mb (${duration}ms)`
       );
     }
 
