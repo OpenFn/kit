@@ -27,7 +27,7 @@ export type APIOptions = Partial<Omit<EngineOptions, 'whitelist'>>;
 
 const DEFAULT_REPO_DIR = path.join(os.homedir(), '.openfn/worker/repo');
 
-const DEFAULT_MEMORY_LIMIT = 500;
+const DEFAULT_RUN_MEMORY_LIMIT = 500;
 
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
@@ -57,7 +57,7 @@ const createAPI = async function (
     autoinstall: options.autoinstall,
 
     maxWorkers: options.maxWorkers,
-    memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
+    memoryLimitMb: options.memoryLimitMb || DEFAULT_RUN_MEMORY_LIMIT,
     runTimeoutMs: options.runTimeoutMs,
 
     statePropsToRemove: options.statePropsToRemove ?? [

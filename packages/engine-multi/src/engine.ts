@@ -73,6 +73,11 @@ export type EngineOptions = {
   // compile?: { skip?: boolean } // TODO no support yet
   logger: Logger;
   maxWorkers?: number;
+
+  /** Sets the maximum total memory usable by the engine. Otherwise uses all available memory */
+  maxEngineMemoryMb?: number;
+
+  /** Memory limit per run */
   memoryLimitMb?: number;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;

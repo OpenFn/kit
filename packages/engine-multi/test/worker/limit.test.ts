@@ -2,15 +2,30 @@ import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
 
 import {
+  calculateLimits,
   detectPrlimitSupport,
   applyMemoryLimit,
   _resetCache,
-} from '../../src/worker/rlimit';
-
+} from '../../src/worker/limits';
 const logger = createMockLogger();
 
 test.beforeEach(() => {
   _resetCache();
+});
+
+test('calculateLimits divides available memory evenly across workers', (t) => {
+  const result = calculateLimits(100, 20, 2);
+  t.is(result, 40);
+});
+
+test('calculateLimits floors the result', (t) => {
+  const result = calculateLimits(100, 20, 3);
+  t.is(result, 26);
+});
+
+test('calculateLimits with capacity of 1', (t) => {
+  const result = calculateLimits(100, 20, 1);
+  t.is(result, 80);
 });
 
 test('detectPrlimitSupport caches the result across calls', (t) => {

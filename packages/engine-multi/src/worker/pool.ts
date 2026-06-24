@@ -13,17 +13,29 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 import type { PayloadLimits } from './thread/runtime';
-import { detectPrlimitSupport, applyMemoryLimit } from './rlimit';
+import {
+  detectPrlimitSupport,
+  getAvailableMemory,
+  calculateLimits,
+  setHardMemoryLimit,
+  applyMemoryLimit,
+} from './limits';
+import { b, mb } from '../util/memory';
 
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
-  maxWorkerMemoryMb?: number; // process-level memory limit via RLIMIT_AS
+
+  /* Total memory available to the whole engine (will auto-detect if not set) */
+  totalMemoryMb?: number;
   env?: Record<string, string>; // default environment for workers
   memoryLimitMb?: number; // --max-old-space-size for child processes
 
   proxyStdout?: boolean; // print internal stdout to console
 };
+
+// TODO set through options
+const ENGINE_MAIN_OVERHEAD_MB = 400;
 
 type RunTaskEvent = {
   type: typeof ENGINE_RUN_TASK;
@@ -74,15 +86,22 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
-  const hasPrlimit = detectPrlimitSupport(logger);
+  const hasPrlimit = detectPrlimitSupport();
+  let hardMemCap_bytes;
 
-  if (hasPrlimit && options.maxWorkerMemoryMb) {
+  if (hasPrlimit) {
+    hardMemCap_bytes = calculateLimits(
+      getAvailableMemory(options),
+      ENGINE_MAIN_OVERHEAD_MB,
+      capacity
+    );
     logger.info(
-      `pool: prlimit memory enforcement enabled | limit: ${options.maxWorkerMemoryMb}MB per child`
+      `Memory enforcement enabled | hard limit: ${Math.floor(
+        mb(hardMemCap_bytes)
+      )}mb per child`
     );
   }
 
-  // a pool of processes
   const pool: ChildProcessPool = new Array(capacity).fill(false);
 
   const queue: QueuedTask[] = [];
@@ -96,6 +115,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // create a new child process and load the module script into it
       const execArgv = ['--experimental-vm-modules', '--no-warnings'];
       if (options.memoryLimitMb) {
+        // TODO this is just a fallback value - prlimit is the primary
+        // mechanism for controlling memory use
         execArgv.push(`--max-old-space-size=${options.memoryLimitMb}`);
       }
 
@@ -115,22 +136,19 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         });
       }
 
+      setHardMemoryLimit(child, hardMemCap_bytes!, logger);
+
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
-
-      if (hasPrlimit && options.maxWorkerMemoryMb) {
-        // RLIMIT_AS counts virtual address space, not RSS.
-        // Node/V8 routinely reserves 4-8GB of virtual memory at startup
-        // (page table entries are cheap on 64-bit). We set a generous limit
-        // that only catches truly runaway allocations.
-        const limitBytes = Math.ceil(
-          (options.maxWorkerMemoryMb * 10 + 2048) * 1024 * 1024
-        );
-        applyMemoryLimit(child.pid!, limitBytes, logger);
-      }
     } else {
       child = maybeChild as ChildProcess;
       logger.debug('pool: Using existing child process', child.pid);
+    }
+
+    // TODO: memory limit is currently set for all runs in the worker according to config
+    // We could now set this per-run by passing a run option
+    if (options.memoryLimitMb) {
+      applyMemoryLimit(child, b(options.memoryLimitMb), logger);
     }
     return child;
   };
@@ -169,7 +187,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
-      const onExit = async (code: number) => {
+      const onExit = async (code: number, e) => {
+        console.log(code, e);
         if (code !== HANDLED_EXIT_CODE) {
           logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
           clearTimeout(timeout);
