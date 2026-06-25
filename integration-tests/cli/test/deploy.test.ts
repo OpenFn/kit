@@ -269,6 +269,52 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
   );
 });
 
+test.serial('deploy a v2 spec file', async (t) => {
+  const testProjectV2 = `
+name: test-project
+schema_version: '4.0'
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          my-job: {}
+      - id: my-job
+        name: My Job
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+`.trim();
+
+  await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProjectV2);
+
+  t.is(Object.keys(server.state.projects).length, 0);
+
+  const { stdout, stderr } = await run(
+    `openfn deploy \
+      --project-path ${tmpDir}/project.yaml \
+      --state-path ${tmpDir}/.state.json \
+      --no-confirm \
+      --log-json \
+      -l debug`
+  );
+
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /v2 spec/i);
+  assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'test-project');
+  const [workflow] = Object.values(project.workflows) as any[];
+  t.is(workflow.name, 'My Workflow');
+});
+
 test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
   t.is(Object.keys(server.state.projects).length, 0);
 
