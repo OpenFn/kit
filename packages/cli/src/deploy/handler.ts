@@ -10,7 +10,7 @@ import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
 import path from 'node:path';
 import { fileExists } from '../util/file-exists';
-import Project, { yamlToJson } from '@openfn/project';
+import Project, { detectVersion, yamlToJson } from '@openfn/project';
 import fs from 'node:fs/promises';
 
 export type DeployFn = typeof deploy;
@@ -139,7 +139,7 @@ const redirectTov2 = async (
 
 export const maybeConvertV2spec = async (yaml: string): Promise<string> => {
   const json = yamlToJson(yaml) as any;
-  if (json.schema_version || json.cli?.version === 2 || json.version) {
+  if (detectVersion(json) > 1) {
     const project = await Project.from('project', json);
     return project.serialize('state', { format: 'yaml' }) as string;
   }

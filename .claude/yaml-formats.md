@@ -82,10 +82,11 @@ workflows:
 
 ## Detection logic
 
-Mirrors `packages/project/src/parse/from-project.ts`:
+Use `detectVersion(data)` from `@openfn/project` — returns `1` or `2`. Accepts YAML/JSON string or pre-parsed object.
 
 ```typescript
-const isV2 = json.schema_version || json.cli?.version === 2 || json.version;
+import { detectVersion } from '@openfn/project';
+if (detectVersion(json) === 2) { /* v2 */ }
 ```
 
 ## Conversion
