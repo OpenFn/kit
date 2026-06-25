@@ -193,4 +193,6 @@ export interface DeployConfig {
   requireConfirmation: boolean;
   dryRun: boolean;
   apiKey: string | null;
+  spec?: string;
+  state?: ProjectState;
 }

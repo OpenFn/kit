@@ -62,6 +62,15 @@ async function deployHandler(
       config.endpoint = process.env['OPENFN_ENDPOINT'];
     }
 
+    const rawSpec = await fs.readFile(config.specPath, 'utf-8');
+    const convertedSpec = await maybeConvertV2spec(rawSpec);
+    if (convertedSpec !== rawSpec) {
+      logger.debug(
+        'Detected v2 spec file! This will be converted into the legacy format and validation will be skipped.'
+      );
+      config.spec = convertedSpec;
+    }
+
     logger.debug('Deploying with config', config);
     logger.info(`Deploying`);
 
