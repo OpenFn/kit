@@ -83,6 +83,43 @@ workflows:
         enabled: true
 `;
 
+// Validates a provisioner payload, returning an error body if invalid or null if valid.
+// Mirrors Lightning's error format so deploy code sees realistic rejection responses.
+export function validateProvisionPayload(incoming: any): Record<string, any> | null {
+  const workflowErrors: Record<string, any> = {};
+
+  const wfList: any[] = Array.isArray(incoming.workflows)
+    ? incoming.workflows
+    : Object.values(incoming.workflows ?? {});
+
+  for (const wf of wfList) {
+    const edgeErrors: Record<string, any> = {};
+    const edgeList: any[] = Array.isArray(wf.edges)
+      ? wf.edges
+      : Object.values(wf.edges ?? {});
+
+    for (const edge of edgeList) {
+      if (!edge.source_trigger_id && !edge.source_job_id) {
+        const key = edge.id ?? '->';
+        edgeErrors[key] = {
+          source_job_id: ['source_job_id or source_trigger_id must be present'],
+        };
+      }
+    }
+
+    if (Object.keys(edgeErrors).length > 0) {
+      const wfKey = wf.name ?? wf.id ?? 'unknown';
+      workflowErrors[wfKey] = { edges: edgeErrors };
+    }
+  }
+
+  if (Object.keys(workflowErrors).length > 0) {
+    return { errors: { workflows: workflowErrors } };
+  }
+
+  return null;
+}
+
 export default (
   app: DevServer,
   state: ServerState,
@@ -121,6 +158,14 @@ export default (
 
   router.post('/api/provision', (ctx) => {
     const incoming: any = ctx.request.body;
+
+    const validationErrors = validateProvisionPayload(incoming);
+    if (validationErrors) {
+      ctx.response.status = 422;
+      ctx.response.body = validationErrors;
+      return;
+    }
+
     const now = new Date().toISOString();
 
     if (!state.projects[incoming.id]) {
