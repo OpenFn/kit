@@ -12,6 +12,26 @@ const port = 8967;
 const endpoint = `http://localhost:${port}`;
 let tmpDir = path.resolve('tmp/deploy');
 
+const testProjectV2 = `
+id: my-project
+name: My Project
+schema_version: '4.0'
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data: {}
+      - id: transform-data
+        name: Transform data
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+`.trim();
+
 const testProject = `
 name: test-project
 workflows:
@@ -97,7 +117,6 @@ test.serial('deploy a local project', async (t) => {
       --log-json \
       -l debug`
   );
-
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
@@ -269,7 +288,7 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
   );
 });
 
-test.serial('deploy a v2 spec file', async (t) => {
+test.serial.only('deploy a v2 spec file', async (t) => {
   const testProjectV2 = `
 name: test-project
 schema_version: '4.0'
@@ -301,7 +320,7 @@ workflows:
       --log-json \
       -l debug`
   );
-
+  console.log(stdout);
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
@@ -377,4 +396,26 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   t.is(Object.keys(server.state.projects).length, 1);
   t.truthy(server.state.projects[projectId]);
+});
+
+test.serial('deploy a v2 project.yaml', async (t) => {
+  await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProjectV2);
+
+  const { stdout, stderr } = await run(
+    `openfn deploy \
+      --project-path ${tmpDir}/project.yaml \
+      --state-path ${tmpDir}/.state.json \
+      --no-confirm \
+      --log-json \
+      -l debug`
+  );
+
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'My Project');
 });

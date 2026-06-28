@@ -612,6 +612,76 @@ test('should convert a project back to app state in json', (t) => {
 
 // TODO this test is failing because the order of keys in the yaml have changed!
 // We probably need to force alphabetical sorting on yaml keys
+// asSpec: true — spec format for deploy pipeline
+
+const v2ProjectData: any = {
+  id: 'my-project',
+  name: 'My Project',
+  schema_version: '4.0',
+  workflows: [
+    {
+      id: 'my-workflow',
+      name: 'My Workflow',
+      start: 'webhook',
+      steps: [
+        {
+          id: 'webhook',
+          type: 'webhook',
+          enabled: true,
+          next: { 'transform-data': {} },
+        },
+        {
+          id: 'transform-data',
+          name: 'Transform data',
+          expression: 'fn(s => s)',
+          adaptor: '@openfn/language-common@latest',
+        },
+      ],
+    },
+  ],
+};
+
+test('asSpec:true - edges use source_trigger/target_job keys, not UUIDs', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const edge = Object.values(result.workflows['my-workflow'].edges)[0] as any;
+  t.truthy(edge.source_trigger);
+  t.truthy(edge.target_job);
+  t.falsy(edge.source_trigger_id);
+  t.falsy(edge.target_job_id);
+  t.falsy(edge.id);
+});
+
+test('asSpec:true - source_trigger matches the trigger key', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const edge = Object.values(wf.edges)[0] as any;
+  t.truthy(wf.triggers[edge.source_trigger]);
+});
+
+test('asSpec:true - target_job matches the job key', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const edge = Object.values(wf.edges)[0] as any;
+  t.truthy(wf.jobs[edge.target_job]);
+});
+
+test('asSpec:true - triggers and jobs have no generated id', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const trigger = Object.values(wf.triggers)[0] as any;
+  const job = Object.values(wf.jobs)[0] as any;
+  t.falsy(trigger.id);
+  t.falsy(job.id);
+});
+
 test.skip('should convert a project back to app state in yaml', (t) => {
   // this is a serialized project file
   const data: any = {

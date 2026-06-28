@@ -118,7 +118,6 @@ export async function deploy(config: DeployConfig, logger: Logger) {
     throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
   }
   const nextState = mergeSpecIntoState(state, spec.doc);
-
   validateProjectState(nextState);
 
   // Convert the state to a payload for the API.

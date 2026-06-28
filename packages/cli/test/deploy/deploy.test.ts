@@ -260,6 +260,24 @@ test('maybeConvertV2spec: converts v2 (schema_version) to v1', async (t) => {
   t.falsy(json.schema_version);
 });
 
+test('maybeConvertV2spec: converted edges use key references, not UUIDs', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  const workflow = Object.values(json.workflows)[0] as any;
+  const edge = Object.values(workflow.edges)[0] as any;
+
+  // edge must use spec format (key references) so mergeSpecIntoState can resolve them
+  t.truthy(edge.source_trigger);
+  t.truthy(edge.target_job);
+  t.falsy(edge.source_trigger_id);
+  t.falsy(edge.target_job_id);
+
+  // source_trigger must match a trigger key; target_job must match a job key
+  t.truthy(workflow.triggers[edge.source_trigger]);
+  t.truthy(workflow.jobs[edge.target_job]);
+});
+
 test('maybeConvertV2spec: converts legacy v2 (cli.version: 2) to v1', async (t) => {
   const legacyV2Yaml = `id: my-project
 name: My Project

@@ -150,7 +150,7 @@ export const maybeConvertV2spec = async (yaml: string): Promise<string> => {
   const json = yamlToJson(yaml) as any;
   if (detectVersion(json) > 1) {
     const project = await Project.from('project', json);
-    return project.serialize('state', { format: 'yaml' }) as string;
+    return project.serialize('state', { format: 'yaml', asSpec: true }) as string;
   }
   return yaml;
 };
