@@ -197,10 +197,14 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           // the cgroup's OOM counter before falling back to scraping stderr.
           const handle = worker.pid ? cgroups[worker.pid] : null;
           if (handle && hasOomKill(handle)) {
+            logger.error(
+              `pool: worker ${worker.pid} was killed by the OS for exceeding ` +
+                `its cgroup memory limit (${options.cgroupMemoryLimitMb}mb)`
+            );
             killWorker(worker);
             // restore a placeholder to the queue
             finish(false);
-            reject(new OOMError());
+            reject(new OOMError('cgroup'));
             return;
           }
 
@@ -214,6 +218,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             if (worker.stderr && worker.stderr?.readableLength > 0) {
               for await (const line of rl) {
                 if (line.match(/JavaScript heap out of memory/)) {
+                  logger.error(
+                    `pool: worker ${worker.pid} exceeded the V8 heap limit`
+                  );
                   killWorker(worker);
                   // restore a placeholder to the queue
                   finish(false);
@@ -301,6 +308,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             // @ts-ignore
             e.severity = evt.error.severity;
             e.name = evt.error.name;
+            // @ts-ignore preserve the OOM source ('heap'/'cgroup') across IPC
+            e.source = evt.error.source;
             reject(e);
 
             finish(worker);
