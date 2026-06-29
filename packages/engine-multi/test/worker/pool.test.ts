@@ -179,9 +179,11 @@ test('throw if memory limit is exceeded', async (t) => {
 
   try {
     await pool.exec('blowMemory', [], { memoryLimitMb: 100 });
+    t.fail('expected the run to OOM');
   } catch (e: any) {
     t.is(e.message, 'Run exceeded maximum memory usage');
     t.is(e.name, 'OOMError');
+    t.is(e.source, 'heap');
   }
 });
 
@@ -200,9 +202,13 @@ test('child process should not have --max-old-space-size when memoryLimitMb is n
 test('pool recovers after process-level OOM', async (t) => {
   const pool = createPool(workerPath, { memoryLimitMb: 50 }, logger);
 
-  await t.throwsAsync(() => pool.exec('blowMemory', [], { memoryLimitMb: 20 }), {
-    name: 'OOMError',
-  });
+  const err = await t.throwsAsync(
+    () => pool.exec('blowMemory', [], { memoryLimitMb: 20 }),
+    {
+      name: 'OOMError',
+    }
+  );
+  t.is((err as any).source, 'heap');
 
   // Pool should still be functional after the OOM
   const result = await pool.exec('test', [42]);

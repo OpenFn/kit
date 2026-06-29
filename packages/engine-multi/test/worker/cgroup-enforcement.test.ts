@@ -28,9 +28,10 @@ linuxOnly(
   async (t) => {
     const pool = createPool(workerPath, { cgroupMemoryLimitMb }, logger);
 
-    await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
+    const err = await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
       name: 'OOMError',
     });
+    t.is((err as any).source, 'cgroup');
 
     await pool.destroy();
   }

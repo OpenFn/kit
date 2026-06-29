@@ -4,6 +4,7 @@ export default (error: any) => {
     name: error.name,
     type: error.type,
     subtype: error.subtype,
+    source: error.source,
     severity: error.severity || 'crash',
   };
 };
