@@ -16,6 +16,8 @@ type Args = {
   batchLimit?: number;
   batchLogs: boolean;
   capacity: number;
+  cgroupMemory?: number;
+  cgroupParent?: string;
   workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -82,6 +84,8 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BATCH_LIMIT,
     WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
+    WORKER_CGROUP_MEMORY_MB,
+    WORKER_CGROUP_PARENT,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
     WORKER_COLLECTIONS_VERSION,
@@ -231,6 +235,16 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
+    .option('cgroup-memory', {
+      description:
+        'Hard memory ceiling (mb) enforced per run via a cgroup v2 leaf. Linux only; falls back to heap-limit only when unavailable. Defaults to run-memory + 128. Env: WORKER_CGROUP_MEMORY_MB',
+      type: 'number',
+    })
+    .option('cgroup-parent', {
+      description:
+        'Parent cgroup path under which per-run leaf cgroups are created. Must be writable (cgroup delegation/root). Default /sys/fs/cgroup/openfn. Env: WORKER_CGROUP_PARENT',
+      type: 'string',
+    })
 
     .option('max-run-duration-seconds', {
       alias: 't',
@@ -339,6 +353,12 @@ export default function parseArgs(argv: string[]): Args {
       (WORKER_MAX_STATE_MEMORY_MB
         ? parseInt(WORKER_MAX_STATE_MEMORY_MB, 10)
         : undefined),
+    cgroupMemory:
+      args.cgroupMemory ??
+      (WORKER_CGROUP_MEMORY_MB ? parseInt(WORKER_CGROUP_MEMORY_MB) : undefined),
+    cgroupParent: setArg(args.cgroupParent, WORKER_CGROUP_PARENT) as
+      | string
+      | undefined,
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
     logPayloadMemory: setArg(
       args.logPayloadMemory,

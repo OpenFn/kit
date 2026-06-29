@@ -13,6 +13,8 @@ type WorkerOptions = {
   env?: any;
   timeout?: number; // ms
   memoryLimitMb?: number;
+  cgroupMemoryLimitMb?: number; // hard cgroup v2 memory.max ceiling
+  cgroupParent?: string; // parent cgroup for per-child leaves
   proxyStdout?: boolean; // print internal stdout to console
 };
 
@@ -27,6 +29,8 @@ export default function initWorkers(
     env = {},
     maxWorkers = 5,
     memoryLimitMb,
+    cgroupMemoryLimitMb,
+    cgroupParent,
     proxyStdout = false,
   } = options;
 
@@ -36,6 +40,8 @@ export default function initWorkers(
       maxWorkers,
       env,
       memoryLimitMb,
+      cgroupMemoryLimitMb,
+      cgroupParent,
       proxyStdout,
     },
     logger
