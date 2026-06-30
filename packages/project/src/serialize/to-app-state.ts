@@ -88,12 +88,15 @@ export const mapWorkflow = (
   const { uuid, ...originalOpenfnProps } = workflow.openfn ?? {};
   const wfState = {
     ...originalOpenfnProps,
-    ...(useUuids ? { id: workflow.openfn?.uuid ?? randomUUID() } : {}),
     jobs: {},
     triggers: {},
     edges: {},
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
   } as Provisioner.Workflow;
+
+  if (useUuids) {
+    wfState.id = (workflow.openfn?.uuid ?? randomUUID) as any;
+  }
 
   if (workflow.name) {
     wfState.name = workflow.name;
