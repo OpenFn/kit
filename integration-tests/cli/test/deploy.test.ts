@@ -288,7 +288,7 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
   );
 });
 
-test.serial.only('deploy a v2 spec file', async (t) => {
+test.serial('deploy a v2 spec file', async (t) => {
   const testProjectV2 = `
 name: test-project
 schema_version: '4.0'
@@ -320,7 +320,6 @@ workflows:
       --log-json \
       -l debug`
   );
-  console.log(stdout);
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
