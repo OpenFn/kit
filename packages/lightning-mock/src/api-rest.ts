@@ -85,7 +85,9 @@ workflows:
 
 // Validates a provisioner payload, returning an error body if invalid or null if valid.
 // Mirrors Lightning's error format so deploy code sees realistic rejection responses.
-export function validateProvisionPayload(incoming: any): Record<string, any> | null {
+export function validateProvisionPayload(
+  incoming: any
+): Record<string, any> | null {
   const workflowErrors: Record<string, any> = {};
 
   const wfList: any[] = Array.isArray(incoming.workflows)

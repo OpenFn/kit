@@ -1,0 +1,59 @@
+{
+  "env": null,
+  "id": "e5aea408-80e8-4b3f-8cc2-dbc0a4775f1f",
+  "name": "basic10",
+  "description": null,
+  "color": null,
+  "concurrency": null,
+  "inserted_at": "2026-06-28T17:08:11Z",
+  "updated_at": "2026-06-28T17:08:11Z",
+  "parent_id": null,
+  "scheduled_deletion": null,
+  "history_retention_period": null,
+  "dataclip_retention_period": null,
+  "retention_policy": "retain_all",
+  "project_credentials": {},
+  "workflows": {
+    "wf1": {
+      "id": "6aa53c12-f7a1-43ed-b430-af58ab35e9e4",
+      "name": "wf1",
+      "edges": {
+        "webhook->a": {
+          "enabled": true,
+          "id": "dadc2183-6ad6-41b5-b0fb-6715cced654a",
+          "condition_type": "always",
+          "source_trigger_id": "5831e3c2-5456-4903-9359-faa68edb175f"
+        }
+      },
+      "concurrency": null,
+      "inserted_at": "2026-06-28T17:08:11Z",
+      "updated_at": "2026-06-28T17:08:11Z",
+      "jobs": {
+        "b": {
+          "id": "aafaac67-dc12-4816-aaec-c34e38ce1ceb",
+          "name": "b",
+          "body": "log($.data)\n",
+          "adaptor": "@openfn/language-common@latest",
+          "project_credential_id": null
+        }
+      },
+      "lock_version": 1,
+      "deleted_at": null,
+      "triggers": {
+        "webhook": {
+          "enabled": true,
+          "id": "5831e3c2-5456-4903-9359-faa68edb175f",
+          "type": "webhook",
+          "webhook_reply": "before_start"
+        }
+      },
+      "version_history": [
+        "cli:0e8bc140349a"
+      ]
+    }
+  },
+  "collections": {},
+  "allow_support_access": false,
+  "requires_mfa": false,
+  "channels": {}
+}
