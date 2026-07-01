@@ -41,22 +41,34 @@ export default function (
   state.id = (uuid as string) ?? randomUUID();
 
   Object.assign(state, rest, project.options);
+  if (options.asSpec) {
+    for (const c of project.credentials) {
+      // note that credentials for a spec file are not the
+      // the same format as a state file,
+      // so typings break here
+      (state as any).credentials ??= {};
+      (state as any).credentials[getCredentialName(c)] = {
+        name: c.name,
+        owner: c.owner,
+      };
+    }
+  } else {
+    const credentialsWithUuids =
+      project.credentials?.map((c) => ({
+        ...c,
+        uuid: (c as CredentialState).uuid ?? randomUUID(),
+      })) ?? [];
 
-  const credentialsWithUuids =
-    project.credentials?.map((c) => ({
-      ...c,
-      uuid: (c as CredentialState).uuid ?? randomUUID(),
-    })) ?? [];
-
-  state.project_credentials = credentialsWithUuids.map((c) => ({
-    // note the subtle conversion here
-    id: c.uuid as string,
-    name: c.name,
-    owner: c.owner,
-  }));
+    state.project_credentials = credentialsWithUuids.map((c) => ({
+      // note the subtle conversion here
+      id: c.uuid as string,
+      name: c.name,
+      owner: c.owner,
+    }));
+  }
 
   state.workflows = project.workflows
-    .map((w) => mapWorkflow(w, credentialsWithUuids, options))
+    .map((w) => mapWorkflow(w, project.credentials, options))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;
@@ -150,10 +162,15 @@ export const mapWorkflow = (
             const name = getCredentialName(c);
             return name === projectCredentialId;
           });
-          if (mappedCredential) {
+          if (mappedCredential && useUuids) {
             projectCredentialId = mappedCredential.uuid;
           }
-          otherOpenFnProps.project_credential_id = projectCredentialId;
+
+          if (useUuids) {
+            otherOpenFnProps.project_credential_id = projectCredentialId;
+          } else {
+            otherOpenFnProps.project_credential = projectCredentialId;
+          }
         }
       }
 

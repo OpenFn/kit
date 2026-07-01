@@ -4,6 +4,7 @@ import toAppState from '../../src/serialize/to-app-state';
 import { generateProject } from '../../src/gen/generator';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
+import { cloneDeep } from 'lodash-es';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -610,10 +611,6 @@ test('should convert a project back to app state in json', (t) => {
   t.deepEqual(newState, state);
 });
 
-// TODO this test is failing because the order of keys in the yaml have changed!
-// We probably need to force alphabetical sorting on yaml keys
-// asSpec: true — spec format for deploy pipeline
-
 const v2ProjectData: any = {
   id: 'my-project',
   name: 'My Project',
@@ -651,6 +648,29 @@ test('asSpec:true - edges use source_trigger/target_job keys, not UUIDs', (t) =>
   t.falsy(edge.source_trigger_id);
   t.falsy(edge.target_job_id);
   t.falsy(edge.id);
+});
+
+test('asSpec:true - handle credentials', (t) => {
+  const data = cloneDeep(v2ProjectData);
+  data.credentials = [
+    {
+      name: 'x',
+      owner: 'a@b.org,',
+      uuid: '123',
+    },
+  ];
+  data.workflows[0].steps[1].configuration = `a@b.org|x`;
+
+  const project = new Project(data, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  t.deepEqual(result.credentials, {
+    'a@b.org,|x': { name: 'x', owner: 'a@b.org,' },
+  });
+  t.is(
+    result.workflows['my-workflow'].jobs['transform-data'].project_credential,
+    'a@b.org|x'
+  );
 });
 
 test('asSpec:true - source_trigger matches the trigger key', (t) => {
