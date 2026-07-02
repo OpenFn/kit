@@ -178,7 +178,7 @@ export const mapWorkflow = (
           if (useUuids) {
             otherOpenFnProps.project_credential_id = projectCredentialId;
           } else {
-            otherOpenFnProps.project_credential = projectCredentialId;
+            otherOpenFnProps.credential = projectCredentialId;
           }
         }
       }

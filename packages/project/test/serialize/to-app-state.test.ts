@@ -668,7 +668,7 @@ test('asSpec:true - handle credentials', (t) => {
     'a@b.org,|x': { name: 'x', owner: 'a@b.org,' },
   });
   t.is(
-    result.workflows['my-workflow'].jobs['transform-data'].project_credential,
+    result.workflows['my-workflow'].jobs['transform-data'].credential,
     'a@b.org|x'
   );
 });
