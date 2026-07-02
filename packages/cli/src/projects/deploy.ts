@@ -295,8 +295,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
   if (!options.new) {
     tracker = ws.get(options.project ?? localProject.uuid!);
     if (!tracker) {
-      console.log('FOUND TRACKER');
-      console.log(options.project ?? localProject.uuid);
       // Is this really an error? Unlikely to happen I thuink
       console.log(
         `ERROR: Failed to find tracked remote project ${
