@@ -2,6 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import Project, { generateWorkflow } from '@openfn/project';
 import { createMockLogger } from '@openfn/logger';
 import createLightningServer from '@openfn/lightning-mock';
@@ -30,6 +31,8 @@ const ENDPOINT = `http://localhost:${port}`;
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
 const two_workflows_yaml = twowfs.replace('https://app.openfn.org', ENDPOINT);
 
+const require = createRequire(import.meta.url);
+
 const mockFs = (paths: Record<string, string>) => {
   // ensure this path is available to pnpm (needed by deps for some reason??)
   // Note: loading all of pnpm takes ~7 seconds per test
@@ -37,8 +40,15 @@ const mockFs = (paths: Record<string, string>) => {
   const iconv = path.resolve(
     '../../node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite/encodings'
   );
+  // undici v8 reads its llhttp WASM from disk on the first request, so keep
+  // that dir visible or fetches to the mock server fail with ENOENT
+  const undiciLlhttp = path.join(
+    path.dirname(require.resolve('undici')),
+    'lib/llhttp'
+  );
   mock({
     [iconv]: mock.load(iconv, {}),
+    [undiciLlhttp]: mock.load(undiciLlhttp, {}),
     ...paths,
   });
 };
