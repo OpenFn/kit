@@ -2,6 +2,7 @@ import path from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { defaultLogger, Logger } from '@openfn/logger';
 import exec from '../util/exec';
+import assertSafeSpecifier from '../util/assert-safe-specifier';
 import * as os from 'node:os';
 const homeDir = os.homedir();
 
@@ -66,7 +67,9 @@ export const install = async (
     const aliases = forInstalling.map(({ name, version }) => {
       const alias = `npm:${name}@${version}`;
       const aliasedName = `${name}_${version}`;
-      return `${aliasedName}@${alias}`;
+      const aliased = `${aliasedName}@${alias}`;
+      assertSafeSpecifier(aliased);
+      return aliased;
     });
     log.info(`npm install ${npmInstallFlags.join(' ')} ${aliases.join(' ')}`);
     // TODO it would be nice to report something about what's going on under the hood here
@@ -142,6 +145,7 @@ export const getAliasedName = (specifier: string, version?: string) => {
 };
 
 export const getLatestVersion = async (specifier: string) => {
+  assertSafeSpecifier(specifier);
   const { stdout } = await exec(`npm view ${specifier} version`);
   return stdout.trim(); // TODO this works for now but isn't very robust
 };

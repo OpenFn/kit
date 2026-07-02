@@ -5,6 +5,7 @@ import {
   install as rtInstall,
   loadRepoPkg,
   getNameAndVersion,
+  assertSafeSpecifier,
 } from '@openfn/runtime';
 import type { Opts } from '../options';
 import { defaultLogger, Logger } from '../util/logger';
@@ -41,6 +42,7 @@ export const removePackage = async (
   }
 
   const aliasedName = `${name}_${version}`;
+  assertSafeSpecifier(aliasedName);
   logger.info(`Removing package ${aliasedName} from repo...`);
 
   try {
@@ -68,6 +70,7 @@ export const clean = async (options: Opts, logger: Logger) => {
       options.force
     );
     if (doIt) {
+      assertSafeSpecifier(options.repoDir);
       return new Promise<void>((resolve) => {
         logger.info(`Cleaning repo at ${options.repoDir} `);
         exec(`npm exec rimraf ${options.repoDir}`, () => {
