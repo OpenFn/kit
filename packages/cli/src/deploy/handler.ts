@@ -64,7 +64,6 @@ async function deployHandler(
 
     const rawSpec = await fs.readFile(config.specPath, 'utf-8');
     const convertedSpec = await maybeConvertV2spec(rawSpec);
-    console.log(convertedSpec);
     if (convertedSpec !== rawSpec) {
       logger.info(
         'Detected v2 spec file - converting to legacy format; validation will be skipped.'

@@ -277,7 +277,7 @@ test('maybeConvertV2spec: converts with credentials', async (t) => {
   });
 
   t.is(
-    json.workflows['my-workflow'].jobs['transform-data'].project_credential,
+    json.workflows['my-workflow'].jobs['transform-data'].credential,
     'super@openfn.org|http1'
   );
 });
