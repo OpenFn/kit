@@ -131,6 +131,7 @@ cd packages/cli && pnpm test:watch  # Watch mode
 The [.claude](.claude) folder contains detailed guides:
 
 - **[event-processor.md](.claude/event-processor.md)** - Worker event processing deep-dive (ordering, batching) — companion to `packages/ws-worker/CLAUDE.md`
+- **[yaml-formats.md](.claude/yaml-formats.md)** - v1 vs v2 project YAML formats: structure, detection logic, and conversion paths
 
 Key packages also carry their own `CLAUDE.md` (runtime, engine-multi, ws-worker), auto-loaded when you work in them.
 

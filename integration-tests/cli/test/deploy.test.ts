@@ -1,6 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
-import fs from 'node:fs/promises';
+import fs, { rm } from 'node:fs/promises';
 import run from '../src/run';
 import createLightningServer from '@openfn/lightning-mock';
 import { extractLogs, assertLog } from '../src/util';
@@ -11,6 +11,50 @@ let server: any;
 const port = 8967;
 const endpoint = `http://localhost:${port}`;
 let tmpDir = path.resolve('tmp/deploy');
+
+const testProjectV2 = `
+id: my-project
+name: My Project
+schema_version: '4.0'
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data: {}
+      - id: transform-data
+        name: Transform data
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+`.trim();
+
+const testProjectV2WithCredential = `
+id: my-project
+name: My Project
+schema_version: '4.0'
+credentials:
+  - name: http1
+    owner: super@openfn.org
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data: {}
+      - id: transform-data
+        name: Transform data
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+        configuration: super@openfn.org|http1
+`.trim();
 
 const testProject = `
 name: test-project
@@ -97,7 +141,6 @@ test.serial('deploy a local project', async (t) => {
       --log-json \
       -l debug`
   );
-
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
@@ -269,6 +312,51 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
   );
 });
 
+test.serial('deploy a v2 spec file', async (t) => {
+  const testProjectV2 = `
+name: test-project
+schema_version: '4.0'
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          my-job: {}
+      - id: my-job
+        name: My Job
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+`.trim();
+
+  await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProjectV2);
+
+  t.is(Object.keys(server.state.projects).length, 0);
+
+  const { stdout, stderr } = await run(
+    `openfn deploy \
+      --project-path ${tmpDir}/project.yaml \
+      --state-path ${tmpDir}/.state.json \
+      --no-confirm \
+      --log-json \
+      -l debug`
+  );
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /v2 spec/i);
+  assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'test-project');
+  const [workflow] = Object.values(project.workflows) as any[];
+  t.is(workflow.name, 'My Workflow');
+});
+
 test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
   t.is(Object.keys(server.state.projects).length, 0);
 
@@ -318,7 +406,6 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   // And deploy those changes
   const { stdout, stderr } = await run(deployCmd);
-
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
@@ -331,4 +418,64 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   t.is(Object.keys(server.state.projects).length, 1);
   t.truthy(server.state.projects[projectId]);
+});
+
+test.serial('deploy a v2 project.yaml', async (t) => {
+  await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProjectV2);
+
+  const { stdout, stderr } = await run(
+    `openfn deploy \
+      --project-path ${tmpDir}/project.yaml \
+      --state-path ${tmpDir}/.state.json \
+      --no-confirm \
+      --log-json \
+      -l debug`
+  );
+
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'My Project');
+});
+
+test.serial('deploy a new v2 project.yaml with credentials', async (t) => {
+  await fs.writeFile(
+    path.join(tmpDir, 'project.yaml'),
+    testProjectV2WithCredential
+  );
+
+  try {
+    await rm(`${tmpDir}/.state.json`);
+  } catch (e) {
+    // ignore
+  }
+
+  const { stdout, stderr } = await run(
+    `openfn deploy \
+      --project-path ${tmpDir}/project.yaml \
+      --no-confirm \
+      --log-json \
+      -l debug`
+  );
+
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'My Project');
+
+  t.is(project.project_credentials[0].name, 'http1');
+  t.is(project.project_credentials[0].owner, 'super@openfn.org');
+
+  const uuid = project.project_credentials[0].id;
+
+  const workflow: any = Object.values(project.workflows).pop();
+  t.is(workflow.jobs[0].project_credential_id, uuid);
 });

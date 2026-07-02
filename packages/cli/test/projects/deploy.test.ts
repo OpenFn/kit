@@ -19,7 +19,6 @@ import {
   TWO_WORKFLOWS_UUID,
 } from './fixtures';
 import { checkout } from '../../src/projects';
-import { readFileSync } from 'node:fs';
 
 let server: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
