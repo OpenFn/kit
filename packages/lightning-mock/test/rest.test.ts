@@ -161,6 +161,25 @@ test('validateProvisionPayload: returns errors when edge has no source', (t) => 
   });
 });
 
+test('validateProvisionPayload: returns null for deleted edges', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            delete: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.falsy(result);
+});
+
 test('validateProvisionPayload: returns null when there are no edges', (t) => {
   const payload = {
     id: 'proj-1',
