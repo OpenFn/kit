@@ -1,4 +1,5 @@
 import assembleState from './assemble-state';
+import assertSafeSpecifier from './assert-safe-specifier';
 import clone from './clone';
 import defaultState from './default-state';
 import exec from './exec';
@@ -9,6 +10,7 @@ import validatePlan from './validate-plan';
 
 export {
   assembleState,
+  assertSafeSpecifier,
   clone,
   defaultState,
   exec,

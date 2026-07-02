@@ -128,9 +128,12 @@ cd packages/cli && pnpm test:watch  # Watch mode
 
 **Changesets**: Run `pnpm changeset` when submitting PRs. Releases publish automatically to npm on merge to main.
 
+Changeset release notes must be a **single, short, high-level sentence** - vague is fine (e.g. `added new "compile-test" command to the CLI` or `Tighten guards against shell injection vectors`). Do not list files, functions, or implementation detail. For breaking changes only, you may add a short migration guide after the sentence. See the package `CHANGELOG.md` files for the house style.
+
 The [.claude](.claude) folder contains detailed guides:
 
 - **[event-processor.md](.claude/event-processor.md)** - Worker event processing deep-dive (ordering, batching) — companion to `packages/ws-worker/CLAUDE.md`
+- **[yaml-formats.md](.claude/yaml-formats.md)** - v1 vs v2 project YAML formats: structure, detection logic, and conversion paths
 
 Key packages also carry their own `CLAUDE.md` (runtime, engine-multi, ws-worker), auto-loaded when you work in them.
 

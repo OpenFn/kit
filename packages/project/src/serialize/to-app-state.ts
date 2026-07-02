@@ -10,7 +10,16 @@ import Workflow from '../Workflow';
 import slugify from '../util/slugify';
 import getCredentialName from '../util/get-credential-name';
 
-type Options = { format?: 'json' | 'yaml' };
+type Options = {
+  format?: 'json' | 'yaml';
+  /**
+   * Serialize the project into a v1 spec format (not state)
+   * This is awkward and ugly but should only be a temporary solution
+   * If we decide we need it long term, we should generate a separate
+   * to-app-spec function which does a more focused job of it.
+   */
+  asSpec?: boolean;
+};
 
 const defaultJobProps = {
   // TODO why does the provisioner throw if these keys are not set?
@@ -41,22 +50,34 @@ export default function (
   state.id = (uuid as string) ?? randomUUID();
 
   Object.assign(state, rest, project.options);
+  if (options.asSpec) {
+    for (const c of project.credentials) {
+      // note that credentials for a spec file are not the
+      // the same format as a state file,
+      // so typings break here
+      (state as any).credentials ??= {};
+      (state as any).credentials[getCredentialName(c)] = {
+        name: c.name,
+        owner: c.owner,
+      };
+    }
+  } else {
+    const credentialsWithUuids =
+      project.credentials?.map((c) => ({
+        ...c,
+        uuid: (c as CredentialState).uuid ?? randomUUID(),
+      })) ?? [];
 
-  const credentialsWithUuids =
-    project.credentials?.map((c) => ({
-      ...c,
-      uuid: (c as CredentialState).uuid ?? randomUUID(),
-    })) ?? [];
-
-  state.project_credentials = credentialsWithUuids.map((c) => ({
-    // note the subtle conversion here
-    id: c.uuid as string,
-    name: c.name,
-    owner: c.owner,
-  }));
+    state.project_credentials = credentialsWithUuids.map((c) => ({
+      // note the subtle conversion here
+      id: c.uuid as string,
+      name: c.name,
+      owner: c.owner,
+    }));
+  }
 
   state.workflows = project.workflows
-    .map((w) => mapWorkflow(w, credentialsWithUuids))
+    .map((w) => mapWorkflow(w, project.credentials, options))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;
@@ -75,8 +96,11 @@ export default function (
 
 export const mapWorkflow = (
   workflow: Workflow,
-  credentials: CredentialState[] = []
+  credentials: CredentialState[] = [],
+  options: Options = {}
 ) => {
+  const useUuids = !options.asSpec;
+
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();
@@ -85,28 +109,31 @@ export const mapWorkflow = (
   const { uuid, ...originalOpenfnProps } = workflow.openfn ?? {};
   const wfState = {
     ...originalOpenfnProps,
-    id: workflow.openfn?.uuid ?? randomUUID(),
     jobs: {},
     triggers: {},
     edges: {},
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
   } as Provisioner.Workflow;
 
+  if (useUuids) {
+    wfState.id = (workflow.openfn?.uuid ?? randomUUID) as any;
+  }
+
   if (workflow.name) {
     wfState.name = workflow.name;
   }
 
-  // lookup of local-ids to project-ids
+  // lookup of local-ids to project-ids (only needed when using UUIDs)
   const lookup = workflow.steps.reduce((obj, next) => {
-    if (!next.openfn?.uuid) {
-      // If there's no tracked id, we generate one here
-      // TODO there is no unit test on this
-      next.openfn ??= {};
-      next.openfn.uuid = randomUUID();
+    if (useUuids) {
+      if (!next.openfn?.uuid) {
+        // If there's no tracked id, we generate one here
+        next.openfn ??= {};
+        next.openfn.uuid = randomUUID();
+      }
+      // @ts-ignore
+      obj[next.id] = next.openfn.uuid;
     }
-
-    // @ts-ignore
-    obj[next.id] = next.openfn.uuid;
     return obj;
   }, {}) as Record<string, string>;
 
@@ -122,13 +149,15 @@ export const mapWorkflow = (
       node = {
         ...rest,
         type: s.type ?? 'webhook', // this is mostly for tests
-        ...renameKeys(openfn, { uuid: 'id' }),
+        ...(useUuids ? renameKeys(openfn, { uuid: 'id' }) : {}),
       } as Provisioner.Trigger;
       wfState.triggers[node.type] = node;
     } else {
       node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
       const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
-      node.id = uuid;
+      if (useUuids) {
+        node.id = uuid;
+      }
       if (s.expression) {
         node.body = s.expression;
       }
@@ -142,19 +171,19 @@ export const mapWorkflow = (
             const name = getCredentialName(c);
             return name === projectCredentialId;
           });
-          if (mappedCredential) {
+          if (mappedCredential && useUuids) {
             projectCredentialId = mappedCredential.uuid;
           }
-          //            else {
-          //             console.warn(`WARING! Failed to map credential ${projectCredentialId} - Lightning may throw an error.
 
-          // Ensure the credential exists in project.yaml and try again (maybe ensure the credential is attached to the project in the app and run project fetch)`);
-          //           }
-          otherOpenFnProps.project_credential_id = projectCredentialId;
+          if (useUuids) {
+            otherOpenFnProps.project_credential_id = projectCredentialId;
+          } else {
+            otherOpenFnProps.credential = projectCredentialId;
+          }
         }
       }
 
-      Object.assign(node, defaultJobProps, otherOpenFnProps);
+      Object.assign(node, useUuids ? defaultJobProps : {}, otherOpenFnProps);
 
       wfState.jobs[s.id ?? slugify(s.name)] = node;
     }
@@ -165,18 +194,31 @@ export const mapWorkflow = (
 
       const { uuid, ...otherOpenFnProps } = rules.openfn ?? {};
 
-      const e = {
-        id: uuid ?? randomUUID(),
-        target_job_id: lookup[next],
-        enabled: !rules.disabled,
-        source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
-      } as Provisioner.Edge;
-      Object.assign(e, otherOpenFnProps);
-
-      if (isTrigger) {
-        e.source_trigger_id = node.id;
+      let e: any;
+      if (useUuids) {
+        e = {
+          id: uuid ?? randomUUID(),
+          target_job_id: lookup[next],
+          enabled: !rules.disabled,
+          source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
+        } as Provisioner.Edge;
+        Object.assign(e, otherOpenFnProps);
+        if (isTrigger) {
+          e.source_trigger_id = node.id;
+        } else {
+          e.source_job_id = node.id;
+        }
       } else {
-        e.source_job_id = node.id;
+        e = {
+          enabled: !rules.disabled,
+          target_job: next,
+        };
+        Object.assign(e, otherOpenFnProps);
+        if (isTrigger) {
+          e.source_trigger = s.type;
+        } else {
+          e.source_job = s.id;
+        }
       }
 
       if (rules.label) {
@@ -202,16 +244,18 @@ export const mapWorkflow = (
     });
   });
 
-  // Sort edges by UUID (for more predictable comparisons in test)
-  wfState.edges = Object.keys(wfState.edges)
-    // convert edge ids to strings just in case a number creeps in (it might in test)
-    .sort((a, b) =>
-      `${wfState.edges[a].id}`.localeCompare('' + wfState.edges[b].id)
-    )
-    .reduce((obj: any, key) => {
-      obj[key] = wfState.edges[key];
-      return obj;
-    }, {});
+  if (useUuids) {
+    // Sort edges by UUID (for more predictable comparisons in test)
+    wfState.edges = Object.keys(wfState.edges)
+      // convert edge ids to strings just in case a number creeps in (it might in test)
+      .sort((a, b) =>
+        `${wfState.edges[a].id}`.localeCompare('' + wfState.edges[b].id)
+      )
+      .reduce((obj: any, key) => {
+        obj[key] = wfState.edges[key];
+        return obj;
+      }, {});
+  }
 
   return wfState;
 };

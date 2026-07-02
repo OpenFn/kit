@@ -10,7 +10,7 @@ import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
 import path from 'node:path';
 import { fileExists } from '../util/file-exists';
-import { yamlToJson } from '@openfn/project';
+import Project, { detectVersion, yamlToJson } from '@openfn/project';
 import fs from 'node:fs/promises';
 
 export type DeployFn = typeof deploy;
@@ -60,6 +60,15 @@ async function deployHandler(
     if (process.env['OPENFN_ENDPOINT']) {
       logger.info('Using OPENFN_ENDPOINT environment variable');
       config.endpoint = process.env['OPENFN_ENDPOINT'];
+    }
+
+    const rawSpec = await fs.readFile(config.specPath, 'utf-8');
+    const convertedSpec = await maybeConvertV2spec(rawSpec);
+    if (convertedSpec !== rawSpec) {
+      logger.info(
+        'Detected v2 spec file - converting to legacy format; validation will be skipped.'
+      );
+      config.spec = convertedSpec;
     }
 
     logger.debug('Deploying with config', config);
@@ -135,6 +144,18 @@ const redirectTov2 = async (
     },
     logger
   );
+};
+
+export const maybeConvertV2spec = async (yaml: string): Promise<string> => {
+  const json = yamlToJson(yaml) as any;
+  if (detectVersion(json) > 1) {
+    const project = await Project.from('project', json);
+    return project.serialize('state', {
+      format: 'yaml',
+      asSpec: true,
+    }) as string;
+  }
+  return yaml;
 };
 
 export default deployHandler;

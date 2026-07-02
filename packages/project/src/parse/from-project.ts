@@ -4,6 +4,7 @@ import Project from '../Project';
 import ensureJson from '../util/ensure-json';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import fromAppState, { fromAppStateConfig } from './from-app-state';
+import detectVersion from '../util/detect-version';
 
 // Load a project from any JSON or yaml representation
 // This is backwards-compatible with v1 state.json files
@@ -21,11 +22,7 @@ export default (
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
 
-  if (
-    rawJson.schema_version ||
-    rawJson.cli?.version === 2 ||
-    rawJson.version /*deprecated*/
-  ) {
+  if (detectVersion(rawJson) > 1) {
     return new Project(from_v2(rawJson as SerializedProject), config);
   }
 

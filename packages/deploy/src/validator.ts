@@ -3,6 +3,10 @@ import { ProjectSpec } from './types';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
+export function parseSpec(input: string) {
+  return { errors: [] as Error[], doc: YAML.parse(input) as ProjectSpec };
+}
+
 export interface Error {
   context: any;
   message: string;

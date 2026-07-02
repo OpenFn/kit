@@ -1,5 +1,14 @@
 # @openfn/lightning-mock
 
+## 2.4.21
+
+### Patch Changes
+
+- 56da9b3: Add validation to the provisioner endpoint
+- Updated dependencies [749b7a3]
+  - @openfn/runtime@1.9.4
+  - @openfn/engine-multi@1.12.1
+
 ## 2.4.20
 
 ### Patch Changes

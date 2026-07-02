@@ -108,7 +108,8 @@ export const getLightningUrl = (
   }
   const params = new URLSearchParams();
   snapshots?.forEach((snapshot) => params.append('snapshots[]', snapshot));
-  return new URL(`/api/provision/${path}?${params.toString()}`, endpoint);
+  const query = params.toString();
+  return new URL(`/api/provision/${path}${query ? `?${query}` : ''}`, endpoint);
 };
 
 // TODO move to client.ts

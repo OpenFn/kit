@@ -2,7 +2,7 @@ import { confirm } from '@inquirer/prompts';
 import { inspect } from 'node:util';
 import { DeployConfig, ProjectState } from './types';
 import { readFile, writeFile } from 'fs/promises';
-import { parseAndValidate } from './validator';
+import { parseAndValidate, parseSpec } from './validator';
 import jsondiff from 'json-diff';
 import {
   mergeProjectPayloadIntoState,
@@ -108,8 +108,8 @@ export async function getSpec(path: string) {
 
 export async function deploy(config: DeployConfig, logger: Logger) {
   const [state, spec] = await Promise.all([
-    getState(config.statePath),
-    getSpec(config.specPath),
+    config.state ?? getState(config.statePath),
+    config.spec ? parseSpec(config.spec) : getSpec(config.specPath),
   ]);
 
   logger.debug('spec', spec);
@@ -118,7 +118,6 @@ export async function deploy(config: DeployConfig, logger: Logger) {
     throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
   }
   const nextState = mergeSpecIntoState(state, spec.doc);
-
   validateProjectState(nextState);
 
   // Convert the state to a payload for the API.

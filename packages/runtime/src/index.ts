@@ -13,4 +13,6 @@ export * from './modules/repo';
 
 export * from './runtime-helpers';
 
+export { default as assertSafeSpecifier } from './util/assert-safe-specifier';
+
 export { registerEsmHook } from './modules/register-esm-hook';

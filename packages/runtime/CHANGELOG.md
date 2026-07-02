@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.9.4
+
+### Patch Changes
+
+- 749b7a3: Tighten guards against shell injection vectors.
+
 ## 1.9.3
 
 ### Patch Changes

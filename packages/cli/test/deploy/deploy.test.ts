@@ -3,7 +3,11 @@
 import test from 'ava';
 import mockfs from 'mock-fs';
 import { Logger, createMockLogger } from '@openfn/logger';
-import deployHandler, { DeployFn } from '../../src/deploy/handler';
+import deployHandler, {
+  DeployFn,
+  maybeConvertV2spec,
+} from '../../src/deploy/handler';
+import { yamlToJson } from '@openfn/project';
 
 import { DeployError, type DeployConfig } from '@openfn/deploy';
 import { DeployOptions } from '../../src/deploy/command';
@@ -182,4 +186,137 @@ test.serial('catches DeployErrors', async (t) => {
 
   t.is(process.exitCode, 10);
   process.exitCode = origExitCode;
+});
+
+const v1Yaml = `id: '1234'
+name: My Project
+workflows:
+  my-workflow:
+    id: job-1
+    name: My Workflow
+    jobs:
+      transform-data:
+        id: job-1
+        name: Transform data
+        body: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+        project_credential_id: null
+        keychain_credential_id: null
+    triggers:
+      webhook:
+        id: trig-1
+        type: webhook
+        enabled: true
+    edges:
+      trigger->transform-data:
+        id: edge-1
+        enabled: true
+        source_trigger_id: trig-1
+        target_job_id: job-1
+project_credentials: []
+`;
+
+const v2Yaml = `id: my-project
+name: My Project
+schema_version: '4.0'
+credentials:
+  - name: http1
+    owner: super@openfn.org
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data: {}
+      - id: transform-data
+        name: Transform data
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+        configuration: super@openfn.org|http1
+`;
+
+test('maybeConvertV2spec: returns v1 yaml unchanged', async (t) => {
+  const result = await maybeConvertV2spec(v1Yaml);
+  t.is(result, v1Yaml);
+});
+
+test('maybeConvertV2spec: converts v2 to v1', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  // v1 has workflows as a keyed object
+  t.is(typeof json.workflows, 'object');
+  t.false(Array.isArray(json.workflows));
+
+  // v1 uses jobs, not steps
+  const workflow = Object.values(json.workflows)[0] as any;
+  t.truthy(workflow.jobs);
+  t.falsy(workflow.steps);
+  t.truthy(workflow.triggers);
+
+  // no uuids
+  const edge = workflow.edges['webhook->transform-data'];
+  t.is(edge.target_job, 'transform-data');
+  t.is(edge.source_trigger, 'webhook');
+  t.falsy(workflow.jobs['transform-data'].id);
+
+  // no v2 marker
+  t.falsy(json.schema_version);
+});
+
+test('maybeConvertV2spec: converts with credentials', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  t.deepEqual(json.credentials, {
+    'super@openfn.org|http1': { name: 'http1', owner: 'super@openfn.org' },
+  });
+
+  t.is(
+    json.workflows['my-workflow'].jobs['transform-data'].credential,
+    'super@openfn.org|http1'
+  );
+});
+
+test('maybeConvertV2spec: converted edges use key references, not UUIDs', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  const workflow = Object.values(json.workflows)[0] as any;
+  const edge = Object.values(workflow.edges)[0] as any;
+
+  // edge must use spec format (key references) so mergeSpecIntoState can resolve them
+  t.truthy(edge.source_trigger);
+  t.truthy(edge.target_job);
+  t.falsy(edge.source_trigger_id);
+  t.falsy(edge.target_job_id);
+
+  // source_trigger must match a trigger key; target_job must match a job key
+  t.truthy(workflow.triggers[edge.source_trigger]);
+  t.truthy(workflow.jobs[edge.target_job]);
+});
+
+test('maybeConvertV2spec: converts legacy v2 (cli.version: 2) to v1', async (t) => {
+  const legacyV2Yaml = `id: my-project
+name: My Project
+cli:
+  version: 2
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+`;
+  const result = await maybeConvertV2spec(legacyV2Yaml);
+  const json = yamlToJson(result) as any;
+
+  t.is(typeof json.workflows, 'object');
+  t.false(Array.isArray(json.workflows));
 });

@@ -4,6 +4,7 @@ import toAppState from '../../src/serialize/to-app-state';
 import { generateProject } from '../../src/gen/generator';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
+import { cloneDeep } from 'lodash-es';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -610,8 +611,97 @@ test('should convert a project back to app state in json', (t) => {
   t.deepEqual(newState, state);
 });
 
-// TODO this test is failing because the order of keys in the yaml have changed!
-// We probably need to force alphabetical sorting on yaml keys
+const v2ProjectData: any = {
+  id: 'my-project',
+  name: 'My Project',
+  schema_version: '4.0',
+  workflows: [
+    {
+      id: 'my-workflow',
+      name: 'My Workflow',
+      start: 'webhook',
+      steps: [
+        {
+          id: 'webhook',
+          type: 'webhook',
+          enabled: true,
+          next: { 'transform-data': {} },
+        },
+        {
+          id: 'transform-data',
+          name: 'Transform data',
+          expression: 'fn(s => s)',
+          adaptor: '@openfn/language-common@latest',
+        },
+      ],
+    },
+  ],
+};
+
+test('asSpec:true - edges use source_trigger/target_job keys, not UUIDs', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const edge = Object.values(result.workflows['my-workflow'].edges)[0] as any;
+  t.truthy(edge.source_trigger);
+  t.truthy(edge.target_job);
+  t.falsy(edge.source_trigger_id);
+  t.falsy(edge.target_job_id);
+  t.falsy(edge.id);
+});
+
+test('asSpec:true - handle credentials', (t) => {
+  const data = cloneDeep(v2ProjectData);
+  data.credentials = [
+    {
+      name: 'x',
+      owner: 'a@b.org,',
+      uuid: '123',
+    },
+  ];
+  data.workflows[0].steps[1].configuration = `a@b.org|x`;
+
+  const project = new Project(data, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  t.deepEqual(result.credentials, {
+    'a@b.org,|x': { name: 'x', owner: 'a@b.org,' },
+  });
+  t.is(
+    result.workflows['my-workflow'].jobs['transform-data'].credential,
+    'a@b.org|x'
+  );
+});
+
+test('asSpec:true - source_trigger matches the trigger key', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const edge = Object.values(wf.edges)[0] as any;
+  t.truthy(wf.triggers[edge.source_trigger]);
+});
+
+test('asSpec:true - target_job matches the job key', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const edge = Object.values(wf.edges)[0] as any;
+  t.truthy(wf.jobs[edge.target_job]);
+});
+
+test('asSpec:true - triggers and jobs have no generated id', (t) => {
+  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  const wf = result.workflows['my-workflow'];
+  const trigger = Object.values(wf.triggers)[0] as any;
+  const job = Object.values(wf.jobs)[0] as any;
+  t.falsy(trigger.id);
+  t.falsy(job.id);
+});
+
 test.skip('should convert a project back to app state in yaml', (t) => {
   // this is a serialized project file
   const data: any = {
