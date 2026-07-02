@@ -382,7 +382,6 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   // And deploy those changes
   const { stdout, stderr } = await run(deployCmd);
-
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);

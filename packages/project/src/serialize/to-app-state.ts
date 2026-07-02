@@ -10,7 +10,16 @@ import Workflow from '../Workflow';
 import slugify from '../util/slugify';
 import getCredentialName from '../util/get-credential-name';
 
-type Options = { format?: 'json' | 'yaml'; asSpec?: boolean };
+type Options = {
+  format?: 'json' | 'yaml';
+  /**
+   * Serialize the project into a v1 spec format (not state)
+   * This is awkward and ugly but should only be a temporary solution
+   * If we decide we need it long term, we should generate a separate
+   * to-app-spec function which does a more focused job of it.
+   */
+  asSpec?: boolean;
+};
 
 const defaultJobProps = {
   // TODO why does the provisioner throw if these keys are not set?
