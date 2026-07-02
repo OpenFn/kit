@@ -2,7 +2,7 @@
 import test from 'ava';
 
 import { setup } from './util';
-import { DEFAULT_PROJECT_ID } from '../src/api-rest';
+import { DEFAULT_PROJECT_ID, validateProvisionPayload } from '../src/api-rest';
 
 // @ts-ignore
 let server: any;
@@ -84,3 +84,140 @@ test.serial("should return 404 if a collection isn't found", async (t) => {
 });
 
 test.todo("should return 403 if a collection isn't authorized");
+
+test('validateProvisionPayload: returns null for a valid edge with source_trigger_id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'e1',
+            source_trigger_id: 'trig-uuid',
+            target_job_id: 'job-uuid',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  t.is(validateProvisionPayload(payload), null);
+});
+
+test('validateProvisionPayload: returns null for a valid edge with source_job_id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'e1',
+            source_job_id: 'job-uuid',
+            target_job_id: 'job-uuid-2',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  t.is(validateProvisionPayload(payload), null);
+});
+
+test('validateProvisionPayload: returns errors when edge has no source', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            source_trigger_id: null,
+            target_job_id: '',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.truthy(result);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          edges: {
+            'edge-1': {
+              source_job_id: [
+                'source_job_id or source_trigger_id must be present',
+              ],
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: returns null for deleted edges', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            delete: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.falsy(result);
+});
+
+test('validateProvisionPayload: returns null when there are no edges', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ name: 'wf1', edges: [] }],
+  };
+  t.is(validateProvisionPayload(payload), null);
+});
+
+test.serial(
+  'should return 422 when a workflow edge has no source',
+  async (t) => {
+    const response = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: 'bad-proj',
+        name: 'Bad Project',
+        workflows: [
+          {
+            id: 'wf-uuid',
+            name: 'wf1',
+            jobs: [],
+            triggers: [],
+            edges: [
+              {
+                id: 'e1',
+                source_trigger_id: null,
+                target_job_id: '',
+                enabled: true,
+              },
+            ],
+          },
+        ],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+
+    t.is(response.status, 422);
+    const body = await response.json();
+    t.truthy(body.errors?.workflows?.wf1?.edges);
+  }
+);

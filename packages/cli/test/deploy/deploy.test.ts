@@ -188,8 +188,6 @@ test.serial('catches DeployErrors', async (t) => {
   process.exitCode = origExitCode;
 });
 
-// maybeConvertV2spec
-
 const v1Yaml = `id: '1234'
 name: My Project
 workflows:
@@ -221,6 +219,9 @@ project_credentials: []
 const v2Yaml = `id: my-project
 name: My Project
 schema_version: '4.0'
+credentials:
+  - name: http1
+    owner: super@openfn.org
 workflows:
   - id: my-workflow
     name: My Workflow
@@ -235,6 +236,7 @@ workflows:
         name: Transform data
         expression: 'fn(s => s)'
         adaptor: '@openfn/language-common@latest'
+        configuration: super@openfn.org|http1
 `;
 
 test('maybeConvertV2spec: returns v1 yaml unchanged', async (t) => {
@@ -242,7 +244,7 @@ test('maybeConvertV2spec: returns v1 yaml unchanged', async (t) => {
   t.is(result, v1Yaml);
 });
 
-test('maybeConvertV2spec: converts v2 (schema_version) to v1', async (t) => {
+test('maybeConvertV2spec: converts v2 to v1', async (t) => {
   const result = await maybeConvertV2spec(v2Yaml);
   const json = yamlToJson(result) as any;
 
@@ -256,8 +258,46 @@ test('maybeConvertV2spec: converts v2 (schema_version) to v1', async (t) => {
   t.falsy(workflow.steps);
   t.truthy(workflow.triggers);
 
+  // no uuids
+  const edge = workflow.edges['webhook->transform-data'];
+  t.is(edge.target_job, 'transform-data');
+  t.is(edge.source_trigger, 'webhook');
+  t.falsy(workflow.jobs['transform-data'].id);
+
   // no v2 marker
   t.falsy(json.schema_version);
+});
+
+test('maybeConvertV2spec: converts with credentials', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  t.deepEqual(json.credentials, {
+    'super@openfn.org|http1': { name: 'http1', owner: 'super@openfn.org' },
+  });
+
+  t.is(
+    json.workflows['my-workflow'].jobs['transform-data'].credential,
+    'super@openfn.org|http1'
+  );
+});
+
+test('maybeConvertV2spec: converted edges use key references, not UUIDs', async (t) => {
+  const result = await maybeConvertV2spec(v2Yaml);
+  const json = yamlToJson(result) as any;
+
+  const workflow = Object.values(json.workflows)[0] as any;
+  const edge = Object.values(workflow.edges)[0] as any;
+
+  // edge must use spec format (key references) so mergeSpecIntoState can resolve them
+  t.truthy(edge.source_trigger);
+  t.truthy(edge.target_job);
+  t.falsy(edge.source_trigger_id);
+  t.falsy(edge.target_job_id);
+
+  // source_trigger must match a trigger key; target_job must match a job key
+  t.truthy(workflow.triggers[edge.source_trigger]);
+  t.truthy(workflow.jobs[edge.target_job]);
 });
 
 test('maybeConvertV2spec: converts legacy v2 (cli.version: 2) to v1', async (t) => {
