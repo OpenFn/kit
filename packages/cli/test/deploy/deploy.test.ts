@@ -272,11 +272,12 @@ test('maybeConvertV2spec: converts with credentials', async (t) => {
   const result = await maybeConvertV2spec(v2Yaml);
   const json = yamlToJson(result) as any;
 
-  t.deepEqual(json.project_credentials, [
-    { name: 'http1', owner: 'super@openfn.org' },
-  ]);
+  t.deepEqual(json.credentials, {
+    'super@openfn.org|http1': { name: 'http1', owner: 'super@openfn.org' },
+  });
+
   t.is(
-    json.workflows['my-workflow'].jobs['transform-data'].project_credential_id,
+    json.workflows['my-workflow'].jobs['transform-data'].project_credential,
     'super@openfn.org|http1'
   );
 });
