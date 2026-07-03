@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.38.4
+
+### Patch Changes
+
+- e9b6e39: Downgrade undici to 6.27.0 with security patches
+
 ## 1.38.3
 
 ### Patch Changes
