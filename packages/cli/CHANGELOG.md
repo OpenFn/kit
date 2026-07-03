@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.38.3
+
+### Patch Changes
+
+- Fix broken detectVersion import
+- Updated dependencies [9837e9b]
+  - @openfn/project@0.17.2
+
 ## 1.38.2
 
 ### Patch Changes
