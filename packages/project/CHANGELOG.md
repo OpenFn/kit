@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.17.2
+
+### Patch Changes
+
+- 9837e9b: Export detectVersion utility
+
 ## 0.17.1
 
 ### Patch Changes
