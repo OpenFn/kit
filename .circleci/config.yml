@@ -134,3 +134,19 @@ workflows:
               node_version: ['22.20', '24.14.0']
           requires:
             - build
+  node_18_back_compat:
+    jobs:
+      - install:
+          filters:
+            branches:
+              ignore:
+                - main
+      - build:
+          requires:
+            - install
+      - integration_test:
+          matrix:
+            parameters:
+              node_version: ['18.20']
+          requires:
+            - build
