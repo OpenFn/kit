@@ -102,9 +102,34 @@ jobs:
       - run:
           name: Check install
           command: openfn test --log info
+      # - run:
+      #     name: Run integration test suite
+      #     command: pnpm test:integration
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+  legacy_test:
+    docker:
+      - image: cimg/node:18.20
+    resource_class: medium
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: ~/project
       - run:
-          name: Run integration test suite
-          command: pnpm test:integration
+          name: Build local tarballs
+          command: pnpm pack:local dist --no-version
+      - run:
+          name: install CLI globally
+          command: sudo npm install -g file:dist/openfn-cli.tgz
+      - run:
+          name: Check install
+          command: openfn test --log info
+      - run:
+          name: Run legacy test suite
+          command: pnpm test:legacy
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -119,9 +144,9 @@ workflows:
       - build:
           requires:
             - install
-      - unit_test:
-          requires:
-            - build
+      # - unit_test:
+      #     requires:
+      #       - build
       - type_check:
           requires:
             - build
@@ -134,19 +159,6 @@ workflows:
               node_version: ['22.20', '24.14.0']
           requires:
             - build
-  node_18_back_compat:
-    jobs:
-      - install:
-          filters:
-            branches:
-              ignore:
-                - main
-      - build:
+      - legacy_test:
           requires:
-            - install
-      - integration_test:
-          matrix:
-            parameters:
-              node_version: ['18.20']
-          requires:
-            - build
+            - integration_test

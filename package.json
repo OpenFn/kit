@@ -16,6 +16,7 @@
     "pack": "pnpm -r run pack",
     "test:format": "prettier --check packages/*/src",
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
+    "test:legacy": "pnpm -C integration-tests/legacy-deploy run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
     "_typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
