@@ -1,5 +1,14 @@
 version: 2.1
 
+# Reusable command definitions.
+# See: https://circleci.com/docs/2.0/configuration-reference/#commands
+commands:
+  install_cli_global:
+    steps:
+      - run:
+          name: install CLI globally
+          command: sudo npm install -g file:dist/openfn-cli.tgz
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -82,6 +91,21 @@ jobs:
           name: Type check
           command: pnpm test:types
 
+  build_openfnx:
+    docker:
+      - image: cimg/node:24.14
+    resource_class: medium
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Build local tarballs
+          command: pnpm pack:local dist --no-version
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - dist
+
   integration_test:
     docker:
       - image: cimg/node:<< parameters.node_version >>
@@ -93,22 +117,13 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
-      - run:
-          name: Build local tarballs
-          command: pnpm pack:local dist --no-version
-      - run:
-          name: install CLI globally
-          command: sudo npm install -g file:dist/openfn-cli.tgz
+      - install_cli_global
       - run:
           name: Check install
           command: openfn test --log info
       # - run:
       #     name: Run integration test suite
       #     command: pnpm test:integration
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
 
   legacy_test:
     docker:
@@ -118,15 +133,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
-      - run:
-          name: Build local tarballs
-          command: pnpm pack:local dist --no-version
-      - run:
-          name: install CLI globally
-          command: sudo npm install -g file:dist/openfn-cli.tgz
-      - run:
-          name: Check install
-          command: openfn test --log info
+      - install_cli_global
       - run:
           name: Run legacy test suite
           command: pnpm test:legacy
@@ -153,12 +160,15 @@ workflows:
       - format:
           requires:
             - build
+      - build_openfnx:
+          requires:
+            - build
       - integration_test:
           matrix:
             parameters:
               node_version: ['22.20', '24.14.0']
           requires:
-            - build
+            - build_openfnx
       - legacy_test:
           requires:
-            - integration_test
+            - build_openfnx
