@@ -125,6 +125,8 @@ jobs:
           name: Run integration test suite
           command: pnpm test:integration
 
+  # This ensures that we can run a v1 CLI deploy in node 18,
+  # which is important for GH sync
   legacy_test:
     docker:
       - image: cimg/node:18.20
