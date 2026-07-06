@@ -102,6 +102,7 @@ try {
 }
 if (existsSync(planFile)) {
   const plan = JSON.parse(readFileSync(planFile, 'utf8'));
+  console.log(plan);
   // changesets[] = packages a changeset explicitly names. Not releases[], which
   // also includes transitive dependency bumps we don't want to treat as covered
   for (const changeset of plan.changesets) {
