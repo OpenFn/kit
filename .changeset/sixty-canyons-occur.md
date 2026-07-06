@@ -1,0 +1,5 @@
+---
+'@openfn/deploy': minor
+---
+
+jam

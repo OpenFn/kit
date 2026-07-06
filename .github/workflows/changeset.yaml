@@ -1,0 +1,27 @@
+# Fail a PR that changes a package under packages/ without a changeset
+# Skipped when the PR carries the "No changeset needed" label
+name: Make sure changesets exist
+
+on:
+  pull_request:
+    # Ensure that the action runs when the label is toggled
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+jobs:
+  changeset:
+    name: Changeset present
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # full history so the base branch is available for the diff
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.14'
+      # The condition sits on the step, not the job, so the check still reports
+      # green when skipped - a required job skipped via `if` blocks the PR forever
+      # No install needed - the check only uses git and Node built-ins
+      - name: Check for a changeset
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'No changeset needed') }}
+        run: node scripts/check-changesets.js "origin/${{ github.event.pull_request.base.ref }}"
