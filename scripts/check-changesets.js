@@ -5,7 +5,12 @@
  */
 
 const { execFileSync } = require('node:child_process');
-const { readFileSync, readdirSync, appendFileSync } = require('node:fs');
+const {
+  readFileSync,
+  existsSync,
+  unlinkSync,
+  appendFileSync,
+} = require('node:fs');
 const path = require('node:path');
 
 // Top-level dirs whose packages must carry a changeset when changed
@@ -83,18 +88,28 @@ for (const dir of changedDirs) {
   }
 }
 
-// Packages named across the frontmatter of every changeset file (the "covered"
-// set) - read straight from disk so pending and uncommitted changesets count
-const changesetDir = path.join(process.cwd(), '.changeset');
+// Ask changesets which packages are marked for release (the "covered" set).
+// Going through the CLI means we never parse the changeset file format ourselves
 const covered = new Set();
-for (const file of readdirSync(changesetDir)) {
-  if (!file.endsWith('.md') || file.toLowerCase() === 'readme.md') {
-    continue;
+const planFile = path.join(process.cwd(), '.changeset-status.json');
+try {
+  execFileSync('pnpm', ['exec', 'changeset', 'status', '--output', planFile], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+} catch {
+  // status exits non-zero and writes nothing when packages changed but no
+  // changesets exist yet - nothing is marked for release, covered stays empty
+}
+if (existsSync(planFile)) {
+  const plan = JSON.parse(readFileSync(planFile, 'utf8'));
+  // changesets[] = packages a changeset explicitly names. Not releases[], which
+  // also includes transitive dependency bumps we don't want to treat as covered
+  for (const changeset of plan.changesets) {
+    for (const release of changeset.releases) {
+      covered.add(release.name);
+    }
   }
-  const contents = readFileSync(path.join(changesetDir, file), 'utf8');
-  for (const name of changesetPackages(contents)) {
-    covered.add(name);
-  }
+  unlinkSync(planFile);
 }
 
 // Any changed package that no changeset accounts for
@@ -140,22 +155,3 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 }
 
 process.exit(1);
-
-// Package names listed in a changeset's frontmatter block
-function changesetPackages(contents) {
-  const frontmatter = contents.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!frontmatter) {
-    return [];
-  }
-  const names = [];
-  for (const line of frontmatter[1].split('\n')) {
-    // e.g.  '@openfn/cli': minor   or   "@openfn/cli": patch
-    const entry = line.match(
-      /^\s*['"]?(@?[\w./-]+)['"]?\s*:\s*(patch|minor|major)\s*$/
-    );
-    if (entry) {
-      names.push(entry[1]);
-    }
-  }
-  return names;
-}

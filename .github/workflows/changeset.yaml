@@ -12,16 +12,19 @@ jobs:
     name: Changeset present
     runs-on: ubuntu-latest
     steps:
-      # Full history so the merge-base with the target branch can be found
       - uses: actions/checkout@v6
         with:
+          # Full history so the merge-base with the target branch can be found
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: '24.14'
+      - uses: pnpm/action-setup@v4
+      # Install only the root package's dev-deps (which include @changesets/cli),
+      # not the whole workspace, so the script can run `changeset`
+      - run: pnpm install --filter @openfn/kit --frozen-lockfile --ignore-scripts
       # The condition sits on the step, not the job, so the check still reports
       # green when skipped - a required job skipped via `if` blocks the PR forever
-      # No install needed - the check only uses git and Node built-ins
       - name: Check for a changeset
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'No changeset needed') }}
         run: node scripts/check-changesets.js "${{ github.event.pull_request.base.ref }}"
