@@ -93,16 +93,26 @@ for (const dir of changedDirs) {
 const covered = new Set();
 const planFile = path.join(process.cwd(), '.changeset-status.json');
 try {
-  execFileSync('pnpm', ['exec', 'changeset', 'status', '--output', planFile], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-} catch {
+  const stdout = execFileSync(
+    'pnpm',
+    ['exec', 'changeset', 'status', '--output', planFile],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }
+  );
+  console.log('[changeset status] exit 0');
+  console.log('[changeset status] stdout:\n', stdout);
+} catch (e) {
   // status exits non-zero and writes nothing when packages changed but no
   // changesets exist yet - nothing is marked for release, covered stays empty
+  console.log('[changeset status] exit', e.status);
+  console.log('[changeset status] stdout:\n', e.stdout?.toString() ?? '');
+  console.log('[changeset status] stderr:\n', e.stderr?.toString() ?? '');
 }
 if (existsSync(planFile)) {
   const plan = JSON.parse(readFileSync(planFile, 'utf8'));
-  console.log(plan);
+  console.log({ plan });
   // changesets[] = packages a changeset explicitly names. Not releases[], which
   // also includes transitive dependency bumps we don't want to treat as covered
   for (const changeset of plan.changesets) {
