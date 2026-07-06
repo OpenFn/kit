@@ -1,12 +1,8 @@
-// Guard: fail if a package under packages/ changed without a changeset
-//
-// changed  = versionable packages with changes vs the base branch, counting
-//            committed, staged, unstaged and untracked files - so it works the
-//            same in CI (committed) and locally (working tree)
-// covered  = packages named across the changeset files in .changeset/
-// A package in `changed` but not in `covered` is an error
-//
-// Usage: node scripts/check-changesets.js [base-ref]   (default origin/main)
+/**
+ * Exits with error if a package changed without a changeset
+ *
+ * Usage: node scripts/check-changesets.js [base-branch]   (default main)
+ */
 
 const { execFileSync } = require('node:child_process');
 const { readFileSync, readdirSync, appendFileSync } = require('node:fs');
@@ -16,28 +12,52 @@ const path = require('node:path');
 // Add 'integration-tests' here to also gate the private test-harness packages
 const SCOPE_DIRS = ['packages'];
 
-const LABEL = 'No changeset needed';
+const GH_LABEL = 'No changeset needed';
 
-const base = process.argv[2] || 'origin/main';
+// Branch to compare against - the workflow passes the PR's target branch
+const branch = (process.argv[2] || 'main').replace(/^origin\//, '');
+const baseRef = `origin/${branch}`;
 
-const git = (args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const git = (args) =>
+  execFileSync('git', args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
 
-// The commit where this branch diverged from the base branch
-let mergeBase;
-try {
-  mergeBase = git(['merge-base', base, 'HEAD']);
-} catch (err) {
+const tryGit = (args) => {
+  try {
+    return git(args);
+  } catch {
+    return null;
+  }
+};
+
+// Where this branch diverged from the base (the merge-base), so we compare only
+// what the PR changed, not what the base has since moved on to. A full checkout
+// (fetch-depth: 0) already has the history; otherwise fetch the base to get it
+let mergeBase = tryGit(['merge-base', baseRef, 'HEAD']);
+if (!mergeBase) {
+  tryGit([
+    'fetch',
+    '--no-tags',
+    'origin',
+    `${branch}:refs/remotes/origin/${branch}`,
+  ]);
+  mergeBase = tryGit(['merge-base', baseRef, 'HEAD']);
+}
+if (!mergeBase) {
   console.error(
-    `Could not find a merge-base with "${base}" - is the base branch fetched?`
+    `Could not find where HEAD diverged from "${baseRef}" - use a full checkout (fetch-depth: 0)`
   );
-  console.error(String(err.stderr || err.message || err));
   process.exit(2);
 }
 
-// Every file that differs from the base branch: committed + staged + unstaged,
+// Every file that differs from the merge-base: committed + staged + unstaged,
 // plus anything untracked - matches what a PR contains and what you have locally
 const diffed = git(['diff', '--name-only', mergeBase]).split('\n');
-const untracked = git(['ls-files', '--others', '--exclude-standard']).split('\n');
+const untracked = git(['ls-files', '--others', '--exclude-standard']).split(
+  '\n'
+);
 
 const scopePattern = new RegExp(`^(${SCOPE_DIRS.join('|')})/([^/]+)/`);
 const changedDirs = new Set();
@@ -98,7 +118,9 @@ for (const name of missing) {
 }
 console.error(lines.join('\n'));
 console.error('\nAdd one and commit it:\n  pnpm changeset');
-console.error(`\nIf this PR does not need a release, add the "${LABEL}" label.\n`);
+console.error(
+  `\nIf this PR does not need a release, add the "${GH_LABEL}" label.\n`
+);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
   const summary = [
@@ -112,7 +134,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   summary.push(
     '',
     'Run `pnpm changeset` and commit the result, or add the',
-    `**${LABEL}** label if no release is needed.`
+    `**${GH_LABEL}** label if no release is needed.`
   );
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n')}\n`);
 }

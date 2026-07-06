@@ -12,9 +12,9 @@ jobs:
     name: Changeset present
     runs-on: ubuntu-latest
     steps:
+      # Full history so the merge-base with the target branch can be found
       - uses: actions/checkout@v6
         with:
-          # full history so the base branch is available for the diff
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
@@ -24,4 +24,4 @@ jobs:
       # No install needed - the check only uses git and Node built-ins
       - name: Check for a changeset
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'No changeset needed') }}
-        run: node scripts/check-changesets.js "origin/${{ github.event.pull_request.base.ref }}"
+        run: node scripts/check-changesets.js "${{ github.event.pull_request.base.ref }}"
