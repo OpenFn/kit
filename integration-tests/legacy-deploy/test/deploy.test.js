@@ -1,20 +1,46 @@
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import { exec } from 'node:child_process';
 import { rimraf } from 'rimraf';
-import createLightningServer from '@openfn/lightning-mock';
 
-const port = 8977;
-const endpoint = `http://localhost:${port}`;
 const tmpDir = path.resolve('tmp/deploy');
 
 let server;
+let endpoint;
+let lastDeploy; // the payload the CLI POSTs to the provisioning endpoint
 
-// Run the globally-installed openfn CLI (the tarball under test)
+// A minimal stand-in for Lightning's provisioning API
+const createMockServer = () =>
+  new Promise((resolve) => {
+    const srv = http.createServer((req, res) => {
+      if (!req.url.startsWith('/api/provision')) {
+        res.statusCode = 404;
+        return res.end();
+      }
+
+      if (req.method === 'GET') {
+        // pretend no project exists yet, so everything is a "new" change
+        res.statusCode = 404;
+        return res.end();
+      }
+
+      let body = '';
+      req.on('data', (chunk) => (body += chunk));
+      req.on('end', () => {
+        lastDeploy = JSON.parse(body);
+        res.statusCode = 200;
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ data: lastDeploy }));
+      });
+    });
+    srv.listen(0, () => resolve(srv));
+  });
+
 const run = (cmd) =>
   new Promise((resolve) => {
-    exec(cmd, { env: process.env }, (err, stdout, stderr) => {
+    exec(cmd, (err, stdout, stderr) => {
       resolve({ err, stdout, stderr });
     });
   });
@@ -41,17 +67,22 @@ workflows:
 `.trim();
 
 test.before(async () => {
-  server = await createLightningServer({ port });
+  server = await createMockServer();
+  endpoint = `http://localhost:${server.address().port}`;
 
   process.env.IGNORE_DOT_ENV = 'true';
   process.env.OPENFN_ENDPOINT = endpoint;
   process.env.OPENFN_API_KEY = 'test-key';
 });
 
+test.after.always(() => {
+  server?.close();
+});
+
 test.beforeEach(async () => {
   await rimraf(tmpDir);
   await fs.mkdir(tmpDir, { recursive: true });
-  server.reset();
+  lastDeploy = undefined;
 });
 
 test.serial('deploy a local project', async (t) => {
@@ -59,8 +90,6 @@ test.serial('deploy a local project', async (t) => {
   t.log(process.version);
 
   await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProject);
-
-  t.is(Object.keys(server.state.projects).length, 0);
 
   const { stdout, stderr } = await run(
     `openfn deploy \
@@ -74,7 +103,7 @@ test.serial('deploy a local project', async (t) => {
   t.falsy(stderr);
   t.regex(stdout, /"message"\:\["Deployed"\]/);
 
-  t.is(Object.keys(server.state.projects).length, 1);
-  const [project] = Object.values(server.state.projects);
-  t.is(project.name, 'test-project');
+  // the CLI should have posted our project to the mock endpoint
+  t.truthy(lastDeploy);
+  t.is(lastDeploy.name, 'test-project');
 });

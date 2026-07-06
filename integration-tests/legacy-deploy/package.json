@@ -12,7 +12,6 @@
     "test": "npx ava -s"
   },
   "dependencies": {
-    "@openfn/lightning-mock": "workspace:^",
     "@types/node": "^18.19.130",
     "ava": "5.3.1",
     "date-fns": "^2.30.0",

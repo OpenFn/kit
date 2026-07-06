@@ -115,9 +115,6 @@ importers:
 
   integration-tests/legacy-deploy:
     dependencies:
-      '@openfn/lightning-mock':
-        specifier: workspace:^
-        version: link:../../packages/lightning-mock
       '@types/node':
         specifier: ^18.19.130
         version: 18.19.130
