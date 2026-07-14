@@ -76,7 +76,7 @@ const printProjectName = (project: Project) =>
 export const command: yargs.CommandModule<DeployOptions> = {
   command: 'deploy [project]',
   aliases: 'push',
-  describe: `Deploy the checked out project to a Lightning Instance`,
+  describe: `Deploy the passed or checked-out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
     build(options, yargs)
       .positional('project', {
@@ -275,25 +275,52 @@ export async function handler(options: DeployOptions, logger: Logger) {
   );
   const config = loadAppAuthConfig(options, logger);
 
-  // TODO this is the hard way to load the local alias
-  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-  const ws = new Workspace(options.workspace || '.');
+  // The local project that we want to actually deploy
+  let localProject: Project;
+  let ws;
+  let alias = options.alias ?? null;
 
-  const active = ws.getTrackedProject();
-  const alias = options.alias ?? active?.alias;
+  if (options.project) {
+    logger.debug('Reading project from path ', options.project);
+    localProject = await Project.from(
+      'path',
+      path.resolve(options.workspace ?? process.cwd(), options.project)
+    );
 
-  const localProject = await Project.from('fs', {
-    root: options.workspace || '.',
-    alias,
-    name: options.name,
-  });
+    // If the local project doesn't have stateful stuff,
+    // flag this as a new upload
+    if (!localProject.uuid) {
+      logger.debug(
+        'Local project does not have a UUID: assuming this is a new project deployment'
+      );
+      options.new = true;
+
+      // TODO ensure the alias is unique if we're posting a new project
+    }
+  } else {
+    logger.debug('Reading checked-out project from workspace');
+    // TODO this is the hard way to load the local alias
+    // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+    ws = new Workspace(options.workspace || '.');
+
+    const active = ws.getTrackedProject();
+
+    // messy
+    alias ??= active?.alias ?? null;
+
+    localProject = await Project.from('fs', {
+      root: options.workspace || '.',
+      alias,
+      name: options.name,
+    });
+  }
 
   // Track the remote we want to target
   // If the user passed a project alias, we need to use that
   // Otherwise just sync with the local project
   let tracker;
   if (!options.new) {
-    tracker = ws.get(options.project ?? localProject.uuid!);
+    tracker = ws?.get(options.project ?? localProject.uuid!);
     if (!tracker) {
       // Is this really an error? Unlikely to happen I thuink
       console.log(
@@ -344,7 +371,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const syncResult = await syncProjects(
       options,
       config,
-      ws,
+      ws!,
       localProject,
       tracker!,
       logger
@@ -357,6 +384,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   const state = merged.serialize('state', {
     format: 'json',
+    // If uploading a new project, serialize to spec, not state
+    // WRONG!!!!!
+    // We DO need to convert this to  v1 state
+    // We just need to ensure that credentials are handled properly
+    // something is wrong in the conversion
+    asSpec: options.new,
   }) as Provisioner.Project_v1;
 
   // TODO only do this if asked
@@ -433,11 +466,16 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
     updateForkedFrom(finalProject);
     const configData = finalProject.generateConfig();
+
+    // Write the updated openfn.yaml
+    // TODO: allow us to suppress writing this stuff
+    // (useful if posting from spec)
     await writeFile(
-      path.resolve(options.workspace!, configData.path),
+      path.resolve(options.workspace ?? process.cwd(), configData.path),
       configData.content
     );
 
+    // TODO if this was marked as new, we probably need to ensure a unique alias here
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);

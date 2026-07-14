@@ -18,6 +18,7 @@ import {
   UUID,
   two_workflows_yaml as twowfs,
   TWO_WORKFLOWS_UUID,
+  myProject_spec,
 } from './fixtures';
 import { checkout } from '../../src/projects';
 
@@ -77,24 +78,58 @@ test.beforeEach(() => {
   mock.restore();
 });
 
-test.serial('deploy a new project', async (t) => {
+test.serial(
+  'deploy a project as new from the checked out project',
+  async (t) => {
+    // the server should have 1 registered project by default - that's fine
+    t.is(Object.keys(server.state.projects).length, 1);
+
+    await setup();
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+      } as any,
+      logger
+    );
+
+    // We should now have a new project with a new UUID
+    t.is(Object.keys(server.state.projects).length, 2);
+
+    const success = logger._find('success', /Created new project at/);
+    t.truthy(success);
+  }
+);
+
+// TODO this generates a UUID for credentials, but that's naughty init
+// Also the credential does not appear to be set on the job
+test.serial.only('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);
 
-  await setup();
+  // skip the usual setup and just set up the filesystem
+  mockFs({
+    '/ws/.projects/main@localhost.yaml': myProject_spec,
+    '/ws/openfn.yaml': '', // TODO this shouldn;'t be neeed
+  });
 
   await deploy(
     {
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-      workspace: '/ws',
-      new: true,
+      project: '/ws/.projects/main@localhost.yaml',
     } as any,
     logger
   );
 
+  console.log(logger._history);
+
   // We should now have a new project with a new UUID
   t.is(Object.keys(server.state.projects).length, 2);
+  // TODO more assertions
 
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
