@@ -10,7 +10,7 @@ OpenFn job expressions are not valid JavaScript out of the box — top-level ada
 
 ## Compiling for Tests
 
-`openfn compile` writes compiled output to `compiled/` by default. Use `--exports-only` to also strip adaptor operation calls, keeping only explicitly exported code.
+`openfn compile` writes compiled output to `dist/` by default (as `.mjs` files). Use `--exports-only` to also strip adaptor operation calls, keeping only explicitly exported code.
 
 ```bash
 # Compile all workflows in the project (full compilation, preserves operations)
@@ -30,6 +30,12 @@ openfn compile workflows/my-workflow/step-a.js --exports-only
 
 # Watch mode: recompile whenever source files change
 openfn compile --exports-only --watch
+
+# Remove the output folder before compiling
+openfn compile --exports-only --clean
+
+# Compile a project in another directory
+openfn compile --workspace path/to/project
 ```
 
 ## What `--exports-only` keeps
@@ -75,7 +81,7 @@ fn((state) => ({
 }));
 ```
 
-**Compiled** (`compiled/dhis2-sync/transform.js`) after `openfn compile --exports-only`:
+**Compiled** (`dist/dhis2-sync/transform.mjs`) after `openfn compile --exports-only`:
 
 ```js
 import { dateFns } from '@openfn/language-dhis2';
@@ -89,7 +95,7 @@ The operation is stripped. `formatDate` survives because it is explicitly export
 
 ```js
 // test/transform.test.js
-import { formatDate } from '../compiled/dhis2-sync/transform.js';
+import { formatDate } from '../dist/dhis2-sync/transform.mjs';
 
 test('formats a date correctly', () => {
   const result = formatDate(new Date('2024-01-15'));
@@ -104,12 +110,12 @@ Running `openfn compile` with no path compiles every step in every workflow in t
 Output layout:
 
 ```
-compiled/
+dist/
   my-workflow/
-    step-a.js
-    step-b.js
+    step-a.mjs
+    step-b.mjs
   another-workflow/
-    step-c.js
+    step-c.mjs
 ```
 
 Override the output directory with `-o <dir>`:
@@ -123,7 +129,7 @@ Configure default directories in `openfn.yaml`:
 ```yaml
 dirs:
   workflows: workflows
-  compiled: compiled # used by openfn compile
+  compiled: dist # output dir used by openfn compile
 ```
 
 ## Recommended Setup
@@ -147,3 +153,5 @@ dirs:
 - Without `--exports-only`, all code including operations is kept in `export default [...]`
 - Watch mode reruns compilation on any source change, making the edit → test cycle fast
 - Use `-O` to print compiled output to stdout instead of writing to disk
+- Output files use the `.mjs` extension, so Node always treats them as ES modules — no `"type": "module"` needed in your project's `package.json`
+- Use `--clean` to remove the output folder before compiling, and `--workspace <dir>` to target a project outside the current directory
