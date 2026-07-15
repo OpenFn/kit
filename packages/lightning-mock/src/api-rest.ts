@@ -101,15 +101,7 @@ export function validateProvisionPayload(
       : Object.values(wf.edges ?? {});
 
     for (const edge of edgeList) {
-      if (edge.delete) {
-        continue;
-      }
-      if (
-        !edge.source_trigger &&
-        !edge.source_trigger_id &&
-        !edge.source_job &&
-        !edge.source_job_id
-      ) {
+      if (!edge.delete && !edge.source_trigger_id && !edge.source_job_id) {
         const key = edge.id ?? '->';
         edgeErrors[key] = {
           source_job_id: ['source_job_id or source_trigger_id must be present'],
