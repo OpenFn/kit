@@ -237,7 +237,7 @@ test('should write openfn keys to objects', (t) => {
   t.is(state.workflows['wf'].edges['trigger->step'].x, 1);
 });
 
-test('should handle credentials', (t) => {
+test('should handle credentials with existing UUIDs', (t) => {
   const data = {
     id: 'my-project',
     credentials: [
@@ -278,6 +278,51 @@ test('should handle credentials', (t) => {
   const { step } = state.workflows['wf'].jobs;
   t.is(step.keychain_credential_id, 'k');
   t.is(step.project_credential_id, '123');
+});
+
+test('should handle credentials without UUIDs (ie new credentials)', (t) => {
+  const data = {
+    id: 'my-project',
+    credentials: [
+      {
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'admin@openfn.org|cred',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  const { step } = state.workflows['wf'].jobs;
+  t.is(step.keychain_credential_id, 'k');
+
+  // Should look like a UUID
+  t.is(typeof step.project_credential_id, 'string');
+  t.is(step.project_credential_id!.length, 36);
 });
 
 test('should force a UUID on project credentials', (t) => {
