@@ -13,6 +13,10 @@ export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
   dirs: {
     projects: config.dirs?.projects ?? '.projects',
     workflows: config.dirs?.workflows ?? 'workflows',
+    // compiled has no default, so it isn't written into serialized
+    // openfn.yaml files unless the user set it. Consumers default it at
+    // point of use (openfn compile uses 'dist')
+    ...(config.dirs?.compiled && { compiled: config.dirs.compiled }),
   },
   formats: {
     openfn: config.formats?.openfn ?? 'yaml',

@@ -147,6 +147,8 @@ export interface WorkspaceConfig {
   dirs: {
     workflows: string;
     projects: string;
+    // Output directory for compiled workflows (openfn compile)
+    compiled?: string;
   };
   formats: {
     openfn?: FileFormats;
