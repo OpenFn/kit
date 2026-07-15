@@ -58,6 +58,13 @@ export default function (
     name: c.name,
   }));
 
+  // Ensure each credential has a UUID
+  project.credentials =
+    project.credentials?.map((c) => ({
+      ...c,
+      uuid: c.uuid ?? randomUUID(),
+    })) ?? [];
+
   Object.assign(state, rest, project.options);
   if (options.asSpec) {
     for (const c of project.credentials) {
@@ -71,14 +78,10 @@ export default function (
       };
     }
   } else {
-    const credentialsWithUuids =
-      project.credentials?.map((c) => ({
-        ...c,
-        uuid: (c as CredentialState).uuid ?? randomUUID(),
-      })) ?? [];
-
-    state.project_credentials = credentialsWithUuids.map((c) => ({
-      // note the subtle conversion here
+    state.project_credentials = project.credentials.map((c) => ({
+      // note the subtle conversion here: uuid -> id
+      // That's because the local Project uses the uuid key to track UUIDs
+      // but the provisioner spec uses id
       id: c.uuid as string,
       name: c.name,
       owner: c.owner,
@@ -219,7 +222,10 @@ export const mapWorkflow = (
               return name === projectCredentialId;
             });
             if (mappedCredential && useUuids) {
-              projectCredentialId = mappedCredential.uuid;
+              // the mapped credential might have a uuid or an id depending on how it was fed in to us
+              // but this is bullshit right?
+              projectCredentialId =
+                mappedCredential.uuid ?? mappedCredential.id;
             }
 
             if (useUuids) {
