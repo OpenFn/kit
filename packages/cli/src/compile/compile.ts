@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { rimraf } from 'rimraf';
 import compile, {
   preloadAdaptorExports,
   Options,
@@ -187,11 +188,11 @@ export const loadTransformOptions = async (
 export const compileProject = async (
   opts: CompileOptions,
   log: Logger,
-  cwd = process.cwd(),
+  workspacePath: string,
   workflowFilter?: string
 ): Promise<string[]> => {
   // validate=false suppresses warnings when workspace config has no extra metadata
-  const workspace = new Workspace(cwd, log as any, false);
+  const workspace = new Workspace(workspacePath, log as any, false);
   const project = await workspace.getCheckedOutProject();
 
   if (!project) {
@@ -201,16 +202,20 @@ export const compileProject = async (
     process.exit(1);
   }
 
-  const wsConfig = workspace.getConfig() as any;
+  const wsConfig = workspace.getConfig();
 
   const compiledDir = opts.outputStdout
     ? null
     : path.resolve(
-        cwd,
-        opts.outputPath ?? wsConfig.dirs?.compiled ?? 'compiled'
+        workspacePath,
+        opts.outputPath ?? wsConfig.dirs?.compiled ?? 'dist'
       );
 
   if (compiledDir) {
+    if (opts.clean) {
+      log.info(`Cleaning ${compiledDir}`);
+      await rimraf(compiledDir);
+    }
     log.info(`Compiling project to ${compiledDir}`);
   }
 
@@ -256,11 +261,11 @@ export const compileProject = async (
     if (opts.outputStdout) {
       log.success(`// ${stepId}\n\n` + code);
     } else {
-      const outPath = path.join(compiledDir!, workflow.id, `${step.id}.js`);
+      const outPath = path.join(compiledDir!, workflow.id, `${step.id}.mjs`);
       await fs.mkdir(path.dirname(outPath), { recursive: true });
       await fs.writeFile(outPath, code);
       outPaths.push(outPath);
-      log.success(`  ${stepId} → ${outPath}`);
+      log.info(`Compiled ${stepId} to ${outPath}`);
     }
   }
 

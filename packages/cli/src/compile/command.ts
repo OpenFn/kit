@@ -1,7 +1,8 @@
 import yargs from 'yargs';
 import { Opts } from '../options';
 import * as o from '../options';
-import { build, ensure } from '../util/command-builders';
+import * as po from '../projects/options';
+import { build, ensure, override } from '../util/command-builders';
 
 export type CompileOptions = Pick<
   Opts,
@@ -11,6 +12,7 @@ export type CompileOptions = Pick<
   | 'exportsOnly'
   | 'ignoreImports'
   | 'expressionPath'
+  | 'planPath'
   | 'logJson'
   | 'log'
   | 'outputPath'
@@ -25,11 +27,16 @@ export type CompileOptions = Pick<
 > & {
   workflow?: Opts['workflow'];
   repoDir?: string;
+  workspace?: string;
+  clean?: boolean;
 };
 
 const options = [
   o.expandAdaptors, // order important
   o.adaptors,
+  override(po.clean, {
+    description: 'Remove the output folder before compiling',
+  }),
   o.exportsOnly,
   o.ignoreImports,
   o.inputPath,
@@ -42,6 +49,7 @@ const options = [
   o.useAdaptorsMonorepo,
   o.watchFlag,
   o.workflow,
+  po.workspace,
 ];
 
 const compileCommand: yargs.CommandModule<CompileOptions> = {
@@ -65,11 +73,11 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
       )
       .example(
         'compile',
-        'Compiles all workflows in the current project and writes JS files to compiled/'
+        'Compiles all workflows in the current project and writes JS files to dist/'
       )
       .example(
         'compile my-workflow',
-        'Compiles a single workflow by name and writes JS files to compiled/'
+        'Compiles a single workflow by name and writes JS files to dist/'
       )
       .example(
         'compile my-workflow -O',
@@ -81,7 +89,11 @@ const compileCommand: yargs.CommandModule<CompileOptions> = {
       )
       .example(
         'compile --exports-only',
-        'Compiles entire project to compiled/ stripping operation calls'
+        'Compiles entire project to dist/ stripping operation calls'
+      )
+      .example(
+        'compile --clean',
+        'Removes the output folder before compiling the project'
       )
       .example(
         'compile foo/job.js --watch',

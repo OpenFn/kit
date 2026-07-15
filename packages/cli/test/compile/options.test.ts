@@ -91,3 +91,40 @@ test('disable some imports', (t) => {
   t.is(a, 'jam');
   t.is(b, 'jar');
 });
+
+test('clean is disabled by default', (t) => {
+  const options = parse('compile');
+  t.false(options.clean);
+});
+
+test('enable clean', (t) => {
+  const options = parse('compile --clean');
+  t.true(options.clean);
+});
+
+test('workspace defaults to cwd', (t) => {
+  const options = parse('compile');
+  t.is(options.workspace, process.cwd());
+});
+
+test('set a workspace path', (t) => {
+  const options = parse('compile --workspace /tmp/proj');
+  t.is(options.workspace, '/tmp/proj');
+});
+
+test('a path with a file extension maps to a file input', (t) => {
+  const options = parse('compile job.js');
+  t.is(options.expressionPath, 'job.js');
+  t.falsy(options.workflowName);
+
+  const wfOptions = parse('compile workflow.json');
+  t.is(wfOptions.planPath, 'workflow.json');
+  t.falsy(wfOptions.workflowName);
+});
+
+test('a path without a file extension maps to a workflow name', (t) => {
+  const options = parse('compile my-workflow');
+  t.is(options.workflowName, 'my-workflow');
+  t.falsy(options.expressionPath);
+  t.falsy(options.planPath);
+});

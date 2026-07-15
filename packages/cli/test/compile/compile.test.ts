@@ -393,7 +393,7 @@ steps:
     );
 
     t.is(outPaths.length, 1);
-    t.true(outPaths[0].endsWith('compiled/wf1/step-a.js'));
+    t.true(outPaths[0].endsWith('dist/wf1/step-a.mjs'));
 
     const { default: nodeFsPromises } = await import('node:fs/promises');
     const code = await nodeFsPromises.readFile(outPaths[0], 'utf-8');
@@ -435,7 +435,90 @@ steps:
 
     // Only step-a has exportable code — step-b should not be written
     t.is(outPaths.length, 1);
-    t.true(outPaths[0].endsWith('step-a.js'));
+    t.true(outPaths[0].endsWith('step-a.mjs'));
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compileProject: respects dirs.compiled from the workspace config',
+  async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
+    const recastPath = `${pnpm}/recast@0.21.5`;
+    const sourceMapPath = `${pnpm}/source-map@0.7.6`;
+
+    mock({
+      [recastPath]: mock.load(recastPath, {}),
+      [sourceMapPath]: mock.load(sourceMapPath, {}),
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+  compiled: build
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+    });
+
+    const outPaths = await compileProject(
+      {} as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].startsWith('/proj/build/'));
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compileProject: --clean removes the output dir before compiling',
+  async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
+    const recastPath = `${pnpm}/recast@0.21.5`;
+    const sourceMapPath = `${pnpm}/source-map@0.7.6`;
+
+    mock({
+      [recastPath]: mock.load(recastPath, {}),
+      [sourceMapPath]: mock.load(sourceMapPath, {}),
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+      // A stale file from a previous compile
+      '/proj/dist/old-workflow/stale.mjs': 'export default [];',
+    });
+
+    const { default: nodeFs } = await import('node:fs/promises');
+
+    // Without --clean, the stale file survives
+    await compileProject({} as CompileOptions, mockLog, '/proj');
+    await t.notThrowsAsync(() =>
+      nodeFs.access('/proj/dist/old-workflow/stale.mjs')
+    );
+
+    // With --clean, it is removed
+    const outPaths = await compileProject(
+      { clean: true } as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+    t.is(outPaths.length, 1);
+    await t.throwsAsync(() =>
+      nodeFs.access('/proj/dist/old-workflow/stale.mjs')
+    );
 
     mock.restore();
   }

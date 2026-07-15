@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { writeFile, mkdir } from 'node:fs/promises';
 import chokidar from 'chokidar';
+import { Workspace } from '@openfn/project';
 import type { CompileOptions } from './command';
 import type { Logger } from '../util/logger';
 
@@ -8,14 +9,33 @@ import compile, { compileProject } from './compile';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
 
-const collectWatchTargets = (options: CompileOptions): string[] => {
+// True if the input path points to a file (workflow or expression),
+// rather than a workflow name or nothing at all.
+// See the input-path option, which maps file paths by extension.
+const isFileInput = (options: CompileOptions) =>
+  Boolean(options.planPath || options.expressionPath);
+
+const collectWatchOptions = (options: CompileOptions, logger: Logger) => {
+  const ignored = ['**/node_modules/**'];
+
   if (options.expressionPath) {
-    return [path.resolve(options.expressionPath)];
+    return { targets: [path.resolve(options.expressionPath)], ignored };
   }
-  if (options.path) {
-    return [path.resolve(options.path)];
+  if (options.path && isFileInput(options)) {
+    return { targets: [path.resolve(options.path)], ignored };
   }
-  return [path.join(process.cwd(), 'workflows', '**', '*.js')];
+
+  // Project mode: watch job files in the workspace's configured workflows dir
+  // and ignore the compiled output dir
+  const workspace = new Workspace(options.workspace!, logger as any, false);
+  const outDir = path.resolve(
+    options.workspace!,
+    options.outputPath ?? workspace.getConfig().dirs?.compiled ?? 'dist'
+  );
+  return {
+    targets: [path.join(workspace.workflowsPath, '**', '*.js')],
+    ignored: [...ignored, path.join(outDir, '**')],
+  };
 };
 
 const doCompile = async (options: CompileOptions, logger: Logger) => {
@@ -39,13 +59,18 @@ const doCompile = async (options: CompileOptions, logger: Logger) => {
 };
 
 const runCompile = async (options: CompileOptions, logger: Logger) => {
-  if (options.workflowName) {
-    await compileProject(options, logger, process.cwd(), options.workflowName);
-  } else if (!options.path) {
-    await compileProject(options, logger);
-  } else {
-    assertPath(options.path);
+  if (isFileInput(options)) {
+    assertPath(options.expressionPath ?? options.planPath);
     await doCompile(options, logger);
+  } else {
+    // No path, or a bare workflow name: compile the checked-out project,
+    // optionally filtered to a single workflow
+    await compileProject(
+      options,
+      logger,
+      options.workspace!,
+      options.workflowName
+    );
   }
 };
 
@@ -54,12 +79,12 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
 
   if (!options.watch) return;
 
-  const watchTargets = collectWatchTargets(options);
+  const { targets, ignored } = collectWatchOptions(options, logger);
   logger.info(`Watching for changes. Ctrl+C to stop.`);
 
-  const watcher = chokidar.watch(watchTargets, {
+  const watcher = chokidar.watch(targets, {
     ignoreInitial: true,
-    ignored: ['**/node_modules/**', '**/compiled/**'],
+    ignored,
   });
 
   watcher.on('change', async (changedPath: string) => {
