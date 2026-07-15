@@ -125,7 +125,43 @@ test('validateProvisionPayload: returns null for a valid edge with source_job_id
   t.is(validateProvisionPayload(payload), null);
 });
 
-test('validateProvisionPayload: returns errors when edge has no source', (t) => {
+test('validateProvisionPayload: returns errors when edge has no source job or trigger id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            source_trigger_id: null,
+            target_job_id: '',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.truthy(result);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          edges: {
+            'edge-1': {
+              source_job_id: [
+                'source_job_id or source_trigger_id must be present',
+              ],
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: for new edges allow source_job', (t) => {
   const payload = {
     id: 'proj-1',
     workflows: [

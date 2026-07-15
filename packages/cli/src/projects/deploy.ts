@@ -382,14 +382,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
     ({ merged, remoteProject, locallyChangedWorkflows } = syncResult);
   }
 
+  /**
+   * Questions:
+   * 1. When this serializses, should project_credentials have uuids?
+   */
   const state = merged.serialize('state', {
     format: 'json',
-    // If uploading a new project, serialize to spec, not state
-    // WRONG!!!!!
-    // We DO need to convert this to  v1 state
-    // We just need to ensure that credentials are handled properly
-    // something is wrong in the conversion
-    asSpec: options.new,
   }) as Provisioner.Project_v1;
 
   // TODO only do this if asked

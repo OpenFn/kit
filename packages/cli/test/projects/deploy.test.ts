@@ -104,16 +104,14 @@ test.serial(
   }
 );
 
-// TODO this generates a UUID for credentials, but that's naughty init
-// Also the credential does not appear to be set on the job
-test.serial.only('deploy a project as new from a v2 spec yaml', async (t) => {
+test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);
 
   // skip the usual setup and just set up the filesystem
   mockFs({
     '/ws/.projects/main@localhost.yaml': myProject_spec,
-    '/ws/openfn.yaml': '', // TODO this shouldn;'t be neeed
+    '/ws/openfn.yaml': '', // TODO this shouldn't be needed
   });
 
   await deploy(
@@ -129,7 +127,10 @@ test.serial.only('deploy a project as new from a v2 spec yaml', async (t) => {
 
   // We should now have a new project with a new UUID
   t.is(Object.keys(server.state.projects).length, 2);
+
   // TODO more assertions
+  // project structure looks right (edges in particular)
+  // - credential is OK
 
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
