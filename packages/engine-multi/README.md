@@ -81,6 +81,22 @@ engine.execute(plan)
 
 For a full list of events, see `src/events/ts` (the top-level API events are listed at the top)
 
+## Memory Limits
+
+The engine enforces two memory limits on each run:
+
+**Heap limit** (`memoryLimitMb`): sets V8's max old space size on the child process (and the worker thread's resource limits). If a run blows this, V8 aborts and the engine reports an OOMError. This only bounds the JavaScript heap - buffers and other native allocations don't count towards it.
+
+**cgroup limit** (`cgroupMemoryLimitMb`): a hard ceiling on the child process's total memory (including native allocations), enforced by the kernel through a cgroup v2 leaf. Each pooled child process is placed in its own cgroup under `cgroupParent` (default `/sys/fs/cgroup/openfn`) with `memory.max` set and swap disabled. If a run exceeds the ceiling, the kernel OOM-kills the child; the engine detects this from the cgroup's `memory.events` and reports an OOMError.
+
+The heap limit should sit below the cgroup limit, so that GC pressure kicks in first. The cgroup is a backstop for native (off-heap) memory, which the heap limit can't see.
+
+An OOMError carries a `source` property (`'heap'` or `'cgroup'`) saying which limit was breached.
+
+cgroup enforcement is best-effort. It needs Linux with a writable cgroup v2 hierarchy - typically root inside a container with cgroup delegation. Anywhere else (macOS, cgroup v1, unprivileged processes - which in practice includes most local dev machines) the engine logs a warning once and falls back to heap-limit-only behaviour. As part of setup, the engine may relocate processes at the cgroup root into a leader leaf so the memory controller can be delegated (the same move systemd and runc make).
+
+The ws-worker enables cgroup enforcement by default, with `run-memory + 128`mb of headroom for native allocations. Pass `--cgroup-memory 0` (or `WORKER_CGROUP_MEMORY_MB=0`) to disable it explicitly.
+
 ## Module Loader Whitelist
 
 A whitelist controls what modules a job is allowed to import. At the moment this is hardcoded in the Engine to modules starting with @openfn.

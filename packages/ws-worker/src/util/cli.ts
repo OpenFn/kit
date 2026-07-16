@@ -237,7 +237,7 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('cgroup-memory', {
       description:
-        'Hard memory ceiling (mb) enforced per run via a cgroup v2 leaf. Linux only; falls back to heap-limit only when unavailable. Defaults to run-memory + 128. Env: WORKER_CGROUP_MEMORY_MB',
+        'Hard memory ceiling (mb) enforced per run via a cgroup v2 leaf. Linux only; falls back to heap-limit only when unavailable. Defaults to run-memory + 128. Set to 0 to disable. Env: WORKER_CGROUP_MEMORY_MB',
       type: 'number',
     })
     .option('cgroup-parent', {
