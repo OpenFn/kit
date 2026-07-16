@@ -71,6 +71,9 @@ export interface WorkflowErrorPayload extends ExternalEvent {
   type: string;
   message: string;
   severity: string;
+  // where the error originated; 'engine' generally, but OOM errors narrow
+  // this to the limit that was breached ('heap' or 'cgroup')
+  source?: string;
 }
 
 export interface JobStartPayload extends ExternalEvent {

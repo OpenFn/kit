@@ -15,11 +15,11 @@ import { Logger } from '@openfn/logger';
 import type { PayloadLimits } from './thread/runtime';
 import {
   CgroupHandle,
-  DEFAULT_CGROUP_PARENT,
   createChildCgroup,
   hasOomKill,
   isCgroupV2Available,
   removeChildCgroup,
+  resolveSelfCgroup,
 } from './cgroup';
 
 export type PoolOptions = {
@@ -31,7 +31,9 @@ export type PoolOptions = {
   // Hard memory.max ceiling (mb) applied to each child via a cgroup v2 leaf.
   // Best-effort: ignored on hosts without a writable cgroup v2 hierarchy.
   cgroupMemoryLimitMb?: number;
-  // Parent cgroup under which per-child leaf cgroups are created.
+  // Parent cgroup under which per-child leaf cgroups are created. Defaults to
+  // the cgroup this process was started in; overriding it generally requires
+  // root (the kernel checks the common ancestor's cgroup.procs on migration)
   cgroupParent?: string;
 
   proxyStdout?: boolean; // print internal stdout to console
@@ -95,10 +97,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const allWorkers: Record<number, ChildProcess> = {};
 
   // cgroup v2 leaf per child (keyed by pid), when memory enforcement is enabled
-  const cgroupParent = options.cgroupParent || DEFAULT_CGROUP_PARENT;
+  const cgroupParent = options.cgroupParent || resolveSelfCgroup();
   const cgroupEnabled =
-    !!options.cgroupMemoryLimitMb &&
-    isCgroupV2Available(cgroupParent, logger);
+    !!options.cgroupMemoryLimitMb && isCgroupV2Available(cgroupParent, logger);
   const cgroups: Record<number, CgroupHandle | null> = {};
 
   // Tear down a child's leaf cgroup once it has been killed (best-effort).
@@ -141,7 +142,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // lives for the lifetime of the (reused) child and is removed when it dies.
       if (cgroupEnabled && child.pid) {
         cgroups[child.pid] = createChildCgroup(
-          cgroupParent,
+          cgroupParent!,
           child.pid,
           options.cgroupMemoryLimitMb! * 1024 * 1024,
           logger
