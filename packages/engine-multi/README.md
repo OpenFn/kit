@@ -87,13 +87,26 @@ The engine enforces two memory limits on each run:
 
 **Heap limit** (`memoryLimitMb`): sets V8's max old space size on the child process (and the worker thread's resource limits). If a run blows this, V8 aborts and the engine reports an OOMError. This only bounds the JavaScript heap - buffers and other native allocations don't count towards it.
 
-**cgroup limit** (`cgroupMemoryLimitMb`): a hard ceiling on the child process's total memory (including native allocations), enforced by the kernel through a cgroup v2 leaf. Each pooled child process is placed in its own cgroup under `cgroupParent` (default `/sys/fs/cgroup/openfn`) with `memory.max` set and swap disabled. If a run exceeds the ceiling, the kernel OOM-kills the child; the engine detects this from the cgroup's `memory.events` and reports an OOMError.
+**cgroup limit** (`cgroupMemoryLimitMb`): a hard ceiling on the child process's total memory (including native allocations), enforced by the kernel through a cgroup v2 leaf. Each pooled child process is placed in its own cgroup under `cgroupParent` with `memory.max` set and swap disabled. If a run exceeds the ceiling, the kernel OOM-kills the child; the engine detects this from the cgroup's `memory.events` and reports an OOMError.
 
 The heap limit should sit below the cgroup limit, so that GC pressure kicks in first. The cgroup is a backstop for native (off-heap) memory, which the heap limit can't see.
 
 An OOMError carries a `source` property (`'heap'` or `'cgroup'`) saying which limit was breached.
 
-cgroup enforcement is best-effort. It needs Linux with a writable cgroup v2 hierarchy - typically root inside a container with cgroup delegation. Anywhere else (macOS, cgroup v1, unprivileged processes - which in practice includes most local dev machines) the engine logs a warning once and falls back to heap-limit-only behaviour. As part of setup, the engine may relocate processes at the cgroup root into a leader leaf so the memory controller can be delegated (the same move systemd and runc make).
+### cgroup setup
+
+The engine never provisions the cgroup hierarchy itself. The contract is that the worker process is **started inside** a writable, delegated cgroup v2 subtree; the engine then creates one leaf per child process within it. By default `cgroupParent` is the cgroup the worker was started in (read from `/proc/self/cgroup`), which makes the common environments work without configuration:
+
+| Environment | Setup required |
+| --- | --- |
+| Docker / K8s | Nothing to create - container processes are born in the container's cgroup. But the cgroup mount must be writable: unprivileged Docker mounts `/sys/fs/cgroup` read-only, so enforcement needs `--privileged` (or Podman, which mounts it read-write by default) |
+| systemd host | A unit with `User=openfn` and `Delegate=memory` - systemd creates the cgroup, chowns it to the user and starts the worker inside it |
+| Manual (no systemd) | As root: `mkdir` the cgroup and `chown` the dir, its `cgroup.procs` and `cgroup.subtree_control` to the worker user; then a root launcher writes its own pid into `cgroup.procs` before dropping privileges and `exec`ing node |
+| Local dev | Nothing - your cgroup isn't writable, so the engine warns once and falls back to heap-limit-only |
+
+If the contract isn't met (macOS, cgroup v1, no writable cgroup), the engine logs a warning once and falls back to heap-limit-only behaviour. All cgroup writes are confined to the delegated subtree: on first use the engine moves its own process into a `leader` leaf (cgroup v2 forbids delegating controllers from a populated cgroup) and enables the memory controller for its leaves.
+
+`cgroupParent` can be overridden, but pointing the worker at a subtree it wasn't started in generally requires root: the kernel only allows migrating a process if the writer has write access to the common ancestor's `cgroup.procs`.
 
 The ws-worker enables cgroup enforcement by default, with `run-memory + 128`mb of headroom for native allocations. Pass `--cgroup-memory 0` (or `WORKER_CGROUP_MEMORY_MB=0`) to disable it explicitly.
 

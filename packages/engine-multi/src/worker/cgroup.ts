@@ -3,6 +3,12 @@
  *
  * cgroup level memory enforcement allows us to enforce memory limits at the kernel level,
  * improving our ability to OOMKill runs.
+ *
+ * The engine never provisions the cgroup hierarchy itself. The contract is that
+ * the worker process is *started inside* a delegated, writable cgroup - by a
+ * systemd unit with Delegate=, by a container runtime, or by a launcher script
+ * (see docs/cgroup-spec.md). When the contract isn't met, every function here
+ * degrades to a no-op and the caller falls back to heap-limit-only behaviour.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,32 +17,80 @@ import type { Logger } from '@openfn/logger';
 
 const CGROUP_ROOT = '/sys/fs/cgroup';
 
-// Default parent cgroup under which per-child leaf cgroups are created.
-// Must be a path the worker process can write to (typically requires cgroup
-// delegation in a container, or running as root).
-export const DEFAULT_CGROUP_PARENT = path.join(CGROUP_ROOT, 'openfn');
-
 export type CgroupHandle = {
   path: string; // absolute path to the leaf cgroup directory
   eventsPath: string; // absolute path to the leaf's memory.events file
 };
 
+// Extract the cgroup v2 path (the "0::<path>" entry) from a /proc/self/cgroup
+// listing and resolve it against the cgroup mount. Returns null if the process
+// has no v2 cgroup (ie, a pure cgroup v1 host)
+export const parseProcSelfCgroup = (content: string): string | null => {
+  for (const line of content.split('\n')) {
+    const match = line.match(/^0::(.+)$/);
+    if (match) {
+      // strip the trailing slash left by the namespace root case ("0::/")
+      return path.join(CGROUP_ROOT, match[1]).replace(/(.)\/$/, '$1');
+    }
+  }
+  return null;
+};
+
+// The cgroup this process was started in. This is the default parent for
+// per-child leaves: under systemd Delegate= or in a container it is exactly
+// the subtree that was handed to us. Returns null when it can't be determined
+export const resolveSelfCgroup = (): string | null => {
+  if (os.platform() !== 'linux') {
+    return null;
+  }
+  try {
+    const self = parseProcSelfCgroup(
+      fs.readFileSync('/proc/self/cgroup', 'utf8')
+    );
+    // If we were started inside a leader leaf (eg, restarted from within an
+    // already-prepared cgroup), the delegated parent is the enclosing cgroup
+    if (self && path.basename(self) === LEADER_NAME) {
+      return path.dirname(self);
+    }
+    return self;
+  } catch (e) {
+    return null;
+  }
+};
+
 // Returns true when cgroup v2 memory enforcement can be used under `parent`.
-// Caches the result and warns (once per parent) when unavailable.
+// On first success this also prepares the parent (delegates the memory
+// controller to its leaves). Caches the result and warns (once per parent)
+// when unavailable
 export const isCgroupV2Available = (
-  parent: string,
+  parent: string | null,
   logger: Logger
 ): boolean => {
-  if (parent in availabilityCache) {
-    return availabilityCache[parent];
+  const key = parent ?? '';
+  if (key in availabilityCache) {
+    return availabilityCache[key];
   }
 
-  const available = detect(parent, logger);
-  availabilityCache[parent] = available;
+  let available = false;
+  if (parent && detect(parent, logger)) {
+    try {
+      prepare(parent, logger);
+      available = true;
+    } catch (e) {
+      logger.debug(
+        `cgroup: could not delegate memory controller in ${parent}: ${
+          (e as Error).message
+        }`
+      );
+    }
+  }
+
+  availabilityCache[key] = available;
   if (!available) {
     logger.warn(
-      'cgroup: v2 memory enforcement unavailable on this host; ' +
-        'falling back to heap-limit only'
+      'cgroup: v2 memory enforcement unavailable; falling back to heap-limit only. ' +
+        'To enable it, start the worker inside a writable, delegated cgroup ' +
+        '(see the engine-multi README)'
     );
   }
   return available;
@@ -114,7 +168,10 @@ export const removeChildCgroup = (
   } catch (e) {
     const err = e as NodeJS.ErrnoException;
     if (attempts > 0 && (err.code === 'EBUSY' || err.code === 'ENOTEMPTY')) {
-      setTimeout(() => removeChildCgroup(handle, logger, attempts - 1), 50);
+      setTimeout(
+        () => removeChildCgroup(handle, logger, attempts - 1),
+        50
+      ).unref();
       return;
     }
     if (err.code !== 'ENOENT') {
@@ -130,9 +187,10 @@ export const _resetAvailabilityCache = () => {
   }
 };
 
-// Leaf cgroup into which we relocate any processes that sit in a cgroup we need
-// to delegate the memory controller from (see enableMemoryController).
-const LEADER_NAME = 'openfn-leader';
+// Leaf cgroup into which the worker relocates the processes in its own cgroup
+// (typically just itself), so the memory controller can be delegated to the
+// run leaves (see prepare)
+const LEADER_NAME = 'leader';
 
 // Cache availability per parent so we only probe the filesystem (and warn) once.
 const availabilityCache: Record<string, boolean> = {};
@@ -143,17 +201,17 @@ function fileLists(file: string, token: string) {
   return fs.readFileSync(file, 'utf8').split(/\s+/).includes(token);
 }
 
-// Relocate every process in `dir` into a dedicated leader leaf cgroup, so `dir`
-// itself becomes empty and its controllers can be delegated. This is the same
-// move systemd/runc make; it includes the worker's own process when `dir` is
-// the container's cgroup namespace root.
-function moveProcsToLeader(dir: string, logger: Logger) {
-  const leader = path.join(dir, LEADER_NAME);
+// Relocate every process in `parent` into a leader leaf, so `parent` itself
+// becomes empty and its controllers can be delegated. Within a delegated
+// subtree the only member processes are our own (typically just the worker,
+// when it was started inside `parent`)
+function moveProcsToLeader(parent: string, logger: Logger) {
+  const leader = path.join(parent, LEADER_NAME);
   if (!fs.existsSync(leader)) {
     fs.mkdirSync(leader);
   }
   const procs = fs
-    .readFileSync(path.join(dir, 'cgroup.procs'), 'utf8')
+    .readFileSync(path.join(parent, 'cgroup.procs'), 'utf8')
     .trim()
     .split('\n')
     .filter(Boolean);
@@ -161,7 +219,8 @@ function moveProcsToLeader(dir: string, logger: Logger) {
     try {
       fs.writeFileSync(path.join(leader, 'cgroup.procs'), pid);
     } catch (e) {
-      // Some processes (e.g. kernel threads) can't be moved; skip them.
+      // A process may exit between the read and the move; skip it and let the
+      // subsequent subtree_control write decide whether the parent is empty
       logger.debug(
         `cgroup: could not move pid ${pid} into leader: ${(e as Error).message}`
       );
@@ -169,24 +228,24 @@ function moveProcsToLeader(dir: string, logger: Logger) {
   }
 }
 
-// Enable the memory controller for the children of `dir` (idempotent).
-function enableMemoryController(dir: string, logger: Logger) {
-  const subtree = path.join(dir, 'cgroup.subtree_control');
+// Enable the memory controller for the leaves of `parent` (idempotent).
+// cgroup v2's "no internal processes" rule forbids delegating controllers
+// from a populated cgroup, and in the recommended setup the worker itself
+// lives in `parent` - so on EBUSY, move its processes into a leader leaf
+// and retry
+function prepare(parent: string, logger: Logger) {
+  const subtree = path.join(parent, 'cgroup.subtree_control');
   if (fileLists(subtree, 'memory')) {
     return;
   }
   try {
     fs.writeFileSync(subtree, '+memory');
   } catch (e) {
-    // EBUSY means `dir` still holds member processes (cgroup v2's "no internal
-    // processes" rule forbids delegating from a populated cgroup). This is the
-    // common containerised case where the worker lives in the namespace root:
-    // move those processes into a leader leaf, then retry the delegation.
     if ((e as NodeJS.ErrnoException).code === 'EBUSY') {
       logger.debug(
-        `cgroup: ${dir} is populated; relocating processes to delegate memory`
+        `cgroup: ${parent} is populated; relocating processes to a leader leaf`
       );
-      moveProcsToLeader(dir, logger);
+      moveProcsToLeader(parent, logger);
       fs.writeFileSync(subtree, '+memory');
     } else {
       throw e;
@@ -194,52 +253,34 @@ function enableMemoryController(dir: string, logger: Logger) {
   }
 }
 
-// Ensure the parent cgroup exists and delegates the memory controller all the
-// way down from the cgroup root, so leaf cgroups created under it can set
-// memory.max. Throws on any failure (caught by the caller).
-function ensureParent(parent: string, logger: Logger) {
-  const rel = path.relative(CGROUP_ROOT, parent);
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
-    throw new Error(`cgroup parent ${parent} is not under ${CGROUP_ROOT}`);
-  }
-
-  // Delegate the memory controller from the root down to (and including) the
-  // parent, creating each intermediate cgroup as needed. Any process sitting in
-  // a cgroup we delegate from (notably the worker itself, in the namespace
-  // root) is relocated to a leader leaf first; processes otherwise only live in
-  // the leaves below `parent`.
-  enableMemoryController(CGROUP_ROOT, logger);
-  let dir = CGROUP_ROOT;
-  for (const segment of rel.split(path.sep).filter(Boolean)) {
-    dir = path.join(dir, segment);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
-    enableMemoryController(dir, logger);
-  }
-}
-
+// Read-only check that `parent` is a usable delegated cgroup: a cgroup v2
+// directory under the cgroup mount, writable by this process, with the memory
+// controller available
 function detect(parent: string, logger: Logger): boolean {
   if (os.platform() !== 'linux') {
     return false;
   }
 
-  // cgroup v2 (the unified hierarchy) exposes cgroup.controllers at the root;
-  // cgroup v1 does not.
-  const rootControllers = path.join(CGROUP_ROOT, 'cgroup.controllers');
-  if (!fs.existsSync(rootControllers)) {
+  const rel = path.relative(CGROUP_ROOT, parent);
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    logger.debug(`cgroup: parent ${parent} is not under ${CGROUP_ROOT}`);
     return false;
   }
 
   try {
-    if (!fileLists(rootControllers, 'memory')) {
+    // cgroup v2 exposes cgroup.controllers in every cgroup; v1 does not
+    const controllers = path.join(parent, 'cgroup.controllers');
+    if (!fileLists(controllers, 'memory')) {
+      logger.debug(`cgroup: memory controller not available in ${parent}`);
       return false;
     }
-    ensureParent(parent, logger);
+    // We need to create leaf dirs and move pids around within the parent
+    fs.accessSync(parent, fs.constants.W_OK);
+    fs.accessSync(path.join(parent, 'cgroup.procs'), fs.constants.W_OK);
     return true;
   } catch (e) {
     logger.debug(
-      `cgroup: setup of parent ${parent} failed: ${(e as Error).message}`
+      `cgroup: parent ${parent} is not usable: ${(e as Error).message}`
     );
     return false;
   }

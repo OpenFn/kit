@@ -155,5 +155,7 @@ export const error = (
     message: error.message || error.toString(),
     // default to exception because if we don't know, it's our fault
     severity: error.severity || 'exception',
+    // @ts-ignore for OOM errors, say which limit was breached (heap/cgroup)
+    source: error.source,
   });
 };

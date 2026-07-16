@@ -242,7 +242,7 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('cgroup-parent', {
       description:
-        'Parent cgroup path under which per-run leaf cgroups are created. Must be writable (cgroup delegation/root). Default /sys/fs/cgroup/openfn. Env: WORKER_CGROUP_PARENT',
+        'Parent cgroup path under which per-run leaf cgroups are created. Defaults to the cgroup the worker was started in; overriding generally requires root. Env: WORKER_CGROUP_PARENT',
       type: 'string',
     })
 

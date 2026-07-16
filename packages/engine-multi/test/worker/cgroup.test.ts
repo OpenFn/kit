@@ -3,11 +3,12 @@ import os from 'node:os';
 import { createMockLogger } from '@openfn/logger';
 
 import {
-  DEFAULT_CGROUP_PARENT,
   createChildCgroup,
   hasOomKill,
   isCgroupV2Available,
+  parseProcSelfCgroup,
   removeChildCgroup,
+  resolveSelfCgroup,
   _resetAvailabilityCache,
 } from '../../src/worker/cgroup';
 
@@ -19,26 +20,70 @@ test.beforeEach(() => {
   _resetAvailabilityCache();
 });
 
-test('DEFAULT_CGROUP_PARENT lives under the cgroup root', (t) => {
-  t.is(DEFAULT_CGROUP_PARENT, '/sys/fs/cgroup/openfn');
+test('parseProcSelfCgroup resolves the v2 entry against the cgroup mount', (t) => {
+  t.is(
+    parseProcSelfCgroup('0::/system.slice/openfn.service\n'),
+    '/sys/fs/cgroup/system.slice/openfn.service'
+  );
 });
 
-// cgroups don't exist on macOS/Windows, so the whole module must no-op there.
+test('parseProcSelfCgroup handles the namespace root', (t) => {
+  t.is(parseProcSelfCgroup('0::/\n'), '/sys/fs/cgroup');
+});
+
+test('parseProcSelfCgroup returns null for a v1-only listing', (t) => {
+  const v1 = ['12:memory:/user.slice', '3:cpu,cpuacct:/user.slice', ''].join(
+    '\n'
+  );
+  t.is(parseProcSelfCgroup(v1), null);
+});
+
 if (!isLinux) {
-  test('isCgroupV2Available returns false on non-linux hosts', (t) => {
-    t.false(isCgroupV2Available(DEFAULT_CGROUP_PARENT, logger));
+  test('resolveSelfCgroup returns null on non-linux hosts', (t) => {
+    t.is(resolveSelfCgroup(), null);
   });
 
-  test('availability probe is cached and only warns once', (t) => {
-    const l = createMockLogger('test', { level: 'debug' });
-    isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
-    isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
-    isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
-
-    const warnings = l._history.filter((h: any) => h[0] === 'warn');
-    t.is(warnings.length, 1);
+  test('isCgroupV2Available returns false on non-linux hosts', (t) => {
+    t.false(isCgroupV2Available('/sys/fs/cgroup/test', logger));
   });
 }
+
+if (isLinux) {
+  test('resolveSelfCgroup returns a path under the cgroup mount', (t) => {
+    const self = resolveSelfCgroup();
+    // null is legitimate on a cgroup v1 host; otherwise the path must be
+    // inside the mount and never a leader leaf (the enclosing cgroup is
+    // returned instead)
+    if (self !== null) {
+      t.true(self.startsWith('/sys/fs/cgroup'));
+      t.not(self.split('/').pop(), 'leader');
+    } else {
+      t.pass();
+    }
+  });
+}
+
+test('isCgroupV2Available returns false for a null parent', (t) => {
+  t.false(isCgroupV2Available(null, logger));
+});
+
+test('isCgroupV2Available returns false for a parent outside the cgroup mount', (t) => {
+  t.false(isCgroupV2Available('/tmp/not-a-cgroup', logger));
+});
+
+test('isCgroupV2Available returns false for a missing parent', (t) => {
+  t.false(isCgroupV2Available('/sys/fs/cgroup/this/does/not/exist', logger));
+});
+
+test('availability probe is cached and only warns once', (t) => {
+  const l = createMockLogger('test', { level: 'debug' });
+  isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
+  isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
+  isCgroupV2Available('/sys/fs/cgroup/test-cache', l);
+
+  const warnings = l._history.filter((h: any) => h[0] === 'warn');
+  t.is(warnings.length, 1);
+});
 
 test('createChildCgroup returns null when the parent is not writable', (t) => {
   const handle = createChildCgroup(
