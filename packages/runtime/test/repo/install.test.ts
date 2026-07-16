@@ -4,7 +4,6 @@
  */
 import test from 'ava';
 import mock from 'mock-fs';
-import semver from 'semver';
 import { createMockLogger } from '@openfn/logger';
 import { install, loadRepoPkg } from '../../src';
 import exec from '../../src/util/exec';
@@ -119,10 +118,11 @@ test.serial('installing should use the correct flags', async (t) => {
   const flags = cmd
     .split(' ')
     .filter((token: string) => token.startsWith('--'));
-  t.assert(flags.length === 3);
+  t.assert(flags.length === 4);
   t.assert(flags.includes('--no-audit'));
   t.assert(flags.includes('--no-fund'));
   t.assert(flags.includes('--no-package-lock'));
+  t.assert(flags.includes('--ignore-scripts'));
 });
 
 test.serial('install with the correct alias', async (t) => {
