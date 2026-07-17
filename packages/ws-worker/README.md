@@ -63,7 +63,7 @@ To enable cgroup enforcement, pass `--cgroups` or set `WORKER_ENABLE_CGROUP_ENFO
 
 If you try and start a local worker with cgroup enforcement, and a process exceeds its memory, you'll find that the whole owning process is taken down (ie, the hosting terminal). This is because the worker doesn't create its own isolated cgroup — it enforces limits using whatever cgroup it happens to be started in. In an ordinary dev terminal, that cgroup is shared with other things (your shell, other tools, sometimes your whole desktop session), so an OOM kill there can take out more than just the run that went over its limit.
 
-To safely run with cgroup enforcement, you have to spawn a detatched process and delegate the cgroup:
+To safely run with cgroup enforcement, you have to spawn a detached process and delegate the cgroup:
 
 ```
 systemd-run --user --scope --unit=openfn-worker -p Delegate=yes -- pnpm start
