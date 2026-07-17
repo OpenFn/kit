@@ -97,18 +97,18 @@ An OOMError carries a `source` property (`'heap'` or `'cgroup'`) saying which li
 
 The engine never provisions the cgroup hierarchy itself. The contract is that the worker process is **started inside** a writable, delegated cgroup v2 subtree; the engine then creates one leaf per child process within it. By default `cgroupParent` is the cgroup the worker was started in (read from `/proc/self/cgroup`), which makes the common environments work without configuration:
 
-| Environment | Setup required |
-| --- | --- |
-| Docker / K8s | Nothing to create - container processes are born in the container's cgroup. But the cgroup mount must be writable: unprivileged Docker mounts `/sys/fs/cgroup` read-only, so enforcement needs `--privileged` (or Podman, which mounts it read-write by default) |
-| systemd host | A unit with `User=openfn` and `Delegate=memory` - systemd creates the cgroup, chowns it to the user and starts the worker inside it |
-| Manual (no systemd) | As root: `mkdir` the cgroup and `chown` the dir, its `cgroup.procs` and `cgroup.subtree_control` to the worker user; then a root launcher writes its own pid into `cgroup.procs` before dropping privileges and `exec`ing node |
-| Local dev | Nothing - your cgroup isn't writable, so the engine warns once and falls back to heap-limit-only |
+| Environment         | Setup required                                                                                                                                                                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker / K8s        | Nothing to create - container processes are born in the container's cgroup. But the cgroup mount must be writable: unprivileged Docker mounts `/sys/fs/cgroup` read-only, so enforcement needs `--privileged` (or Podman, which mounts it read-write by default) |
+| systemd host        | A unit with `User=openfn` and `Delegate=memory` - systemd creates the cgroup, chowns it to the user and starts the worker inside it                                                                                                                              |
+| Manual (no systemd) | As root: `mkdir` the cgroup and `chown` the dir, its `cgroup.procs` and `cgroup.subtree_control` to the worker user; then a root launcher writes its own pid into `cgroup.procs` before dropping privileges and `exec`ing node                                   |
+| Local dev           | Nothing - your cgroup isn't writable, so the engine warns once and falls back to heap-limit-only                                                                                                                                                                 |
 
 If the contract isn't met (macOS, cgroup v1, no writable cgroup), the engine logs a warning once and falls back to heap-limit-only behaviour. All cgroup writes are confined to the delegated subtree: on first use the engine moves its own process into a `leader` leaf (cgroup v2 forbids delegating controllers from a populated cgroup) and enables the memory controller for its leaves.
 
 `cgroupParent` can be overridden, but pointing the worker at a subtree it wasn't started in generally requires root: the kernel only allows migrating a process if the writer has write access to the common ancestor's `cgroup.procs`.
 
-The ws-worker enables cgroup enforcement by default, with `run-memory + 128`mb of headroom for native allocations. Pass `--cgroup-memory 0` (or `WORKER_CGROUP_MEMORY_MB=0`) to disable it explicitly.
+The ws-worker enables cgroup enforcement by default, with `run-memory + 128`mb of headroom for native allocations. Pass `--cgroup-memory 0` (or `WORKER_ENABLE_CGROUP_ENFORCEMENT_MEMORY_MB=0`) to disable it explicitly.
 
 ## Module Loader Whitelist
 
