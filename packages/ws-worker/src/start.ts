@@ -112,7 +112,6 @@ if (args.mock) {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
     stateLimitMb: args.stateMemory,
-    cgroupParent: args.cgroupParent,
     maxWorkers: effectiveCapacity,
     statePropsToRemove: args.statePropsToRemove,
     runTimeoutMs: args.maxRunDurationSeconds * 1000,

@@ -16,7 +16,6 @@ type Args = {
   batchLimit?: number;
   batchLogs: boolean;
   capacity: number;
-  cgroupParent?: string;
   workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -83,7 +82,6 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BATCH_LIMIT,
     WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
-    WORKER_CGROUP_PARENT,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
     WORKER_COLLECTIONS_VERSION,
@@ -233,12 +231,6 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
-    .option('cgroup-parent', {
-      description:
-        'Parent cgroup path under which per-run leaf cgroups are created. Defaults to the cgroup the worker was started in; overriding generally requires root. Env: WORKER_CGROUP_PARENT',
-      type: 'string',
-    })
-
     .option('max-run-duration-seconds', {
       alias: 't',
       description:
@@ -346,9 +338,6 @@ export default function parseArgs(argv: string[]): Args {
       (WORKER_MAX_STATE_MEMORY_MB
         ? parseInt(WORKER_MAX_STATE_MEMORY_MB, 10)
         : undefined),
-    cgroupParent: setArg(args.cgroupParent, WORKER_CGROUP_PARENT) as
-      | string
-      | undefined,
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
     logPayloadMemory: setArg(
       args.logPayloadMemory,
