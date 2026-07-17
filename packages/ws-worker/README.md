@@ -51,6 +51,44 @@ Use `-l mock` to connect to a lightning mock server (on the default port).
 
 For a list of supported worker and engine options, see src/start.ts
 
+## Enforcing memory limits with cgroups
+
+Each run's memory limit is enforced by default through node's max-old-space-size, which only constrains heap size. Native and buffer allocations bypass this limit. This can cause the worker to consume more memory than it is technically allowed, which can in turn cause the whole worker process to be killed by its container (ie, kubernetes).
+
+For tighter enforcement on linux environments, cgroups can be utilised. This approach make the kernel itself enforce the memory size of all run processes. If a single run exceeds its alloted size, that process is terminated and the run is marked as Killed. See engine docs for more details about this.
+
+To enable cgroup enforcement, pass `--cgroups` or set `WORKER_ENABLE_CGROUP_ENFORCEMENT`.
+
+### Local Development
+
+If you try and start a local worker with cgroup enforcement, and a process exceeds its memory, you'll find that the whole owning process is taken down (ie, the hosting terminal). This is because the worker doesn't create its own isolated cgroup — it enforces limits using whatever cgroup it happens to be started in. In an ordinary dev terminal, that cgroup is shared with other things (your shell, other tools, sometimes your whole desktop session), so an OOM kill there can take out more than just the run that went over its limit.
+
+To safely run with cgroup enforcement, you have to spawn a detatched process and delegate the cgroup:
+
+```
+systemd-run --user --scope --unit=openfn-worker -p Delegate=yes -- pnpm start
+```
+
+To close the process press CTRL-C or run:
+
+```
+systemctl --user stop openfn-worker.scope
+```
+
+### With Docker
+
+Cgroup enforcement is off by default even inside a container — you still need to explicitly set `WORKER_ENABLE_CGROUP_ENFORCEMENT` (or pass `--cgroups`) for it to activate.
+
+Setting the env var isn't enough on its own, though: the container also needs write access to its own cgroup files, which an ordinary `docker run` doesn't grant. Without it, enforcement quietly falls back to heap-limit-only, same as above.
+
+For local testing, you can grant that access with `--privileged`:
+
+```bash
+docker run --privileged -e WORKER_ENABLE_CGROUP_ENFORCEMENT=true -e WORKER_SECRET=$WORKER_SECRET openfn-worker
+```
+
+**`--privileged` is not suitable for production.** It grants far more than cgroup write access — full device access, every Linux capability, and disabled seccomp/AppArmor confinement — which is a big escalation for a worker that executes arbitrary job code. For a real deployment, work out the narrowest way to grant cgroup write access with whoever owns your container/orchestration setup, rather than reaching for `--privileged`.
+
 ## Watched Server
 
 You can start a dev server (which rebuilds on save) by running:
