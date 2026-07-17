@@ -4,11 +4,8 @@
  * cgroup level memory enforcement allows us to enforce memory limits at the kernel level,
  * improving our ability to OOMKill runs.
  *
- * The engine never provisions the cgroup hierarchy itself. The contract is that
- * the worker process is *started inside* a delegated, writable cgroup - by a
- * systemd unit with Delegate=, by a container runtime, or by a launcher script
- * (see docs/cgroup-spec.md). When the contract isn't met, every function here
- * degrades to a no-op and the caller falls back to heap-limit-only behaviour.
+ * cgroup enforcement is disabled by default because the worker needs to run in an appropriately delegated runtime. See readme.
+ *
  */
 import fs from 'node:fs';
 import os from 'node:os';
