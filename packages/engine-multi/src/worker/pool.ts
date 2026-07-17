@@ -31,11 +31,6 @@ export type PoolOptions = {
   env?: Record<string, string>; // default environment for workers
   memoryLimitMb?: number; // --max-old-space-size for child processes
 
-  // Parent cgroup under which per-child leaf cgroups are created. Defaults to
-  // the cgroup this process was started in; overriding it generally requires
-  // root (the kernel checks the common ancestor's cgroup.procs on migration)
-  cgroupParent?: string;
-
   proxyStdout?: boolean; // print internal stdout to console
 };
 
@@ -97,7 +92,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const allWorkers: Record<number, ChildProcess> = {};
 
   // cgroup v2 leaf per child (keyed by pid), when memory enforcement is enabled
-  const cgroupParent = options.cgroupParent || resolveSelfCgroup();
+  const cgroupParent = resolveSelfCgroup();
   const cgroupMemoryLimitMb = options.memoryLimitMb
     ? options.memoryLimitMb + CGROUP_MEMORY_OVERHEAD_MB
     : undefined;

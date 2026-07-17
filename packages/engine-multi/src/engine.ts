@@ -75,7 +75,6 @@ export type EngineOptions = {
   maxWorkers?: number;
   memoryLimitMb?: number;
   stateLimitMb?: number;
-  cgroupParent?: string;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
   repoDir: string;
@@ -143,7 +142,6 @@ const createEngine = async (
     {
       maxWorkers: options.maxWorkers,
       memoryLimitMb: defaultMemoryLimit,
-      cgroupParent: options.cgroupParent,
       proxyStdout: options.proxyStdout,
     },
     options.logger

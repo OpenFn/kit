@@ -13,7 +13,6 @@ type WorkerOptions = {
   env?: any;
   timeout?: number; // ms
   memoryLimitMb?: number;
-  cgroupParent?: string; // parent cgroup for per-child leaves
   proxyStdout?: boolean; // print internal stdout to console
 };
 
@@ -28,7 +27,6 @@ export default function initWorkers(
     env = {},
     maxWorkers = 5,
     memoryLimitMb,
-    cgroupParent,
     proxyStdout = false,
   } = options;
 
@@ -38,7 +36,6 @@ export default function initWorkers(
       maxWorkers,
       env,
       memoryLimitMb,
-      cgroupParent,
       proxyStdout,
     },
     logger

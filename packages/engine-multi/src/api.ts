@@ -58,7 +58,6 @@ const createAPI = async function (
 
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
-    cgroupParent: options.cgroupParent,
     runTimeoutMs: options.runTimeoutMs,
 
     statePropsToRemove: options.statePropsToRemove ?? [
