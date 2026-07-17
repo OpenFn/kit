@@ -112,9 +112,6 @@ if (args.mock) {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
     stateLimitMb: args.stateMemory,
-    // Hard cgroup ceiling sits above the V8 heap limit so GC fires first;
-    // default to run-memory + 128mb of headroom for native/buffer allocations.
-    cgroupMemoryLimitMb: args.cgroupMemory ?? (args.runMemory ?? 500) + 128,
     cgroupParent: args.cgroupParent,
     maxWorkers: effectiveCapacity,
     statePropsToRemove: args.statePropsToRemove,
