@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm ava --serial",
+    "test:cgroup": "systemd-run --user --scope --unit=cgroup-test -p Delegate=yes -p MemoryMax=2G -- pnpm exec ava test/worker/cgroup-enforcement.test.ts",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:mem": "NODE_OPTIONS=\"--max-old-space-size=90 --experimental-vm-modules\" pnpm exec tsx test/memtest.ts",
     "build": "tsup --config ./tsup.config.js",
