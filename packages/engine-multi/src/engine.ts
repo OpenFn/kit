@@ -13,6 +13,7 @@ import {
   WORKFLOW_START,
 } from './events';
 import initWorkers from './api/call-worker';
+import type { MemoryEnforcement } from './worker/pool';
 import createState from './util/create-state';
 import execute from './api/execute';
 import validateWorker from './api/validate-worker';
@@ -74,6 +75,7 @@ export type EngineOptions = {
   logger: Logger;
   maxWorkers?: number;
   memoryLimitMb?: number;
+  memoryEnforcement?: MemoryEnforcement;
   stateLimitMb?: number;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
@@ -142,6 +144,7 @@ const createEngine = async (
     {
       maxWorkers: options.maxWorkers,
       memoryLimitMb: defaultMemoryLimit,
+      memoryEnforcement: options.memoryEnforcement,
       proxyStdout: options.proxyStdout,
     },
     options.logger

@@ -1,5 +1,5 @@
 import { Logger } from '@openfn/logger';
-import createPool from '../worker/pool';
+import createPool, { MemoryEnforcement } from '../worker/pool';
 import { CallWorker } from '../types';
 
 // All events coming out of the worker need to include a type key
@@ -13,6 +13,7 @@ type WorkerOptions = {
   env?: any;
   timeout?: number; // ms
   memoryLimitMb?: number;
+  memoryEnforcement?: MemoryEnforcement;
   proxyStdout?: boolean; // print internal stdout to console
 };
 
@@ -27,6 +28,7 @@ export default function initWorkers(
     env = {},
     maxWorkers = 5,
     memoryLimitMb,
+    memoryEnforcement,
     proxyStdout = false,
   } = options;
 
@@ -36,6 +38,7 @@ export default function initWorkers(
       maxWorkers,
       env,
       memoryLimitMb,
+      memoryEnforcement,
       proxyStdout,
     },
     logger
