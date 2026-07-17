@@ -16,6 +16,7 @@ type Args = {
   batchLimit?: number;
   batchLogs: boolean;
   capacity: number;
+  cgroup?: boolean;
   workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -82,6 +83,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BATCH_LIMIT,
     WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
+    WORKER_CGROUP,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
     WORKER_COLLECTIONS_VERSION,
@@ -231,6 +233,11 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
+    .option('cgroup', {
+      description:
+        'Enforce run-memory as a hard ceiling via a cgroup v2 leaf, in addition to --max-old-space-size. Linux only; falls back to heap-limit only if a writable, delegated cgroup is unavailable. Default false (disabled entirely, no availability check). Env: WORKER_CGROUP',
+      type: 'boolean',
+    })
     .option('max-run-duration-seconds', {
       alias: 't',
       description:
@@ -326,6 +333,7 @@ export default function parseArgs(argv: string[]): Args {
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
     capacity: setArg(args.capacity, WORKER_CAPACITY, DEFAULT_WORKER_CAPACITY),
+    cgroup: setArg(args.cgroup, WORKER_CGROUP, false),
     statePropsToRemove: setArg(
       args.statePropsToRemove,
       WORKER_STATE_PROPS_TO_REMOVE,
