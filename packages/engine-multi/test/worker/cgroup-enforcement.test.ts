@@ -27,15 +27,18 @@ const cgroupTest = available ? test.serial : test.serial.skip;
 
 const workerPath = path.resolve('dist/test/worker-functions.js');
 
-// Ceiling above Node's baseline RSS but low enough that blowNativeMemory
-// crosses it almost immediately. memoryLimitMb is deliberately left unset so
-// the V8 heap limit can't be what kills the run — only the cgroup can.
-const cgroupMemoryLimitMb = 200;
+// The cgroup ceiling is now derived as memoryLimitMb + a fixed headroom (see
+// CGROUP_MEMORY_HEADROOM_MB in pool.ts), so this sets memoryLimitMb low
+// enough that the resulting ceiling is above Node's baseline RSS but low
+// enough that blowNativeMemory crosses it almost immediately. blowNativeMemory
+// allocates native (off V8 heap) memory, so --max-old-space-size can't be
+// what kills the run here — only the cgroup can.
+const memoryLimitMb = 72; // + 128mb headroom = 200mb effective ceiling
 
 cgroupTest(
   'cgroup OOM-kills a run that exceeds memory.max and surfaces OOMError',
   async (t) => {
-    const pool = createPool(workerPath, { cgroupMemoryLimitMb }, logger);
+    const pool = createPool(workerPath, { memoryLimitMb }, logger);
 
     const err = await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
       name: 'OOMError',
@@ -47,7 +50,7 @@ cgroupTest(
 );
 
 cgroupTest('pool recovers after a cgroup OOM kill', async (t) => {
-  const pool = createPool(workerPath, { cgroupMemoryLimitMb }, logger);
+  const pool = createPool(workerPath, { memoryLimitMb }, logger);
 
   await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
     name: 'OOMError',

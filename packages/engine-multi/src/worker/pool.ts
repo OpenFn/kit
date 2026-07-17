@@ -22,15 +22,15 @@ import {
   resolveSelfCgroup,
 } from './cgroup';
 
+// Constant memory overhead to apply to the cgroup ceiling
+const CGROUP_MEMORY_OVERHEAD_MB = 128;
+
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
   memoryLimitMb?: number; // --max-old-space-size for child processes
 
-  // Hard memory.max ceiling (mb) applied to each child via a cgroup v2 leaf.
-  // Best-effort: ignored on hosts without a writable cgroup v2 hierarchy.
-  cgroupMemoryLimitMb?: number;
   // Parent cgroup under which per-child leaf cgroups are created. Defaults to
   // the cgroup this process was started in; overriding it generally requires
   // root (the kernel checks the common ancestor's cgroup.procs on migration)
@@ -98,8 +98,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
   // cgroup v2 leaf per child (keyed by pid), when memory enforcement is enabled
   const cgroupParent = options.cgroupParent || resolveSelfCgroup();
+  const cgroupMemoryLimitMb = options.memoryLimitMb
+    ? options.memoryLimitMb + CGROUP_MEMORY_OVERHEAD_MB
+    : undefined;
   const cgroupEnabled =
-    !!options.cgroupMemoryLimitMb && isCgroupV2Available(cgroupParent, logger);
+    !!cgroupMemoryLimitMb && isCgroupV2Available(cgroupParent, logger);
   const cgroups: Record<number, CgroupHandle | null> = {};
 
   // Tear down a child's leaf cgroup once it has been killed (best-effort).
@@ -144,7 +147,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         cgroups[child.pid] = createChildCgroup(
           cgroupParent!,
           child.pid,
-          options.cgroupMemoryLimitMb! * 1024 * 1024,
+          cgroupMemoryLimitMb! * 1024 * 1024,
           logger
         );
       }
@@ -200,7 +203,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           if (handle && hasOomKill(handle)) {
             logger.error(
               `pool: worker ${worker.pid} was killed by the OS for exceeding ` +
-                `its cgroup memory limit (${options.cgroupMemoryLimitMb}mb)`
+                `its cgroup memory limit (${cgroupMemoryLimitMb}mb)`
             );
             killWorker(worker);
             // restore a placeholder to the queue
