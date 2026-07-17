@@ -1,3 +1,12 @@
+/**
+ * These tests prove the kernel actually OOM-kills a runaway run via the cgroup's memory.max ceiling.
+ * Tests run with node's oldspace enforcement disabled: cgroups are the only lever we can use to trigger an OOM error.
+ *
+ * !!!IMPORTANT!!
+ *
+ * This is NOT safe to run directly from a terminal as the owning cgroup will be terminated
+ * Use `pnpm test:cgroup` to run the test in a detatched process
+ */
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
@@ -9,17 +18,8 @@ import {
   _resetAvailabilityCache,
 } from '../../src/worker/cgroup';
 
-// These tests prove the kernel actually OOM-kills a runaway run via the
-// cgroup's memory.max ceiling. That needs a writable, delegated cgroup v2
-// subtree (e.g. a privileged container), so they are skipped everywhere else.
-// The gate must be real availability, not just the platform: without a
-// working cgroup there is no limit of any kind on blowNativeMemory, and it
-// would happily eat the whole host.
-//
-//   docker run --rm -it --privileged -v "$PWD":/kit -w /kit node:24 bash
-//   corepack enable && pnpm install && pnpm --filter @openfn/engine-multi build
-//   cd packages/engine-multi && pnpm ava test/worker/cgroup-enforcement.test.ts
 const logger = createMockLogger();
+
 const available = isCgroupV2Available(resolveSelfCgroup(), logger);
 _resetAvailabilityCache();
 
@@ -27,18 +27,19 @@ const cgroupTest = available ? test.serial : test.serial.skip;
 
 const workerPath = path.resolve('dist/test/worker-functions.js');
 
-// The cgroup ceiling is now derived as memoryLimitMb + a fixed headroom (see
-// CGROUP_MEMORY_HEADROOM_MB in pool.ts), so this sets memoryLimitMb low
-// enough that the resulting ceiling is above Node's baseline RSS but low
-// enough that blowNativeMemory crosses it almost immediately. blowNativeMemory
-// allocates native (off V8 heap) memory, so --max-old-space-size can't be
-// what kills the run here — only the cgroup can.
-const memoryLimitMb = 72; // + 128mb headroom = 200mb effective ceiling
+const memoryLimitMb = 72; // + 128mb headroom = 200mb effective cgroup ceiling
+
+// Disable node's oldspace memory limit so that croup is the only variable in play
+const memoryEnforcement = { cgroup: true, oldspace: false };
 
 cgroupTest(
   'cgroup OOM-kills a run that exceeds memory.max and surfaces OOMError',
   async (t) => {
-    const pool = createPool(workerPath, { memoryLimitMb }, logger);
+    const pool = createPool(
+      workerPath,
+      { memoryLimitMb, memoryEnforcement },
+      logger
+    );
 
     const err = await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
       name: 'OOMError',
@@ -50,7 +51,11 @@ cgroupTest(
 );
 
 cgroupTest('pool recovers after a cgroup OOM kill', async (t) => {
-  const pool = createPool(workerPath, { memoryLimitMb }, logger);
+  const pool = createPool(
+    workerPath,
+    { memoryLimitMb, memoryEnforcement },
+    logger
+  );
 
   await t.throwsAsync(() => pool.exec('blowNativeMemory', []), {
     name: 'OOMError',

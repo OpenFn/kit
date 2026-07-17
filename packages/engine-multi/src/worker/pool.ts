@@ -25,11 +25,22 @@ import {
 // Constant memory overhead to apply to the cgroup ceiling
 const CGROUP_MEMORY_OVERHEAD_MB = 128;
 
+export type MemoryEnforcement = {
+  // Sets node's --max-old-space-size on child processes
+  // Default true
+  oldspace?: boolean;
+
+  // Uses cgroups to set a hard ceiling on child processes through the kernel
+  // Default false.
+  cgroup?: boolean;
+};
+
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
-  memoryLimitMb?: number; // --max-old-space-size for child processes
+  memoryLimitMb?: number; // Set the maximum runtime memory a child process can consume
+  memoryEnforcement?: MemoryEnforcement;
 
   proxyStdout?: boolean; // print internal stdout to console
 };
@@ -91,13 +102,16 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   // Keep track of all the workers we created
   const allWorkers: Record<number, ChildProcess> = {};
 
-  // cgroup v2 leaf per child (keyed by pid), when memory enforcement is enabled
+  const enforceOldspace = options.memoryEnforcement?.oldspace ?? true;
+
+  // cgroup v2 leaf per child (keyed by pid), when cgroup memory enforcement is enabled
   const cgroupParent = resolveSelfCgroup();
-  const cgroupMemoryLimitMb = options.memoryLimitMb
-    ? options.memoryLimitMb + CGROUP_MEMORY_OVERHEAD_MB
-    : undefined;
+  const cgroupMemoryLimitMb =
+    options.memoryLimitMb && options.memoryLimitMb + CGROUP_MEMORY_OVERHEAD_MB;
   const cgroupEnabled =
-    !!cgroupMemoryLimitMb && isCgroupV2Available(cgroupParent, logger);
+    options.memoryEnforcement?.cgroup &&
+    !!cgroupMemoryLimitMb &&
+    isCgroupV2Available(cgroupParent, logger);
   const cgroups: Record<number, CgroupHandle | null> = {};
 
   // Tear down a child's leaf cgroup once it has been killed (best-effort).
@@ -113,7 +127,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     if (!maybeChild) {
       // create a new child process and load the module script into it
       const execArgv = ['--experimental-vm-modules', '--no-warnings'];
-      if (options.memoryLimitMb) {
+      if (enforceOldspace && options.memoryLimitMb) {
         execArgv.push(`--max-old-space-size=${options.memoryLimitMb}`);
       }
 
