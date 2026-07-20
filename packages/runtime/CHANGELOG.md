@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.9.5
+
+### Patch Changes
+
+- 702dcc7: Ignore scripts on adaptor install
+
 ## 1.9.4
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.12.2
+
+### Patch Changes
+
+- 702dcc7: Tighten default autoinstall whitelist
+- Updated dependencies [702dcc7]
+  - @openfn/runtime@1.9.5
+
 ## 1.12.1
 
 ### Patch Changes
