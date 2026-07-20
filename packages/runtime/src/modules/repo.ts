@@ -16,7 +16,12 @@ const defaultPkg = {
 };
 
 export const defaultRepoPath = path.join(homeDir, './openfn/repo/cli');
-const npmInstallFlags = ['--no-audit', '--no-fund', '--no-package-lock'];
+const npmInstallFlags = [
+  '--no-audit',
+  '--no-fund',
+  '--no-package-lock',
+  '--ignore-scripts',
+];
 
 type InstallList = Array<{ name: string; version: string }>;
 

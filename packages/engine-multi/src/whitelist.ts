@@ -1,1 +1,1 @@
-export default [/^@openfn/];
+export default [/^@openfn\//];
