@@ -9,9 +9,8 @@ import compile, { compileProject } from './compile';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
 
-// True if the input path points to a file (workflow or expression),
-// rather than a workflow name or nothing at all.
-// See the input-path option, which maps file paths by extension.
+// planPath/expressionPath are set by the input-path option when options.path
+// looks like a file; a bare workflow name sets neither
 const isFileInput = (options: CompileOptions) =>
   Boolean(options.planPath || options.expressionPath);
 
@@ -25,8 +24,8 @@ const collectWatchOptions = (options: CompileOptions, logger: Logger) => {
     return { targets: [path.resolve(options.path)], ignored };
   }
 
-  // Project mode: watch job files in the workspace's configured workflows dir
-  // and ignore the compiled output dir
+  // Project mode: the output dir must be ignored, or writing compiled files
+  // would retrigger the watcher
   const workspace = new Workspace(options.workspace!, logger as any, false);
   const outDir = path.resolve(
     options.workspace!,
@@ -63,8 +62,6 @@ const runCompile = async (options: CompileOptions, logger: Logger) => {
     assertPath(options.expressionPath ?? options.planPath);
     await doCompile(options, logger);
   } else {
-    // No path, or a bare workflow name: compile the checked-out project,
-    // optionally filtered to a single workflow
     await compileProject(
       options,
       logger,
