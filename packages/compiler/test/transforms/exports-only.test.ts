@@ -7,20 +7,31 @@ import visitors from '../../src/transforms/exports-only';
 const enabled = { 'exports-only': true };
 const disabled = { 'exports-only': false };
 
-test('is a no-op when options is not true', (t) => {
-  const before = `fn();
-export default [];`;
+test('strips a non-exported value', (t) => {
+  const before = `const x = 42;
+fn();`;
   const ast = parse(before);
-  const transformed = transform(ast, [visitors]);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
+});
+
+test('is a no-op if exports-only is false', (t) => {
+  const before = `const x = 42;
+fn();`;
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], disabled);
   const after = print(transformed).code;
 
   t.is(after, before);
 });
 
-test('is a no-op when options is false', (t) => {
-  const before = `fn();`;
+test('is a no-op if no options are passed', (t) => {
+  const before = `const x = 42;
+fn();`;
   const ast = parse(before);
-  const transformed = transform(ast, [visitors], disabled);
+  const transformed = transform(ast, [visitors]);
   const after = print(transformed).code;
 
   t.is(after, before);
@@ -39,16 +50,6 @@ fn();`;
 test('strips export default []', (t) => {
   const before = `fn();
 export default [];`;
-  const ast = parse(before);
-  const transformed = transform(ast, [visitors], enabled);
-  const after = print(transformed).code;
-
-  t.is(after, '');
-});
-
-test('strips non-exported declarations', (t) => {
-  const before = `const x = 42;
-fn();`;
   const ast = parse(before);
   const transformed = transform(ast, [visitors], enabled);
   const after = print(transformed).code;
