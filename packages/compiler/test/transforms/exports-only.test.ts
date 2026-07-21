@@ -4,10 +4,8 @@ import parse from '../../src/parse';
 import transform from '../../src/transform';
 import visitors, { hasExportableCode } from '../../src/transforms/exports-only';
 
-const compile = (source: string, options = {}) =>
-  print(transform(parse(source), [visitors], options)).code.trim();
-
-// --- hasExportableCode ---
+const enabled = { 'exports-only': true };
+const disabled = { 'exports-only': false };
 
 test('hasExportableCode: true for export const', (t) => {
   t.true(hasExportableCode('export const x = 1;'));
@@ -29,6 +27,18 @@ test('hasExportableCode: true for export class', (t) => {
   t.true(hasExportableCode('export class Foo {}'));
 });
 
+test('hasExportableCode: true for export list', (t) => {
+  t.true(hasExportableCode('export { x, y, z };'));
+});
+
+test('hasExportableCode: true for export async function', (t) => {
+  t.true(hasExportableCode('export async function foo() {}'));
+});
+
+test('hasExportableCode: false for export default', (t) => {
+  t.false(hasExportableCode('export default [];'));
+});
+
 test('hasExportableCode: false for import only', (t) => {
   t.false(hasExportableCode("import { get } from '@openfn/language-http';"));
 });
@@ -44,44 +54,70 @@ test('hasExportableCode: false for operations only', (t) => {
 test('is a no-op when options is not true', (t) => {
   const before = `fn();
 export default [];`;
-  t.is(compile(before), before);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors]);
+  const after = print(transformed).code;
+
+  t.is(after, before);
 });
 
 test('is a no-op when options is false', (t) => {
   const before = `fn();`;
-  t.is(compile(before, { 'exports-only': false }), before);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], disabled);
+  const after = print(transformed).code;
+
+  t.is(after, before);
 });
 
 test('strips operation calls', (t) => {
   const before = `get();
 fn();`;
-  t.is(compile(before, { 'exports-only': true }), '');
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
 });
 
 test('strips export default []', (t) => {
   const before = `fn();
 export default [];`;
-  t.is(compile(before, { 'exports-only': true }), '');
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
 });
 
 test('strips non-exported declarations', (t) => {
   const before = `const x = 42;
 fn();`;
-  t.is(compile(before, { 'exports-only': true }), '');
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
 });
 
 test('keeps import declarations', (t) => {
   const before = `import { get } from '@openfn/language-http';
 fn();`;
-  const after = `import { get } from '@openfn/language-http';`;
-  t.is(compile(before, { 'exports-only': true }), after);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, `import { get } from '@openfn/language-http';`);
 });
 
 test('keeps named export declarations', (t) => {
   const before = `export const helper = 42;
 fn();`;
-  const after = `export const helper = 42;`;
-  t.is(compile(before, { 'exports-only': true }), after);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, `export const helper = 42;`);
 });
 
 test('keeps exported function declarations', (t) => {
@@ -89,10 +125,16 @@ test('keeps exported function declarations', (t) => {
   return 1;
 }
 fn();`;
-  const after = `export function formatDate() {
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(
+    after,
+    `export function formatDate() {
   return 1;
-}`;
-  t.is(compile(before, { 'exports-only': true }), after);
+}`
+  );
 });
 
 test('drops non-exported declarations that no export depends on', (t) => {
@@ -101,42 +143,125 @@ export function greet() {
   return 'hi';
 }
 fn();`;
-  const after = `export function greet() {
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(
+    after,
+    `export function greet() {
   return 'hi';
-}`;
-  t.is(compile(before, { 'exports-only': true }), after);
+}`
+  );
 });
 
 test('keeps imports alongside named exports', (t) => {
   const before = `import { dateFns } from '@openfn/language-dhis2';
 export const formatDate = 42;
 fn();`;
-  const after = `import { dateFns } from '@openfn/language-dhis2';
-export const formatDate = 42;`;
-  t.is(compile(before, { 'exports-only': true }), after);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(
+    after,
+    `import { dateFns } from '@openfn/language-dhis2';
+export const formatDate = 42;`
+  );
+});
+
+test('keeps declarations referenced by an export list', (t) => {
+  const before = `const x = 1;
+export { x };
+fn();`;
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(
+    after,
+    `const x = 1;
+export { x };`
+  );
+});
+
+test('keeps a function referenced by an aliased export list', (t) => {
+  const before = `function formatDate() {
+  return 1;
+}
+export { formatDate as format };
+fn();`;
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(
+    after,
+    `function formatDate() {
+  return 1;
+}
+export { formatDate as format };`
+  );
+});
+
+test('keeps re-exports from another module', (t) => {
+  const before = `export { helper } from './helpers';
+fn();`;
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, `export { helper } from './helpers';`);
+});
+
+test('keeps export * from another module', (t) => {
+  const before = `export * from './helpers';
+fn();`;
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, `export * from './helpers';`);
 });
 
 test('handles a file with only operations (no exports)', (t) => {
   const before = `fn();
 get();`;
-  t.is(compile(before, { 'exports-only': true }), '');
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
 });
 
 test('handles an empty file', (t) => {
-  t.is(compile('', { 'exports-only': true }), '');
+  const before = '';
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, '');
 });
 
 test('handles multiple exports without operations', (t) => {
-  const source = `export const a = 42;
+  const before = `export const a = 42;
 export const b = 42;
 export function c() {
   return 1;
 }`;
-  t.is(compile(source, { 'exports-only': true }), source);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], enabled);
+  const after = print(transformed).code;
+
+  t.is(after, before);
 });
 
 test('does not remove export default when exports-only is disabled', (t) => {
   const before = `fn();
 export default [];`;
-  t.is(compile(before, { 'exports-only': false }), before);
+  const ast = parse(before);
+  const transformed = transform(ast, [visitors], disabled);
+  const after = print(transformed).code;
+
+  t.is(after, before);
 });
