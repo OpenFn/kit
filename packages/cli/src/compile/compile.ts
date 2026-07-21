@@ -5,7 +5,6 @@ import compile, {
   preloadAdaptorExports,
   Options,
   getExports,
-  hasExportableCode,
 } from '@openfn/compiler';
 import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
@@ -253,8 +252,8 @@ export const compileProject = async (
 
     const stepId = `${workflow.id}/${step.id}`;
 
-    if (opts.exportsOnly && !hasExportableCode(code)) {
-      log.debug(`  ${stepId} — skipped (no exportable code)`);
+    if (opts.exportsOnly && !code.trim()) {
+      log.debug(`  ${stepId} — skipped (empty after stripping)`);
       continue;
     }
 

@@ -49,7 +49,7 @@ openfn compile --workspace path/to/project
 
 `export default` is removed in strip mode — it is only needed by the runtime, not for unit testing.
 
-Steps with no exportable code (nothing is exported after stripping) are skipped — no file is written.
+Steps whose compiled output is empty after stripping are skipped — no file is written.
 
 ## Full compilation (no `--exports-only`)
 

@@ -6,10 +6,6 @@ import { namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
-// export default is excluded — exports-only strips it before this check runs.
-export const hasExportableCode = (code: string): boolean =>
-  /^\s*export\s+(?!default\b)/m.test(code);
-
 // Names referenced by bare export lists, eg export { x, y }
 const findExportListNames = (body: any[]) => {
   const names = new Set<string>();
