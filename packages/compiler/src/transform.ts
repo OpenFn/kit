@@ -15,6 +15,7 @@ import { heap } from './util';
 export type TransformerName =
   | 'add-imports'
   | 'ensure-exports'
+  | 'exports-only'
   | 'top-level-operations'
   | 'test'
   | 'lazy-state';
@@ -38,6 +39,7 @@ export type TransformOptions = {
 
   ['add-imports']?: AddImportsOptions | boolean;
   ['ensure-exports']?: boolean;
+  ['exports-only']?: boolean;
   ['top-level-operations']?: TopLevelOpsOptions | boolean;
   ['test']?: any;
   ['lazy-state']?: any;

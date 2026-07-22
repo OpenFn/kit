@@ -134,6 +134,7 @@ The [.claude](.claude) folder contains detailed guides:
 
 - **[event-processor.md](.claude/event-processor.md)** - Worker event processing deep-dive (ordering, batching) — companion to `packages/ws-worker/CLAUDE.md`
 - **[yaml-formats.md](.claude/yaml-formats.md)** - v1 vs v2 project YAML formats: structure, detection logic, and conversion paths
+- **[unit-testing-jobs.md](.claude/unit-testing-jobs.md)** - How to compile job for unit-testing
 
 Key packages also carry their own `CLAUDE.md` (runtime, engine-multi, ws-worker), auto-loaded when you work in them.
 

@@ -66,8 +66,10 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   timeout?: number; // ms
+  exportsOnly?: boolean;
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
+  watch?: boolean;
   workflow: string;
   workflowName?: string;
   validate?: boolean;
@@ -629,6 +631,26 @@ export const validate: CLIOption = {
     boolean: true,
     default: false,
     description: 'Validate workflows before executing',
+  },
+};
+
+export const exportsOnly: CLIOption = {
+  name: 'exports-only',
+  yargs: {
+    boolean: true,
+    description:
+      'Strip adaptor operation calls, exporting only constants and functions',
+    default: false,
+  },
+};
+
+export const watchFlag: CLIOption = {
+  name: 'watch',
+  yargs: {
+    alias: ['w'],
+    boolean: true,
+    description: 'Watch source files and recompile on change',
+    default: false,
   },
 };
 

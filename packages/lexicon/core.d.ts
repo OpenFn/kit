@@ -147,6 +147,7 @@ export interface WorkspaceConfig {
   dirs: {
     workflows: string;
     projects: string;
+    compiled?: string;
   };
   formats: {
     openfn?: FileFormats;
