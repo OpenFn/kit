@@ -5,6 +5,7 @@ import compile, {
   preloadAdaptorExports,
   Options,
   getExports,
+  transformers as t,
 } from '@openfn/compiler';
 import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
@@ -56,7 +57,11 @@ const compileJob = async (
   jobName?: string
 ): Promise<CompiledJob> => {
   try {
+    let transformers;
     const compilerOptions: Options = await loadTransformOptions(opts, log);
+    if (opts.exportsOnly) {
+      transformers = [t.exportsOnly, t.lazyState, t.promises, t.addImports];
+    }
     if (jobName) {
       compilerOptions.name = jobName;
     }
@@ -141,12 +146,6 @@ export const loadTransformOptions = async (
     trace: opts.trace,
   };
 
-  if (opts.exportsOnly) {
-    options['exports-only'] = true;
-    // ensure-exports and top-level-operations produce output incompatible with exports-only mode
-    options['ensure-exports'] = false;
-    options['top-level-operations'] = false;
-  }
   if (opts.adaptors?.length && opts.ignoreImports != true) {
     const adaptorsConfig = [];
     for (const adaptorInput of opts.adaptors) {

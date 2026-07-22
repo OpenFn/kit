@@ -2,7 +2,7 @@ import { print } from 'recast';
 import createLogger, { Logger } from '@openfn/logger';
 
 import parse from './parse';
-import transform, { TransformOptions } from './transform';
+import transform, { TransformOptions, Transformer } from './transform';
 import { isPath, loadFile } from './util';
 
 import type { SourceMapWithOperations } from '@openfn/lexicon';
@@ -23,7 +23,8 @@ export type Options = TransformOptions & {
 
 export default function compile(
   pathOrSource: string,
-  options: Options = {}
+  options: Options = {},
+  transformers?: Transformer[]
 ): {
   code: string;
   map?: SourceMapWithOperations;
@@ -42,7 +43,7 @@ export default function compile(
   const name = options.name ?? 'src';
   const trace = options.trace;
   const ast = parse(source, { logger, name, trace });
-  const transformedAst = transform(ast, undefined, options);
+  const transformedAst = transform(ast, transformers, options);
 
   const { code, map } = print(transformedAst, {
     sourceMapName: `${name}.map.js`,
