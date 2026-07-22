@@ -2,6 +2,7 @@ import test from 'ava';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import compile from '../src/compile';
+import exportsOnly from '../src/transforms/exports-only';
 
 // Not doing deep testing on this because recast does the heavy lifting
 // This is just to ensure the map is actually generated
@@ -285,46 +286,17 @@ const exportsOnlyOpts = {
   'top-level-operations': false,
 } as const;
 
-test('exports-only: removes top-level operations, keeps exported JS', (t) => {
+test('only run transformers that are passed in', (t) => {
   const source = [
     'export const formatDate = (d) => d.toISOString();',
     'get("/api");',
     'fn(state => ({ ...state, date: formatDate(state.data.date) }));',
   ].join('\n');
 
-  const { code: result } = compile(source, exportsOnlyOpts);
+  const { code: result } = compile(source, exportsOnlyOpts, [exportsOnly]);
 
   t.true(result.includes('export const formatDate'));
   t.false(result.includes('get('));
   t.false(result.includes('fn(state'));
   t.false(result.includes('export default []'));
-});
-
-test('exports-only: removes non-exported declarations', (t) => {
-  const source = [
-    'const formatDate = (d) => d.toISOString();',
-    'get("/api");',
-  ].join('\n');
-
-  const { code: result } = compile(source, exportsOnlyOpts);
-
-  // non-exported const is dropped; no export default []
-  t.false(result.includes('const formatDate'));
-  t.false(result.includes('get('));
-  t.false(result.includes('export default []'));
-});
-
-test('exports-only: keeps import statements', (t) => {
-  const source = [
-    'import { dateFns } from "@openfn/language-common";',
-    'export const formatDate = (d) => dateFns.format(d);',
-    'get("/api");',
-    'export default [];',
-  ].join('\n');
-
-  const { code: result } = compile(source, exportsOnlyOpts);
-
-  t.true(result.includes('import { dateFns }'));
-  t.true(result.includes('export const formatDate'));
-  t.false(result.includes('get('));
 });

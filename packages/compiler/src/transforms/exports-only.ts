@@ -40,13 +40,7 @@ const declaresName = (node: any, names: Set<string>) => {
   return false;
 };
 
-function visitor(
-  programPath: NodePath<n.Program>,
-  _logger: any,
-  options: boolean | {} = {}
-) {
-  if (options !== true) return;
-
+function visitor(programPath: NodePath<n.Program>) {
   const { body } = programPath.node;
   const exportListNames = findExportListNames(body);
 

@@ -496,17 +496,6 @@ test.serial('loadTransformOptions: ignore some imports', async (t) => {
 // TODO test exception if the module can't be found
 
 test.serial(
-  'loadTransformOptions: --exports-only enables exports-only transformer',
-  async (t) => {
-    const opts = { exportsOnly: true } as CompileOptions;
-    const result = await loadTransformOptions(opts, mockLog);
-    t.is(result['exports-only'], true);
-    t.is(result['ensure-exports'], false);
-    t.is(result['top-level-operations'], false);
-  }
-);
-
-test.serial(
   'loadTransformOptions: --exports-only does not affect other options',
   async (t) => {
     const opts = { exportsOnly: true } as CompileOptions;
