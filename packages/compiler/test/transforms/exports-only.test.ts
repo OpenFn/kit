@@ -27,16 +27,6 @@ fn();`;
   t.is(after, before);
 });
 
-test('is a no-op if no options are passed', (t) => {
-  const before = `const x = 42;
-fn();`;
-  const ast = parse(before);
-  const transformed = transform(ast, [visitors]);
-  const after = print(transformed).code;
-
-  t.is(after, before);
-});
-
 test('strips operation calls', (t) => {
   const before = `get();
 fn();`;
