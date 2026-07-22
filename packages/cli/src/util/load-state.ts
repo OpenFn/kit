@@ -35,6 +35,7 @@ export default async (
   log.debug('Loading state...');
   if (stateStdin) {
     try {
+      log.info(stateStdin);
       const json = JSON.parse(stateStdin);
       log.success('Read state from stdin');
       log.debug('state:', json);
