@@ -57,7 +57,7 @@ const compileJob = async (
   jobName?: string
 ): Promise<CompiledJob> => {
   try {
-    let transformers;
+    let transformers: any = undefined;
     const compilerOptions: Options = await loadTransformOptions(opts, log);
     if (opts.exportsOnly) {
       transformers = [t.exportsOnly, t.lazyState, t.promises, t.addImports];
@@ -65,7 +65,7 @@ const compileJob = async (
     if (jobName) {
       compilerOptions.name = jobName;
     }
-    return compile(job, compilerOptions);
+    return compile(job, compilerOptions, transformers);
   } catch (e: any) {
     abort(
       log,
