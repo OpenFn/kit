@@ -1,5 +1,6 @@
 import test from 'ava';
 import mock from 'mock-fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 
@@ -7,6 +8,7 @@ import compile, {
   stripVersionSpecifier,
   loadTransformOptions,
   resolveSpecifierPath,
+  compileProject,
 } from '../../src/compile/compile';
 import { CompileOptions } from '../../src/compile/command';
 import { mockFs, resetMockFs } from '../util';
@@ -75,6 +77,156 @@ test.serial('compile from execution plan', async (t) => {
   const [a, b] = result.workflow.steps;
   t.is((a as Job).expression, expected);
   t.is((b as Job).expression, expected);
+});
+
+test.serial('compile from project', async (t) => {
+  mockFs({
+    '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+    '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+  });
+
+  const outPaths = await compileProject({} as CompileOptions, mockLog, '/proj');
+
+  t.is(outPaths.length, 1);
+  t.true(outPaths[0].endsWith('dist/wf1/step-a.mjs'));
+
+  const code = await fs.readFile(outPaths[0], 'utf-8');
+  t.true(code.includes('export default [x()]'));
+
+  mock.restore();
+});
+
+test.serial(
+  'compile from project, skipping steps left empty by --exports-only',
+  async (t) => {
+    mockFs({
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "export const helper = () => {}; fn();"
+  - id: step-b
+    expression: "fn();"
+`,
+    });
+
+    const outPaths = await compileProject(
+      { exportsOnly: true } as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    // Only step-a has exportable code — step-b should not be written
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].endsWith('step-a.mjs'));
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compile from project to the dirs.compiled folder in the workspace config',
+  async (t) => {
+    mockFs({
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+  compiled: build
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+    });
+
+    const outPaths = await compileProject(
+      {} as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+
+    t.is(outPaths.length, 1);
+    t.true(outPaths[0].startsWith('/proj/build/'));
+
+    mock.restore();
+  }
+);
+
+test.serial(
+  'compile from project with --clean, removing the output dir first',
+  async (t) => {
+    mockFs({
+      '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+      '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+      // A stale file from a previous compile
+      '/proj/dist/old-workflow/stale.mjs': 'export default [];',
+    });
+
+    // Without --clean, the stale file survives
+    await compileProject({} as CompileOptions, mockLog, '/proj');
+    await t.notThrowsAsync(() =>
+      fs.access('/proj/dist/old-workflow/stale.mjs')
+    );
+
+    // With --clean, it is removed
+    const outPaths = await compileProject(
+      { clean: true } as CompileOptions,
+      mockLog,
+      '/proj'
+    );
+    t.is(outPaths.length, 1);
+    await t.throwsAsync(() => fs.access('/proj/dist/old-workflow/stale.mjs'));
+
+    mock.restore();
+  }
+);
+
+test.serial('compile from project to outputPath', async (t) => {
+  mockFs({
+    '/proj/openfn.yaml': `
+dirs:
+  workflows: /proj/workflows
+`,
+    '/proj/workflows/wf1/wf1.yaml': `
+id: wf1
+steps:
+  - id: step-a
+    expression: "x();"
+`,
+  });
+
+  const outPaths = await compileProject(
+    { outputPath: '/out' } as CompileOptions,
+    mockLog,
+    '/proj'
+  );
+
+  t.is(outPaths.length, 1);
+  t.true(outPaths[0].startsWith('/out/'));
+
+  mock.restore();
 });
 
 test.serial('throw an AbortError if a job is uncompilable', async (t) => {
@@ -342,3 +494,12 @@ test.serial('loadTransformOptions: ignore some imports', async (t) => {
 });
 
 // TODO test exception if the module can't be found
+
+test.serial(
+  'loadTransformOptions: --exports-only does not affect other options',
+  async (t) => {
+    const opts = { exportsOnly: true } as CompileOptions;
+    const result = await loadTransformOptions(opts, mockLog);
+    t.falsy(result['add-imports']);
+  }
+);

@@ -1,5 +1,26 @@
 # @openfn/cli
 
+## 1.39.0
+
+### Minor Changes
+
+- ac44559: Improve `openfn compile` for unit-testing job code
+
+  - Add `--exports-only` to strip adaptor operation calls, keeping only exported declarations
+  - Compile whole projects (or a single workflow by name) to `dist/` as `.mjs` files
+  - Add `--clean` to remove the output folder before compiling
+  - Add `--workspace` support (as in `openfn execute` and `openfn project`)
+  - Support a `dirs.compiled` key in the workspace config (openfn.yaml) to set the output folder
+  - Watch mode now respects the configured workflows and output directories
+
+### Patch Changes
+
+- bec2581: Fix for cleaner output to stdout
+- Updated dependencies [ac44559]
+  - @openfn/compiler@1.3.0
+  - @openfn/lexicon@2.4.0
+  - @openfn/project@0.18.0
+
 ## 1.38.5
 
 ### Patch Changes

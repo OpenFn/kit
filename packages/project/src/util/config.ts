@@ -13,6 +13,7 @@ export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
   dirs: {
     projects: config.dirs?.projects ?? '.projects',
     workflows: config.dirs?.workflows ?? 'workflows',
+    ...(config.dirs?.compiled && { compiled: config.dirs.compiled }),
   },
   formats: {
     openfn: config.formats?.openfn ?? 'yaml',

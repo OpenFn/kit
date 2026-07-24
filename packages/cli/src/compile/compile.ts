@@ -1,10 +1,15 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { rimraf } from 'rimraf';
 import compile, {
   preloadAdaptorExports,
   Options,
   getExports,
+  transformers as t,
 } from '@openfn/compiler';
 import { getModulePath, type ExecutionPlan, type Job } from '@openfn/runtime';
 import type { SourceMapWithOperations } from '@openfn/lexicon';
+import { Workspace } from '@openfn/project';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
@@ -52,11 +57,15 @@ const compileJob = async (
   jobName?: string
 ): Promise<CompiledJob> => {
   try {
+    let transformers: any = undefined;
     const compilerOptions: Options = await loadTransformOptions(opts, log);
+    if (opts.exportsOnly) {
+      transformers = [t.exportsOnly, t.lazyState, t.promises, t.addImports];
+    }
     if (jobName) {
       compilerOptions.name = jobName;
     }
-    return compile(job, compilerOptions);
+    return compile(job, compilerOptions, transformers);
   } catch (e: any) {
     abort(
       log,
@@ -69,7 +78,6 @@ const compileJob = async (
   }
 };
 
-// Find every expression in the job and run the compiler on it
 const compileWorkflow = async (
   plan: ExecutionPlan,
   opts: CompileOptions,
@@ -110,7 +118,6 @@ export const stripVersionSpecifier = (specifier: string) => {
   return specifier;
 };
 
-// Take a module path as provided by the CLI and convert it into a path
 export const resolveSpecifierPath = async (
   pattern: string,
   repoDir: string | undefined,
@@ -119,7 +126,6 @@ export const resolveSpecifierPath = async (
   const [specifier, path] = pattern.split('=');
 
   if (path) {
-    // given an explicit path, just load it.
     log.debug(`Resolved ${specifier} to path: ${path}`);
     return path;
   }
@@ -131,7 +137,6 @@ export const resolveSpecifierPath = async (
   return null;
 };
 
-// Mutate the opts object to write export information for the add-imports transformer
 export const loadTransformOptions = async (
   opts: CompileOptions,
   log: Logger
@@ -140,15 +145,13 @@ export const loadTransformOptions = async (
     logger: log || createLogger(COMPILER, opts as any),
     trace: opts.trace,
   };
-  // If an adaptor is passed in, we need to look up its declared exports
-  // and pass them along to the compiler
+
   if (opts.adaptors?.length && opts.ignoreImports != true) {
     const adaptorsConfig = [];
     for (const adaptorInput of opts.adaptors) {
       let exports;
       const [specifier] = adaptorInput.split('=');
 
-      // Preload exports from a path, optionally logging errors in case of a failure
       log.debug(`Trying to preload types for ${specifier}`);
       const path = await resolveSpecifierPath(adaptorInput, opts.repoDir, log);
       if (path) {
@@ -178,4 +181,94 @@ export const loadTransformOptions = async (
   }
 
   return options;
+};
+
+export const compileProject = async (
+  opts: CompileOptions,
+  log: Logger,
+  workspacePath: string,
+  workflowFilter?: string
+): Promise<string[]> => {
+  // validate=false suppresses warnings when workspace config has no extra metadata
+  const workspace = new Workspace(workspacePath, log as any, false);
+  const project = await workspace.getCheckedOutProject();
+
+  if (!project) {
+    log.error(
+      'No project found. Run from a directory containing openfn.yaml, or provide a path.'
+    );
+    process.exit(1);
+  }
+
+  const wsConfig = workspace.getConfig();
+
+  const compiledDir = opts.outputStdout
+    ? null
+    : path.resolve(
+        workspacePath,
+        opts.outputPath ?? wsConfig.dirs?.compiled ?? 'dist'
+      );
+
+  if (compiledDir) {
+    if (opts.clean) {
+      log.info(`Cleaning ${compiledDir}`);
+      await rimraf(compiledDir);
+    }
+    log.info(`Compiling project to ${compiledDir}`);
+  }
+
+  let workflows = project.workflows;
+  if (workflowFilter) {
+    workflows = workflows.filter(
+      (wf: any) => wf.id === workflowFilter || wf.name === workflowFilter
+    );
+    if (workflows.length === 0) {
+      log.error(`Workflow '${workflowFilter}' not found in project.`);
+      process.exit(1);
+    }
+  }
+
+  const outPaths: string[] = [];
+
+  const allSteps = workflows.flatMap((wf: any) =>
+    wf.steps
+      .filter((step: any) => step.expression)
+      .map((step: any) => ({ workflow: wf, step }))
+  );
+
+  for (const { workflow, step } of allSteps) {
+    const stepOpts: CompileOptions = {
+      ...opts,
+      adaptors: step.adaptor ? [step.adaptor] : opts.adaptors ?? [],
+    };
+
+    const { code } = await compileJob(
+      step.expression,
+      stepOpts,
+      log,
+      step.name ?? step.id
+    );
+
+    const stepId = `${workflow.id}/${step.id}`;
+
+    if (opts.exportsOnly && !code.trim()) {
+      log.debug(`  ${stepId} — skipped (empty after stripping)`);
+      continue;
+    }
+
+    if (opts.outputStdout) {
+      log.success(`// ${stepId}\n\n` + code);
+    } else {
+      const outPath = path.join(compiledDir!, workflow.id, `${step.id}.mjs`);
+      await fs.mkdir(path.dirname(outPath), { recursive: true });
+      await fs.writeFile(outPath, code);
+      outPaths.push(outPath);
+      log.info(`Compiled ${stepId} to ${outPath}`);
+    }
+  }
+
+  if (!opts.outputStdout) {
+    log.success(`Compiled ${outPaths.length} step(s) to ${compiledDir}`);
+  }
+  return outPaths;
 };

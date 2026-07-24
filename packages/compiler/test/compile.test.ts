@@ -2,6 +2,7 @@ import test from 'ava';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import compile from '../src/compile';
+import exportsOnly from '../src/transforms/exports-only';
 
 // Not doing deep testing on this because recast does the heavy lifting
 // This is just to ensure the map is actually generated
@@ -277,4 +278,25 @@ test('respect ignore list when exports not provided', (t) => {
   const expected = `import { fn } from "@openfn/language-common";\nexport default [fn(state=> doSomething(state))];`;
   const { code: result } = compile(source, options);
   t.is(result, expected);
+});
+
+const exportsOnlyOpts = {
+  'exports-only': true,
+  'ensure-exports': false,
+  'top-level-operations': false,
+} as const;
+
+test('only run transformers that are passed in', (t) => {
+  const source = [
+    'export const formatDate = (d) => d.toISOString();',
+    'get("/api");',
+    'fn(state => ({ ...state, date: formatDate(state.data.date) }));',
+  ].join('\n');
+
+  const { code: result } = compile(source, exportsOnlyOpts, [exportsOnly]);
+
+  t.true(result.includes('export const formatDate'));
+  t.false(result.includes('get('));
+  t.false(result.includes('fn(state'));
+  t.false(result.includes('export default []'));
 });
