@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.12.3
+
+### Patch Changes
+
+- Updated dependencies [ac44559]
+  - @openfn/compiler@1.3.0
+  - @openfn/lexicon@2.4.0
+
 ## 1.12.2
 
 ### Patch Changes
