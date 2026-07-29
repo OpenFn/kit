@@ -168,7 +168,7 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ['22.20', '24.18.0']
+              node_version: ['22.20', '24.18.1', '26.5.1']
           requires:
             - build_openfnx
       - legacy_test:
