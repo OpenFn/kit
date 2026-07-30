@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.39.1
+
+### Patch Changes
+
+- Support for node 26
+
 ## 1.39.0
 
 ### Minor Changes
