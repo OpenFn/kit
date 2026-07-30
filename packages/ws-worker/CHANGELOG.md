@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.27.4
+
+### Patch Changes
+
+- Rebuild image to support node 24.18.1
+
 ## 1.27.3
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { rmdir } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { Opts } from '../options';
@@ -76,7 +76,7 @@ export const clearCache = async (
   const cacheDir = getCachePath(options, plan.workflow?.name);
 
   try {
-    await rmdir(cacheDir, { recursive: true });
+    await rm(cacheDir, { recursive: true, force: true });
 
     logger.info(`Cleared cache at ${cacheDir}`);
   } catch (e: any) {

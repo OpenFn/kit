@@ -681,14 +681,15 @@ test.serial('run a job without compilation', async (t) => {
 test.serial('run a job which does not return state', async (t) => {
   const job = `${fn}fn(() => {});`;
   mockFs({
-    '/job.js': job,
+    '/abc.js': job,
   });
 
   const options = {
     ...defaultOptions,
-    expressionPath: '/job.js',
+    expressionPath: '/abc.js',
   };
   const result = await handler(options, logger);
+  t.log(logger._history);
   t.falsy(result);
 
   // Check that no error messages have been logged

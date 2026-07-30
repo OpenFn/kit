@@ -22,7 +22,7 @@ jobs:
           path: resources/repo
       - uses: actions/setup-node@v6
         with:
-          node-version: '24.14'
+          node-version: '24.18'
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm install:openfnx
