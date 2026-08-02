@@ -24,5 +24,7 @@ RUN pnpm build
 WORKDIR /app/packages/ws-worker
 # ------------------------------------------------------------------------------
 
+USER node
+
 EXPOSE 2222
 CMD [ "node", "./dist/start.js"]
