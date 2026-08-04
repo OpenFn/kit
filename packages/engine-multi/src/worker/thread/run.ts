@@ -21,6 +21,7 @@ export type RunOptions = {
   profile?: boolean;
   profilePollInterval?: number;
   stateLimitMb?: number;
+  globals?: any;
 };
 
 const eventMap = {
@@ -41,6 +42,7 @@ register({
       profile,
       profilePollInterval,
       stateLimitMb,
+      globals,
     } = runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
@@ -74,6 +76,7 @@ register({
       profilePollInterval,
       statePropsToRemove,
       stateLimitMb,
+      globals,
       callbacks: {
         // TODO: this won't actually work across the worker boundary
         // For now I am preloading credentials

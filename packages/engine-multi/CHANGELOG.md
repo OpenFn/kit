@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.12.4
+
+### Patch Changes
+
+- 0207f0e: Allow global scope context to be fed through to individual runs
+
 ## 1.12.3
 
 ### Patch Changes

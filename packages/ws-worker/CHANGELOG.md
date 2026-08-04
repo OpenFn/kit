@@ -1,5 +1,17 @@
 # ws-worker
 
+## 1.28.0
+
+### Minor Changes
+
+- 0207f0e: Pass a meta object to each run
+- f79954e: Run Docker image as node user
+
+### Patch Changes
+
+- Updated dependencies [0207f0e]
+  - @openfn/engine-multi@1.12.4
+
 ## 1.27.4
 
 ### Patch Changes
