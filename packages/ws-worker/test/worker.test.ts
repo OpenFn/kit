@@ -42,7 +42,7 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
     const channel = mockChannel({
       [RUN_START]: async () => true,
       [STEP_START]: async () => true,
-      [RUN_LOG]: async (_evt) => {
+      [RUN_LOG]: async (evt) => {
         console.log(evt.source, evt.message);
         return true;
       },
