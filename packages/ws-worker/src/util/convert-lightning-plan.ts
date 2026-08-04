@@ -133,6 +133,14 @@ export default (
 
   // But some need to get passed down into the engine's options
   const engineOpts: WorkerRunOptions = {};
+
+  engineOpts.globals = {
+    meta: {
+      runId: run.id,
+      startTime: Date.now(),
+    },
+  };
+
   if (run.options) {
     if ('run_timeout_ms' in run.options) {
       engineOpts.runTimeoutMs = run.options.run_timeout_ms;
