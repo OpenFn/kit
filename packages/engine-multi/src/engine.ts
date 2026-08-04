@@ -178,6 +178,7 @@ const createEngine = async (
         payloadLimitMb: opts.payloadLimitMb ?? defaultPayloadLimit,
         logPayloadLimitMb: opts.logPayloadLimitMb ?? defaultLogPayloadLimit,
         jobLogLevel: opts.jobLogLevel,
+        globals: opts.globals,
         profile: defaultProfile,
         profilePollInterval: defaultProfilePollInterval,
       },

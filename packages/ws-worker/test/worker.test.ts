@@ -43,7 +43,7 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
       [RUN_START]: async () => true,
       [STEP_START]: async () => true,
       [RUN_LOG]: async (_evt) => {
-        //console.log(evt.source, evt.message)
+        console.log(evt.source, evt.message);
         return true;
       },
       [STEP_COMPLETE]: async () => true,
