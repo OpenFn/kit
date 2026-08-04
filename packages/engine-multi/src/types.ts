@@ -54,6 +54,8 @@ export type ExecuteOptions = {
   runTimeoutMs?: number;
   sanitize?: SanitizePolicies;
   jobLogLevel?: string;
+  // inject globals into the environment
+  globals?: any;
 };
 
 export type ExecutionContextOptions = ExecuteOptions & EngineOptions;
