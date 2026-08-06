@@ -22,8 +22,11 @@ import {
   resolveSelfCgroup,
 } from './cgroup';
 
-// Constant memory overhead to apply to the cgroup ceiling
-const CGROUP_MEMORY_OVERHEAD_MB = 128;
+// Memory overhead to apply to the cgroup ceiling, on top of memoryLimitMb.
+// Override with CGROUP_MEMORY_OVERHEAD_MB
+const CGROUP_MEMORY_OVERHEAD_MB = process.env.CGROUP_MEMORY_OVERHEAD_MB
+  ? Number(process.env.CGROUP_MEMORY_OVERHEAD_MB)
+  : 128;
 
 export type MemoryEnforcement = {
   // Sets node's --max-old-space-size on child processes

@@ -97,7 +97,7 @@ The engine does not provision the cgroup hierarchy itself. Rather, the host runt
 
 The engine creates one leaf per child process within it, applying the memory limit to each.
 
-cgroups must be enabled explicitly: the are off by default because unless properly configured, an OOM exception can kill the parenting process group hierarchy.
+cgroups must be enabled explicitly: they are off by default because unless properly configured, an OOM exception can kill the parenting process group hierarchy.
 
 See Worker documentation for notes about how to start the engine with cgroups enabled.
 

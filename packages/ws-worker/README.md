@@ -59,6 +59,12 @@ For tighter enforcement on linux environments, cgroups can be utilised. This app
 
 To enable cgroup enforcement, pass `--cgroups` or set `WORKER_ENABLE_CGROUP_ENFORCEMENT`.
 
+The cgroup ceiling for each child process is `memoryLimitMb` plus a fixed overhead (default 128mb), to leave headroom for the child process's own baseline footprint on top of the run's configured memory. Override the overhead with:
+
+```
+CGROUP_MEMORY_OVERHEAD_MB=256
+```
+
 ### Local Development
 
 If you try and start a local worker with cgroup enforcement, and a process exceeds its memory, you'll find that the whole owning process is taken down (ie, the hosting terminal). This is because the worker doesn't create its own isolated cgroup — it enforces limits using whatever cgroup it happens to be started in. In an ordinary dev terminal, that cgroup is shared with other things (your shell, other tools, sometimes your whole desktop session), so an OOM kill there can take out more than just the run that went over its limit.
