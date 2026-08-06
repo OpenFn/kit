@@ -71,14 +71,21 @@ export class AutoinstallError extends EngineError {
   }
 }
 
+// Where an OOM kill came from:
+// - 'heap'   the V8 heap limit (thread resourceLimits or --max-old-space-size)
+// - 'cgroup' the OS cgroup memory.max ceiling (kernel SIGKILL)
+export type OOMSource = 'heap' | 'cgroup';
+
 export class OOMError extends EngineError {
   severity = 'kill';
   name = 'OOMError';
   message;
+  source: OOMSource;
 
-  constructor() {
+  constructor(source: OOMSource = 'heap') {
     super();
 
+    this.source = source;
     this.message = `Run exceeded maximum memory usage`;
   }
 }
