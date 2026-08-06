@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.39.2
+
+### Patch Changes
+
+- Enable legacy deploy to read a v2 project file
+
 ## 1.39.1
 
 ### Patch Changes
@@ -52,7 +58,6 @@
 
 ### Patch Changes
 
-- Enable legacy deploy to read a v2 project file
 - 0b09320: Update undici version
 - 749b7a3: Tighten guards against shell injection vectors.
 - Updated dependencies [749b7a3]

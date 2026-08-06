@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.14.0
+
+### Minor Changes
+
+- Enable legacy deploy to load v2 spec files
+
 ## 0.13.1
 
 ### Patch Changes
