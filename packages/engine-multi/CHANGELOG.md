@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.13.0
+
+### Minor Changes
+
+- Add support for strict memory enforcement with cgroups
+
 ## 1.12.4
 
 ### Patch Changes

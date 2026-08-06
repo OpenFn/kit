@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.29.0
+
+### Minor Changes
+
+- Add support for strict memory enforcement with cgroups
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.13.0
+
 ## 1.28.0
 
 ### Minor Changes
