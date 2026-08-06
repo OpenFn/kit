@@ -28,4 +28,4 @@ USER node
 
 EXPOSE 2222
 
-CMD [ "node", "./dist/start.js" "--cgroups"]
+CMD [ "node", "./dist/start.js"]
