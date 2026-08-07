@@ -199,13 +199,13 @@ importers:
         specifier: workspace:*
         version: link:../describe-package
       '@openfn/lexicon':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../lexicon
       '@openfn/logger':
         specifier: workspace:*
         version: link:../logger
       '@openfn/project':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../project
       '@openfn/runtime':
         specifier: workspace:*
