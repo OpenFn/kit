@@ -1,5 +1,13 @@
 # @openfn/lightning-mock
 
+## 2.4.27
+
+### Patch Changes
+
+- cb21649: Tighten validation on provisioner to ensure ids on entities
+- Updated dependencies [d3213e6]
+  - @openfn/project@0.18.1
+
 ## 2.4.26
 
 ### Patch Changes

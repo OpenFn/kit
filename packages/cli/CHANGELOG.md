@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.39.3
+
+### Patch Changes
+
+Fix an issue where `openfn project deploy --new` drops UUIDs on workflows
+
+- Updated dependencies [d3213e6]
+  - @openfn/project@0.18.1
+
 ## 1.39.2
 
 ### Patch Changes

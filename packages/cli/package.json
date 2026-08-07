@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.39.2",
+  "version": "1.39.3",
   "description": "CLI devtools for the OpenFn toolchain",
   "engines": {
     "node": ">=18",
@@ -55,9 +55,9 @@
     "@openfn/compiler": "workspace:*",
     "@openfn/deploy": "workspace:*",
     "@openfn/describe-package": "workspace:*",
-    "@openfn/lexicon": "workspace:^",
+    "@openfn/lexicon": "workspace:*",
     "@openfn/logger": "workspace:*",
-    "@openfn/project": "workspace:^",
+    "@openfn/project": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "chalk": "^5.6.2",
     "chokidar": "^3.6.0",
