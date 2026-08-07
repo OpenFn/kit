@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.18.1
+
+### Patch Changes
+
+- d3213e6: Fix an issue where new workflows do not get assigned a UUID
+
 ## 0.18.0
 
 ### Minor Changes
