@@ -133,11 +133,14 @@ export default (
 
   // But some need to get passed down into the engine's options
   const engineOpts: WorkerRunOptions = {};
-
+  console.log(JSON.stringify(run, null, 2));
   engineOpts.globals = {
     meta: {
       runId: run.id,
       startTime: Date.now(),
+      workOrderId: run.meta?.work_order_id,
+      workflowId: run.meta?.workflow_id,
+      projectId: run.meta?.project_id,
     },
   };
 

@@ -773,3 +773,38 @@ test('sets runId and startTime on the engine options globals meta', (t) => {
   t.true(options.globals!.meta.startTime >= before);
   t.true(options.globals!.meta.startTime <= after);
 });
+
+test('maps run.meta workorder/workflow/project ids onto globals meta', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+    meta: {
+      workorder_id: 'some-workorder-id',
+      workflow_id: 'some-workflow-id',
+      project_id: 'some-project-id',
+    },
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.workorderId, 'some-workorder-id');
+  t.is(options.globals!.meta.workflowId, 'some-workflow-id');
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('leaves globals meta ids undefined when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.workorderId, undefined);
+  t.is(options.globals!.meta.workflowId, undefined);
+  t.is(options.globals!.meta.projectId, undefined);
+});
