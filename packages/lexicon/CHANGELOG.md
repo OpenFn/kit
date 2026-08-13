@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.4.1
+
+### Patch Changes
+
+- e3ddfef: Support metadata on the run object
+
 ## 2.4.0
 
 ### Minor Changes
