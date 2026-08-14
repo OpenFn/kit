@@ -10,7 +10,17 @@ import createLogger from '@openfn/logger';
 const debugWorker = process.env.OPENFN_DEBUG_WORKER;
 const debugLightning = process.env.OPENFN_DEBUG_LIGHTNING;
 
-export const randomPort = () => Math.round(2000 + Math.random() * 1000);
+// Hand out a fresh port for every server we start. This used to pick a random
+// number in a 1000 wide range without checking it was free, which collided
+// often enough to fail the integration job every few runs: the second server
+// couldn't bind, its setup hook never finished, and the file timed out.
+//
+// ava runs these files one at a time and each one is its own process, so a
+// counter is enough - ports are released when the previous file exits. The base
+// sits clear of the 3000s that the server tests walk through.
+let nextPortNumber = 4400;
+
+export const nextPort = () => nextPortNumber++;
 
 export const initLightning = (port = 4000, privateKey?: string) => {
   // TODO the lightning mock right now doesn't use the secret
@@ -30,7 +40,7 @@ export const initWorker = async (
   engineArgs = {},
   workerArgs = {}
 ) => {
-  const workerPort = randomPort();
+  const workerPort = nextPort();
 
   const engineLogger = createMockLogger('engine', {
     level: 'debug',
