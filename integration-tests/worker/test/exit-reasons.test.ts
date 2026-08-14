@@ -2,13 +2,13 @@ import test from 'ava';
 import crypto from 'node:crypto';
 import path from 'node:path';
 
-import { initLightning, initWorker } from '../src/init';
+import { initLightning, initWorker, nextPort } from '../src/init';
 
 let lightning;
 let worker;
 
 test.before(async () => {
-  const lightningPort = 4321;
+  const lightningPort = nextPort();
 
   lightning = initLightning(lightningPort);
 
@@ -23,8 +23,8 @@ test.after(async () => {
 });
 
 const run = async (attempt) => {
-  return new Promise<any>(async (done) => {
-    lightning.once('run:complete', (evt) => {
+  return new Promise<any>((done) => {
+    lightning.onSocketEvent('run:complete', attempt.id, (evt) => {
       if (attempt.id === evt.runId) {
         done(evt.payload);
       }

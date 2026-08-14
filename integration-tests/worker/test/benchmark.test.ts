@@ -2,7 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 
 import { createRun } from '../src/factories';
-import { initLightning, initWorker } from '../src/init';
+import { initLightning, initWorker, nextPort } from '../src/init';
 import { run, humanMb } from '../src/util';
 
 let lightning;
@@ -11,7 +11,7 @@ let worker;
 const maxConcurrency = 20;
 
 test.before(async () => {
-  const lightningPort = 4322;
+  const lightningPort = nextPort();
 
   lightning = initLightning(lightningPort);
 
