@@ -180,7 +180,6 @@ test.serial('allow a job to complete after receiving a sigterm', (t) => {
 test.serial("don't restore the claim loop after a sigterm", (t) => {
   return new Promise(async (done) => {
     let abort = false;
-    let didSendSigterm = false;
     const port = getPort();
 
     const job = createJob({
@@ -208,7 +207,6 @@ test.serial("don't restore the claim loop after a sigterm", (t) => {
     // After the second run starts, there should be no more claims
     lightning.on('run:start', (evt) => {
       if (evt.runId === b.id) {
-        didSendSigterm = true;
         // Kill the worker once the second job has started
         // This will force an overlap of two pending runs at full capacity
         workerProcess.kill('SIGTERM');
@@ -220,8 +218,12 @@ test.serial("don't restore the claim loop after a sigterm", (t) => {
     lightning.enqueueRun(a);
     lightning.enqueueRun(b);
 
-    lightning.on('claim', (e) => {
-      if (didSendSigterm && !abort) {
+    lightning.on('claim', () => {
+      const didReceiveSigterm = workerLogs.some((l) =>
+        l.match(/SIGTERM RECEIVED/)
+      );
+
+      if (didReceiveSigterm && !abort) {
         abort = true;
         t.fail('Claim triggered after sigterm');
         done();

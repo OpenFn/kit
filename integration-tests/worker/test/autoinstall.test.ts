@@ -3,7 +3,7 @@ import path from 'node:path';
 import { rm } from 'node:fs/promises';
 import { generateKeys } from '@openfn/lightning-mock';
 
-import { initLightning, initWorker } from '../src/init';
+import { initLightning, initWorker, nextPort } from '../src/init';
 import { createRun, createJob } from '../src/factories';
 
 const generate = (adaptor, version) => {
@@ -39,7 +39,7 @@ test.before(async () => {
   } catch (e) {}
 
   const keys = await generateKeys();
-  const lightningPort = 4321;
+  const lightningPort = nextPort();
 
   lightning = initLightning(lightningPort, keys.private);
 
