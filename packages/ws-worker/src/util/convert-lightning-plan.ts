@@ -133,14 +133,23 @@ export default (
 
   // But some need to get passed down into the engine's options
   const engineOpts: WorkerRunOptions = {};
-  console.log(JSON.stringify(run, null, 2));
+
+  // Lightning only sends run.meta from 2.18.0. Older versions get a meta global
+  // with just the run id, rather than a set of undefined keys. project_id is on
+  // the plan itself, so it's available whatever version we're talking to.
+  const ids = {
+    workOrderId: run.meta?.work_order_id,
+    workflowId: run.meta?.workflow_id,
+    projectId: run.meta?.project_id ?? run.project_id,
+  };
+
   engineOpts.globals = {
     meta: {
       runId: run.id,
       startTime: Date.now(),
-      workOrderId: run.meta?.work_order_id,
-      workflowId: run.meta?.workflow_id,
-      projectId: run.meta?.project_id,
+      ...Object.fromEntries(
+        Object.entries(ids).filter(([_key, value]) => value !== undefined)
+      ),
     },
   };
 
