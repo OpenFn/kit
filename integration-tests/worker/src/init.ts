@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 
 import createLightningServer, { toBase64 } from '@openfn/lightning-mock';
 import createEngine from '@openfn/engine-multi';
-import createWorkerServer from '@openfn/ws-worker';
+import createWorkerServer, { INTERNAL_SOCKET_READY } from '@openfn/ws-worker';
 import { createMockLogger } from '@openfn/logger';
 import createLogger from '@openfn/logger';
 
@@ -65,6 +65,24 @@ export const initWorker = async (
     batchLogs: true,
     ...workerArgs,
   });
+
+  // The server is returned before it has connected to Lightning: it fetches the
+  // collections version over http first and only then opens the socket. Tests
+  // which swap the worker out and queue a run straight afterwards could leave
+  // that run sitting in the queue with nothing listening for it, and the whole
+  // file would hang until ava's timeout. Waiting for the socket closes that.
+  if (!worker.socket) {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('worker did not connect to lightning within 10s'));
+      }, 10_000);
+
+      worker.events.once(INTERNAL_SOCKET_READY, () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
+  }
 
   return { engine, engineLogger, worker };
 };
