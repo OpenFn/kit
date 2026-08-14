@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.39.4
+
+### Patch Changes
+
+- Updated dependencies [e3ddfef]
+  - @openfn/lexicon@2.4.1
+
 ## 1.39.3
 
 ### Patch Changes

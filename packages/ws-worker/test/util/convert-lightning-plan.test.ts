@@ -773,3 +773,53 @@ test('sets runId and startTime on the engine options globals meta', (t) => {
   t.true(options.globals!.meta.startTime >= before);
   t.true(options.globals!.meta.startTime <= after);
 });
+
+test('maps run.meta work order/workflow/project ids onto globals meta', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+    meta: {
+      work_order_id: 'some-work-order-id',
+      workflow_id: 'some-workflow-id',
+      project_id: 'some-project-id',
+    },
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.workOrderId, 'some-work-order-id');
+  t.is(options.globals!.meta.workflowId, 'some-workflow-id');
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('takes projectId from the plan when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    project_id: 'some-project-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('omits globals meta ids when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.deepEqual(Object.keys(options.globals!.meta).sort(), [
+    'runId',
+    'startTime',
+  ]);
+});

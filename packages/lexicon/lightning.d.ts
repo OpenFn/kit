@@ -44,6 +44,14 @@ export type LightningPlan = {
   options?: LightningPlanOptions;
 
   globals?: string;
+
+  meta?: LightningPlanMeta;
+};
+
+export type LightningPlanMeta = {
+  work_order_id?: string;
+  workflow_id?: string;
+  project_id?: string;
 };
 
 /**

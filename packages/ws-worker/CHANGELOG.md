@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.29.1
+
+### Patch Changes
+
+- e3ddfef: Support metadata on the run object
+- Updated dependencies [e3ddfef]
+  - @openfn/lexicon@2.4.1
+
 ## 1.29.0
 
 ### Minor Changes
