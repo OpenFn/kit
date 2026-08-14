@@ -24,11 +24,6 @@ test.after(async () => {
 
 const run = async (attempt) => {
   return new Promise<any>((done) => {
-    // This used to be a plain `once` with the id checked inside it, which meant
-    // any completion for another run - a late one from the test before, or a
-    // duplicate - used up the listener and left this promise hanging for good,
-    // stalling the rest of the file until ava gave up. onSocketEvent only
-    // releases the listener once the id actually matches.
     lightning.onSocketEvent('run:complete', attempt.id, (evt) => {
       if (attempt.id === evt.runId) {
         done(evt.payload);

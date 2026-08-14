@@ -219,9 +219,6 @@ test.serial("don't restore the claim loop after a sigterm", (t) => {
     lightning.enqueueRun(b);
 
     lightning.on('claim', () => {
-      // Sending the signal and the worker acting on it are not the same moment,
-      // so a claim already in flight can land here through no fault of the
-      // worker. Only count claims made after it told us it had the signal.
       const didReceiveSigterm = workerLogs.some((l) =>
         l.match(/SIGTERM RECEIVED/)
       );

@@ -10,14 +10,6 @@ import createLogger from '@openfn/logger';
 const debugWorker = process.env.OPENFN_DEBUG_WORKER;
 const debugLightning = process.env.OPENFN_DEBUG_LIGHTNING;
 
-// Hand out a fresh port for every server we start. This used to pick a random
-// number in a 1000 wide range without checking it was free, which collided
-// often enough to fail the integration job every few runs: the second server
-// couldn't bind, its setup hook never finished, and the file timed out.
-//
-// ava runs these files one at a time and each one is its own process, so a
-// counter is enough - ports are released when the previous file exits. The base
-// sits clear of the 3000s that the server tests walk through.
 let nextPortNumber = 4400;
 
 export const nextPort = () => nextPortNumber++;
@@ -66,11 +58,6 @@ export const initWorker = async (
     ...workerArgs,
   });
 
-  // The server is returned before it has connected to Lightning: it fetches the
-  // collections version over http first and only then opens the socket. Tests
-  // which swap the worker out and queue a run straight afterwards could leave
-  // that run sitting in the queue with nothing listening for it, and the whole
-  // file would hang until ava's timeout. Waiting for the socket closes that.
   if (!worker.socket) {
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
