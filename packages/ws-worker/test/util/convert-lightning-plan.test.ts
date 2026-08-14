@@ -774,14 +774,14 @@ test('sets runId and startTime on the engine options globals meta', (t) => {
   t.true(options.globals!.meta.startTime <= after);
 });
 
-test('maps run.meta workorder/workflow/project ids onto globals meta', (t) => {
+test('maps run.meta work order/workflow/project ids onto globals meta', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'some-run-id',
     jobs: [createNode()],
     triggers: [],
     edges: [],
     meta: {
-      workorder_id: 'some-workorder-id',
+      work_order_id: 'some-work-order-id',
       workflow_id: 'some-workflow-id',
       project_id: 'some-project-id',
     },
@@ -789,12 +789,26 @@ test('maps run.meta workorder/workflow/project ids onto globals meta', (t) => {
 
   const { options } = convertPlan(run as LightningPlan);
 
-  t.is(options.globals!.meta.workorderId, 'some-workorder-id');
+  t.is(options.globals!.meta.workOrderId, 'some-work-order-id');
   t.is(options.globals!.meta.workflowId, 'some-workflow-id');
   t.is(options.globals!.meta.projectId, 'some-project-id');
 });
 
-test('leaves globals meta ids undefined when run.meta is missing', (t) => {
+test('takes projectId from the plan when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    project_id: 'some-project-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('omits globals meta ids when run.meta is missing', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'some-run-id',
     jobs: [createNode()],
@@ -804,7 +818,8 @@ test('leaves globals meta ids undefined when run.meta is missing', (t) => {
 
   const { options } = convertPlan(run as LightningPlan);
 
-  t.is(options.globals!.meta.workorderId, undefined);
-  t.is(options.globals!.meta.workflowId, undefined);
-  t.is(options.globals!.meta.projectId, undefined);
+  t.deepEqual(Object.keys(options.globals!.meta).sort(), [
+    'runId',
+    'startTime',
+  ]);
 });
