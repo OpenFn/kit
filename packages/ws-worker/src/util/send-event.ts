@@ -7,7 +7,10 @@ import { LightningSocketError, LightningTimeoutError } from '../errors';
 const allowRetryOntimeout = false;
 
 export const sendEvent = <T>(
-  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
+  context: Pick<
+    Context,
+    'logger' | 'channel' | 'id' | 'options' | 'sentryScope'
+  >,
   event: string,
   payload?: any,
   attempts?: number
@@ -18,7 +21,7 @@ export const sendEvent = <T>(
 
   const thisAttempt = attempts ?? 1;
 
-  const { channel, logger, id: runId = '<unknown run>' } = context;
+  const { channel, logger, id: runId = '<unknown run>', sentryScope } = context;
 
   return new Promise<T>((resolve, reject) => {
     const report = (error: any) => {
@@ -34,10 +37,14 @@ export const sendEvent = <T>(
         extras.rejection_reason = error.rejectMessage;
       }
 
-      Sentry.captureException(error, (scope) => {
-        scope.setContext('run', context);
-        scope.setExtras(extras);
-        return scope;
+      // report() is invoked from a phoenix receive callback, ie off the
+      // socket's async chain, so the run's scope must be re-entered by hand
+      Sentry.withIsolationScope(sentryScope, () => {
+        Sentry.captureException(error, (scope) => {
+          scope.setContext('run', context);
+          scope.setExtras(extras);
+          return scope;
+        });
       });
 
       // Mark that we've reported this to downstream handlers
