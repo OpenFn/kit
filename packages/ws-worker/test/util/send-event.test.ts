@@ -390,3 +390,53 @@ test.serial('should report caller-supplied sentryExtras alongside a failed event
   // sentryExtras must not crowd out the fields send-event already reports
   t.is(reports[0].extra?.channel_state, 'joined');
 });
+
+// The real phoenix channel invokes its receive callbacks from the socket's
+// message chain, which is not the chain that called push(). mockChannel defers
+// with a setTimeout created inside push, so async context leaks through it and
+// it cannot exercise this. This mock replies from a pump created up-front, so
+// the callback runs with no inherited context, exactly like the real socket
+const mockDetachedChannel = () => {
+  const bus = new EventEmitter();
+  const pump = setInterval(() => bus.emit('reply'), 1);
+
+  return {
+    stop: () => clearInterval(pump),
+    channel: {
+      push: () => {
+        const responses = {} as Record<string, (e?: any) => void>;
+        bus.once('reply', () => responses.error?.('detached'));
+
+        const receive = {
+          receive: (status: string, callback: (e?: any) => void) => {
+            responses[status] = callback;
+            return receive;
+          },
+        };
+        return receive;
+      },
+    } as any,
+  };
+};
+
+test.serial('should report to sentry against the run scope', async (t) => {
+  const sentryScope = Sentry.getIsolationScope().clone();
+  sentryScope.setTag('run_id', 'run-1');
+  sentryScope.addBreadcrumb({ category: 'event', message: 'job-complete' });
+
+  const { channel, stop } = mockDetachedChannel();
+  const context = { id: 'run-1', channel, logger, options: {}, sentryScope };
+
+  await t.throwsAsync(() => sendEvent(context, 'step:complete', {}));
+  stop();
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].error?.name, 'LightningSocketError');
+  t.is(reports[0].tags.run_id, 'run-1');
+
+  // The run's breadcrumb trail must survive too - this is why the capture
+  // re-enters the scope rather than passing it to captureException, which
+  // merges tags but drops breadcrumbs
+  const trail = reports[0].originalReport?.breadcrumbs ?? [];
+  t.true(trail.some((b: any) => b.message === 'job-complete'));
+});
