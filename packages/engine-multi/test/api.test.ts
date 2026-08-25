@@ -80,7 +80,7 @@ test.serial('engine api uses custom options', async (t) => {
 
 // Note that this runs with the actual runtime worker
 // I won't want to do deep testing on execute here - I just want to make sure the basic
-// exeuction functionality is working. It's more a test of the api surface than the inner
+// execution functionality is working. It's more a test of the api surface than the inner
 // workings of the job
 test.serial(
   'execute should return an event listener and receive workflow-complete',
@@ -88,6 +88,7 @@ test.serial(
     return new Promise(async (done) => {
       api = await createAPI({
         logger,
+        proxyStdout: true,
       });
 
       const plan: ExecutionPlan = {

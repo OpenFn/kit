@@ -262,6 +262,8 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     }
     j = j as JSONLog;
 
+    j.message ??= [];
+
     log(j.name, j.level, ...j.message);
     return [j.name, j.level, ...j.message];
   };
