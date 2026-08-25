@@ -64,6 +64,12 @@ export default async function onStepComplete(
     duration: event.duration,
     thread_id: event.threadId,
     timestamp: timeInMicroseconds(event.time),
+    // toPrecision (not toFixed) so small dataclips don't round to "0.00" -
+    // this needs to read sensibly from a few KB up to the ~10mb redaction
+    // limit, not just near the limit
+    dataclip_size_mb: event.payloadSize_b
+      ? (event.payloadSize_b / (1024 * 1024)).toPrecision(3)
+      : undefined,
   } as StepCompletePayload;
 
   // Feed through the webhook response if it's on state
@@ -106,9 +112,13 @@ export default async function onStepComplete(
 
   const { output_dataclip, ...eventWithoutDataclip } = evt;
   context.logger?.debug(
-    `${context.id} step-complete payload: ${JSON.stringify(
+    `${context.id} step-complete (without dataclip): ${JSON.stringify(
       eventWithoutDataclip
     )}`
+  );
+
+  context.logger?.debug(
+    `${context.id} step-complete payload is ${evt.dataclip_size_mb}mb`
   );
 
   return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
