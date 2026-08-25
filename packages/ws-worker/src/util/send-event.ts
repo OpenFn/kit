@@ -6,6 +6,18 @@ import { LightningSocketError, LightningTimeoutError } from '../errors';
 // See https://github.com/OpenFn/kit/issues/1137
 const allowRetryOntimeout = false;
 
+// channel.socket is not part of our Channel type (or of @types/phoenix's),
+// but it exists on the real phoenix Channel instance - reach for it
+// defensively so a mock channel in tests, or a future phoenix version,
+// cannot turn this into a reporting-path crash
+const getSocketState = (channel: any): string | undefined => {
+  try {
+    return channel?.socket?.connectionState?.();
+  } catch {
+    return undefined;
+  }
+};
+
 export const sendEvent = <T>(
   context: Pick<
     Context,
@@ -31,7 +43,12 @@ export const sendEvent = <T>(
         run_id: runId,
         event: event,
       };
-      const extras: any = {};
+      const extras: any = {
+        // Distinguishes a genuine timeout/error on a healthy channel from
+        // collateral damage while the channel is mid-rejoin after a drop
+        channel_state: channel.state,
+        socket_state: getSocketState(channel),
+      };
 
       if (error.rejectMessage) {
         extras.rejection_reason = error.rejectMessage;
@@ -41,6 +58,13 @@ export const sendEvent = <T>(
       // socket's async chain, so the run's scope must be re-entered by hand
       Sentry.withIsolationScope(sentryScope, () => {
         Sentry.captureException(error, (scope) => {
+          scope.setTag('run_id', runId);
+          scope.setTag('lightning_event', event);
+          // Every timeout (or every socket error) currently collapses into a
+          // single sentry issue regardless of which event caused it. Splitting
+          // the fingerprint by event name is what would have made this
+          // pattern visible without needing to dig through raw events
+          scope.setFingerprint([error.name, event]);
           scope.setContext('run', context);
           scope.setExtras(extras);
           return scope;

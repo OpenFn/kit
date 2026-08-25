@@ -51,9 +51,12 @@ export type EventMap = {
 
 export type ExternalEvents = keyof EventMap;
 
-interface ExternalEvent {
+export interface ExternalEvent {
   threadId?: string;
   workflowId: UUID;
+  // Byte size of any large fields on this payload
+  // eg, dataclips, state objects, log objects
+  payloadSize_b?: number;
 }
 
 export interface WorkflowStartPayload extends ExternalEvent {

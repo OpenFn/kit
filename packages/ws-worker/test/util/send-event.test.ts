@@ -270,6 +270,59 @@ test.serial('should report to sentry if the event timesout', async (t) => {
   }
   const reports = await waitForSentryReport(testkit);
   t.is(reports[0].error?.name, 'LightningTimeoutError');
+
+  // Tags are indexed (unlike the run context below), so these are what make
+  // it possible to ask sentry "is it only step:complete that times out?"
+  t.is(reports[0].tags.run_id, 'x');
+  t.is(reports[0].tags.lightning_event, EVENT_NAME);
+});
+
+test.serial('should fingerprint sentry reports by error type and event name', async (t) => {
+  // Without this, every timeout for every event collapses into one sentry
+  // issue - this is the change that would have made the step:complete
+  // pattern visible without digging through raw events. Each event is
+  // checked against a fresh testkit so the two reports cannot be confused
+  // with each other or raced against waitForSentryReport's "at least one"
+  // polling.
+  const channelA = mockChannel({});
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel: channelA, logger, options: {} }, 'step:complete', {})
+  );
+  const [stepReport] = await waitForSentryReport(testkit);
+  t.deepEqual(stepReport.originalReport.fingerprint, [
+    'LightningTimeoutError',
+    'step:complete',
+  ]);
+
+  testkit.reset();
+
+  const channelB = mockChannel({});
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel: channelB, logger, options: {} }, 'run:complete', {})
+  );
+  const [runReport] = await waitForSentryReport(testkit);
+  t.deepEqual(runReport.originalReport.fingerprint, [
+    'LightningTimeoutError',
+    'run:complete',
+  ]);
+});
+
+test.serial('should report channel and socket state alongside a failed event', async (t) => {
+  // Distinguishes a genuine failure on a healthy channel from collateral
+  // damage while the channel is mid-rejoin after a drop
+  const channel = {
+    ...mockChannel({}),
+    state: 'errored',
+    socket: { connectionState: () => 'connecting' },
+  };
+
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel, logger, options: {} }, 'step:complete', {})
+  );
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].extra?.channel_state, 'errored');
+  t.is(reports[0].extra?.socket_state, 'connecting');
 });
 
 // The real phoenix channel invokes its receive callbacks from the socket's
