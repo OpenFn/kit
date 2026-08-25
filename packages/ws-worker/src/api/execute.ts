@@ -80,6 +80,16 @@ export function execute(
     sentryScope,
   };
 
+  // Log pheonix channel errors to sentry
+  channel.onError((...args: any) => {
+    sentryScope.addBreadcrumb({
+      category: 'channel',
+      message: 'Channel error',
+      level: 'warning',
+      data: { state: channel.state, args },
+    });
+  });
+
   Sentry.withIsolationScope(sentryScope, async () => {
     Sentry.addBreadcrumb({
       category: 'run',

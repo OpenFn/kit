@@ -35,3 +35,24 @@ export class LightningTimeoutError extends Error {
     super(`[${event}] timeout`);
   }
 }
+
+export type SocketCloseDetails = {
+  code?: number;
+  reason?: string;
+  wasClean?: boolean;
+};
+
+export class LightningSocketClosedError extends Error {
+  name = 'LightningSocketClosedError';
+  code?: number;
+  reason?: string;
+  wasClean?: boolean;
+  constructor({ code, reason, wasClean }: SocketCloseDetails = {}) {
+    super(
+      `Lightning socket closed: code=${code} reason=${reason ?? 'unknown'}`
+    );
+    this.code = code;
+    this.reason = reason;
+    this.wasClean = wasClean;
+  }
+}

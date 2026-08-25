@@ -43,3 +43,21 @@ test('should fail to join an run channel with an invalid token', async (t) => {
     t.pass();
   }
 });
+
+test('should log an error including channel state when the channel errors', async (t) => {
+  const logger = createMockLogger();
+  const channel = mockChannel({
+    join: () => ({ status: 'ok' }),
+    [GET_PLAN]: () => runs['run-1'],
+  });
+  const socket = new MockSocket('www', { 'run:a': channel });
+
+  await joinRunChannel(socket, 'x.y.z', 'a', logger);
+
+  channel.state = 'errored';
+  channel._triggerError('boom');
+
+  const log = logger._find('error', /Critical error in channel run:a/);
+  t.truthy(log);
+  t.regex(log!.message as string, /errored/);
+});
