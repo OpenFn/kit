@@ -7,7 +7,6 @@ import {
   type WorkerEvents,
 } from '../events';
 import ensurePayloadSize from '../../util/ensure-payload-size';
-import type { ExternalEvent } from '../../events';
 
 // This constrains the size of any payloads coming out of the worker thread
 // Payloads exceeding this will be redacted
