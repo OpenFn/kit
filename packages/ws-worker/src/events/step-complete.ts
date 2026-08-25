@@ -121,5 +121,9 @@ export default async function onStepComplete(
     `${context.id} step-complete payload is ${evt.dataclip_size_mb}mb`
   );
 
-  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
+  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt, {
+    // Raw bytes, not the formatted evt.dataclip_size_mb string - kept out of
+    // the Lightning-bound payload, only surfaced if this push errors or times out
+    sentryExtras: { payloadSize_b: event.payloadSize_b },
+  });
 }

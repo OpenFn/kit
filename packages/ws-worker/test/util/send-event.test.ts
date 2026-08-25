@@ -374,3 +374,19 @@ test.serial('should report to sentry against the run scope', async (t) => {
   const trail = reports[0].originalReport?.breadcrumbs ?? [];
   t.true(trail.some((b: any) => b.message === 'job-complete'));
 });
+
+test.serial('should report caller-supplied sentryExtras alongside a failed event', async (t) => {
+  const EVENT_NAME = 'test';
+  const channel = { ...mockChannel({}), state: 'joined' };
+
+  const context = { id: 'x', channel, logger, options: {} };
+
+  await t.throwsAsync(() =>
+    sendEvent(context, EVENT_NAME, {}, { sentryExtras: { payloadSize_b: 1536 } })
+  );
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].extra?.payloadSize_b, 1536);
+  // sentryExtras must not crowd out the fields send-event already reports
+  t.is(reports[0].extra?.channel_state, 'joined');
+});

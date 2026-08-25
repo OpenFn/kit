@@ -18,6 +18,14 @@ const getSocketState = (channel: any): string | undefined => {
   }
 };
 
+export type SentryExtras = Record<string, any>;
+
+export type SendEventOptions = {
+  attempts?: number;
+  // Extra data to report to sentry
+  sentryExtras?: SentryExtras;
+};
+
 export const sendEvent = <T>(
   context: Pick<
     Context,
@@ -25,12 +33,13 @@ export const sendEvent = <T>(
   >,
   event: string,
   payload?: any,
-  attempts?: number
+  opts: SendEventOptions = {}
 ) => {
   // Low defaults here are better for unit tests
   const { timeoutRetryCount = 1, timeoutRetryDelay = 1 } =
     context.options ?? {};
 
+  const { attempts, sentryExtras } = opts;
   const thisAttempt = attempts ?? 1;
 
   const { channel, logger, id: runId = '<unknown run>', sentryScope } = context;
@@ -43,11 +52,12 @@ export const sendEvent = <T>(
         run_id: runId,
         event: event,
       };
-      const extras: any = {
+      const extras: SentryExtras = {
         // Distinguishes a genuine timeout/error on a healthy channel from
         // collateral damage while the channel is mid-rejoin after a drop
         channel_state: channel.state,
         socket_state: getSocketState(channel),
+        ...sentryExtras,
       };
 
       if (error.rejectMessage) {
@@ -98,7 +108,10 @@ export const sendEvent = <T>(
           );
 
           setTimeout(() => {
-            sendEvent<T>(context, event, payload, thisAttempt + 1)
+            sendEvent<T>(context, event, payload, {
+              attempts: thisAttempt + 1,
+              sentryExtras,
+            })
               .then(resolve)
               .catch(reject);
           }, timeoutRetryDelay);
