@@ -68,6 +68,51 @@ test('cli should set default values for unspecified options', (t) => {
   t.is(args.engineValidationTimeoutMs, 5000);
   t.is(args.profile, false);
   t.is(args.profilePollIntervalMs, 10);
+  t.is(args.noStringifyState, false);
+});
+
+test('cli should default noStringifyState to false', (t) => {
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, false);
+});
+
+test('cli should enable noStringifyState via --no-stringify-state', (t) => {
+  const argv = 'pnpm start --no-stringify-state'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, true);
+});
+
+test('cli should enable noStringifyState via --stringify-state false', (t) => {
+  const argv = 'pnpm start --stringify-state false'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, true);
+});
+
+test('cli should disable noStringifyState via --stringify-state true', (t) => {
+  const argv = 'pnpm start --stringify-state true'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, false);
+});
+
+test('cli should enable noStringifyState via WORKER_NO_STRINGIFY_STATE', (t) => {
+  process.env.WORKER_NO_STRINGIFY_STATE = 'true';
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, true);
+});
+
+test('cli --no-stringify-state should override WORKER_NO_STRINGIFY_STATE', (t) => {
+  process.env.WORKER_NO_STRINGIFY_STATE = 'true';
+  const argv = 'pnpm start --stringify-state true'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.noStringifyState, false);
 });
 
 test('cli should handle boolean options correctly', (t) => {

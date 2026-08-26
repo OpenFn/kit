@@ -62,6 +62,7 @@ export type ServerOptions = {
   claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   logPayloadLimitMb?: number; // max memory limit for log payloads specifically
+  noStringifyState?: boolean; // send output dataclips as native JSON instead of a pre-stringified string. Requires lightning support
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
@@ -368,6 +369,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
 
+        options.noStringifyState = app.options.noStringifyState;
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;

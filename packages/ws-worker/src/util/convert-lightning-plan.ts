@@ -33,6 +33,9 @@ export type WorkerRunOptions = ExecuteOptions & {
   outputDataclips?: boolean;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
+  // Send the output dataclip as a native JSON value instead of a
+  // pre-stringified string. Defaults to false (old behaviour)
+  noStringifyState?: boolean;
   jobLogLevel?: LogLevel;
   timeoutRetryCount?: number;
   timeoutRetryDelay?: number;
