@@ -83,7 +83,16 @@ export const jobComplete = (
   event: internalEvents.JobCompleteEvent
 ) => {
   const { logger, state: runState } = context;
-  const { threadId, state, duration, jobId, next, mem, redacted } = event;
+  const {
+    threadId,
+    state,
+    duration,
+    jobId,
+    next,
+    mem,
+    redacted,
+    payloadSize_b,
+  } = event;
   logger.debug(
     `${runState.id}: sending job complete (step complete): ${event.jobId}`
   );
@@ -95,6 +104,7 @@ export const jobComplete = (
     jobId,
     next,
     redacted,
+    payloadSize_b,
     mem,
     time: timestamp(),
   });

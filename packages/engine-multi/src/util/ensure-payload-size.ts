@@ -1,4 +1,5 @@
 import { JsonStreamStringify } from 'json-stream-stringify';
+import type { ExternalEvent } from '../events';
 
 // This specifies which keys of an event payload to potentially redact
 // if they are too big
@@ -17,7 +18,7 @@ export const verify = async (
   value: any,
   limit_mb: number = 10,
   algo: 'stringify' | 'stream' = 'stringify'
-) => {
+): Promise<number | undefined> => {
   if (value && !isNaN(limit_mb)) {
     const limitBytes = limit_mb * 1024 * 1024;
 
@@ -33,9 +34,15 @@ export const verify = async (
       // @ts-ignore
       e.name = 'PAYLOAD_TOO_LARGE';
       e.message = `The payload exceeded the size limit of ${limit_mb}mb`;
+      // @ts-ignore carry the size we already computed out to the caller
+      e.sizeBytes = sizeBytes;
       throw e;
     }
+
+    return sizeBytes;
   }
+
+  return undefined;
 };
 
 export const calculateSizeStringify = (value: any): number => {
@@ -65,15 +72,25 @@ export const calculateSizeStream = async (
   return size_bytes;
 };
 
-export default async (payload: any, limit_mb: number = 10) => {
-  const newPayload = { ...payload };
+export default async (
+  payload: ExternalEvent,
+  limit_mb: number = 10
+): Promise<ExternalEvent> => {
+  const newPayload: any = { ...payload };
+  const rawPayload = payload as any;
 
   for (const key of KEYS_TO_VERIFY) {
     try {
-      await verify(payload[key], limit_mb);
-    } catch (e) {
+      const sizeBytes = await verify(rawPayload[key], limit_mb);
+      if (key === 'state' && sizeBytes !== undefined) {
+        newPayload.payloadSize_b = sizeBytes;
+      }
+    } catch (e: any) {
       Object.assign(newPayload[key], replacements[key] ?? replacements.default);
       newPayload.redacted = true;
+      if (key === 'state') {
+        newPayload.payloadSize_b = e.sizeBytes;
+      }
     }
   }
 

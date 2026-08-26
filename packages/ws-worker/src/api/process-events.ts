@@ -78,7 +78,7 @@ export function eventProcessor(
   callbacks: Record<string, EventHandler>,
   options: EventProcessorOptions = {}
 ) {
-  const { id: planId, logger } = context;
+  const { id: planId, logger, sentryScope } = context;
   const {
     batchLimit = DEFAULT_BATCH_LIMIT,
     batchInterval = DEFAULT_BATCH_INTERVAL,
@@ -175,7 +175,12 @@ export function eventProcessor(
       }
     } catch (e: any) {
       if (!e.reportedToSentry) {
-        Sentry.captureException(e);
+        // Engine events fire outside the async context which created this
+        // processor, so the run's scope has to be re-entered to pick up its
+        // breadcrumb trail
+        Sentry.withIsolationScope(sentryScope, () =>
+          Sentry.captureException(e)
+        );
         logger.error(e);
       }
       // Do nothing else here: the error should have been handled
@@ -196,7 +201,7 @@ export function eventProcessor(
     trace('process', name);
     // TODO this actually shouldn't be here - should be done separately
     if (name !== 'workflow-log') {
-      Sentry.addBreadcrumb({
+      sentryScope?.addBreadcrumb({
         category: 'event',
         message: name,
         level: 'info',

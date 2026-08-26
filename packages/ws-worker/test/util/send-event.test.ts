@@ -1,4 +1,6 @@
 import test from 'ava';
+import { EventEmitter } from 'node:events';
+import * as Sentry from '@sentry/node';
 import { createMockLogger } from '@openfn/logger';
 
 import { mockChannel } from '../../src/mock/sockets';
@@ -268,4 +270,123 @@ test.serial('should report to sentry if the event timesout', async (t) => {
   }
   const reports = await waitForSentryReport(testkit);
   t.is(reports[0].error?.name, 'LightningTimeoutError');
+
+  // Tags are indexed (unlike the run context below), so these are what make
+  // it possible to ask sentry "is it only step:complete that times out?"
+  t.is(reports[0].tags.run_id, 'x');
+  t.is(reports[0].tags.lightning_event, EVENT_NAME);
+});
+
+test.serial('should fingerprint sentry reports by error type and event name', async (t) => {
+  // Without this, every timeout for every event collapses into one sentry
+  // issue - this is the change that would have made the step:complete
+  // pattern visible without digging through raw events. Each event is
+  // checked against a fresh testkit so the two reports cannot be confused
+  // with each other or raced against waitForSentryReport's "at least one"
+  // polling.
+  const channelA = mockChannel({});
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel: channelA, logger, options: {} }, 'step:complete', {})
+  );
+  const [stepReport] = await waitForSentryReport(testkit);
+  t.deepEqual(stepReport.originalReport.fingerprint, [
+    'LightningTimeoutError',
+    'step:complete',
+  ]);
+
+  testkit.reset();
+
+  const channelB = mockChannel({});
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel: channelB, logger, options: {} }, 'run:complete', {})
+  );
+  const [runReport] = await waitForSentryReport(testkit);
+  t.deepEqual(runReport.originalReport.fingerprint, [
+    'LightningTimeoutError',
+    'run:complete',
+  ]);
+});
+
+test.serial('should report channel and socket state alongside a failed event', async (t) => {
+  // Distinguishes a genuine failure on a healthy channel from collateral
+  // damage while the channel is mid-rejoin after a drop
+  const channel = {
+    ...mockChannel({}),
+    state: 'errored',
+    socket: { connectionState: () => 'connecting' },
+  };
+
+  await t.throwsAsync(() =>
+    sendEvent({ id: 'x', channel, logger, options: {} }, 'step:complete', {})
+  );
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].extra?.channel_state, 'errored');
+  t.is(reports[0].extra?.socket_state, 'connecting');
+});
+
+// The real phoenix channel invokes its receive callbacks from the socket's
+// message chain, which is not the chain that called push(). mockChannel defers
+// with a setTimeout created inside push, so async context leaks through it and
+// it cannot exercise this. This mock replies from a pump created up-front, so
+// the callback runs with no inherited context, exactly like the real socket
+const mockDetachedChannel = () => {
+  const bus = new EventEmitter();
+  const pump = setInterval(() => bus.emit('reply'), 1);
+
+  return {
+    stop: () => clearInterval(pump),
+    channel: {
+      push: () => {
+        const responses = {} as Record<string, (e?: any) => void>;
+        bus.once('reply', () => responses.error?.('detached'));
+
+        const receive = {
+          receive: (status: string, callback: (e?: any) => void) => {
+            responses[status] = callback;
+            return receive;
+          },
+        };
+        return receive;
+      },
+    } as any,
+  };
+};
+
+test.serial('should report to sentry against the run scope', async (t) => {
+  const sentryScope = Sentry.getIsolationScope().clone();
+  sentryScope.setTag('run_id', 'run-1');
+  sentryScope.addBreadcrumb({ category: 'event', message: 'job-complete' });
+
+  const { channel, stop } = mockDetachedChannel();
+  const context = { id: 'run-1', channel, logger, options: {}, sentryScope };
+
+  await t.throwsAsync(() => sendEvent(context, 'step:complete', {}));
+  stop();
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].error?.name, 'LightningSocketError');
+  t.is(reports[0].tags.run_id, 'run-1');
+
+  // The run's breadcrumb trail must survive too - this is why the capture
+  // re-enters the scope rather than passing it to captureException, which
+  // merges tags but drops breadcrumbs
+  const trail = reports[0].originalReport?.breadcrumbs ?? [];
+  t.true(trail.some((b: any) => b.message === 'job-complete'));
+});
+
+test.serial('should report caller-supplied sentryExtras alongside a failed event', async (t) => {
+  const EVENT_NAME = 'test';
+  const channel = { ...mockChannel({}), state: 'joined' };
+
+  const context = { id: 'x', channel, logger, options: {} };
+
+  await t.throwsAsync(() =>
+    sendEvent(context, EVENT_NAME, {}, { sentryExtras: { payloadSize_b: 1536 } })
+  );
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].extra?.payloadSize_b, 1536);
+  // sentryExtras must not crowd out the fields send-event already reports
+  t.is(reports[0].extra?.channel_state, 'joined');
 });
