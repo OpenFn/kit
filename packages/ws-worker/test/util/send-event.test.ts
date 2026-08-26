@@ -367,34 +367,6 @@ test.serial(
   }
 );
 
-// The real phoenix channel invokes its receive callbacks from the socket's
-// message chain, which is not the chain that called push(). mockChannel defers
-// with a setTimeout created inside push, so async context leaks through it and
-// it cannot exercise this. This mock replies from a pump created up-front, so
-// the callback runs with no inherited context, exactly like the real socket
-const mockDetachedChannel = () => {
-  const bus = new EventEmitter();
-  const pump = setInterval(() => bus.emit('reply'), 1);
-
-  return {
-    stop: () => clearInterval(pump),
-    channel: {
-      push: () => {
-        const responses = {} as Record<string, (e?: any) => void>;
-        bus.once('reply', () => responses.error?.('detached'));
-
-        const receive = {
-          receive: (status: string, callback: (e?: any) => void) => {
-            responses[status] = callback;
-            return receive;
-          },
-        };
-        return receive;
-      },
-    } as any,
-  };
-};
-
 test.serial('should report to sentry against the run scope', async (t) => {
   const sentryScope = Sentry.getIsolationScope().clone();
   sentryScope.setTag('run_id', 'run-1');
