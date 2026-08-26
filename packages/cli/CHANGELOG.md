@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.39.5
+
+### Patch Changes
+
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+
 ## 1.39.4
 
 ### Patch Changes

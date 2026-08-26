@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.4.2
+
+### Patch Changes
+
+- 7398d41: Support dataclipSize
+
 ## 2.4.1
 
 ### Patch Changes

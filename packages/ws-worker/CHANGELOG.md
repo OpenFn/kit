@@ -1,5 +1,18 @@
 # ws-worker
 
+## 1.29.2
+
+### Patch Changes
+
+- 7398d41: Include dataclip size in sentry reports
+- 7398d41: Attribute Sentry reports to the run that produced them
+- c433bcf: Capture more diagnostic detail when the connection to Lightning drops unexpectedly
+- c433bcf: Reduce dataclip bloat when sending step results to Lightning
+- Updated dependencies [7398d41]
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+  - @openfn/engine-multi@1.13.1
+
 ## 1.29.1
 
 ### Patch Changes

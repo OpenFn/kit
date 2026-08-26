@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.13.1
+
+### Patch Changes
+
+- 7398d41: Report the size of a job's output state alongside the existing payload redaction check
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+
 ## 1.13.0
 
 ### Minor Changes
