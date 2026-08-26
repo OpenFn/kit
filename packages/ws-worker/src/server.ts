@@ -31,6 +31,7 @@ import { convertRun } from './util';
 import parseWorkloops from './util/parse-workloops';
 import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 import { matchesIgnoredError } from './util/ignored-errors';
+import { LightningSocketClosedError, SocketCloseDetails } from './errors';
 
 const exec = promisify(_exec);
 
@@ -61,6 +62,7 @@ export type ServerOptions = {
   claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   logPayloadLimitMb?: number; // max memory limit for log payloads specifically
+  noStringifyState?: boolean; // send output dataclips as native JSON instead of a pre-stringified string. Requires lightning support
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
@@ -137,18 +139,32 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   };
 
   // We were disconnected from the queue
-  const onDisconnect = () => {
+  const onDisconnect = (details: SocketCloseDetails = {}) => {
     for (const w of app.workloops) {
       if (!w.isStopped()) {
         w.stop('Socket disconnected unexpectedly');
       }
     }
     if (!app.destroyed) {
-      logger.info('Connection to lightning lost');
+      logger.info(
+        `Connection to lightning lost (code=${details.code} reason=${details.reason} clean=${details.wasClean})`
+      );
       logger.info(
         'Worker will automatically reconnect when lightning is back online'
       );
-      // So far as I know, the socket will try and reconnect in the background forever
+      Sentry.captureException(
+        new LightningSocketClosedError(details),
+        (scope) => {
+          scope.setFingerprint([
+            'LightningSocketClosedError',
+            String(details.code),
+            details.reason ?? '',
+          ]);
+          scope.setTag('close_code', String(details.code));
+          scope.setExtras(details);
+          return scope;
+        }
+      );
     }
   };
 
@@ -353,6 +369,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
 
+        options.noStringifyState = app.options.noStringifyState;
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;

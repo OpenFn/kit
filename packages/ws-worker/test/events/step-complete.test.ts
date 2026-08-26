@@ -157,6 +157,86 @@ test('send a step:complete event', async (t) => {
   await handleStepComplete({ channel, state } as any, event);
 });
 
+test('stringifies the output dataclip by default (noStringifyState unset)', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { x: 10 };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      t.is(evt.output_dataclip, JSON.stringify(result));
+    },
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    time: BigInt(123),
+  } as JobCompletePayload;
+  await handleStepComplete({ channel, state } as any, event);
+});
+
+test('stringifies the output dataclip when noStringifyState is false', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { x: 10 };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const options = { noStringifyState: false };
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      t.is(evt.output_dataclip, JSON.stringify(result));
+    },
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    time: BigInt(123),
+  } as JobCompletePayload;
+  await handleStepComplete({ channel, state, options } as any, event);
+});
+
+test('sends the output dataclip as a native object when noStringifyState is true', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { x: 10 };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const options = { noStringifyState: true };
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      t.deepEqual(evt.output_dataclip, result as any);
+      t.not(evt.output_dataclip, JSON.stringify(result) as any);
+    },
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    time: BigInt(123),
+  } as JobCompletePayload;
+  await handleStepComplete({ channel, state, options } as any, event);
+});
+
 test('does not put payloadSize_b on the wire, only dataclip_size_mb', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';

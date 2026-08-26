@@ -98,10 +98,14 @@ export default async function onStepComplete(
     ]);
   } else {
     evt.output_dataclip_id = dataclipId;
+    // Write the dataclip if it's not too big
     if (!options || options.outputDataclips !== false) {
-      const payload = stringify(outputState);
-      // Write the dataclip if it's not too big
-      evt.output_dataclip = payload;
+      // For back compatibility, stringify the the state object before sending
+      // Note that this causes payloads to bloat
+      // In a major version soon, we should remove the option and never stringify
+      evt.output_dataclip = options?.noStringifyState
+        ? outputState
+        : stringify(outputState);
     }
   }
 

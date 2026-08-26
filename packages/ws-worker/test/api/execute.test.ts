@@ -402,6 +402,32 @@ test('execute should return a context object', async (t) => {
   });
 });
 
+test('execute should breadcrumb a channel error onto the run scope', async (t) => {
+  const channel = mockChannel(mockEventHandlers);
+  const engine = await createMockRTE();
+  const logger = createMockLogger();
+
+  const plan = {
+    id: 'a',
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
+  } as ExecutionPlan;
+
+  const context = execute(channel, engine, logger, plan, {}, {}, () => {});
+
+  channel._triggerError('boom');
+
+  const breadcrumbs = context.sentryScope!.getScopeData().breadcrumbs;
+  const found = breadcrumbs.find((b: any) => b.message === 'Channel error');
+  t.truthy(found);
+  t.is(found!.category, 'channel');
+});
+
 // TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load a credential', async (t) => {
   const logger = createMockLogger();
