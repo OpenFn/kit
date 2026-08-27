@@ -228,6 +228,7 @@ export type StepCompletePayload = ExitReason & {
   run_id?: string;
   job_id: string;
   step_id: string;
+  dataclip_size_mb?: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
   output_dataclip_error?: 'DATACLIP_TOO_LARGE';

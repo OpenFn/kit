@@ -42,6 +42,9 @@ export type Context = {
   options: WorkerRunOptions;
   onFinish: (result: any) => void;
 
+  // This run's sentry isolation scope
+  sentryScope?: Sentry.Scope;
+
   // maybe its better for version numbers to be scribbled here as we go?
 };
 
@@ -62,6 +65,10 @@ export function execute(
 
   const state = createRunState(plan, input);
 
+  // Ensure that each execute call is in its own sentry isolated scope
+  const sentryScope = Sentry.getIsolationScope().clone();
+  sentryScope.setTag('run_id', plan.id!);
+
   const context: Context = {
     id: plan.id!,
     channel,
@@ -70,11 +77,20 @@ export function execute(
     engine,
     options,
     onFinish,
+    sentryScope,
   };
 
-  // Ensure that each execute call is in its own sentry isolated scope
-  // Because I don't trust it to automatically scope each request properly
-  Sentry.withIsolationScope(async () => {
+  // Log pheonix channel errors to sentry
+  channel.onError((...args: any) => {
+    sentryScope.addBreadcrumb({
+      category: 'channel',
+      message: 'Channel error',
+      level: 'warning',
+      data: { state: channel.state, args },
+    });
+  });
+
+  Sentry.withIsolationScope(sentryScope, async () => {
     Sentry.addBreadcrumb({
       category: 'run',
       message: 'Executing run: loading metadata',

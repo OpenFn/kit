@@ -64,6 +64,12 @@ export default async function onStepComplete(
     duration: event.duration,
     thread_id: event.threadId,
     timestamp: timeInMicroseconds(event.time),
+    // toPrecision (not toFixed) so small dataclips don't round to "0.00" -
+    // this needs to read sensibly from a few KB up to the ~10mb redaction
+    // limit, not just near the limit
+    dataclip_size_mb: event.payloadSize_b
+      ? (event.payloadSize_b / (1024 * 1024)).toPrecision(3)
+      : undefined,
   } as StepCompletePayload;
 
   // Feed through the webhook response if it's on state
@@ -92,10 +98,14 @@ export default async function onStepComplete(
     ]);
   } else {
     evt.output_dataclip_id = dataclipId;
+    // Write the dataclip if it's not too big
     if (!options || options.outputDataclips !== false) {
-      const payload = stringify(outputState);
-      // Write the dataclip if it's not too big
-      evt.output_dataclip = payload;
+      // For back compatibility, stringify the the state object before sending
+      // Note that this causes payloads to bloat
+      // In a major version soon, we should remove the option and never stringify
+      evt.output_dataclip = options?.noStringifyState
+        ? outputState
+        : stringify(outputState);
     }
   }
 
@@ -106,10 +116,18 @@ export default async function onStepComplete(
 
   const { output_dataclip, ...eventWithoutDataclip } = evt;
   context.logger?.debug(
-    `${context.id} step-complete payload: ${JSON.stringify(
+    `${context.id} step-complete (without dataclip): ${JSON.stringify(
       eventWithoutDataclip
     )}`
   );
 
-  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
+  context.logger?.debug(
+    `${context.id} step-complete payload is ${evt.dataclip_size_mb}mb`
+  );
+
+  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt, {
+    // Raw bytes, not the formatted evt.dataclip_size_mb string - kept out of
+    // the Lightning-bound payload, only surfaced if this push errors or times out
+    sentryExtras: { payloadSize_b: event.payloadSize_b },
+  });
 }

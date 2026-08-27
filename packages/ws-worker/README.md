@@ -51,6 +51,12 @@ Use `-l mock` to connect to a lightning mock server (on the default port).
 
 For a list of supported worker and engine options, see src/start.ts
 
+### Sending output dataclips without double-encoding
+
+By default, the worker JSON-stringifies each step's output dataclip before sending it to Lightning, and Lightning's own transport then re-encodes the whole envelope — this double-encoding bloats large dataclips on the wire. Pass `--no-stringify-state` or set `WORKER_NO_STRINGIFY_STATE` to send the dataclip as a native JSON value instead, avoiding that bloat.
+
+This is only compatible with Lightning 2.19 or later — do not enable it against older Lightning versions.
+
 ## Enforcing memory limits with cgroups
 
 Each run's memory limit is enforced by default through node's max-old-space-size, which only constrains heap size. Native and buffer allocations bypass this limit. This can cause the worker to consume more memory than it is technically allowed, which can in turn cause the whole worker process to be killed by its container (ie, kubernetes).

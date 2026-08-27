@@ -6,19 +6,43 @@ import { LightningSocketError, LightningTimeoutError } from '../errors';
 // See https://github.com/OpenFn/kit/issues/1137
 const allowRetryOntimeout = false;
 
+// channel.socket is not part of our Channel type (or of @types/phoenix's),
+// but it exists on the real phoenix Channel instance - reach for it
+// defensively so a mock channel in tests, or a future phoenix version,
+// cannot turn this into a reporting-path crash
+const getSocketState = (channel: any): string | undefined => {
+  try {
+    return channel?.socket?.connectionState?.();
+  } catch {
+    return undefined;
+  }
+};
+
+export type SentryExtras = Record<string, any>;
+
+export type SendEventOptions = {
+  attempts?: number;
+  // Extra data to report to sentry
+  sentryExtras?: SentryExtras;
+};
+
 export const sendEvent = <T>(
-  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
+  context: Pick<
+    Context,
+    'logger' | 'channel' | 'id' | 'options' | 'sentryScope'
+  >,
   event: string,
   payload?: any,
-  attempts?: number
+  opts: SendEventOptions = {}
 ) => {
   // Low defaults here are better for unit tests
   const { timeoutRetryCount = 1, timeoutRetryDelay = 1 } =
     context.options ?? {};
 
+  const { attempts, sentryExtras } = opts;
   const thisAttempt = attempts ?? 1;
 
-  const { channel, logger, id: runId = '<unknown run>' } = context;
+  const { channel, logger, id: runId = '<unknown run>', sentryScope } = context;
 
   return new Promise<T>((resolve, reject) => {
     const report = (error: any) => {
@@ -28,16 +52,33 @@ export const sendEvent = <T>(
         run_id: runId,
         event: event,
       };
-      const extras: any = {};
+      const extras: SentryExtras = {
+        // Distinguishes a genuine timeout/error on a healthy channel from
+        // collateral damage while the channel is mid-rejoin after a drop
+        channel_state: channel.state,
+        socket_state: getSocketState(channel),
+        ...sentryExtras,
+      };
 
       if (error.rejectMessage) {
         extras.rejection_reason = error.rejectMessage;
       }
 
-      Sentry.captureException(error, (scope) => {
-        scope.setContext('run', context);
-        scope.setExtras(extras);
-        return scope;
+      // report() is invoked from a phoenix receive callback, ie off the
+      // socket's async chain, so the run's scope must be re-entered by hand
+      Sentry.withIsolationScope(sentryScope, () => {
+        Sentry.captureException(error, (scope) => {
+          scope.setTag('run_id', runId);
+          scope.setTag('lightning_event', event);
+          // Every timeout (or every socket error) currently collapses into a
+          // single sentry issue regardless of which event caused it. Splitting
+          // the fingerprint by event name is what would have made this
+          // pattern visible without needing to dig through raw events
+          scope.setFingerprint([error.name, event]);
+          scope.setContext('run', context);
+          scope.setExtras(extras);
+          return scope;
+        });
       });
 
       // Mark that we've reported this to downstream handlers
@@ -67,7 +108,10 @@ export const sendEvent = <T>(
           );
 
           setTimeout(() => {
-            sendEvent<T>(context, event, payload, thisAttempt + 1)
+            sendEvent<T>(context, event, payload, {
+              attempts: thisAttempt + 1,
+              sentryExtras,
+            })
               .then(resolve)
               .catch(reject);
           }, timeoutRetryDelay);

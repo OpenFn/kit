@@ -59,6 +59,7 @@ function engineReady(engine: any) {
     maxWorkflows: effectiveCapacity,
     workloopConfigs,
     payloadLimitMb: args.payloadMemory,
+    noStringifyState: args.noStringifyState,
     logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,

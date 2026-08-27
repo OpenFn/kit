@@ -194,6 +194,43 @@ test(`job-complete: emits ${e.JOB_COMPLETE} with key fields`, (t) => {
   });
 });
 
+test(`job-complete: forwards payloadSize_b`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+
+    const context = createContext(workflowId, state);
+
+    const event: w.JobCompleteEvent = {
+      type: w.JOB_COMPLETE,
+      workflowId,
+      threadId: '1',
+      jobId: 'j',
+      duration: 200,
+      state: 22,
+      redacted: true,
+      payloadSize_b: 12345,
+      next: [],
+      mem: { job: 100, system: 1000 },
+    };
+
+    context.on(e.JOB_COMPLETE, (evt) => {
+      // This is the number that lets a diagnostic downstream (eg the
+      // lightning worker's sentry reporting) see how big the state was even
+      // when it never tripped the redaction limit
+      t.is(evt.payloadSize_b, 12345);
+      t.true(evt.redacted);
+      done();
+    });
+
+    jobComplete(context, event);
+  });
+});
+
 test(`job-error: emits ${e.JOB_ERROR} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';

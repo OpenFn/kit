@@ -63,7 +63,13 @@ const joinRunChannel = (
     channel.onError((...args: any) => {
       // Error occurred on the channel
       // (the socket will try to reconnect with backoff)
-      logger.debug(`Critical error in channel ${channelName}`, args);
+      // Note we don't report to sentry here - the socket error handler does that
+      logger.error(
+        `Critical error in channel ${channelName}`,
+        args,
+        'state:',
+        channel.state
+      );
     });
   });
 };
