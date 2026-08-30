@@ -2,6 +2,7 @@ import test from 'ava';
 import jp from 'jsonpath';
 import {
   getStateFromProjectPayload,
+  maskUnsentTriggerFields,
   mergeProjectPayloadIntoState,
   mergeSpecIntoState,
   toProjectPayload,
@@ -1587,4 +1588,59 @@ test('mergeProjectIntoState preserves channels from payload', (t) => {
       destination_credential_id: null,
     },
   });
+});
+
+const payloadWith = (trigger: any) =>
+  ({
+    id: 'p1',
+    name: 'my project',
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: [],
+        triggers: [trigger],
+        edges: [],
+      },
+    ],
+  } as unknown as ProjectPayload);
+
+test('maskUnsentTriggerFields hides a field the payload does not carry', (t) => {
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    custom_path: 'set-in-app',
+  });
+  const next = payloadWith({ id: 't1', type: 'webhook' });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.false('custom_path' in masked.workflows[0].triggers[0]);
+  t.is(masked.workflows[0].triggers[0].type, 'webhook');
+});
+
+test('maskUnsentTriggerFields keeps a field the payload does carry', (t) => {
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    custom_path: 'old',
+  });
+  const next = payloadWith({ id: 't1', type: 'webhook', custom_path: 'new' });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.is(masked.workflows[0].triggers[0].custom_path, 'old');
+});
+
+test('maskUnsentTriggerFields leaves a trigger the payload does not mention', (t) => {
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    custom_path: 'set-in-app',
+  });
+  const next = payloadWith({ id: 'other', type: 'webhook' });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.is(masked.workflows[0].triggers[0].custom_path, 'set-in-app');
 });

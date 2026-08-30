@@ -73,6 +73,21 @@ test('match lightning version', async (t) => {
   t.is(parse(hash).hash, parse(expected).hash);
 });
 
+test('a webhook custom path moves the version hash', async (t) => {
+  // Lightning hashes the same key, so both sides move together. A workflow
+  // without a path hashes as it always did, which `match lightning version`
+  // above is the guard for.
+  // @ts-ignore
+  const before = await Project.from('state', { workflows: [example] });
+
+  const withPath = structuredClone(example);
+  withPath.triggers[0].custom_path = 'facility-001';
+  // @ts-ignore
+  const after = await Project.from('state', { workflows: [withPath] });
+
+  t.not(generateHash(before.workflows[0]), generateHash(after.workflows[0]));
+});
+
 test('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(
     `

@@ -55,6 +55,7 @@ export const generateHash = (
 
   const triggerKeys = [
     'type',
+    'custom_path',
     'enabled',
     'cron_expression',
     'webhook_reply',

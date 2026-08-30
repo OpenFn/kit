@@ -660,6 +660,46 @@ function idKeyPairs<P extends { id: string }, S extends { id: string }>(
   return pairs;
 }
 
+/**
+ * Hide the trigger fields the payload does not carry, so a diff against the
+ * server shows what will change and nothing else.
+ *
+ * Absence means "leave this alone", so a field held on the server and never
+ * named in the spec is not a removal. Without this, `deploy` reports one for
+ * every such field and stops saying "No changes to deploy".
+ */
+export function maskUnsentTriggerFields(
+  current: ProjectPayload | null,
+  next: ProjectPayload
+): ProjectPayload | null {
+  if (!current) return current;
+
+  const sentTriggers = new Map<string, Record<string, unknown>>();
+
+  for (const workflow of next.workflows ?? []) {
+    for (const trigger of workflow.triggers ?? []) {
+      if (trigger.id) {
+        sentTriggers.set(trigger.id, trigger as Record<string, unknown>);
+      }
+    }
+  }
+
+  return {
+    ...current,
+    workflows: (current.workflows ?? []).map((workflow) => ({
+      ...workflow,
+      triggers: (workflow.triggers ?? []).map((trigger) => {
+        const sent = sentTriggers.get(trigger.id);
+        if (!sent) return trigger;
+
+        return Object.fromEntries(
+          Object.entries(trigger).filter(([key]) => key in sent)
+        ) as typeof trigger;
+      }),
+    })),
+  };
+}
+
 export function toProjectPayload(state: ProjectState): ProjectPayload {
   // convert the state into a payload that can be sent to the server
   // the server expects lists of jobs, triggers, and edges, so we need to
