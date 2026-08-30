@@ -1644,3 +1644,53 @@ test('maskUnsentTriggerFields leaves a trigger the payload does not mention', (t
 
   t.is(masked.workflows[0].triggers[0].custom_path, 'set-in-app');
 });
+
+test('maskUnsentTriggerFields shows everything when the type changes', (t) => {
+  // The server clears a path when a webhook becomes a cron, whether or not the
+  // payload mentions it, so the diff has to say so.
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    custom_path: 'orders',
+  });
+  const next = payloadWith({
+    id: 't1',
+    type: 'cron',
+    cron_expression: '0 0 * * *',
+  });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.is(masked.workflows[0].triggers[0].custom_path, 'orders');
+});
+
+test('maskUnsentTriggerFields shows everything when the reply mode changes', (t) => {
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    webhook_reply: 'after_completion',
+    webhook_response_config: { success_code: 202 },
+  });
+  const next = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    webhook_reply: 'before_start',
+  });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.truthy(masked.workflows[0].triggers[0].webhook_response_config);
+});
+
+test('maskUnsentTriggerFields leaves a trigger being deleted intact', (t) => {
+  const current = payloadWith({
+    id: 't1',
+    type: 'webhook',
+    custom_path: 'orders',
+  });
+  const next = payloadWith({ id: 't1', delete: true });
+
+  const masked = maskUnsentTriggerFields(current, next);
+
+  t.is(masked.workflows[0].triggers[0].custom_path, 'orders');
+});

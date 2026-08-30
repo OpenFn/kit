@@ -80,12 +80,28 @@ test('a webhook custom path moves the version hash', async (t) => {
   // @ts-ignore
   const before = await Project.from('state', { workflows: [example] });
 
-  const withPath = structuredClone(example);
+  const withPath = structuredClone(example) as any;
   withPath.triggers[0].custom_path = 'facility-001';
   // @ts-ignore
   const after = await Project.from('state', { workflows: [withPath] });
 
   t.not(generateHash(before.workflows[0]), generateHash(after.workflows[0]));
+});
+
+test('a custom path on a cron trigger does not move the hash', async (t) => {
+  // It never served a URL. Lightning skips one there too.
+  const cron = structuredClone(example) as any;
+  cron.triggers[0].type = 'cron';
+  cron.triggers[0].cron_expression = '0 0 * * *';
+  // @ts-ignore
+  const before = await Project.from('state', { workflows: [cron] });
+
+  const withPath = structuredClone(cron);
+  withPath.triggers[0].custom_path = 'stale';
+  // @ts-ignore
+  const after = await Project.from('state', { workflows: [withPath] });
+
+  t.is(generateHash(before.workflows[0]), generateHash(after.workflows[0]));
 });
 
 test('generate an 12 character version hash for a basic workflow', (t) => {

@@ -690,7 +690,21 @@ export function maskUnsentTriggerFields(
       ...workflow,
       triggers: (workflow.triggers ?? []).map((trigger) => {
         const sent = sentTriggers.get(trigger.id);
-        if (!sent) return trigger;
+
+        // A trigger on its way out, where the diff is the only place the user
+        // sees what goes with it.
+        if (!sent || sent.delete) return trigger;
+
+        // The server clears fields by resolved type, so once the type or the
+        // reply mode is changing, an absent key no longer means "leave alone".
+        // Switching a webhook to cron retires its path whether the payload
+        // mentions it or not, and the diff has to say so.
+        const retypes =
+          ('type' in sent && sent.type !== trigger.type) ||
+          ('webhook_reply' in sent &&
+            sent.webhook_reply !== trigger.webhook_reply);
+
+        if (retypes) return trigger;
 
         return Object.fromEntries(
           Object.entries(trigger).filter(([key]) => key in sent)
