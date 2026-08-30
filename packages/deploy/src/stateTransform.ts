@@ -160,6 +160,14 @@ function mergeTriggers(
             ...pickKeys(specTrigger, ['type', 'enabled']),
           };
 
+          // `type` is optional in a spec and defaults to webhook, so the
+          // resolved type is what decides, not what the spec wrote.
+          const specType = specTrigger.type ?? 'webhook';
+
+          if (specType === 'webhook' && specTrigger.custom_path !== undefined) {
+            trigger.custom_path = specTrigger.custom_path;
+          }
+
           if (specTrigger.type === 'webhook' && specTrigger.webhook_reply) {
             trigger.webhook_reply = specTrigger.webhook_reply;
           }
@@ -204,6 +212,16 @@ function mergeTriggers(
           type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
         };
+
+        // Only when the spec says something. An absent key means "leave it
+        // alone", so deploying a spec written before custom paths existed does
+        // not wipe a path set through the app. A blank one clears it.
+        if (
+          trigger.type === 'webhook' &&
+          specTrigger!.custom_path !== undefined
+        ) {
+          trigger.custom_path = specTrigger!.custom_path;
+        }
 
         if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
           trigger.webhook_reply = specTrigger!.webhook_reply;

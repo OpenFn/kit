@@ -536,6 +536,307 @@ test('toNextState omits webhook_reply when not specified', (t) => {
   t.false('webhook_reply' in result.workflows.w.triggers.t);
 });
 
+test('toNextState sets custom_path on a new webhook trigger', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { type: 'webhook', custom_path: 'et-emr-facility-001' },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.custom_path, 'et-emr-facility-001');
+});
+
+test('toNextState omits custom_path when the spec does not mention it', (t) => {
+  // An absent key means "leave whatever the server has", so deploying a spec
+  // written before custom paths existed does not wipe one set in the app.
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { type: 'webhook' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('custom_path' in result.workflows.w.triggers.t);
+});
+
+test('toNextState sets custom_path on an existing webhook trigger', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            id: triggerId,
+            type: 'webhook',
+            enabled: true,
+            custom_path: 'old-name',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { type: 'webhook', custom_path: 'new-name' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.id, triggerId);
+  t.is(result.workflows.w.triggers.t.custom_path, 'new-name');
+});
+
+test('toNextState leaves an existing custom_path alone when unmentioned', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            id: triggerId,
+            type: 'webhook',
+            enabled: true,
+            custom_path: 'keep-me',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { type: 'webhook' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+
+  t.false('custom_path' in result.workflows.w.triggers.t);
+});
+
+test('toNextState clears a custom_path with an empty string', (t) => {
+  const triggerId = 'aaa-bbb-ccc';
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            id: triggerId,
+            type: 'webhook',
+            enabled: true,
+            custom_path: 'drop-me',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { type: 'webhook', custom_path: '' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.custom_path, '');
+});
+
+test('toNextState sets custom_path on a new trigger with no explicit type', (t) => {
+  // `type` is optional in a spec and defaults to webhook.
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { custom_path: 'facility-001' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.custom_path, 'facility-001');
+});
+
+test('toNextState sets custom_path on an existing trigger with no explicit type', (t) => {
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: { id: 'aaa-bbb-ccc', type: 'webhook', enabled: true },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { custom_path: 'facility-001' } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.custom_path, 'facility-001');
+});
+
+test('toNextState clears a custom_path with a bare key', (t) => {
+  // YAML reads `custom_path:` with no value as null, which the server also
+  // takes as a clear.
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            id: 'aaa-bbb-ccc',
+            type: 'webhook',
+            enabled: true,
+            custom_path: 'drop-me',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: { t: { type: 'webhook', custom_path: null } },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.is(result.workflows.w.triggers.t.custom_path, null);
+});
+
+test('toNextState ignores custom_path on an existing cron trigger', (t) => {
+  const state = {
+    workflows: {
+      w: {
+        id: 'wf-1',
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            id: 'aaa-bbb-ccc',
+            type: 'cron',
+            enabled: true,
+            cron_expression: '0 0 * * *',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'cron',
+            cron_expression: '0 0 * * *',
+            custom_path: 'meaningless-here',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('custom_path' in result.workflows.w.triggers.t);
+});
+
+test('toNextState ignores custom_path on a cron trigger', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    workflows: {
+      w: {
+        name: 'workflow',
+        jobs: {},
+        triggers: {
+          t: {
+            type: 'cron',
+            cron_expression: '0 0 * * *',
+            custom_path: 'meaningless-here',
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  const result = mergeSpecIntoState(state, spec);
+  t.false('custom_path' in result.workflows.w.triggers.t);
+});
+
 test('toNextState sets cron_cursor_job_id when specified', (t) => {
   const state = { workflows: {} };
   const spec = {
