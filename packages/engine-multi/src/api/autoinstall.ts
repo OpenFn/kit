@@ -14,6 +14,9 @@ import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
 import ExecutionContext from '../classes/ExecutionContext';
 
+const hasOwn = (target: object, key: PropertyKey) =>
+  Object.prototype.hasOwnProperty.call(target, key);
+
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
   skipRepoValidation?: boolean;
@@ -122,7 +125,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   }
 
   const adaptors = Array.from(identifyAdaptors(plan));
-  const paths: ModulePaths = {};
+  const paths = new Map<string, ModulePaths[string]>();
 
   const adaptorsToLoad = [];
   for (const a of adaptors) {
@@ -148,8 +151,13 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     const alias = getAliasedName(resolvedAdaptorName);
 
     // Write the adaptor version to the context for reporting later
-    if (!context.versions[name]) {
-      context.versions[name] = [];
+    if (!hasOwn(context.versions, name)) {
+      Object.defineProperty(context.versions, name, {
+        value: [],
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
     }
     if (!context.versions[name].includes(v)) {
       (context.versions[name] as string[]).push(v);
@@ -161,10 +169,10 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     }
 
     // important: write back to paths with the RAW specifier
-    paths[a] = {
+    paths.set(a, {
       path: `${repoDir}/node_modules/${alias}`,
       version: v,
-    };
+    });
 
     if (!(await isInstalledFn(resolvedAdaptorName, repoDir, logger))) {
       adaptorsToLoad.push(resolvedAdaptorName);
@@ -175,11 +183,16 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   for (const step of plan.workflow.steps) {
     const job = step as unknown as Job;
     for (const adaptor of job.adaptors ?? []) {
-      if (paths[adaptor!]) {
+      const modulePath = paths.get(adaptor!);
+      if (modulePath) {
         const { name } = getNameAndVersion(adaptor!);
         job.linker ??= {};
-        // @ts-ignore
-        job.linker[name] = paths[adaptor!];
+        Object.defineProperty(job.linker, name, {
+          value: modulePath,
+          configurable: true,
+          enumerable: true,
+          writable: true,
+        });
       }
     }
   }
@@ -196,11 +209,11 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       if (err) {
         throw err;
       }
-      return paths;
+      return Object.fromEntries(paths);
     });
   }
 
-  return paths;
+  return Object.fromEntries(paths);
 };
 
 export default autoinstall;
@@ -232,7 +245,7 @@ const isInstalled = async (
   const pkg = await loadRepoPkg(repoDir);
   if (pkg) {
     const { dependencies } = pkg;
-    return dependencies.hasOwnProperty(alias);
+    return hasOwn(dependencies, alias);
   }
 };
 
