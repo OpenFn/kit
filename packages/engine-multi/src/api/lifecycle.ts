@@ -48,7 +48,7 @@ export const workflowComplete = (
   event: internalEvents.WorkflowCompleteEvent
 ) => {
   const { logger, state } = context;
-  const { workflowId, state: result, threadId } = event;
+  const { workflowId, state: result, threadId, redacted } = event;
 
   logger.success('complete workflow ', workflowId);
   state.status = 'done';
@@ -59,6 +59,7 @@ export const workflowComplete = (
     threadId,
     duration: state.duration,
     state: result,
+    redacted,
     time: timestamp(),
   });
 };

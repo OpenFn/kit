@@ -1,5 +1,6 @@
 import type { WorkflowCompletePayload } from '@openfn/engine-multi';
 import type { RunCompletePayload } from '@openfn/lexicon/lightning';
+import { timestamp } from '@openfn/logger';
 
 import { RUN_COMPLETE } from '../events';
 import { calculateRunExitReason } from '../api/reasons';
@@ -7,6 +8,7 @@ import { Context } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
 import { timeInMicroseconds } from '../util';
 import { sendEvent } from '../util/send-event';
+import handleJobLog from './run-log';
 
 const isEmptyState = (obj: any) => {
   if (
@@ -70,6 +72,20 @@ export default async function onWorkflowComplete(
     final_state: result,
     ...reason,
   };
+
+  if (event.redacted) {
+    const time = (timestamp() - BigInt(10e6)).toString();
+    await handleJobLog(context, [
+      {
+        time,
+        message: [
+          'WARNING: Final state exceeds dataclip size limit. The dataclip has been redacted. If this is a cron workflow, the next run will be passed an invalid state object',
+        ],
+        level: 'info',
+        name: 'R/T',
+      },
+    ]);
+  }
 
   if (isSingleLeaf) {
     payload.final_dataclip_id = state.leafDataclipIds[0];

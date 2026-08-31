@@ -519,6 +519,7 @@ test.serial('redact final state if it exceeds the payload limit', (t) => {
     const expression = `
 export default [(state) => {
   state.data = new Array(1024 * 512).fill('a').join('')
+  state.otherStuff = 1001;
   return state;
 }]`;
 
@@ -535,7 +536,7 @@ export default [(state) => {
       .execute(plan, emptyState, options)
       .on('workflow-complete', ({ state }) => {
         t.log(state);
-        t.is(state.data, '[REDACTED]');
+        t.deepEqual(state, { data: '[REDACTED]' });
         done();
       });
   });
@@ -693,6 +694,46 @@ export default [(state) => {
         })
         .on('workflow-complete', ({ state }) => {
           t.is(state.data, '[REDACTED]', 'State should be redacted');
+          done();
+        });
+    });
+  }
+);
+
+test.serial(
+  'redact multi-leaf final state when only the combined size exceeds the limit',
+  (t) => {
+    return new Promise(async (done) => {
+      api = await createAPI({
+        logger,
+      });
+
+      // Each leaf on its own is well under the 0.3mb limit, so no per-job
+      // redaction fires - only the aggregated multi-leaf dict is oversized
+      const leafExpression = (n: number) => `${withFn}fn((state) => {
+  state.data = new Array(1024 * 150).fill('${n}').join('');
+  return state;
+})`;
+
+      const jobs = [
+        {
+          id: 'a',
+          next: { b: true, c: true, d: true },
+        },
+        { id: 'b', expression: leafExpression(1) },
+        { id: 'c', expression: leafExpression(2) },
+        { id: 'd', expression: leafExpression(3) },
+      ];
+
+      const plan = createPlan(jobs);
+      const options = {
+        payloadLimitMb: 0.3,
+      };
+
+      api
+        .execute(plan, emptyState, options)
+        .on('workflow-complete', ({ state }) => {
+          t.deepEqual(state, { data: '[REDACTED]' });
           done();
         });
     });

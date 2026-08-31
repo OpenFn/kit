@@ -62,8 +62,8 @@ export const publish = async (
     type,
     threadId,
     processId,
-    ...safePayload,
     ...payload,
+    ...safePayload,
   });
 };
 

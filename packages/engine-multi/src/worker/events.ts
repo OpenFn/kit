@@ -49,6 +49,7 @@ export interface WorkflowStartEvent extends InternalEvent {}
 
 export interface WorkflowCompleteEvent extends InternalEvent {
   state: any;
+  redacted?: boolean;
 }
 
 export interface JobStartEvent extends InternalEvent {

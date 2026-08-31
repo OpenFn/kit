@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.13.2
+
+### Patch Changes
+
+- 5999cf9: Fix a bug where an oversized final run state could reach Lightning without being redacted
+
 ## 1.13.1
 
 ### Patch Changes
