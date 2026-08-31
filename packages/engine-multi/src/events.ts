@@ -68,6 +68,7 @@ export interface WorkflowCompletePayload extends ExternalEvent {
   state: any;
   duration: number;
   time: bigint;
+  redacted?: boolean;
 }
 
 export interface WorkflowErrorPayload extends ExternalEvent {

@@ -86,7 +86,14 @@ export default async (
         newPayload.payloadSize_b = sizeBytes;
       }
     } catch (e: any) {
-      Object.assign(newPayload[key], replacements[key] ?? replacements.default);
+      const replacement = replacements[key];
+      if (replacement) {
+        // A key-specific replacement (eg 'log') has a known, fixed shape -
+        // merge so other fields on it (time, level, ...) survive
+        Object.assign(newPayload[key], replacement);
+      } else {
+        newPayload[key] = replacements.default;
+      }
       newPayload.redacted = true;
       if (key === 'state') {
         newPayload.payloadSize_b = e.sizeBytes;

@@ -124,6 +124,37 @@ test('workflowComplete: updates state', (t) => {
   t.assert(state.duration! > 0);
 });
 
+test('workflowComplete: forwards redacted', (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+    const context = createContext(workflowId, state);
+
+    const event: w.WorkflowCompleteEvent = {
+      type: w.WORKFLOW_COMPLETE,
+      workflowId,
+      state: { data: '[REDACTED]' },
+      threadId: '1',
+      redacted: true,
+    };
+
+    // Without this, ws-worker's run-complete handler has no way to know the
+    // final state was too big and got redacted - it just silently ships
+    // '[REDACTED]' with no explanation, unlike step-complete's handling of
+    // an oversized dataclip
+    context.on(e.WORKFLOW_COMPLETE, (evt) => {
+      t.true(evt.redacted);
+      done();
+    });
+
+    workflowComplete(context, event);
+  });
+});
+
 test(`job-start: emits ${e.JOB_START} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';

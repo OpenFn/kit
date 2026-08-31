@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.29.3
+
+### Patch Changes
+
+- 5999cf9: Warn when a run's final state has been redacted for exceeding the payload size limit
+- Updated dependencies [5999cf9]
+  - @openfn/engine-multi@1.13.2
+
 ## 1.29.2
 
 ### Patch Changes

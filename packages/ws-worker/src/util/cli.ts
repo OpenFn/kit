@@ -232,7 +232,7 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('payload-memory', {
       description:
-        'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
+        'Maximum serialized size of any payload, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
     .option('stringify-state', {
