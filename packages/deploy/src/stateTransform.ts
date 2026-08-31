@@ -218,9 +218,10 @@ function mergeTriggers(
         // not wipe a path set through the app. A blank one clears it.
         if (
           trigger.type === 'webhook' &&
-          specTrigger!.custom_path !== undefined
+          specTrigger &&
+          specTrigger.custom_path !== undefined
         ) {
-          trigger.custom_path = specTrigger!.custom_path;
+          trigger.custom_path = specTrigger.custom_path;
         }
 
         if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
