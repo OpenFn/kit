@@ -1,5 +1,13 @@
 # @openfn/lightning-mock
 
+## 2.4.30
+
+### Patch Changes
+
+- Updated dependencies [b5cf7b5]
+  - @openfn/project@0.19.0
+  - @openfn/lexicon@2.4.3
+
 ## 2.4.29
 
 ### Patch Changes
