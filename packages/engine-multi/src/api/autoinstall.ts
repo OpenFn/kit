@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { stat } from 'node:fs/promises';
 import {
   ensureRepo,
   getAliasedName,
@@ -13,98 +15,102 @@ import type { Logger } from '@openfn/logger';
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
 import ExecutionContext from '../classes/ExecutionContext';
+import { withInstallLock } from '../util/repo-lock';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
   skipRepoValidation?: boolean;
-  handleInstall?(fn: string, repoDir: string, logger: Logger): Promise<void>;
-  handleIsInstalled?(
-    fn: string,
-    repoDir: string,
-    logger: Logger
-  ): Promise<boolean>;
+  lockRepo?: boolean;
   versionLookup?: (specifier: string) => Promise<string>;
 };
 
-const pending: Record<string, Promise<void>> = {};
+// Per-entry options are pinned at enqueue time so the worker that drains the
+// queue doesn't accidentally use the *first* caller's closure. See PR #1416.
+type QueueEntry = {
+  adaptors: string[];
+  callback: (err?: any) => void;
+  context: ExecutionContext;
+  repoDir: string;
+  logger: Logger;
+  useLock: boolean;
+};
 
 let busy = false;
+const queue: QueueEntry[] = [];
 
-const queue: Array<{ adaptors: string[]; callback: (err?: any) => void }> = [];
+const processQueue = async () => {
+  const next = queue.shift();
+  if (next) {
+    busy = true;
+    await doAutoinstall(next);
+    processQueue();
+  } else {
+    busy = false;
+  }
+};
 
-const enqueue = (adaptors: string[]) =>
-  new Promise((resolve) => {
-    queue.push({ adaptors, callback: resolve });
-  });
+const doAutoinstall = async (entry: QueueEntry) => {
+  const { adaptors, callback, context, repoDir, logger, useLock } = entry;
+
+  for (const a of adaptors) {
+    const { name, version } = getNameAndVersion(a);
+    if (await isInstalled(a, repoDir, logger)) {
+      continue;
+    }
+
+    const startTime = Date.now();
+    try {
+      if (useLock) {
+        // Re-check inside the lock so we skip work a peer worker
+        // completed while we were waiting.
+        await withInstallLock(repoDir, getAliasedName(a), logger, async () => {
+          if (await isInstalled(a, repoDir, logger)) {
+            logger.debug(
+              `another worker installed ${a} while waiting for lock; skipping`
+            );
+            return;
+          }
+          await install(a, repoDir, logger);
+        });
+      } else {
+        await install(a, repoDir, logger);
+      }
+
+      const duration = Date.now() - startTime;
+      logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
+      context.emit(AUTOINSTALL_COMPLETE, {
+        module: name,
+        version: version!,
+        duration,
+      });
+    } catch (e: any) {
+      logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
+      logger.error(e);
+      const duration = Date.now() - startTime;
+      context.emit(AUTOINSTALL_ERROR, {
+        module: name,
+        version: version!,
+        duration,
+        message: e.message || e.toString(),
+      });
+
+      // Abort on the first error
+      return callback(new AutoinstallError(a, e));
+    }
+  }
+  callback();
+};
 
 // Install any modules for an Execution Plan that are not already installed
 // This will enforce a queue ensuring only one module is installed at a time
 // This fixes https://github.com/OpenFn/kit/issues/503
 const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
-  // TODO not a huge fan of these functions in the closure, but it's ok for now
-  const processQueue = async () => {
-    const next = queue.shift();
-    if (next) {
-      busy = true;
-      const { adaptors, callback } = next;
-      await doAutoinstall(adaptors, callback);
-      processQueue();
-    } else {
-      // do nothing
-      busy = false;
-    }
-  };
-
-  // This will actually do the autoinstall for an run (all adaptors)
-  const doAutoinstall = async (
-    adaptors: string[],
-    onComplete: (err?: any) => void
-  ) => {
-    // Check whether we still need to do any work
-    for (const a of adaptors) {
-      const { name, version } = getNameAndVersion(a);
-      if (await isInstalledFn(a, repoDir, logger)) {
-        continue;
-      }
-
-      const startTime = Date.now();
-      try {
-        await installFn(a, repoDir, logger);
-
-        const duration = Date.now() - startTime;
-        logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
-        context.emit(AUTOINSTALL_COMPLETE, {
-          module: name,
-          version: version!,
-          duration,
-        });
-      } catch (e: any) {
-        delete pending[a];
-
-        logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
-        logger.error(e);
-        const duration = Date.now() - startTime;
-        context.emit(AUTOINSTALL_ERROR, {
-          module: name,
-          version: version!,
-          duration,
-          message: e.message || e.toString(),
-        });
-
-        // Abort on the first error
-        return onComplete(new AutoinstallError(a, e));
-      }
-    }
-    onComplete();
-  };
-
   const { logger, state, options } = context;
   const { plan } = state;
   const { repoDir, whitelist } = options;
   const autoinstallOptions = options.autoinstall || {};
+  const useLock = autoinstallOptions.lockRepo !== false;
 
-  const installFn = autoinstallOptions?.handleInstall || install;
-  const isInstalledFn = autoinstallOptions?.handleIsInstalled || isInstalled;
   const versionlookup = autoinstallOptions?.versionLookup || getLatestVersion;
 
   let didValidateRepo = false;
@@ -124,7 +130,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   const adaptors = Array.from(identifyAdaptors(plan));
   const paths: ModulePaths = {};
 
-  const adaptorsToLoad = [];
+  const adaptorsToLoad: string[] = [];
   for (const a of adaptors) {
     // Ensure that this is not blacklisted
     if (whitelist && !whitelist.find((r) => r.exec(a))) {
@@ -166,7 +172,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       version: v,
     };
 
-    if (!(await isInstalledFn(resolvedAdaptorName, repoDir, logger))) {
+    if (!(await isInstalled(resolvedAdaptorName, repoDir, logger))) {
       adaptorsToLoad.push(resolvedAdaptorName);
     }
   }
@@ -185,8 +191,16 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   }
 
   if (adaptorsToLoad.length) {
-    // Add this to the queue
-    const p = enqueue(adaptorsToLoad);
+    const p = new Promise((resolve) => {
+      queue.push({
+        adaptors: adaptorsToLoad,
+        callback: resolve,
+        context,
+        repoDir,
+        logger,
+        useLock,
+      });
+    });
 
     if (!busy) {
       processQueue();
@@ -210,9 +224,17 @@ export default autoinstall;
 const install = (specifier: string, repoDir: string, logger: Logger) =>
   runtimeInstall([specifier], repoDir, logger);
 
-// The actual isInstalled function is not unit tested
-// TODO this should probably all be handled (and tested) in @openfn/runtime
-const isInstalled = async (
+const fileExists = async (p: string) => {
+  try {
+    await stat(p);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Exported for unit testing
+export const isInstalled = async (
   specifier: string,
   repoDir: string,
   logger: Logger
@@ -232,7 +254,12 @@ const isInstalled = async (
   const pkg = await loadRepoPkg(repoDir);
   if (pkg) {
     const { dependencies } = pkg;
-    return dependencies.hasOwnProperty(alias);
+    if (!dependencies.hasOwnProperty(alias)) {
+      return false;
+    }
+    return fileExists(
+      path.join(repoDir, 'node_modules', alias, 'package.json')
+    );
   }
 };
 

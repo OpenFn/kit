@@ -1,5 +1,9 @@
 import test from 'ava';
-import createRTE from '@openfn/engine-multi';
+import esmock from 'esmock';
+import * as runtime from '@openfn/runtime';
+import path from 'node:path';
+import os from 'node:os';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createMockLogger } from '@openfn/logger';
 import type { ExitReason } from '@openfn/lexicon/lightning';
 
@@ -18,23 +22,38 @@ import { ExecutionPlan } from '@openfn/runtime';
 
 let engine: any;
 let logger: any;
+let repoDir: string;
 
 test.before(async () => {
   logger = createMockLogger();
-  // logger = createLogger(null, { level: 'debug' });
 
-  // Note: this is the REAL engine, not a mock
-  engine = await createRTE({
-    maxWorkers: 1,
-    logger,
-    autoinstall: {
-      handleIsInstalled: async () => false,
-      handleInstall: () =>
+  repoDir = await mkdtemp(path.join(os.tmpdir(), 'ws-worker-reasons-'));
+  await writeFile(
+    path.join(repoDir, 'package.json'),
+    JSON.stringify({ name: 'repo', dependencies: {} })
+  );
+
+  // Load the real engine but swap @openfn/runtime's install with a fast-failing
+  // stub. This exercises the engine's autoinstall path without touching npm.
+  const engineModule: any = await esmock('@openfn/engine-multi', {
+    '@openfn/runtime': {
+      ...runtime,
+      install: () =>
         new Promise((_resolve, reject) => {
           setTimeout(() => reject(new Error('not the way to amarillo')), 1);
         }),
     },
   });
+
+  engine = await engineModule.default({
+    maxWorkers: 1,
+    logger,
+    repoDir,
+  });
+});
+
+test.after.always(async () => {
+  if (repoDir) await rm(repoDir, { recursive: true, force: true });
 });
 
 test.after(async () => engine.destroy());
