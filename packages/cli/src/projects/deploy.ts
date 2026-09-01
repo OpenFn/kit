@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  mergeCollections,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
@@ -129,6 +130,20 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+// Workflow diffing (above) doesn't notice a collections-only edit, so the
+// "nothing to deploy" check needs its own comparison here - otherwise
+// editing openfn.yaml's collections list with no workflow changes would be
+// silently ignored by deploy.
+export const collectionsChanged = (local: Project, remote: Project) => {
+  const localNames = new Set<string>(local.collections ?? []);
+  const remoteNames = new Set<string>(
+    (remote.collections ?? []).map((c: { name: string }) => c.name)
+  );
+
+  if (localNames.size !== remoteNames.size) return true;
+  return Array.from(localNames).some((name) => !remoteNames.has(name));
+};
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -198,7 +213,7 @@ const syncProjects = async (
     ? remoteProject.diff(localProject, mergeCandidates)
     : [];
 
-  if (!diffs.length) {
+  if (!diffs.length && !collectionsChanged(localProject, remoteProject)) {
     logger.success('Nothing to deploy');
     return null;
   }
@@ -339,6 +354,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let locallyChangedWorkflows: string[] = [];
 
   if (options.new) {
+    // force a merge to generate a UUID for these new collections
+    localProject.collections = mergeCollections(localProject.collections, []);
     merged = localProject;
   } else {
     const syncResult = await syncProjects(

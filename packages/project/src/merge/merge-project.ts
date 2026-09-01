@@ -2,6 +2,7 @@ import { defaultsDeep, isEmpty } from 'lodash-es';
 import { CredentialState } from '@openfn/lexicon';
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
+import { mergeCollections } from './merge-collections';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
@@ -148,6 +149,13 @@ export function merge(
             source.credentials,
             target.credentials
           ),
+          // sandbox mode merges workflow content into a different target
+          // project and otherwise ignores the source's project-level
+          // identity/settings (see name/description/openfn above) -
+          // collections follow the same rule, so a local openfn.yaml can't
+          // accidentally delete another project's real collections just by
+          // not listing them.
+          collections: target.collections,
         }
       : {
           workflows: finalWorkflows,
@@ -168,13 +176,13 @@ export function merge(
             source.credentials,
             target.credentials
           ),
-          collections: source.collections ?? target.collections,
+          collections: mergeCollections(source.collections, target.collections),
           channels: source.channels ?? target.channels,
         };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
-    baseMerge(target, source, ['collections', 'channels'], assigns as any)
+    baseMerge(target, source, ['channels'], assigns as any)
   );
 }
 

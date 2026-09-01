@@ -6,6 +6,7 @@ import Project from '../../src';
 import {
   merge,
   REPLACE_MERGE,
+  SANDBOX_MERGE,
   replaceCredentials,
 } from '../../src/merge/merge-project';
 import { generateWorkflow } from '../../src/gen/generator';
@@ -212,6 +213,86 @@ test('replace mode: target channels preserved when source has none', (t) => {
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
   t.deepEqual(result.channels, targetChannels);
+});
+
+test('replace mode: diffs local collection names against remote collections', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  // target (remote): fetched from Lightning, real ids
+  const targetCollections = [
+    { id: 'remote-id-1', name: 'keep-me' },
+    { id: 'remote-id-2', name: 'remove-me' },
+  ];
+  // source (local): edited openfn.yaml, names only
+  const sourceCollections = ['keep-me', 'new-collection'];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  const source = createProject(wf_b, 'b', { collections: sourceCollections });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(
+    result.collections.find((c: any) => c.name === 'keep-me'),
+    { id: 'remote-id-1', name: 'keep-me' }
+  );
+  t.deepEqual(
+    result.collections.find((c: any) => c.name === 'remove-me'),
+    { id: 'remote-id-2', name: 'remove-me', delete: true }
+  );
+  const created = result.collections.find(
+    (c: any) => c.name === 'new-collection'
+  );
+  t.truthy(created?.id);
+  t.falsy(created?.delete);
+});
+
+test('replace mode: no local collections deletes all remote collections', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetCollections = [{ id: 'remote-id-1', name: 'my-collection' }];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.collections, [
+    { id: 'remote-id-1', name: 'my-collection', delete: true },
+  ]);
+});
+
+test('sandbox mode: target collections are preserved untouched, source is ignored', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetCollections = [{ id: 'remote-id-1', name: 'target-collection' }];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  // source is a local project whose openfn.yaml lists a totally different
+  // (or no) set of collections - sandbox mode must not touch the target's
+  // real collections based on that
+  const source = createProject(wf_b, 'b', { collections: ['unrelated'] });
+
+  const result = merge(source, target, { mode: SANDBOX_MERGE });
+
+  t.deepEqual(result.collections, targetCollections);
 });
 
 test('replace mode: replace the name and UUID of the target project', (t) => {

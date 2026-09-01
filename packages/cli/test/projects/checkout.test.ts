@@ -729,6 +729,41 @@ test.serial(
   }
 );
 
+test.serial(
+  'checkout: writes fetched collections into openfn.yaml',
+  async (t) => {
+    mock({
+      '/ws6/workflows': {},
+      '/ws6/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws6/.projects/main-project@server.yaml': jsonToYaml({
+        id: '<uuid:main>',
+        name: 'Main Project',
+        collections: [
+          { id: 'coll-id-1', name: 'my-collection' },
+          { id: 'coll-id-2', name: 'another-collection' },
+        ],
+        workflows: [],
+      }),
+    });
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'main-project',
+        workspace: '/ws6',
+      },
+      logger
+    );
+
+    const openfn: any = yamlToJson(fs.readFileSync('/ws6/openfn.yaml', 'utf8'));
+    // ids should never be written to disk - only bare names
+    t.deepEqual(openfn.project.collections, [
+      'my-collection',
+      'another-collection',
+    ]);
+  }
+);
+
 /**
  * Using projects foo and bar here which come from a real issue
  * Keeping those exact state files to keep diversity in the tests

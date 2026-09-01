@@ -383,4 +383,92 @@ test('toFs: extract a project with forked_from meta', (t) => {
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
 
+test('toFs: writes collection names into openfn.json', (t) => {
+  const project = new Project(
+    {
+      name: 'My Project',
+      collections: ['my-collection', 'another-collection'],
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+    },
+    {
+      formats: {
+        openfn: 'json',
+        workflow: 'json',
+      },
+    }
+  );
+
+  const files = toFs(project);
+
+  const config = JSON.parse(files['openfn.json']);
+  t.deepEqual(config.project.collections, [
+    'my-collection',
+    'another-collection',
+  ]);
+});
+
+test('toFs: normalizes {id, name} collections (as fetched from Lightning) to bare names', (t) => {
+  const project = new Project(
+    {
+      name: 'My Project',
+      // this is the shape a freshly-fetched project's collections are in -
+      // ids should never be written to openfn.yaml
+      collections: [
+        { id: 'remote-id-1', name: 'my-collection' },
+        { id: 'remote-id-2', name: 'another-collection' },
+      ] as any,
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+    },
+    {
+      formats: {
+        openfn: 'json',
+        workflow: 'json',
+      },
+    }
+  );
+
+  const files = toFs(project);
+
+  const config = JSON.parse(files['openfn.json']);
+  t.deepEqual(config.project.collections, [
+    'my-collection',
+    'another-collection',
+  ]);
+});
+
+test('toFs: omits collections key when there are none', (t) => {
+  const project = new Project(
+    {
+      name: 'My Project',
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+    },
+    {
+      formats: {
+        openfn: 'json',
+        workflow: 'json',
+      },
+    }
+  );
+
+  const files = toFs(project);
+
+  const config = JSON.parse(files['openfn.json']);
+  t.falsy(config.project.collections);
+});
+
 // TODO we need many more tests on this, with options
