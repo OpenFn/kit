@@ -160,6 +160,14 @@ function mergeTriggers(
             ...pickKeys(specTrigger, ['type', 'enabled']),
           };
 
+          // `type` is optional in a spec and defaults to webhook, so the
+          // resolved type is what decides, not what the spec wrote.
+          const specType = specTrigger.type ?? 'webhook';
+
+          if (specType === 'webhook' && specTrigger.custom_path !== undefined) {
+            trigger.custom_path = specTrigger.custom_path;
+          }
+
           if (specTrigger.type === 'webhook' && specTrigger.webhook_reply) {
             trigger.webhook_reply = specTrigger.webhook_reply;
           }
@@ -204,6 +212,17 @@ function mergeTriggers(
           type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
         };
+
+        // Only when the spec says something. An absent key means "leave it
+        // alone", so deploying a spec written before custom paths existed does
+        // not wipe a path set through the app. A blank one clears it.
+        if (
+          trigger.type === 'webhook' &&
+          specTrigger &&
+          specTrigger.custom_path !== undefined
+        ) {
+          trigger.custom_path = specTrigger.custom_path;
+        }
 
         if (specTrigger!.type === 'webhook' && specTrigger!.webhook_reply) {
           trigger.webhook_reply = specTrigger!.webhook_reply;
@@ -640,6 +659,60 @@ function idKeyPairs<P extends { id: string }, S extends { id: string }>(
   }
 
   return pairs;
+}
+
+/**
+ * Hide the trigger fields the payload does not carry, so a diff against the
+ * server shows what will change and nothing else.
+ *
+ * Absence means "leave this alone", so a field held on the server and never
+ * named in the spec is not a removal. Without this, `deploy` reports one for
+ * every such field and stops saying "No changes to deploy".
+ */
+export function maskUnsentTriggerFields(
+  current: ProjectPayload | null,
+  next: ProjectPayload
+): ProjectPayload | null {
+  if (!current) return current;
+
+  const sentTriggers = new Map<string, Record<string, unknown>>();
+
+  for (const workflow of next.workflows ?? []) {
+    for (const trigger of workflow.triggers ?? []) {
+      if (trigger.id) {
+        sentTriggers.set(trigger.id, trigger as Record<string, unknown>);
+      }
+    }
+  }
+
+  return {
+    ...current,
+    workflows: (current.workflows ?? []).map((workflow) => ({
+      ...workflow,
+      triggers: (workflow.triggers ?? []).map((trigger) => {
+        const sent = sentTriggers.get(trigger.id);
+
+        // A trigger on its way out, where the diff is the only place the user
+        // sees what goes with it.
+        if (!sent || sent.delete) return trigger;
+
+        // The server clears fields by resolved type, so once the type or the
+        // reply mode is changing, an absent key no longer means "leave alone".
+        // Switching a webhook to cron retires its path whether the payload
+        // mentions it or not, and the diff has to say so.
+        const retypes =
+          ('type' in sent && sent.type !== trigger.type) ||
+          ('webhook_reply' in sent &&
+            sent.webhook_reply !== trigger.webhook_reply);
+
+        if (retypes) return trigger;
+
+        return Object.fromEntries(
+          Object.entries(trigger).filter(([key]) => key in sent)
+        ) as typeof trigger;
+      }),
+    })),
+  };
 }
 
 export function toProjectPayload(state: ProjectState): ProjectPayload {

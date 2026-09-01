@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.19.0
+
+### Minor Changes
+
+- b5cf7b5: Include a webhook's custom path in the workflow version hash
+
 ## 0.18.1
 
 ### Patch Changes

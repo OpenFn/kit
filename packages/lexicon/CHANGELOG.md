@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.4.3
+
+### Patch Changes
+
+- b5cf7b5: Add `custom_path` to the trigger types
+
 ## 2.4.2
 
 ### Patch Changes

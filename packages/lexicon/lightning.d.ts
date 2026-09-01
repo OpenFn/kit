@@ -332,6 +332,7 @@ export namespace Provisioner {
   export type Trigger = {
     id: string;
     type: string;
+    custom_path?: string | null;
     cron_expression?: string;
     cron_cursor_job_id?: string | null;
     webhook_reply?: 'before_start' | 'after_completion';
