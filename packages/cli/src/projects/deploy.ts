@@ -130,10 +130,6 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
-// Workflow diffing (above) doesn't notice a collections-only edit, so the
-// "nothing to deploy" check needs its own comparison here - otherwise
-// editing openfn.yaml's collections list with no workflow changes would be
-// silently ignored by deploy.
 export const collectionsChanged = (local: Project, remote: Project) => {
   const localNames = new Set<string>(local.collections ?? []);
   const remoteNames = new Set<string>(
@@ -209,11 +205,11 @@ const syncProjects = async (
   }
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = mergeCandidates.length
+  const workflowDiffs = mergeCandidates.length
     ? remoteProject.diff(localProject, mergeCandidates)
     : [];
-
-  if (!diffs.length && !collectionsChanged(localProject, remoteProject)) {
+  const didCollectionsChange = collectionsChanged(localProject, remoteProject);
+  if (!workflowDiffs.length && !didCollectionsChange) {
     logger.success('Nothing to deploy');
     return null;
   }
