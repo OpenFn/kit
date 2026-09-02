@@ -126,9 +126,36 @@ test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // We should now have a new project with a new UUID
   t.is(Object.keys(server.state.projects).length, 2);
 
-  // TODO more assertions
-  // project structure looks right (edges in particular)
-  // - credential is OK
+  const newUuid = Object.keys(server.state.projects).find((id) => id !== UUID);
+  const newProject = server.state.projects[newUuid!];
+
+  // credential should have been created with a generated uuid
+  t.is(newProject.project_credentials.length, 1);
+  const credential = newProject.project_credentials[0];
+  t.is(credential.name, 'http1');
+  t.is(credential.owner, 'super@openfn.org');
+  t.truthy(credential.id);
+
+  // only one workflow, keyed by a generated uuid rather than 'my-workflow'
+  const workflows = Object.values(newProject.workflows) as any[];
+  t.is(workflows.length, 1);
+  const workflow = workflows[0];
+  t.is(workflow.name, 'My Workflow');
+
+  const job = workflow.jobs['transform-data'];
+  t.is(job.body, 'fn()');
+  t.is(job.adaptor, '@openfn/language-common@latest');
+  // the job's configuration should resolve to the new credential
+  t.is(job.project_credential_id, credential.id);
+
+  const trigger = workflow.triggers['webhook'];
+  t.truthy(trigger);
+  t.is(trigger.type, 'webhook');
+
+  const edge = workflow.edges['webhook->transform-data'];
+  t.truthy(edge);
+  t.is(edge.source_trigger_id, trigger.id);
+  t.is(edge.target_job_id, job.id);
 
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
