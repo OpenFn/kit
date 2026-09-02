@@ -1,5 +1,15 @@
 # @openfn/lightning-mock
 
+## 2.4.31
+
+### Patch Changes
+
+- 5f3626f: Support removal of collections in the mock provisioner
+- Updated dependencies [8157adf]
+- Updated dependencies [89324cc]
+  - @openfn/lexicon@2.4.4
+  - @openfn/project@0.20.0
+
 ## 2.4.30
 
 ### Patch Changes

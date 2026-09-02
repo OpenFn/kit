@@ -1,5 +1,16 @@
 # @openfn/project
 
+## 0.20.0
+
+### Minor Changes
+
+- 89324cc: Support project collections as first-class, mergeable project data.
+
+### Patch Changes
+
+- Updated dependencies [8157adf]
+  - @openfn/lexicon@2.4.4
+
 ## 0.19.0
 
 ### Minor Changes
