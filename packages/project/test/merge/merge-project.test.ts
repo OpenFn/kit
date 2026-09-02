@@ -298,6 +298,37 @@ test('sandbox mode: target collections are preserved untouched, source is ignore
   t.deepEqual(result.collections, targetCollections);
 });
 
+// KNOWN BUG: sandbox mode does not preserve channels the way it does
+// collections - see the collections test above for the correct behavior.
+// This test documents the bug and is expected to fail until it's fixed.
+test.skip('sandbox mode: target channels are preserved untouched, source is ignored', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-1',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  // source is a local project that never populates channels at all - same
+  // as a real localProject loaded from fs
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: SANDBOX_MERGE });
+
+  t.deepEqual(result.channels, targetChannels);
+});
+
 test('mergeCollections: empty source and target returns empty array', (t) => {
   const result = mergeCollections([], []);
   t.deepEqual(result, []);
