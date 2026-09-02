@@ -90,6 +90,7 @@ test('validateProvisionPayload: returns null for a valid edge with source_trigge
     id: 'proj-1',
     workflows: [
       {
+        id: 'wf-1',
         name: 'wf1',
         edges: [
           {
@@ -110,6 +111,7 @@ test('validateProvisionPayload: returns null for a valid edge with source_job_id
     id: 'proj-1',
     workflows: [
       {
+        id: 'wf-1',
         name: 'wf1',
         edges: [
           {
@@ -166,6 +168,7 @@ test('validateProvisionPayload: for new edges allow source_job', (t) => {
     id: 'proj-1',
     workflows: [
       {
+        id: 'wf-1',
         name: 'wf1',
         edges: [
           {
@@ -202,6 +205,7 @@ test('validateProvisionPayload: returns null for deleted edges', (t) => {
     id: 'proj-1',
     workflows: [
       {
+        id: 'wf-1',
         name: 'wf1',
         edges: [
           {
@@ -219,9 +223,115 @@ test('validateProvisionPayload: returns null for deleted edges', (t) => {
 test('validateProvisionPayload: returns null when there are no edges', (t) => {
   const payload = {
     id: 'proj-1',
-    workflows: [{ name: 'wf1', edges: [] }],
+    workflows: [{ id: 'wf-1', name: 'wf1', edges: [] }],
   };
   t.is(validateProvisionPayload(payload), null);
+});
+
+test('validateProvisionPayload: returns an error when a workflow has no id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ name: 'wf1', edges: [] }],
+  };
+  const result = validateProvisionPayload(payload);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          id: ["This field can't be blank"],
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: returns an error when an edge has no id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        edges: [
+          {
+            source_trigger_id: 'trig-uuid',
+            target_job_id: 'job-uuid',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          edges: {
+            '->': {
+              id: ["This field can't be blank"],
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: returns an error when a job has no id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        edges: [],
+        jobs: [{ name: 'Transform data' }],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          jobs: {
+            'Transform data': {
+              id: ["This field can't be blank"],
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: returns an error when a trigger has no id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        edges: [],
+        triggers: [{ type: 'webhook', enabled: true }],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          triggers: {
+            webhook: {
+              id: ["This field can't be blank"],
+            },
+          },
+        },
+      },
+    },
+  });
 });
 
 test.serial(

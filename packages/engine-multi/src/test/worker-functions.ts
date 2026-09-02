@@ -119,6 +119,17 @@ const tasks = {
     // Array(1e9).fill('mario')
   },
 
+  // Allocate memory OUTSIDE the V8 heap. Buffer.alloc lives in native memory,
+  // so --max-old-space-size can't catch this — only an OS-level limit (a
+  // cgroup memory.max ceiling) will. Zero-filling forces the pages resident so
+  // they count against the cgroup's accounting.
+  blowNativeMemory: async () => {
+    const chunks = [];
+    while (true) {
+      chunks.push(Buffer.alloc(10 * 1024 * 1024, 1)); // 10mb, resident
+    }
+  },
+
   // Some useful code
   // const stats = v8.getHeapStatistics();
   // console.log(

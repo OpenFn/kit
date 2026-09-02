@@ -47,6 +47,13 @@ export type WebhookReply = 'before_start' | 'after_completion';
 
 export type SpecTrigger = {
   type: string;
+  /**
+   * Names a webhook's endpoint, so its URL is known before deploying. The
+   * public URL becomes /i/<project-id>/<custom_path>. Omit to leave whatever
+   * the server has. Both `custom_path: ''` and a bare `custom_path:`, which
+   * YAML reads as null, clear it.
+   */
+  custom_path?: string | null;
   cron_expression?: string;
   cron_cursor_job?: string;
   webhook_reply?: WebhookReply;
@@ -58,6 +65,7 @@ export type SpecTrigger = {
 export type StateTrigger = {
   id: string;
   type: string;
+  custom_path?: string | null;
   cron_expression?: string;
   cron_cursor_job_id?: string | null;
   webhook_reply?: WebhookReply;

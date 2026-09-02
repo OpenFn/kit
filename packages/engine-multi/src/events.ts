@@ -51,9 +51,12 @@ export type EventMap = {
 
 export type ExternalEvents = keyof EventMap;
 
-interface ExternalEvent {
+export interface ExternalEvent {
   threadId?: string;
   workflowId: UUID;
+  // Byte size of any large fields on this payload
+  // eg, dataclips, state objects, log objects
+  payloadSize_b?: number;
 }
 
 export interface WorkflowStartPayload extends ExternalEvent {
@@ -65,12 +68,16 @@ export interface WorkflowCompletePayload extends ExternalEvent {
   state: any;
   duration: number;
   time: bigint;
+  redacted?: boolean;
 }
 
 export interface WorkflowErrorPayload extends ExternalEvent {
   type: string;
   message: string;
   severity: string;
+  // where the error originated; 'engine' generally, but OOM errors narrow
+  // this to the limit that was breached ('heap' or 'cgroup')
+  source?: string;
 }
 
 export interface JobStartPayload extends ExternalEvent {

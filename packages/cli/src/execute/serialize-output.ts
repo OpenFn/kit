@@ -4,7 +4,7 @@ import { Opts } from '../options';
 import { dirname } from 'node:path';
 
 const serializeOutput = async (
-  options: Pick<Opts, 'outputStdout' | 'outputPath'>,
+  options: Pick<Opts, 'outputStdout' | 'outputPath' | 'log'>,
   result: any,
   logger: Logger
 ) => {
@@ -22,7 +22,12 @@ const serializeOutput = async (
 
   if (options.outputStdout) {
     logger.success(`Result: `);
-    logger.always(output);
+    if (options.log?.default === 'none') {
+      // special case because if we use logger.always the output won't be seen
+      console.log(output);
+    } else {
+      logger.always(output);
+    }
   } else if (options.outputPath) {
     await mkdir(dirname(options.outputPath), { recursive: true });
 

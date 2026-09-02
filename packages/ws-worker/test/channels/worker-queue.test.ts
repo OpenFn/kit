@@ -24,6 +24,32 @@ test('should connect', (t) => {
   });
 });
 
+test('should emit disconnect with the close code, reason and wasClean', (t) => {
+  return new Promise((done) => {
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      SocketConstructor: MockSocket as any,
+    })
+      .on('connect', ({ socket }) => {
+        // Real phoenix sockets invoke onClose with a CloseEvent-like object -
+        // MockSocket doesn't drive this itself, so trigger it directly
+        // @ts-ignore accessing test-only internals
+        socket.callbacks.onClose({
+          code: 1009,
+          reason: 'message too big',
+          wasClean: false,
+        });
+      })
+      .on('disconnect', (details) => {
+        t.deepEqual(details, {
+          code: 1009,
+          reason: 'message too big',
+          wasClean: false,
+        });
+        done();
+      });
+  });
+});
+
 test('should connect with an auth token', async (t) => {
   return new Promise((done) => {
     const workerId = 'x';

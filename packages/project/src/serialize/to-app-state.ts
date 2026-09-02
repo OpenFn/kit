@@ -119,7 +119,7 @@ export const mapWorkflow = (
   } as Provisioner.Workflow;
 
   if (useUuids) {
-    wfState.id = (workflow.openfn?.uuid ?? randomUUID) as any;
+    wfState.id = (workflow.openfn?.uuid ?? randomUUID()) as any;
   }
 
   if (workflow.name) {

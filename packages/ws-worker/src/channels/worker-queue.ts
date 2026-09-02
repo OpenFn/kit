@@ -103,9 +103,15 @@ const connectToWorkerQueue = (
 
     // On close, the socket will try and reconnect itself
     // Forever, so far as I can tell
-    socket.onClose((_e: any) => {
-      logger.debug('queue socket closed');
-      events.emit('disconnect');
+    socket.onClose((e: any) => {
+      logger.warn(
+        `queue socket closed: code=${e?.code} reason=${e?.reason} clean=${e?.wasClean}`
+      );
+      events.emit('disconnect', {
+        code: e?.code,
+        reason: e?.reason,
+        wasClean: e?.wasClean,
+      });
     });
 
     // if we fail to connect, the socket will try to reconnect

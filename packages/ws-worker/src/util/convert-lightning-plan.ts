@@ -33,6 +33,9 @@ export type WorkerRunOptions = ExecuteOptions & {
   outputDataclips?: boolean;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
+  // Send the output dataclip as a native JSON value instead of a
+  // pre-stringified string. Defaults to false (old behaviour)
+  noStringifyState?: boolean;
   jobLogLevel?: LogLevel;
   timeoutRetryCount?: number;
   timeoutRetryDelay?: number;
@@ -133,6 +136,26 @@ export default (
 
   // But some need to get passed down into the engine's options
   const engineOpts: WorkerRunOptions = {};
+
+  // Lightning only sends run.meta from 2.18.0. Older versions get a meta global
+  // with just the run id, rather than a set of undefined keys. project_id is on
+  // the plan itself, so it's available whatever version we're talking to.
+  const ids = {
+    workOrderId: run.meta?.work_order_id,
+    workflowId: run.meta?.workflow_id,
+    projectId: run.meta?.project_id ?? run.project_id,
+  };
+
+  engineOpts.globals = {
+    meta: {
+      runId: run.id,
+      startTime: Date.now(),
+      ...Object.fromEntries(
+        Object.entries(ids).filter(([_key, value]) => value !== undefined)
+      ),
+    },
+  };
+
   if (run.options) {
     if ('run_timeout_ms' in run.options) {
       engineOpts.runTimeoutMs = run.options.run_timeout_ms;

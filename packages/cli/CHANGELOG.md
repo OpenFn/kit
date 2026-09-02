@@ -1,5 +1,78 @@
 # @openfn/cli
 
+## 1.39.6
+
+### Patch Changes
+
+- Updated dependencies [b5cf7b5]
+- Updated dependencies [b5cf7b5]
+  - @openfn/project@0.19.0
+  - @openfn/lexicon@2.4.3
+  - @openfn/deploy@0.15.0
+
+## 1.39.5
+
+### Patch Changes
+
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+
+## 1.39.4
+
+### Patch Changes
+
+- Updated dependencies [e3ddfef]
+  - @openfn/lexicon@2.4.1
+
+## 1.39.3
+
+### Patch Changes
+
+Fix an issue where `openfn project deploy --new` drops UUIDs on workflows
+
+- Updated dependencies [d3213e6]
+  - @openfn/project@0.18.1
+
+## 1.39.2
+
+### Patch Changes
+
+- Enable legacy deploy to read a v2 project file
+
+## 1.39.1
+
+### Patch Changes
+
+- Support for node 26
+
+## 1.39.0
+
+### Minor Changes
+
+- ac44559: Improve `openfn compile` for unit-testing job code
+
+  - Add `--exports-only` to strip adaptor operation calls, keeping only exported declarations
+  - Compile whole projects (or a single workflow by name) to `dist/` as `.mjs` files
+  - Add `--clean` to remove the output folder before compiling
+  - Add `--workspace` support (as in `openfn execute` and `openfn project`)
+  - Support a `dirs.compiled` key in the workspace config (openfn.yaml) to set the output folder
+  - Watch mode now respects the configured workflows and output directories
+
+### Patch Changes
+
+- bec2581: Fix for cleaner output to stdout
+- Updated dependencies [ac44559]
+  - @openfn/compiler@1.3.0
+  - @openfn/lexicon@2.4.0
+  - @openfn/project@0.18.0
+
+## 1.38.5
+
+### Patch Changes
+
+- Updated dependencies [702dcc7]
+  - @openfn/runtime@1.9.5
+
 ## 1.38.4
 
 ### Patch Changes
@@ -18,7 +91,6 @@
 
 ### Patch Changes
 
-- Enable legacy deploy to read a v2 project file
 - 0b09320: Update undici version
 - 749b7a3: Tighten guards against shell injection vectors.
 - Updated dependencies [749b7a3]

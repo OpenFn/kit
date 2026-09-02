@@ -1,5 +1,35 @@
 # @openfn/project
 
+## 0.19.0
+
+### Minor Changes
+
+- b5cf7b5: Include a webhook's custom path in the workflow version hash
+
+## 0.18.1
+
+### Patch Changes
+
+- d3213e6: Fix an issue where new workflows do not get assigned a UUID
+
+## 0.18.0
+
+### Minor Changes
+
+- ac44559: Improve `openfn compile` for unit-testing job code
+
+  - Add `--exports-only` to strip adaptor operation calls, keeping only exported declarations
+  - Compile whole projects (or a single workflow by name) to `dist/` as `.mjs` files
+  - Add `--clean` to remove the output folder before compiling
+  - Add `--workspace` support (as in `openfn execute` and `openfn project`)
+  - Support a `dirs.compiled` key in the workspace config (openfn.yaml) to set the output folder
+  - Watch mode now respects the configured workflows and output directories
+
+### Patch Changes
+
+- Updated dependencies [ac44559]
+  - @openfn/lexicon@2.4.0
+
 ## 0.17.2
 
 ### Patch Changes

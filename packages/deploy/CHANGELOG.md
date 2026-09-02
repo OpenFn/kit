@@ -1,5 +1,17 @@
 # @openfn/deploy
 
+## 0.15.0
+
+### Minor Changes
+
+- b5cf7b5: Support custom webhook paths in project.yaml
+
+## 0.14.0
+
+### Minor Changes
+
+- Enable legacy deploy to load v2 spec files
+
 ## 0.13.1
 
 ### Patch Changes

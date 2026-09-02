@@ -1,5 +1,36 @@
 # lexicon
 
+## 2.4.3
+
+### Patch Changes
+
+- b5cf7b5: Add `custom_path` to the trigger types
+
+## 2.4.2
+
+### Patch Changes
+
+- 7398d41: Support dataclipSize
+
+## 2.4.1
+
+### Patch Changes
+
+- e3ddfef: Support metadata on the run object
+
+## 2.4.0
+
+### Minor Changes
+
+- ac44559: Improve `openfn compile` for unit-testing job code
+
+  - Add `--exports-only` to strip adaptor operation calls, keeping only exported declarations
+  - Compile whole projects (or a single workflow by name) to `dist/` as `.mjs` files
+  - Add `--clean` to remove the output folder before compiling
+  - Add `--workspace` support (as in `openfn execute` and `openfn project`)
+  - Support a `dirs.compiled` key in the workspace config (openfn.yaml) to set the output folder
+  - Watch mode now respects the configured workflows and output directories
+
 ## 2.3.0
 
 ### Minor Changes

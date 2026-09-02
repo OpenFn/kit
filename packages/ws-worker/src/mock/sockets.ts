@@ -4,6 +4,8 @@ type EventHandler = (evt?: any) => void;
 export const mockChannel = (
   callbacks: Record<string, EventHandler> = {}
 ): any => {
+  const closeCallbacks: EventHandler[] = [];
+  const errorCallbacks: EventHandler[] = [];
   const c = {
     on: (event: string, fn: EventHandler) => {
       // TODO support multiple callbacks
@@ -71,8 +73,21 @@ export const mockChannel = (
       return receive;
     },
     leave: () => {},
-    onClose: () => {},
-    onError: () => {},
+    // Real phoenix channels support multiple onClose/onError bindings (each
+    // call pushes onto an array), which is now relied on in production -
+    // run.ts and execute.ts both bind onError on the same channel. So this
+    // collects every registered callback rather than keeping only the last
+    onClose: (fn: EventHandler) => {
+      closeCallbacks.push(fn);
+    },
+    onError: (fn: EventHandler) => {
+      errorCallbacks.push(fn);
+    },
+    // test helpers: fire every registered callback, as the real socket would
+    _triggerClose: (...args: any[]) =>
+      closeCallbacks.forEach((fn) => fn(...args)),
+    _triggerError: (...args: any[]) =>
+      errorCallbacks.forEach((fn) => fn(...args)),
   };
   return c;
 };

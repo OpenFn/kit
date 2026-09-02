@@ -8,14 +8,14 @@ import {
   createJob,
   createTrigger,
 } from '../src/factories';
-import { initLightning, initWorker } from '../src/init';
+import { initLightning, initWorker, nextPort } from '../src/init';
 
 let lightning;
 let worker;
 
 test.before(async () => {
   const keys = await generateKeys();
-  const lightningPort = 4321;
+  const lightningPort = nextPort();
 
   lightning = initLightning(lightningPort, keys.private);
 

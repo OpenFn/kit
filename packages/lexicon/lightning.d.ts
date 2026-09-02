@@ -44,6 +44,14 @@ export type LightningPlan = {
   options?: LightningPlanOptions;
 
   globals?: string;
+
+  meta?: LightningPlanMeta;
+};
+
+export type LightningPlanMeta = {
+  work_order_id?: string;
+  workflow_id?: string;
+  project_id?: string;
 };
 
 /**
@@ -220,6 +228,7 @@ export type StepCompletePayload = ExitReason & {
   run_id?: string;
   job_id: string;
   step_id: string;
+  dataclip_size_mb?: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
   output_dataclip_error?: 'DATACLIP_TOO_LARGE';
@@ -323,6 +332,7 @@ export namespace Provisioner {
   export type Trigger = {
     id: string;
     type: string;
+    custom_path?: string | null;
     cron_expression?: string;
     cron_cursor_job_id?: string | null;
     webhook_reply?: 'before_start' | 'after_completion';

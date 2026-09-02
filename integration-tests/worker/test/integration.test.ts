@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import Koa from 'koa';
 import { generateKeys } from '@openfn/lightning-mock';
 
-import { initLightning, initWorker, randomPort } from '../src/init';
+import { initLightning, initWorker, nextPort } from '../src/init';
 
 let lightning;
 let worker;
@@ -14,7 +14,7 @@ let lightningPort;
 
 test.before(async () => {
   const keys = await generateKeys();
-  lightningPort = randomPort();
+  lightningPort = nextPort();
   lightning = initLightning(lightningPort, keys.private);
 
   const engineArgs = {

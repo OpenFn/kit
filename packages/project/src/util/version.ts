@@ -55,6 +55,7 @@ export const generateHash = (
 
   const triggerKeys = [
     'type',
+    'custom_path',
     'enabled',
     'cron_expression',
     'webhook_reply',
@@ -82,6 +83,10 @@ export const generateHash = (
   for (const triggerId in wfState.triggers) {
     const trigger = wfState.triggers[triggerId];
     triggerKeys.forEach((key) => {
+      // A path on a cron or kafka trigger never served a URL. Lightning's
+      // canonical_form/1 skips one there too, and the two have to agree.
+      if (key === 'custom_path' && trigger.type !== 'webhook') return;
+
       const value = get(trigger, key);
       // bit of a hack: default the trigger key value
       if (isDefined(value)) {

@@ -13,12 +13,37 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 import type { PayloadLimits } from './thread/runtime';
+import {
+  CgroupHandle,
+  createChildCgroup,
+  hasOomKill,
+  isCgroupV2Available,
+  removeChildCgroup,
+  resolveSelfCgroup,
+} from './cgroup';
+
+// Memory overhead to apply to the cgroup ceiling, on top of memoryLimitMb.
+// Override with CGROUP_MEMORY_OVERHEAD_MB
+const CGROUP_MEMORY_OVERHEAD_MB = process.env.CGROUP_MEMORY_OVERHEAD_MB
+  ? Number(process.env.CGROUP_MEMORY_OVERHEAD_MB)
+  : 128;
+
+export type MemoryEnforcement = {
+  // Sets node's --max-old-space-size on child processes
+  // Default true
+  oldspace?: boolean;
+
+  // Uses cgroups to set a hard ceiling on child processes through the kernel
+  // Default false.
+  cgroup?: boolean;
+};
 
 export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
-  memoryLimitMb?: number; // --max-old-space-size for child processes
+  memoryLimitMb?: number; // Set the maximum runtime memory a child process can consume
+  memoryEnforcement?: MemoryEnforcement;
 
   proxyStdout?: boolean; // print internal stdout to console
 };
@@ -80,12 +105,32 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   // Keep track of all the workers we created
   const allWorkers: Record<number, ChildProcess> = {};
 
+  const enforceOldspace = options.memoryEnforcement?.oldspace ?? true;
+
+  // cgroup v2 leaf per child (keyed by pid), when cgroup memory enforcement is enabled
+  const cgroupParent = resolveSelfCgroup();
+  const cgroupMemoryLimitMb =
+    options.memoryLimitMb && options.memoryLimitMb + CGROUP_MEMORY_OVERHEAD_MB;
+  const cgroupEnabled =
+    options.memoryEnforcement?.cgroup &&
+    !!cgroupMemoryLimitMb &&
+    isCgroupV2Available(cgroupParent, logger);
+  const cgroups: Record<number, CgroupHandle | null> = {};
+
+  // Tear down a child's leaf cgroup once it has been killed (best-effort).
+  const cleanupCgroup = (worker: ChildProcess | false) => {
+    if (worker && worker.pid && cgroups[worker.pid]) {
+      removeChildCgroup(cgroups[worker.pid], logger);
+      delete cgroups[worker.pid];
+    }
+  };
+
   const init = (maybeChild: ChildProcess | false) => {
     let child: ChildProcess;
     if (!maybeChild) {
       // create a new child process and load the module script into it
       const execArgv = ['--experimental-vm-modules', '--no-warnings'];
-      if (options.memoryLimitMb) {
+      if (enforceOldspace && options.memoryLimitMb) {
         execArgv.push(`--max-old-space-size=${options.memoryLimitMb}`);
       }
 
@@ -107,6 +152,17 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
+
+      // Place the child in its own cgroup with a hard memory ceiling. The leaf
+      // lives for the lifetime of the (reused) child and is removed when it dies.
+      if (cgroupEnabled && child.pid) {
+        cgroups[child.pid] = createChildCgroup(
+          cgroupParent!,
+          child.pid,
+          cgroupMemoryLimitMb! * 1024 * 1024,
+          logger
+        );
+      }
     } else {
       child = maybeChild as ChildProcess;
       logger.debug('pool: Using existing child process', child.pid);
@@ -153,6 +209,21 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
           clearTimeout(timeout);
 
+          // A cgroup memory kill is a bare SIGKILL with no V8 message, so check
+          // the cgroup's OOM counter before falling back to scraping stderr.
+          const handle = worker.pid ? cgroups[worker.pid] : null;
+          if (handle && hasOomKill(handle)) {
+            logger.error(
+              `pool: worker ${worker.pid} was killed by the OS for exceeding ` +
+                `its cgroup memory limit (${cgroupMemoryLimitMb}mb)`
+            );
+            killWorker(worker);
+            // restore a placeholder to the queue
+            finish(false);
+            reject(new OOMError('cgroup'));
+            return;
+          }
+
           // Read the stderr stream from the worked to see if this looks like an OOM error
           const rl = readline.createInterface({
             input: worker.stderr!,
@@ -163,6 +234,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             if (worker.stderr && worker.stderr?.readableLength > 0) {
               for await (const line of rl) {
                 if (line.match(/JavaScript heap out of memory/)) {
+                  logger.error(
+                    `pool: worker ${worker.pid} exceeded the V8 heap limit`
+                  );
                   killWorker(worker);
                   // restore a placeholder to the queue
                   finish(false);
@@ -250,6 +324,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             // @ts-ignore
             e.severity = evt.error.severity;
             e.name = evt.error.name;
+            // @ts-ignore preserve the OOM source ('heap'/'cgroup') across IPC
+            e.source = evt.error.source;
             reject(e);
 
             finish(worker);
@@ -265,6 +341,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     if (worker) {
       logger.debug('pool: destroying worker ', worker.pid);
       worker.kill();
+      cleanupCgroup(worker);
       delete allWorkers[worker.pid!];
     }
   };
@@ -305,6 +382,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       const worker = pool.pop();
       if (worker) {
         killPromises.push(waitForWorkerExit(worker));
+        cleanupCgroup(worker);
         delete allWorkers[worker.pid!];
       }
     }
@@ -312,6 +390,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     if (immediate) {
       Object.values(allWorkers).forEach((worker) => {
         killPromises.push(waitForWorkerExit(worker, 1));
+        cleanupCgroup(worker);
         delete allWorkers[worker.pid!];
       });
     }

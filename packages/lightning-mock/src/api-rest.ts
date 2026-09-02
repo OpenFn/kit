@@ -95,23 +95,74 @@ export function validateProvisionPayload(
     : Object.values(incoming.workflows ?? {});
 
   for (const wf of wfList) {
+    const wfErrors: Record<string, any> = {};
+
+    if (!wf.id) {
+      wfErrors.id = ["This field can't be blank"];
+    }
+
     const edgeErrors: Record<string, any> = {};
     const edgeList: any[] = Array.isArray(wf.edges)
       ? wf.edges
       : Object.values(wf.edges ?? {});
 
     for (const edge of edgeList) {
+      const key = edge.id ?? '->';
+      const fieldErrors: Record<string, any> = {};
+
       if (!edge.delete && !edge.source_trigger_id && !edge.source_job_id) {
-        const key = edge.id ?? '->';
-        edgeErrors[key] = {
-          source_job_id: ['source_job_id or source_trigger_id must be present'],
-        };
+        fieldErrors.source_job_id = [
+          'source_job_id or source_trigger_id must be present',
+        ];
+      }
+      if (!edge.id) {
+        fieldErrors.id = ["This field can't be blank"];
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
+        edgeErrors[key] = fieldErrors;
       }
     }
 
     if (Object.keys(edgeErrors).length > 0) {
+      wfErrors.edges = edgeErrors;
+    }
+
+    const jobErrors: Record<string, any> = {};
+    const jobList: any[] = Array.isArray(wf.jobs)
+      ? wf.jobs
+      : Object.values(wf.jobs ?? {});
+
+    for (const job of jobList) {
+      if (!job.id) {
+        const key = job.name ?? 'unknown';
+        jobErrors[key] = { id: ["This field can't be blank"] };
+      }
+    }
+
+    if (Object.keys(jobErrors).length > 0) {
+      wfErrors.jobs = jobErrors;
+    }
+
+    const triggerErrors: Record<string, any> = {};
+    const triggerList: any[] = Array.isArray(wf.triggers)
+      ? wf.triggers
+      : Object.values(wf.triggers ?? {});
+
+    for (const trigger of triggerList) {
+      if (!trigger.id) {
+        const key = trigger.type ?? 'unknown';
+        triggerErrors[key] = { id: ["This field can't be blank"] };
+      }
+    }
+
+    if (Object.keys(triggerErrors).length > 0) {
+      wfErrors.triggers = triggerErrors;
+    }
+
+    if (Object.keys(wfErrors).length > 0) {
       const wfKey = wf.name ?? wf.id ?? 'unknown';
-      workflowErrors[wfKey] = { edges: edgeErrors };
+      workflowErrors[wfKey] = wfErrors;
     }
   }
 

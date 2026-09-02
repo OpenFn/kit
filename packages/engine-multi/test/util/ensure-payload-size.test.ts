@@ -5,6 +5,13 @@ import ensurePayloadSize, {
   calculateSizeStream,
 } from '../../src/util/ensure-payload-size';
 
+// ensurePayloadSize now takes/returns the full ExternalEvent envelope, but
+// these tests exercise its redaction/sizing behaviour in isolation against
+// bare state/log/final_state fixtures, not real events - so untyped is right
+// here rather than padding every fixture with a fake workflowId
+const check = (payload: any, limit?: number): Promise<any> =>
+  ensurePayloadSize(payload, limit);
+
 (['stringify', 'stream'] as const).forEach((algo) => {
   test(algo + ': throw limit 0, payload 1 byte', async (t) => {
     await t.throwsAsync(() => verify('x', 0, algo), {
@@ -60,7 +67,7 @@ import ensurePayloadSize, {
       },
     };
 
-    const newPayload = await ensurePayloadSize(payload, 1);
+    const newPayload = await check(payload, 1);
     t.deepEqual(newPayload.state, {
       data: '[REDACTED]',
     });
@@ -74,7 +81,7 @@ import ensurePayloadSize, {
       },
     };
 
-    const newPayload = await ensurePayloadSize(payload, 1);
+    const newPayload = await check(payload, 1);
     t.deepEqual(newPayload.log, {
       message: ['[REDACTED: Message length exceeds payload limit]'],
     });
@@ -88,11 +95,47 @@ import ensurePayloadSize, {
       },
     };
 
-    const newPayload = await ensurePayloadSize(payload, 1);
+    const newPayload = await check(payload, 1);
     t.deepEqual(newPayload.final_state, {
       data: '[REDACTED]',
     });
     t.true(newPayload.redacted);
+  });
+
+  test(algo + ': attaches payloadSize_b when state is within limit', async (t) => {
+    const payload = { state: { data: 'hello world' } };
+
+    const newPayload = await check(payload, 1);
+    t.false(!!newPayload.redacted);
+    t.is(
+      newPayload.payloadSize_b,
+      calculateSizeStringify(payload.state)
+    );
+  });
+
+  test(algo + ': attaches payloadSize_b when state is redacted', async (t) => {
+    const payload = {
+      state: {
+        data: new Array(1024 * 1024).fill('z').join(''),
+      },
+    };
+    const rawSize = calculateSizeStringify(payload.state);
+
+    const newPayload = await check(payload, 1);
+    t.true(newPayload.redacted);
+    // The size must survive redaction - this is the number that explains a
+    // run which timed out sending its dataclip without tripping this limit
+    t.is(newPayload.payloadSize_b, rawSize);
+  });
+
+  test(algo + ': does not attach payloadSize_b for final_state or log', async (t) => {
+    const payload = {
+      final_state: { data: 'hello world' },
+      log: { message: ['hello world'] },
+    };
+
+    const newPayload = await check(payload, 1);
+    t.is(newPayload.payloadSize_b, undefined);
   });
 });
 

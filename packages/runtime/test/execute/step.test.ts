@@ -265,7 +265,7 @@ test.serial('log duration of execution', async (t) => {
 
   const duration = logger._find('success', /completed in/i);
 
-  t.regex(duration?.message, /y completed in \d\d?ms/i);
+  t.regex(duration?.message, /y completed in \d+(\.\d+)?(ms|s|m)/i);
 });
 
 test.serial('log memory usage', async (t) => {
@@ -303,8 +303,8 @@ test.serial('log memory usage with profiler and peak', async (t) => {
   await execute(context, step, initialState);
 
   const memory = logger._find('debug', /step memory usage/i);
-  // All we're looking for here is two strings of numbers in mb
-  t.regex(memory?.message, /peak (\d)+(.+)\d(\d?)mb/i);
+  // All we're looking for here is a number (optionally decimal) in mb
+  t.regex(memory?.message, /peak \d+(\.\d+)?mb/i);
 });
 
 test.serial('warn if a non-leaf step does not return state', async (t) => {

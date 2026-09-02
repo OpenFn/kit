@@ -126,6 +126,7 @@ export const mapWorkflow = (
     const {
       type,
       enabled,
+      custom_path,
       cron_expression,
       cron_cursor_job_id,
       webhook_reply,
@@ -144,6 +145,7 @@ export const mapWorkflow = (
         id: type,
         type,
         enabled,
+        custom_path,
         cron_expression,
         cron_cursor_job_id,
         webhook_reply,

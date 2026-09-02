@@ -124,6 +124,37 @@ test('workflowComplete: updates state', (t) => {
   t.assert(state.duration! > 0);
 });
 
+test('workflowComplete: forwards redacted', (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+    const context = createContext(workflowId, state);
+
+    const event: w.WorkflowCompleteEvent = {
+      type: w.WORKFLOW_COMPLETE,
+      workflowId,
+      state: { data: '[REDACTED]' },
+      threadId: '1',
+      redacted: true,
+    };
+
+    // Without this, ws-worker's run-complete handler has no way to know the
+    // final state was too big and got redacted - it just silently ships
+    // '[REDACTED]' with no explanation, unlike step-complete's handling of
+    // an oversized dataclip
+    context.on(e.WORKFLOW_COMPLETE, (evt) => {
+      t.true(evt.redacted);
+      done();
+    });
+
+    workflowComplete(context, event);
+  });
+});
+
 test(`job-start: emits ${e.JOB_START} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
@@ -187,6 +218,43 @@ test(`job-complete: emits ${e.JOB_COMPLETE} with key fields`, (t) => {
       t.deepEqual(evt.mem, event.mem);
       t.assert(evt.time > 0);
       t.assert(typeof evt.time === 'bigint');
+      done();
+    });
+
+    jobComplete(context, event);
+  });
+});
+
+test(`job-complete: forwards payloadSize_b`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+
+    const context = createContext(workflowId, state);
+
+    const event: w.JobCompleteEvent = {
+      type: w.JOB_COMPLETE,
+      workflowId,
+      threadId: '1',
+      jobId: 'j',
+      duration: 200,
+      state: 22,
+      redacted: true,
+      payloadSize_b: 12345,
+      next: [],
+      mem: { job: 100, system: 1000 },
+    };
+
+    context.on(e.JOB_COMPLETE, (evt) => {
+      // This is the number that lets a diagnostic downstream (eg the
+      // lightning worker's sentry reporting) see how big the state was even
+      // when it never tripped the redaction limit
+      t.is(evt.payloadSize_b, 12345);
+      t.true(evt.redacted);
       done();
     });
 

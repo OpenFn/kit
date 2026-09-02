@@ -55,6 +55,15 @@ const createJob = (props = {}) => ({
   ...props,
 });
 
+// Pulls the generated globals out of the options object and checks them,
+// returning the remainder so callers can deepEqual the rest as before
+const checkGlobals = (t: any, options: any, runId: string) => {
+  const { globals, ...rest } = options;
+  t.is(globals.meta.runId, runId);
+  t.is(typeof globals.meta.startTime, 'number');
+  return rest;
+};
+
 test('convert a single job', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'w',
@@ -115,7 +124,7 @@ test('convert a single job with options', (t) => {
       steps: [createJob()],
     },
   });
-  t.deepEqual(options, {
+  t.deepEqual(checkGlobals(t, options, 'w'), {
     runTimeoutMs: 10,
     memoryLimitMb: 500,
     payloadLimitMb: 20,
@@ -136,7 +145,7 @@ test('convert a single job with state_limit_mb', (t) => {
   };
   const { options } = convertPlan(run as LightningPlan);
 
-  t.deepEqual(options, {
+  t.deepEqual(checkGlobals(t, options, 'w'), {
     memoryLimitMb: 500,
     stateLimitMb: 50,
   });
@@ -165,7 +174,7 @@ test('convert a single job with log_payload_limit_mb', (t) => {
       steps: [createJob()],
     },
   });
-  t.deepEqual(options, {
+  t.deepEqual(checkGlobals(t, options, 'w'), {
     runTimeoutMs: 10,
     memoryLimitMb: 500,
     payloadLimitMb: 20,
@@ -192,7 +201,7 @@ test('convert a single job with data', (t) => {
       steps: [createJob({ state: { data: { x: 22 } } })],
     },
   });
-  t.deepEqual(options, {});
+  t.deepEqual(checkGlobals(t, options, 'w'), {});
 });
 
 test('Accept a partial run object', (t) => {
@@ -208,7 +217,7 @@ test('Accept a partial run object', (t) => {
       steps: [],
     },
   });
-  t.deepEqual(options, {});
+  t.deepEqual(checkGlobals(t, options, 'w'), {});
 });
 
 test('handle dataclip_id as input', (t) => {
@@ -241,7 +250,7 @@ test('handle output_dataclip as options', (t) => {
     },
   };
   const { options } = convertPlan(run as LightningPlan);
-  t.deepEqual(options, {
+  t.deepEqual(checkGlobals(t, options, 'w'), {
     outputDataclips: false,
   });
 });
@@ -746,4 +755,71 @@ test("ignore globals when it isn't a string", (t) => {
 
   const { plan } = convertPlan(run as LightningPlan);
   t.deepEqual(plan.workflow.globals, undefined);
+});
+
+test('sets runId and startTime on the engine options globals meta', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const before = Date.now();
+  const { options } = convertPlan(run as LightningPlan);
+  const after = Date.now();
+
+  t.is(options.globals!.meta.runId, 'some-run-id');
+  t.true(options.globals!.meta.startTime >= before);
+  t.true(options.globals!.meta.startTime <= after);
+});
+
+test('maps run.meta work order/workflow/project ids onto globals meta', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+    meta: {
+      work_order_id: 'some-work-order-id',
+      workflow_id: 'some-workflow-id',
+      project_id: 'some-project-id',
+    },
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.workOrderId, 'some-work-order-id');
+  t.is(options.globals!.meta.workflowId, 'some-workflow-id');
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('takes projectId from the plan when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    project_id: 'some-project-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.is(options.globals!.meta.projectId, 'some-project-id');
+});
+
+test('omits globals meta ids when run.meta is missing', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'some-run-id',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+  };
+
+  const { options } = convertPlan(run as LightningPlan);
+
+  t.deepEqual(Object.keys(options.globals!.meta).sort(), [
+    'runId',
+    'startTime',
+  ]);
 });

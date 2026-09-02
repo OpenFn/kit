@@ -42,6 +42,7 @@ const project: ProjectSpec = {
             error_code: 500,
           },
           next: 'fetch',
+          custom_path: 'facility-001',
         },
         {
           id: 'fetch',
@@ -191,6 +192,7 @@ workflows:
           success_code: 202
           error_code: 500
         next: fetch
+        custom_path: facility-001
     history: []
   - id: wf-cron
     name: Cron Workflow

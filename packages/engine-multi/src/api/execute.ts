@@ -40,6 +40,7 @@ const execute = async (context: ExecutionContext) => {
     const whitelist = options.whitelist?.map((w) => w.toString());
 
     const runOptions = {
+      globals: options.globals,
       statePropsToRemove: options.statePropsToRemove,
       whitelist,
       jobLogLevel: options.jobLogLevel,

@@ -16,7 +16,7 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
@@ -44,7 +44,7 @@ jobs:
 
   build:
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     steps:
       - attach_workspace:
@@ -59,7 +59,7 @@ jobs:
 
   unit_test:
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     parallelism: 1
     steps:
@@ -71,7 +71,7 @@ jobs:
 
   format:
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     steps:
       - attach_workspace:
@@ -82,7 +82,7 @@ jobs:
 
   type_check:
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     steps:
       - attach_workspace:
@@ -93,7 +93,7 @@ jobs:
 
   build_openfnx:
     docker:
-      - image: cimg/node:24.14
+      - image: cimg/node:24.18
     resource_class: medium
     steps:
       - attach_workspace:
@@ -168,7 +168,7 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ['22.20', '24.14.0']
+              node_version: ['22.20', '24.18.1', '26.5.1']
           requires:
             - build_openfnx
       - legacy_test:

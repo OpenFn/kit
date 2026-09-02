@@ -403,3 +403,29 @@ test.serial('should forward the jobLogLevel option', async (t) => {
   t.truthy(passedOptions);
   t.deepEqual(passedOptions.jobLogLevel, 'none');
 });
+
+test.serial('should forward the globals option', async (t) => {
+  let passedOptions: any;
+
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const context = createContext({
+    state,
+    options: {
+      ...options,
+      globals: { x: 22 },
+    },
+  });
+  // @ts-ignore
+  context.callWorker = (_command, args) => {
+    passedOptions = args[2];
+  };
+
+  await execute(context);
+
+  t.truthy(passedOptions);
+  t.deepEqual(passedOptions.globals, { x: 22 });
+});

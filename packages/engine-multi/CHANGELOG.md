@@ -1,5 +1,47 @@
 # engine-multi
 
+## 1.13.2
+
+### Patch Changes
+
+- 5999cf9: Fix a bug where an oversized final run state could reach Lightning without being redacted
+
+## 1.13.1
+
+### Patch Changes
+
+- 7398d41: Report the size of a job's output state alongside the existing payload redaction check
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+
+## 1.13.0
+
+### Minor Changes
+
+- Add support for strict memory enforcement with cgroups
+
+## 1.12.4
+
+### Patch Changes
+
+- 0207f0e: Allow global scope context to be fed through to individual runs
+
+## 1.12.3
+
+### Patch Changes
+
+- Updated dependencies [ac44559]
+  - @openfn/compiler@1.3.0
+  - @openfn/lexicon@2.4.0
+
+## 1.12.2
+
+### Patch Changes
+
+- 702dcc7: Tighten default autoinstall whitelist
+- Updated dependencies [702dcc7]
+  - @openfn/runtime@1.9.5
+
 ## 1.12.1
 
 ### Patch Changes

@@ -39,12 +39,17 @@ interface InternalEvent {
   type: WorkerEvents;
   workflowId: UUID;
   threadId: string;
+  // Byte size of whichever field this payload had checked against the
+  // redaction limit (state, final_state or log - see KEYS_TO_VERIFY in
+  // ensure-payload-size.ts)
+  payloadSize_b?: number;
 }
 
 export interface WorkflowStartEvent extends InternalEvent {}
 
 export interface WorkflowCompleteEvent extends InternalEvent {
   state: any;
+  redacted?: boolean;
 }
 
 export interface JobStartEvent extends InternalEvent {

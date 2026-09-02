@@ -87,7 +87,6 @@ const run = (
   }
 
   const logger = opts.logger || defaultLogger;
-
   if (typeof xplan === 'string') {
     xplan = loadPlanFromString(
       xplan,

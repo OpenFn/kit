@@ -59,6 +59,7 @@ function engineReady(engine: any) {
     maxWorkflows: effectiveCapacity,
     workloopConfigs,
     payloadLimitMb: args.payloadMemory,
+    noStringifyState: args.noStringifyState,
     logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
@@ -111,6 +112,7 @@ if (args.mock) {
   const engineOptions = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
+    memoryEnforcement: { cgroup: args.cgroup },
     stateLimitMb: args.stateMemory,
     maxWorkers: effectiveCapacity,
     statePropsToRemove: args.statePropsToRemove,

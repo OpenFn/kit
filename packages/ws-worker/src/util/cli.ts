@@ -16,6 +16,7 @@ type Args = {
   batchLimit?: number;
   batchLogs: boolean;
   capacity: number;
+  cgroup?: boolean;
   workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -32,6 +33,7 @@ type Args = {
   messageTimeoutSeconds?: number;
   mock?: boolean;
   monorepoDir?: string;
+  noStringifyState?: boolean;
   payloadMemory?: number;
   port?: number;
   profile?: boolean;
@@ -82,6 +84,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BATCH_LIMIT,
     WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
+    WORKER_ENABLE_CGROUP_ENFORCEMENT,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
     WORKER_COLLECTIONS_VERSION,
@@ -94,6 +97,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_MAX_STATE_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
+    WORKER_NO_STRINGIFY_STATE,
     WORKER_PORT,
     WORKER_PROFILE_POLL_INTERVAL_MS,
     WORKER_PROFILE,
@@ -228,10 +232,20 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('payload-memory', {
       description:
-        'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
+        'Maximum serialized size of any payload, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
-
+    .option('stringify-state', {
+      description:
+        'Pass --no-stringify-state or set WORKER_NO_STRINGIFY_STATE to optimize stateful payloads sent to lightning. Not back compatible with lightning versions older than 2.19.',
+      type: 'boolean',
+    })
+    .option('cgroup', {
+      alias: ['enable-cgroup-enforcement', 'cgroups'],
+      description:
+        'Enforce run memory limits applied via cgroups for extra memory hardening. Linux only. Default false. Env: WORKER_ENABLE_CGROUP_ENFORCEMENT',
+      type: 'boolean',
+    })
     .option('max-run-duration-seconds', {
       alias: 't',
       description:
@@ -291,7 +305,7 @@ export default function parseArgs(argv: string[]): Args {
       'production start configuration with 1 fast lane workloop (capacity 1) and a second workloop with capacity 4'
     );
 
-  const args = parser.parse() as Args;
+  const args = parser.parse() as Args & { stringifyState?: boolean };
 
   const resolvedWorkloops = setArg(args.workloops, WORKER_WORKLOOPS) as
     | string
@@ -327,6 +341,7 @@ export default function parseArgs(argv: string[]): Args {
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
     capacity: setArg(args.capacity, WORKER_CAPACITY, DEFAULT_WORKER_CAPACITY),
+    cgroup: setArg(args.cgroup, WORKER_ENABLE_CGROUP_ENFORCEMENT, false),
     statePropsToRemove: setArg(
       args.statePropsToRemove,
       WORKER_STATE_PROPS_TO_REMOVE,
@@ -340,6 +355,13 @@ export default function parseArgs(argv: string[]): Args {
         ? parseInt(WORKER_MAX_STATE_MEMORY_MB, 10)
         : undefined),
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
+    // args.stringifyState is positively framed (see the --stringify-state
+    // option above); everything downstream of parseArgs uses the negatively
+    // framed noStringifyState, matching WORKER_NO_STRINGIFY_STATE
+    noStringifyState:
+      args.stringifyState !== undefined
+        ? !args.stringifyState
+        : setArg(undefined, WORKER_NO_STRINGIFY_STATE, false),
     logPayloadMemory: setArg(
       args.logPayloadMemory,
       WORKER_MAX_LOG_PAYLOAD_MB,

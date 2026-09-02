@@ -48,7 +48,7 @@ export const workflowComplete = (
   event: internalEvents.WorkflowCompleteEvent
 ) => {
   const { logger, state } = context;
-  const { workflowId, state: result, threadId } = event;
+  const { workflowId, state: result, threadId, redacted } = event;
 
   logger.success('complete workflow ', workflowId);
   state.status = 'done';
@@ -59,6 +59,7 @@ export const workflowComplete = (
     threadId,
     duration: state.duration,
     state: result,
+    redacted,
     time: timestamp(),
   });
 };
@@ -83,7 +84,16 @@ export const jobComplete = (
   event: internalEvents.JobCompleteEvent
 ) => {
   const { logger, state: runState } = context;
-  const { threadId, state, duration, jobId, next, mem, redacted } = event;
+  const {
+    threadId,
+    state,
+    duration,
+    jobId,
+    next,
+    mem,
+    redacted,
+    payloadSize_b,
+  } = event;
   logger.debug(
     `${runState.id}: sending job complete (step complete): ${event.jobId}`
   );
@@ -95,6 +105,7 @@ export const jobComplete = (
     jobId,
     next,
     redacted,
+    payloadSize_b,
     mem,
     time: timestamp(),
   });
@@ -155,5 +166,7 @@ export const error = (
     message: error.message || error.toString(),
     // default to exception because if we don't know, it's our fault
     severity: error.severity || 'exception',
+    // @ts-ignore for OOM errors, say which limit was breached (heap/cgroup)
+    source: error.source,
   });
 };

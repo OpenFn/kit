@@ -1,5 +1,80 @@
 # ws-worker
 
+## 1.29.3
+
+### Patch Changes
+
+- 5999cf9: Warn when a run's final state has been redacted for exceeding the payload size limit
+- Updated dependencies [5999cf9]
+  - @openfn/engine-multi@1.13.2
+
+## 1.29.2
+
+### Patch Changes
+
+- 7398d41: Include dataclip size in sentry reports
+- 7398d41: Attribute Sentry reports to the run that produced them
+- c433bcf: Capture more diagnostic detail when the connection to Lightning drops unexpectedly
+- c433bcf: Reduce dataclip bloat when sending step results to Lightning
+- Updated dependencies [7398d41]
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+  - @openfn/engine-multi@1.13.1
+
+## 1.29.1
+
+### Patch Changes
+
+- e3ddfef: Support metadata on the run object
+- Updated dependencies [e3ddfef]
+  - @openfn/lexicon@2.4.1
+
+## 1.29.0
+
+### Minor Changes
+
+- Add support for strict memory enforcement with cgroups
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.13.0
+
+## 1.28.0
+
+### Minor Changes
+
+- 0207f0e: Pass a meta object to each run
+- f79954e: Run Docker image as node user
+
+### Patch Changes
+
+- Updated dependencies [0207f0e]
+  - @openfn/engine-multi@1.12.4
+
+## 1.27.4
+
+### Patch Changes
+
+- Rebuild image to support node 24.18.1
+
+## 1.27.3
+
+### Patch Changes
+
+- Updated dependencies [ac44559]
+  - @openfn/lexicon@2.4.0
+  - @openfn/engine-multi@1.12.3
+
+## 1.27.2
+
+### Patch Changes
+
+- Updated dependencies [702dcc7]
+- Updated dependencies [702dcc7]
+  - @openfn/engine-multi@1.12.2
+  - @openfn/runtime@1.9.5
+
 ## 1.27.1
 
 ### Patch Changes

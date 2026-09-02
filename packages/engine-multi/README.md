@@ -81,6 +81,26 @@ engine.execute(plan)
 
 For a full list of events, see `src/events/ts` (the top-level API events are listed at the top)
 
+## Memory Limits
+
+The engine enforces a memory limits on each run via `memoryLimitMb`. There are two modes of enforcement:
+
+**Heap limit**: sets V8's max old space size on the child process (and the worker thread's resource limits). If a run blows this, V8 aborts and the engine reports an OOMError. This only bounds the JavaScript heap - buffers and other native allocations don't count towards it. This is enabled by default.
+
+**cgroup limit**: a hard ceiling on the child process's total memory (including native allocations), enforced by the kernel through a cgroup v2 leaf. Each pooled child process is placed in its own cgroup under `cgroupParent` with `memory.max` set and swap disabled. If a run exceeds the ceiling, the kernel OOM-kills the child; the engine detects this from the cgroup's `memory.events` and reports an OOMError.
+
+An OOMError carries a `source` property (`'heap'` or `'cgroup'`) saying which limit was breached.
+
+### cgroup setup
+
+The engine does not provision the cgroup hierarchy itself. Rather, the host runtime must be started within a writable, cgroup v2 subtree.
+
+The engine creates one leaf per child process within it, applying the memory limit to each.
+
+cgroups must be enabled explicitly: they are off by default because unless properly configured, an OOM exception can kill the parenting process group hierarchy.
+
+See Worker documentation for notes about how to start the engine with cgroups enabled.
+
 ## Module Loader Whitelist
 
 A whitelist controls what modules a job is allowed to import. At the moment this is hardcoded in the Engine to modules starting with @openfn.

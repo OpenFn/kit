@@ -5,6 +5,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { parseAndValidate, parseSpec } from './validator';
 import jsondiff from 'json-diff';
 import {
+  maskUnsentTriggerFields,
   mergeProjectPayloadIntoState,
   mergeSpecIntoState,
   toProjectPayload,
@@ -132,7 +133,10 @@ export async function deploy(config: DeployConfig, logger: Logger) {
   );
   logger.debug('nextProject', '\n' + inspect(nextProject, { colors: true }));
 
-  const diff = jsondiff.diffString(currentProject, nextProject);
+  const diff = jsondiff.diffString(
+    maskUnsentTriggerFields(currentProject, nextProject),
+    nextProject
+  );
 
   if (!diff) {
     logger.always('No changes to deploy.');

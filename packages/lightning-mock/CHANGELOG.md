@@ -1,5 +1,69 @@
 # @openfn/lightning-mock
 
+## 2.4.30
+
+### Patch Changes
+
+- Updated dependencies [b5cf7b5]
+  - @openfn/project@0.19.0
+  - @openfn/lexicon@2.4.3
+
+## 2.4.29
+
+### Patch Changes
+
+- Updated dependencies [5999cf9]
+  - @openfn/engine-multi@1.13.2
+
+## 2.4.28
+
+### Patch Changes
+
+- Updated dependencies [7398d41]
+- Updated dependencies [7398d41]
+  - @openfn/lexicon@2.4.2
+  - @openfn/engine-multi@1.13.1
+
+## 2.4.27
+
+### Patch Changes
+
+- cb21649: Tighten validation on provisioner to ensure ids on entities
+- Updated dependencies [d3213e6]
+  - @openfn/project@0.18.1
+
+## 2.4.26
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.13.0
+
+## 2.4.25
+
+### Patch Changes
+
+- Updated dependencies [0207f0e]
+  - @openfn/engine-multi@1.12.4
+
+## 2.4.24
+
+### Patch Changes
+
+- Updated dependencies [ac44559]
+  - @openfn/lexicon@2.4.0
+  - @openfn/project@0.18.0
+  - @openfn/engine-multi@1.12.3
+
+## 2.4.23
+
+### Patch Changes
+
+- Updated dependencies [702dcc7]
+- Updated dependencies [702dcc7]
+  - @openfn/engine-multi@1.12.2
+  - @openfn/runtime@1.9.5
+
 ## 2.4.22
 
 ### Patch Changes
