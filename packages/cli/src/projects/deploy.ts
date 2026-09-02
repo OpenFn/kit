@@ -281,11 +281,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let alias = options.alias ?? null;
 
   if (options.project) {
-    logger.debug('Reading project from path ', options.project);
-    localProject = await Project.from(
-      'path',
-      path.resolve(options.workspace ?? process.cwd(), options.project)
+    const localPath = path.resolve(
+      options.workspace ?? process.cwd(),
+      options.project
     );
+    logger.debug('Reading project from path ', localPath);
+    localProject = await Project.from('path', localPath);
 
     // If the local project doesn't have stateful stuff,
     // flag this as a new upload
