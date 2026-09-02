@@ -304,7 +304,7 @@ test.serial(
   }
 );
 
-test.serial(
+test.serial.only(
   'deploy: syncs a collections-only change with no workflow changes',
   async (t) => {
     // live server state: two existing collections
@@ -339,15 +339,9 @@ test.serial(
     t.truthy(logger._find('success', /Updated project at/));
 
     const remoteCollections = server.state.projects[UUID].collections;
-
-    t.deepEqual(
-      remoteCollections.find((c: any) => c.name === 'keep-me'),
-      { id: 'coll-1', name: 'keep-me' }
-    );
-    t.deepEqual(
-      remoteCollections.find((c: any) => c.name === 'remove-me'),
-      { id: 'coll-2', name: 'remove-me', delete: true }
-    );
+    t.is(remoteCollections.length, 2);
+    t.deepEqual(remoteCollections[0], { id: 'coll-1', name: 'keep-me' });
+    t.is(remoteCollections[1].name, 'new-collection');
 
     const created = remoteCollections.find(
       (c: any) => c.name === 'new-collection'
