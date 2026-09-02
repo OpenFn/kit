@@ -531,9 +531,7 @@ collections:
   assertLog(t, extractLogs(first.stdout), /Deployed/);
 
   const [projectId] = Object.keys(server.state.projects);
-  // the provisioner payload omits the collections key entirely when
-  // there's nothing to report
-  t.falsy(server.state.projects[projectId].collections);
+  t.deepEqual(server.state.projects[projectId].collections, []);
 
   // add a collection to the spec and redeploy
   await fs.writeFile(projectPath, testProjectWithNewCollection);
@@ -592,9 +590,7 @@ ${collectionsWorkflow}
   t.falsy(second.stderr);
   assertLog(t, extractLogs(second.stdout), /Deployed/);
 
-  // deleted entries come back keyed by id only - the provisioner doesn't
-  // send (or need) a name for a deletion
+  // the deleted collection should be gone from the project entirely
   const collections: any[] = server.state.projects[projectId].collections;
-  const removed = collections.find((c) => c.id === created.id);
-  t.true(removed.delete);
+  t.falsy(collections.find((c) => c.id === created.id));
 });

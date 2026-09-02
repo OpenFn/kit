@@ -331,7 +331,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   'deploy collections: remove a collection via openfn.yaml',
   async (t) => {
     const projectId = 'hhhhhhhh';
@@ -370,12 +370,7 @@ test.serial.only(
     // a collections-only edit must still trigger a real deploy
     assertLog(t, logs, /Updated project/);
 
-    // deleted entries come back keyed by id only - the provisioner
-    // doesn't send (or need) a name for a deletion
-    const collections = server.state.projects[projectId].collections;
-    const removed = collections.find((c: any) => c.id === 'coll-remove');
-    t.true(removed.delete);
-
+    // the deleted collection should be gone from the project entirely
     t.is(server.state.projects[projectId].collections.length, 0);
   }
 );
