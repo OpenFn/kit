@@ -148,12 +148,6 @@ export function merge(
             source.credentials,
             target.credentials
           ),
-          // sandbox mode merges workflow content into a different target
-          // project and otherwise ignores the source's project-level
-          // identity/settings (see name/description/openfn above) -
-          // collections follow the same rule, so a local openfn.yaml can't
-          // accidentally delete another project's real collections just by
-          // not listing them.
           collections: target.collections,
         }
       : {
