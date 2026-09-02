@@ -304,7 +304,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   'deploy: syncs a collections-only change with no workflow changes',
   async (t) => {
     // live server state: two existing collections
