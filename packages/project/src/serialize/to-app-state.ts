@@ -49,6 +49,13 @@ export default function (
 
   state.id = (uuid as string) ?? randomUUID();
 
+  // Ensure each credential has a UUID
+  project.credentials =
+    project.credentials?.map((c) => ({
+      ...c,
+      uuid: c.uuid ?? randomUUID(),
+    })) ?? [];
+
   Object.assign(state, rest, project.options);
   if (options.asSpec) {
     for (const c of project.credentials) {
@@ -62,14 +69,10 @@ export default function (
       };
     }
   } else {
-    const credentialsWithUuids =
-      project.credentials?.map((c) => ({
-        ...c,
-        uuid: (c as CredentialState).uuid ?? randomUUID(),
-      })) ?? [];
-
-    state.project_credentials = credentialsWithUuids.map((c) => ({
-      // note the subtle conversion here
+    state.project_credentials = project.credentials.map((c) => ({
+      // note the subtle conversion here: uuid -> id
+      // That's because the local Project uses the uuid key to track UUIDs
+      // but the provisioner spec uses id
       id: c.uuid as string,
       name: c.name,
       owner: c.owner,
@@ -163,23 +166,22 @@ export const mapWorkflow = (
       }
       if (
         typeof s.configuration === 'string' &&
+        s.configuration.length &&
         !s.configuration.endsWith('.json')
       ) {
         let projectCredentialId = s.configuration;
-        if (projectCredentialId) {
-          const mappedCredential = credentials.find((c) => {
-            const name = getCredentialName(c);
-            return name === projectCredentialId;
-          });
-          if (mappedCredential && useUuids) {
-            projectCredentialId = mappedCredential.uuid;
-          }
+        const mappedCredential = credentials.find((c) => {
+          const name = getCredentialName(c);
+          return name === projectCredentialId;
+        });
+        if (mappedCredential && useUuids) {
+          projectCredentialId = mappedCredential.uuid;
+        }
 
-          if (useUuids) {
-            otherOpenFnProps.project_credential_id = projectCredentialId;
-          } else {
-            otherOpenFnProps.credential = projectCredentialId;
-          }
+        if (useUuids) {
+          otherOpenFnProps.project_credential_id = projectCredentialId;
+        } else {
+          otherOpenFnProps.credential = projectCredentialId;
         }
       }
 

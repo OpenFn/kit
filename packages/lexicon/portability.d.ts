@@ -95,6 +95,7 @@ export interface Trigger extends Step {
 export interface Credential {
   name: string;
   owner: string;
+  uuid?: string | number;
 }
 
 export interface Job extends Step {

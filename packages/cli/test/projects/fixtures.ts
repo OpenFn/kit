@@ -104,6 +104,32 @@ workflows:
     id: my-workflow
     start: webhook`;
 
+export const myProject_spec = `id: my-project
+name: My Project
+schema_version: '4.0'
+description: my lovely project
+collections: []
+credentials:
+  - name: http1
+    owner: super@openfn.org
+workflows:
+  - name: My Workflow
+    steps:
+      - id: transform-data
+        name: Transform data
+        expression: fn()
+        adaptor: '@openfn/language-common@latest'
+        configuration: super@openfn.org|http1
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data:
+            disabled: false
+            condition: always
+    id: my-workflow
+    start: webhook`;
+
 export const TWO_WORKFLOWS_UUID = '4b09ddf1-35f4-4e40-9aa9-0d80c086dd9e';
 
 export const two_workflows_yaml = `id: my-project
