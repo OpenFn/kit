@@ -166,25 +166,22 @@ export const mapWorkflow = (
       }
       if (
         typeof s.configuration === 'string' &&
+        s.configuration.length &&
         !s.configuration.endsWith('.json')
       ) {
         let projectCredentialId = s.configuration;
-        if (projectCredentialId) {
-          const mappedCredential = credentials.find((c) => {
-            const name = getCredentialName(c);
-            return name === projectCredentialId;
-          });
-          if (mappedCredential && useUuids) {
-            // the mapped credential might have a uuid or an id depending on how it was fed in to us
-            // but this is bullshit right?
-            projectCredentialId = mappedCredential.uuid ?? mappedCredential.id;
-          }
+        const mappedCredential = credentials.find((c) => {
+          const name = getCredentialName(c);
+          return name === projectCredentialId;
+        });
+        if (mappedCredential && useUuids) {
+          projectCredentialId = mappedCredential.uuid;
+        }
 
-          if (useUuids) {
-            otherOpenFnProps.project_credential_id = projectCredentialId;
-          } else {
-            otherOpenFnProps.credential = projectCredentialId;
-          }
+        if (useUuids) {
+          otherOpenFnProps.project_credential_id = projectCredentialId;
+        } else {
+          otherOpenFnProps.credential = projectCredentialId;
         }
       }
 
