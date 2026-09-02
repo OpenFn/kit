@@ -59,6 +59,62 @@ test.serial('should deploy a project and fetch it back', async (t) => {
   t.is(proj.name, 'my project');
 });
 
+test.serial(
+  'should create, update and delete collections across deploys',
+  async (t) => {
+    const post = (collections: any[]) =>
+      fetch(`${endpoint}/api/provision`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id: 'collections-project',
+          name: 'collections project',
+          collections,
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+
+    // create two collections
+    await post([
+      { id: 'coll-1', name: 'keep-me' },
+      { id: 'coll-2', name: 'remove-me' },
+    ]);
+
+    let res = await fetch(`${endpoint}/api/provision/collections-project`);
+    let { data: proj } = await res.json();
+    t.deepEqual(proj.collections, [
+      { id: 'coll-1', name: 'keep-me' },
+      { id: 'coll-2', name: 'remove-me' },
+    ]);
+
+    // keep one, delete the other, create a third
+    await post([
+      { id: 'coll-1', name: 'keep-me' },
+      { id: 'coll-2', delete: true },
+      { id: 'coll-3', name: 'new-collection' },
+    ]);
+
+    res = await fetch(`${endpoint}/api/provision/collections-project`);
+    ({ data: proj } = await res.json());
+
+    // the deleted collection should be gone entirely, not lingering with
+    // a delete flag
+    t.deepEqual(proj.collections.map((c: any) => c.id).sort(), [
+      'coll-1',
+      'coll-3',
+    ]);
+    t.deepEqual(
+      proj.collections.find((c: any) => c.id === 'coll-1'),
+      { id: 'coll-1', name: 'keep-me' }
+    );
+    t.deepEqual(
+      proj.collections.find((c: any) => c.id === 'coll-3'),
+      { id: 'coll-3', name: 'new-collection' }
+    );
+  }
+);
+
 test.serial('should fetch many items from a collection', async (t) => {
   server.collections.createCollection('stuff');
   server.collections.upsert('stuff', 'x', { id: 'x' });
