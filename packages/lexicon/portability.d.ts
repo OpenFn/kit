@@ -23,7 +23,7 @@ export interface ProjectSpec {
 
   credentials?: Credential[];
 
-  collections?: string[];
+  collections?: Collection[];
 
   channels?: Channel[];
 }
@@ -95,6 +95,10 @@ export interface Trigger extends Step {
 export interface Credential {
   name: string;
   owner: string;
+}
+
+export interface Collection {
+  name: string;
 }
 
 export interface Job extends Step {

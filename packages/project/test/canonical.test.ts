@@ -13,7 +13,7 @@ const project: ProjectSpec = {
   description: 'Everything including the kitchen sink',
   schema_version: '4.0',
   credentials: [{ owner: 'admin@openfn.org', name: 'secret-squirrel' }],
-  collections: ['nut-stash'],
+  collections: [{ name: 'nut-stash' }],
   channels: [
     {
       id: 'proxy',
@@ -115,7 +115,7 @@ test('create a canonical project', (t) => {
   t.deepEqual(p.credentials, [
     { owner: 'admin@openfn.org', name: 'secret-squirrel' },
   ]);
-  t.deepEqual(p.collections, ['nut-stash']);
+  t.deepEqual(p.collections, [{ name: 'nut-stash' }]);
 
   const [webhook, cron] = p.workflows;
 
@@ -141,7 +141,7 @@ name: Kitchen Sink Test
 schema_version: '4.0'
 description: Everything including the kitchen sink
 collections:
-  - nut-stash
+  - name: nut-stash
 channels:
   - id: proxy
     name: My Proxy

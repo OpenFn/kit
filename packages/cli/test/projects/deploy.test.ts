@@ -15,6 +15,8 @@ import createLightningServer from '@openfn/lightning-mock';
 import {
   handler as deploy,
   hasRemoteDiverged,
+  collectionsChanged,
+  deletedCollections,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
 import {
@@ -105,37 +107,34 @@ test.serial('deploy a new project', async (t) => {
   t.truthy(success);
 });
 
-test.serial(
-  'deploy a new project mints fresh ids for its collections',
-  async (t) => {
-    const yamlWithCollections = projectYaml.replace(
-      'collections: []',
-      'collections:\n  - my-collection'
-    );
+test.serial('deploy a new project creates ids for collections', async (t) => {
+  const yamlWithCollections = projectYaml.replace(
+    'collections: []',
+    'collections:\n  - name: my-collection'
+  );
 
-    await setup(yamlWithCollections);
+  await setup(yamlWithCollections);
 
-    await deploy(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-        new: true,
-      } as any,
-      logger
-    );
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      new: true,
+    } as any,
+    logger
+  );
 
-    const newProjectId = Object.keys(server.state.projects).find(
-      (id) => id !== UUID
-    )!;
-    const created: any = server.state.projects[newProjectId];
+  const newProjectId = Object.keys(server.state.projects).find(
+    (id) => id !== UUID
+  )!;
+  const created: any = server.state.projects[newProjectId];
 
-    t.is(created.collections.length, 1);
-    t.is(created.collections[0].name, 'my-collection');
-    t.truthy(created.collections[0].id);
-    t.falsy(created.collections[0].delete);
-  }
-);
+  t.is(created.collections.length, 1);
+  t.is(created.collections[0].name, 'my-collection');
+  t.truthy(created.collections[0].id);
+  t.falsy(created.collections[0].delete);
+});
 
 test.serial('deploy a change to a project', async (t) => {
   t.truthy(server.state.projects[UUID]);
@@ -628,4 +627,73 @@ test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
 
   const diverged = hasRemoteDiverged(local, remote);
   t.deepEqual(diverged, ['w']);
+});
+
+test('collectionsChanged: false when the same names are on both sides', (t) => {
+  const local = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.false(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when a name was added locally', (t) => {
+  const local = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when a name was removed locally', (t) => {
+  const local = {
+    collections: [{ name: 'a' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('deletedCollections: flags a remote name missing from the merged project', (t) => {
+  const merged = {
+    collections: [{ name: 'keep-me' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-keep', name: 'keep-me' },
+      { uuid: 'uuid-remove', name: 'remove-me' },
+    ],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), [
+    { id: 'uuid-remove', name: 'remove-me', delete: true },
+  ]);
+});
+
+test('deletedCollections: nothing to delete when every remote name survives', (t) => {
+  const merged = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), []);
 });

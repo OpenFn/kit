@@ -383,11 +383,11 @@ test('toFs: extract a project with forked_from meta', (t) => {
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
 
-test('toFs: writes collection names into openfn.json', (t) => {
+test('toFs: writes collection names into openfn.json (freshly authored, no uuid yet)', (t) => {
   const project = new Project(
     {
       name: 'My Project',
-      collections: ['my-collection', 'another-collection'],
+      collections: [{ name: 'my-collection' }, { name: 'another-collection' }],
       workflows: [
         {
           id: 'my-workflow',
@@ -412,16 +412,16 @@ test('toFs: writes collection names into openfn.json', (t) => {
   ]);
 });
 
-test('toFs: normalizes {id, name} collections (as fetched from Lightning) to bare names', (t) => {
+test('toFs: strips uuids from fetched collections when writing to openfn.json', (t) => {
   const project = new Project(
     {
       name: 'My Project',
       // this is the shape a freshly-fetched project's collections are in -
-      // ids should never be written to openfn.yaml
+      // uuids should never be written to openfn.yaml
       collections: [
-        { id: 'remote-id-1', name: 'my-collection' },
-        { id: 'remote-id-2', name: 'another-collection' },
-      ] as any,
+        { uuid: 'remote-uuid-1', name: 'my-collection' },
+        { uuid: 'remote-uuid-2', name: 'another-collection' },
+      ],
       workflows: [
         {
           id: 'my-workflow',

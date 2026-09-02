@@ -38,11 +38,8 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
 
   if (source.collections?.length) {
     // openfn.yaml only ever carries collection names - no ids/uuids, those
-    // belong to the server. Normalize in case source.collections is still
-    // the raw {id, name} shape fetched from Lightning.
-    project.collections = source.collections.map((c: any) =>
-      typeof c === 'string' ? c : c.name
-    );
+    // belong to the server.
+    project.collections = source.collections.map((c) => c.name);
   }
 
   const workspace = {

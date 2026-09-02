@@ -1,7 +1,7 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 
-import { Credential, Job, ProjectSpec, WorkflowSpec } from './portability';
+import { Credential, Collection, Job, ProjectSpec, WorkflowSpec } from './portability';
 export {
   Step,
   StepId,
@@ -10,6 +10,7 @@ export {
   StepEdge,
   ConditionalStepEdge,
   Credential,
+  Collection,
   WorkflowSpec,
 } from './portability';
 
@@ -33,6 +34,11 @@ export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
   config: WorkspaceConfig;
 
   credentials?: Array<CredentialState>;
+
+  // override collections (ProjectSpec has it as bare names, since that's
+  // all openfn.yaml ever carries) - the internal/state representation
+  // tracks each collection's uuid once it's been created on the server
+  collections?: Array<CollectionState>;
 
   /** Stuff only used by the CLI for this project */
   cli?: LocalMeta;
@@ -106,6 +112,15 @@ export interface CredentialState extends Credential {
   uuid?: UUID;
 }
 
+/**
+ * Internal representation of a project collection. `uuid` is only present
+ * once the collection has been created on the server - a locally-authored
+ * collection (from openfn.yaml, not yet deployed) has no uuid.
+ */
+export interface CollectionState extends Collection {
+  uuid?: UUID;
+}
+
 type FileFormats = 'yaml' | 'json';
 
 // This is the old workspace config file, up to 0.6
@@ -164,6 +179,7 @@ export interface ProjectMeta {
   inserted_at?: string;
   updated_at?: string;
   forked_from?: Record<string, string>;
+  collections?: string[];
 
   [key: string]: unknown;
 }

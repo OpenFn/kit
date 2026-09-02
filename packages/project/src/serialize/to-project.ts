@@ -59,7 +59,7 @@ export default (project: Project, options: ToProjectOptions = {}) => {
       }),
     },
     isNil
-  ) as SerializedProject;
+  ) as unknown as SerializedProject;
 
   // only write the sandbox key if this project is itself a sandbox
   if (project.sandbox?.parentId) {

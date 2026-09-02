@@ -19,6 +19,7 @@ import {
   UUID,
   WorkspaceConfig,
   Credential,
+  CollectionState,
 } from '@openfn/lexicon';
 import { parse } from './util/get-credential-name';
 
@@ -74,7 +75,7 @@ export class Project {
 
   config: l.WorkspaceConfig;
 
-  collections: any;
+  collections?: Array<CollectionState>;
 
   channels?: l.Channel[];
 

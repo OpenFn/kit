@@ -216,7 +216,7 @@ test('replace mode: target channels preserved when source has none', (t) => {
   t.deepEqual(result.channels, targetChannels);
 });
 
-test('replace mode: diffs local collection names against remote collections', (t) => {
+test('replace mode: merged collections keep target uuid on a name match', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -225,35 +225,35 @@ test('replace mode: diffs local collection names against remote collections', (t
   const wf_a = assignUUIDs(wf);
   const wf_b = assignUUIDs(wf);
 
-  // target (remote): fetched from Lightning, real ids
+  // target (remote): fetched from Lightning, has real uuids
   const targetCollections = [
-    { id: 'remote-id-1', name: 'keep-me' },
-    { id: 'remote-id-2', name: 'remove-me' },
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: 'remote-uuid-2', name: 'remove-me' },
   ];
-  // source (local): edited openfn.yaml, names only
-  const sourceCollections = ['keep-me', 'new-collection'];
+  // source (local): edited openfn.yaml, names only, no uuids yet
+  const sourceCollections = [{ name: 'keep-me' }, { name: 'new-collection' }];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
   const source = createProject(wf_b, 'b', { collections: sourceCollections });
 
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
+  // kept: uuid preserved from target
   t.deepEqual(
-    result.collections.find((c: any) => c.name === 'keep-me'),
-    { id: 'remote-id-1', name: 'keep-me' }
+    result.collections?.find((c) => c.name === 'keep-me'),
+    { uuid: 'remote-uuid-1', name: 'keep-me' }
   );
+  // new: no uuid minted here (that happens at deploy-serialization time)
   t.deepEqual(
-    result.collections.find((c: any) => c.name === 'remove-me'),
-    { id: 'remote-id-2', name: 'remove-me', delete: true }
+    result.collections?.find((c) => c.name === 'new-collection'),
+    { uuid: undefined, name: 'new-collection' }
   );
-  const created = result.collections.find(
-    (c: any) => c.name === 'new-collection'
-  );
-  t.truthy(created?.id);
-  t.falsy(created?.delete);
+  // removed locally: simply absent from the merged result (no delete flag -
+  // that's computed separately, against the remote, at deploy time)
+  t.falsy(result.collections?.find((c) => c.name === 'remove-me'));
 });
 
-test('replace mode: no local collections deletes all remote collections', (t) => {
+test('replace mode: no local collections means none survive the merge', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -262,16 +262,14 @@ test('replace mode: no local collections deletes all remote collections', (t) =>
   const wf_a = assignUUIDs(wf);
   const wf_b = assignUUIDs(wf);
 
-  const targetCollections = [{ id: 'remote-id-1', name: 'my-collection' }];
+  const targetCollections = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
   const source = createProject(wf_b, 'b');
 
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
-  t.deepEqual(result.collections, [
-    { id: 'remote-id-1', name: 'my-collection', delete: true },
-  ]);
+  t.deepEqual(result.collections, []);
 });
 
 test('sandbox mode: target collections are preserved untouched, source is ignored', (t) => {
@@ -283,13 +281,17 @@ test('sandbox mode: target collections are preserved untouched, source is ignore
   const wf_a = assignUUIDs(wf);
   const wf_b = assignUUIDs(wf);
 
-  const targetCollections = [{ id: 'remote-id-1', name: 'target-collection' }];
+  const targetCollections = [
+    { uuid: 'remote-uuid-1', name: 'target-collection' },
+  ];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
   // source is a local project whose openfn.yaml lists a totally different
   // (or no) set of collections - sandbox mode must not touch the target's
   // real collections based on that
-  const source = createProject(wf_b, 'b', { collections: ['unrelated'] });
+  const source = createProject(wf_b, 'b', {
+    collections: [{ name: 'unrelated' }],
+  });
 
   const result = merge(source, target, { mode: SANDBOX_MERGE });
 
@@ -301,73 +303,54 @@ test('mergeCollections: empty source and target returns empty array', (t) => {
   t.deepEqual(result, []);
 });
 
-test('mergeCollections: new local name with no remote match is created with a fresh id', (t) => {
-  const result = mergeCollections(['my-collection'], []);
+test('mergeCollections: new local name with no target match has no uuid', (t) => {
+  const result = mergeCollections([{ name: 'my-collection' }], []);
 
-  t.is(result.length, 1);
-  t.is(result[0].name, 'my-collection');
-  t.truthy(result[0].id);
-  t.falsy(result[0].delete);
+  t.deepEqual(result, [{ name: 'my-collection', uuid: undefined }]);
 });
 
-test('mergeCollections: matching name keeps the remote id', (t) => {
-  const target = [{ id: 'remote-id-1', name: 'my-collection' }];
-  const result = mergeCollections(['my-collection'], target);
+test('mergeCollections: matching name keeps the target uuid', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+  const result = mergeCollections([{ name: 'my-collection' }], target);
 
-  t.deepEqual(result, [{ id: 'remote-id-1', name: 'my-collection' }]);
+  t.deepEqual(result, [{ uuid: 'remote-uuid-1', name: 'my-collection' }]);
 });
 
-test('mergeCollections: name removed locally is flagged for deletion, keeping its remote id', (t) => {
-  const target = [{ id: 'remote-id-1', name: 'my-collection' }];
+test('mergeCollections: name only on target is dropped (not present in source)', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
   const result = mergeCollections([], target);
 
+  t.deepEqual(result, []);
+});
+
+test('mergeCollections: mix of keep and create', (t) => {
+  const target = [
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: 'remote-uuid-2', name: 'remove-me' },
+  ];
+  const result = mergeCollections(
+    [{ name: 'keep-me' }, { name: 'new-collection' }],
+    target
+  );
+
   t.deepEqual(result, [
-    { id: 'remote-id-1', name: 'my-collection', delete: true },
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: undefined, name: 'new-collection' },
   ]);
 });
 
-test('mergeCollections: mix of keep, create and delete', (t) => {
-  const target = [
-    { id: 'remote-id-1', name: 'keep-me' },
-    { id: 'remote-id-2', name: 'remove-me' },
-  ];
-  const result = mergeCollections(['keep-me', 'new-collection'], target);
+test('mergeCollections: renaming reads as drop + create (no rename tracking)', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'old-name' }];
+  const result = mergeCollections([{ name: 'new-name' }], target);
 
-  t.is(result.length, 3);
-
-  const kept = result.find((c) => c.name === 'keep-me');
-  t.deepEqual(kept, { id: 'remote-id-1', name: 'keep-me' });
-
-  const created = result.find((c) => c.name === 'new-collection');
-  t.truthy(created?.id);
-  t.not(created?.id, 'remote-id-1');
-  t.not(created?.id, 'remote-id-2');
-  t.falsy(created?.delete);
-
-  const removed = result.find((c) => c.name === 'remove-me');
-  t.deepEqual(removed, {
-    id: 'remote-id-2',
-    name: 'remove-me',
-    delete: true,
-  });
-});
-
-test('mergeCollections: renaming reads as delete + create (no rename tracking)', (t) => {
-  const target = [{ id: 'remote-id-1', name: 'old-name' }];
-  const result = mergeCollections(['new-name'], target);
-
-  t.deepEqual(
-    result.find((c) => c.name === 'old-name'),
-    { id: 'remote-id-1', name: 'old-name', delete: true }
-  );
-  t.truthy(result.find((c) => c.name === 'new-name' && !c.delete));
+  t.deepEqual(result, [{ uuid: undefined, name: 'new-name' }]);
 });
 
 test('mergeCollections: does not mutate the target array', (t) => {
-  const target = [{ id: 'remote-id-1', name: 'my-collection' }];
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
   mergeCollections([], target);
 
-  t.deepEqual(target, [{ id: 'remote-id-1', name: 'my-collection' }]);
+  t.deepEqual(target, [{ uuid: 'remote-uuid-1', name: 'my-collection' }]);
 });
 
 test('replace mode: replace the name and UUID of the target project', (t) => {

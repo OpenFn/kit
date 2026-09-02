@@ -206,7 +206,12 @@ test.serial('should load collections from config', async (t) => {
   });
 
   const project = await parseProject({ root: '/ws' });
-  t.deepEqual(project.collections, ['my-collection', 'another-collection']);
+  // in-memory shape is always {name, uuid?} - openfn.yaml itself still
+  // holds bare names
+  t.deepEqual(project.collections, [
+    { name: 'my-collection' },
+    { name: 'another-collection' },
+  ]);
   // collections shouldn't leak into openfn metadata
   // @ts-ignore
   t.falsy(project.openfn!.collections);
