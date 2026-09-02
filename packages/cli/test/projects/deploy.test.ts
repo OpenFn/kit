@@ -123,8 +123,6 @@ test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
     logger
   );
 
-  console.log(logger._history);
-
   // We should now have a new project with a new UUID
   t.is(Object.keys(server.state.projects).length, 2);
 
