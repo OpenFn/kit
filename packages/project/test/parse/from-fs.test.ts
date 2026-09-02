@@ -191,6 +191,47 @@ test.serial('should load the name from config', async (t) => {
   t.is(project.id, 'peaches-for-me');
 });
 
+test.serial('should load collections from config', async (t) => {
+  mockFile('/ws/openfn.yaml', {
+    workspace: buildConfig(),
+    project: {
+      id: 'my-project',
+      collections: ['my-collection', 'another-collection'],
+    },
+  });
+
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    id: 'workflow-1',
+    name: 'Workflow 1',
+  });
+
+  const project = await parseProject({ root: '/ws' });
+  // in-memory shape is always {name, uuid?} - openfn.yaml itself still
+  // holds bare names
+  t.deepEqual(project.collections, [
+    { name: 'my-collection' },
+    { name: 'another-collection' },
+  ]);
+  // collections shouldn't leak into openfn metadata
+  // @ts-ignore
+  t.falsy(project.openfn!.collections);
+});
+
+test.serial(
+  'should return undefined collections when none are configured',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+      id: 'workflow-1',
+      name: 'Workflow 1',
+    });
+
+    const project = await parseProject({ root: '/ws' });
+    t.falsy(project.collections);
+  }
+);
+
 test.serial('should override the name and id from options', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),

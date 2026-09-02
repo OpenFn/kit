@@ -116,6 +116,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
   const defaultState = toAppState(project);
   t.deepEqual(defaultState, {
     id: '<uuid>',
+    collections: [],
     project_credentials: [],
     workflows: {
       'my-workflow': {

@@ -1,5 +1,11 @@
 # lexicon
 
+## 2.4.4
+
+### Patch Changes
+
+- 8157adf: Add collections to project meta in openfn.yaml
+
 ## 2.4.3
 
 ### Patch Changes

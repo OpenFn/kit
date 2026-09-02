@@ -114,6 +114,26 @@ workflows:
         target_job: another-job
 `.trim();
 
+const collectionsWorkflow = `
+workflows:
+  My-Workflow:
+    name: My Workflow
+    jobs:
+      my-job:
+        name: My Job
+        adaptor: '@openfn/language-common@latest'
+        body: 'fn(s => s)'
+    triggers:
+      webhook:
+        type: webhook
+        enabled: true
+    edges:
+      webhook->my-job:
+        condition_type: always
+        source_trigger: webhook
+        target_job: my-job
+`.trim();
+
 test.before(async () => {
   server = await createLightningServer({ port });
 
@@ -478,4 +498,99 @@ test.serial('deploy a new v2 project.yaml with credentials', async (t) => {
 
   const workflow: any = Object.values(project.workflows).pop();
   t.is(workflow.jobs[0].project_credential_id, uuid);
+});
+
+test.serial('deploy collections: add a collection', async (t) => {
+  const testProjectNoCollections = `
+name: test-project-collections-add
+${collectionsWorkflow}
+`.trim();
+
+  const testProjectWithNewCollection = `
+name: test-project-collections-add
+${collectionsWorkflow}
+collections:
+  my-collection:
+    name: my-collection
+`.trim();
+
+  const projectPath = path.join(tmpDir, 'project.yaml');
+  const statePath = path.join(tmpDir, '.state.json');
+
+  await fs.writeFile(projectPath, testProjectNoCollections);
+
+  const deployCmd = `openfn deploy \
+    --project-path ${projectPath} \
+    --state-path ${statePath} \
+    --no-confirm \
+    --log-json -l debug`;
+
+  // first deploy - no collections yet
+  const first = await run(deployCmd);
+  t.falsy(first.stderr);
+  assertLog(t, extractLogs(first.stdout), /Deployed/);
+
+  const [projectId] = Object.keys(server.state.projects);
+  t.deepEqual(server.state.projects[projectId].collections, []);
+
+  // add a collection to the spec and redeploy
+  await fs.writeFile(projectPath, testProjectWithNewCollection);
+
+  const second = await run(deployCmd);
+  t.falsy(second.stderr);
+  assertLog(t, extractLogs(second.stdout), /Deployed/);
+
+  const collections: any[] = server.state.projects[projectId].collections;
+  t.is(collections.length, 1);
+  t.is(collections[0].name, 'my-collection');
+  t.truthy(collections[0].id);
+  t.falsy(collections[0].delete);
+});
+
+test.serial('deploy collections: remove a collection', async (t) => {
+  const testProjectWithCollection = `
+name: test-project-collections-remove
+${collectionsWorkflow}
+collections:
+  my-collection:
+    name: my-collection
+`.trim();
+
+  const testProjectCollectionRemoved = `
+name: test-project-collections-remove
+${collectionsWorkflow}
+`.trim();
+
+  const projectPath = path.join(tmpDir, 'project.yaml');
+  const statePath = path.join(tmpDir, '.state.json');
+
+  await fs.writeFile(projectPath, testProjectWithCollection);
+
+  const deployCmd = `openfn deploy \
+    --project-path ${projectPath} \
+    --state-path ${statePath} \
+    --no-confirm \
+    --log-json -l debug`;
+
+  // first deploy - creates the collection
+  const first = await run(deployCmd);
+  t.falsy(first.stderr);
+  assertLog(t, extractLogs(first.stdout), /Deployed/);
+
+  const [projectId] = Object.keys(server.state.projects);
+  const created = server.state.projects[projectId].collections.find(
+    (c: any) => c.name === 'my-collection'
+  );
+  t.truthy(created?.id);
+
+  // remove the collection from the spec and redeploy
+  await fs.writeFile(projectPath, testProjectCollectionRemoved);
+
+  const second = await run(deployCmd);
+  t.falsy(second.stderr);
+  assertLog(t, extractLogs(second.stdout), /Deployed/);
+
+  // the deleted collection should be gone from the project entirely
+  const collections: any[] = server.state.projects[projectId].collections;
+  t.falsy(collections.find((c) => c.id === created.id));
 });

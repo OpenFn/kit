@@ -5,7 +5,9 @@ import type { CredentialState } from '@openfn/lexicon';
 import Project from '../../src';
 import {
   merge,
+  mergeCollections,
   REPLACE_MERGE,
+  SANDBOX_MERGE,
   replaceCredentials,
 } from '../../src/merge/merge-project';
 import { generateWorkflow } from '../../src/gen/generator';
@@ -212,6 +214,174 @@ test('replace mode: target channels preserved when source has none', (t) => {
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
   t.deepEqual(result.channels, targetChannels);
+});
+
+test('replace mode: merged collections keep target uuid on a name match', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  // target (remote): fetched from Lightning, has real uuids
+  const targetCollections = [
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: 'remote-uuid-2', name: 'remove-me' },
+  ];
+  // source (local): edited openfn.yaml, names only, no uuids yet
+  const sourceCollections = [{ name: 'keep-me' }, { name: 'new-collection' }];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  const source = createProject(wf_b, 'b', { collections: sourceCollections });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  // kept: uuid preserved from target
+  t.deepEqual(
+    result.collections?.find((c) => c.name === 'keep-me'),
+    { uuid: 'remote-uuid-1', name: 'keep-me' }
+  );
+  // new: no uuid minted here (that happens at deploy-serialization time)
+  t.deepEqual(
+    result.collections?.find((c) => c.name === 'new-collection'),
+    { uuid: undefined, name: 'new-collection' }
+  );
+  // removed locally: simply absent from the merged result (no delete flag -
+  // that's computed separately, against the remote, at deploy time)
+  t.falsy(result.collections?.find((c) => c.name === 'remove-me'));
+});
+
+test('replace mode: no local collections means none survive the merge', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetCollections = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.collections, []);
+});
+
+test('sandbox mode: target collections are preserved untouched, source is ignored', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetCollections = [
+    { uuid: 'remote-uuid-1', name: 'target-collection' },
+  ];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  // source is a local project whose openfn.yaml lists a totally different
+  // (or no) set of collections - sandbox mode must not touch the target's
+  // real collections based on that
+  const source = createProject(wf_b, 'b', {
+    collections: [{ name: 'unrelated' }],
+  });
+
+  const result = merge(source, target, { mode: SANDBOX_MERGE });
+
+  t.deepEqual(result.collections, targetCollections);
+});
+
+// KNOWN BUG: sandbox mode does not preserve channels the way it does
+// collections - see the collections test above for the correct behavior.
+// This test documents the bug and is expected to fail until it's fixed.
+test.skip('sandbox mode: target channels are preserved untouched, source is ignored', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetChannels = [
+    {
+      id: 'chan-1',
+      name: 'target-channel',
+      destination_url: 'https://target.example.com',
+      enabled: true,
+    },
+  ];
+
+  const target = createProject(wf_a, 'a', { channels: targetChannels });
+  // source is a local project that never populates channels at all - same
+  // as a real localProject loaded from fs
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: SANDBOX_MERGE });
+
+  t.deepEqual(result.channels, targetChannels);
+});
+
+test('mergeCollections: empty source and target returns empty array', (t) => {
+  const result = mergeCollections([], []);
+  t.deepEqual(result, []);
+});
+
+test('mergeCollections: new local name with no target match has no uuid', (t) => {
+  const result = mergeCollections([{ name: 'my-collection' }], []);
+
+  t.deepEqual(result, [{ name: 'my-collection', uuid: undefined }]);
+});
+
+test('mergeCollections: matching name keeps the target uuid', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+  const result = mergeCollections([{ name: 'my-collection' }], target);
+
+  t.deepEqual(result, [{ uuid: 'remote-uuid-1', name: 'my-collection' }]);
+});
+
+test('mergeCollections: name only on target is dropped (not present in source)', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+  const result = mergeCollections([], target);
+
+  t.deepEqual(result, []);
+});
+
+test('mergeCollections: mix of keep and create', (t) => {
+  const target = [
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: 'remote-uuid-2', name: 'remove-me' },
+  ];
+  const result = mergeCollections(
+    [{ name: 'keep-me' }, { name: 'new-collection' }],
+    target
+  );
+
+  t.deepEqual(result, [
+    { uuid: 'remote-uuid-1', name: 'keep-me' },
+    { uuid: undefined, name: 'new-collection' },
+  ]);
+});
+
+test('mergeCollections: renaming reads as drop + create (no rename tracking)', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'old-name' }];
+  const result = mergeCollections([{ name: 'new-name' }], target);
+
+  t.deepEqual(result, [{ uuid: undefined, name: 'new-name' }]);
+});
+
+test('mergeCollections: does not mutate the target array', (t) => {
+  const target = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+  mergeCollections([], target);
+
+  t.deepEqual(target, [{ uuid: 'remote-uuid-1', name: 'my-collection' }]);
 });
 
 test('replace mode: replace the name and UUID of the target project', (t) => {

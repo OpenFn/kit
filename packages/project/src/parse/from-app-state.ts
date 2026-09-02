@@ -44,10 +44,17 @@ export default (
     owner: c.owner,
   }));
 
+  // same mapping for collections - the server's `id` becomes our `uuid`.
+  // stays undefined (not []) when absent, matching how channels is handled
+  const collectionsList = collections?.map((c: any) => ({
+    uuid: c.id,
+    name: c.name,
+  }));
+
   const proj: Partial<l.ProjectState> = {
     name,
     description: description ?? undefined,
-    collections,
+    collections: collectionsList,
     channels,
     credentials,
     options,

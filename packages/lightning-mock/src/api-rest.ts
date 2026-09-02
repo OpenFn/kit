@@ -83,6 +83,9 @@ workflows:
         enabled: true
 `;
 
+const filterCollections = (incoming: any[] = []): any[] =>
+  incoming.filter((c) => !c.delete);
+
 // Validates a provisioner payload, returning an error body if invalid or null if valid.
 // Mirrors Lightning's error format so deploy code sees realistic rejection responses.
 export function validateProvisionPayload(
@@ -224,6 +227,7 @@ export default (
     if (!state.projects[incoming.id]) {
       state.projects[incoming.id] = {
         ...incoming,
+        collections: filterCollections(incoming.collections),
         workflows: [],
         inserted_at: now,
         updated_at: now,
@@ -233,6 +237,7 @@ export default (
       state.projects[incoming.id] = {
         ...state.projects[incoming.id],
         ...projectFields,
+        collections: filterCollections(incoming.collections),
         updated_at: now,
       };
     }

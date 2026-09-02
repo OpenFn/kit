@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.40.0
+
+### Minor Changes
+
+- 89324cc: Support adding and removing project collections locally by editing openfn.yaml.
+
+### Patch Changes
+
+- Updated dependencies [8157adf]
+- Updated dependencies [89324cc]
+  - @openfn/lexicon@2.4.4
+  - @openfn/project@0.20.0
+
 ## 1.39.6
 
 ### Patch Changes

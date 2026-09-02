@@ -43,11 +43,20 @@ export default function (
   } = project.openfn ?? {};
 
   const state = omitBy(
-    pick(project, ['name', 'description', 'collections', 'channels']),
+    pick(project, ['name', 'description', 'channels']),
     isNil
   ) as Provisioner.Project;
 
   state.id = (uuid as string) ?? randomUUID();
+
+  // unlike ProjectState, Provisioner.Project.collections is a required
+  // field on the wire - always send it, defaulting to []
+  state.collections = (project.collections ?? []).map((c) => ({
+    // mint an id for any collection that doesn't have one yet (ie, was
+    // authored locally in openfn.yaml, never fetched from the server)
+    id: c.uuid ?? randomUUID(),
+    name: c.name,
+  }));
 
   Object.assign(state, rest, project.options);
   if (options.asSpec) {

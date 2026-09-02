@@ -5,7 +5,7 @@ import run from '../src/run';
 import createLightningServer, {
   DEFAULT_PROJECT_ID,
 } from '@openfn/lightning-mock';
-import Project from '@openfn/project';
+import Project, { jsonToYaml, yamlToJson } from '@openfn/project';
 import { extractLogs, assertLog } from '../src/util';
 import { rimraf } from 'rimraf';
 import { makeProject, makeMultiProject } from './fixtures/projects';
@@ -286,3 +286,91 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
   assertLog(t, logs, /have diverged/i);
   assertLog(t, logs, /Projects have diverged/i);
 });
+
+test.serial(
+  'deploy collections: add a collection via openfn.yaml',
+  async (t) => {
+    const projectId = 'gggggggg';
+    server.addProject(makeProject(projectId) as any);
+
+    t.is(server.state.projects[projectId].collections.length, 0);
+
+    // pull the project - no collections yet
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+    assertLog(
+      t,
+      extractLogs(pullResult.stdout),
+      /Checked out project locally/i
+    );
+
+    const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
+    const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
+    t.falsy(before.project.collections);
+
+    // add a collection by hand - no workflow files are touched
+    before.project.collections = ['my-collection'];
+    await fs.writeFile(openfnPath, jsonToYaml(before));
+
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+
+    const logs = extractLogs(stdout);
+    // a collections-only edit must still trigger a real deploy
+    assertLog(t, logs, /Updated project/);
+
+    const collections = server.state.projects[projectId].collections;
+    t.is(collections.length, 1);
+    t.is(collections[0].name, 'my-collection');
+    t.truthy(collections[0].id);
+    t.falsy(collections[0].delete);
+  }
+);
+
+test.serial(
+  'deploy collections: remove a collection via openfn.yaml',
+  async (t) => {
+    const projectId = 'hhhhhhhh';
+    server.addProject({
+      ...makeProject(projectId),
+      collections: [{ id: 'coll-remove', name: 'my-collection' }],
+    } as any);
+
+    t.is(server.state.projects[projectId].collections.length, 1);
+
+    // pull the project - openfn.yaml should list the fetched collection
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+    assertLog(
+      t,
+      extractLogs(pullResult.stdout),
+      /Checked out project locally/i
+    );
+
+    const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
+    const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
+    t.deepEqual(before.project.collections, ['my-collection']);
+
+    // remove the collection by hand - no workflow files are touched
+    before.project.collections = [];
+    await fs.writeFile(openfnPath, jsonToYaml(before));
+
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+
+    const logs = extractLogs(stdout);
+    // a collections-only edit must still trigger a real deploy
+    assertLog(t, logs, /Updated project/);
+
+    // the deleted collection should be gone from the project entirely
+    t.is(server.state.projects[projectId].collections.length, 0);
+  }
+);

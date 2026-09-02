@@ -3,13 +3,20 @@ import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import Project, { generateWorkflow } from '@openfn/project';
+import fs from 'node:fs';
+import Project, {
+  generateWorkflow,
+  jsonToYaml,
+  yamlToJson,
+} from '@openfn/project';
 import { createMockLogger } from '@openfn/logger';
 import createLightningServer from '@openfn/lightning-mock';
 
 import {
   handler as deploy,
   hasRemoteDiverged,
+  collectionsChanged,
+  deletedCollections,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
 import {
@@ -98,6 +105,35 @@ test.serial('deploy a new project', async (t) => {
 
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
+});
+
+test.serial('deploy a new project creates ids for collections', async (t) => {
+  const yamlWithCollections = projectYaml.replace(
+    'collections: []',
+    'collections:\n  - name: my-collection'
+  );
+
+  await setup(yamlWithCollections);
+
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      new: true,
+    } as any,
+    logger
+  );
+
+  const newProjectId = Object.keys(server.state.projects).find(
+    (id) => id !== UUID
+  )!;
+  const created: any = server.state.projects[newProjectId];
+
+  t.is(created.collections.length, 1);
+  t.is(created.collections[0].name, 'my-collection');
+  t.truthy(created.collections[0].id);
+  t.falsy(created.collections[0].delete);
 });
 
 test.serial('deploy a change to a project', async (t) => {
@@ -265,6 +301,53 @@ test.serial(
         ),
       { message: /nope-not-a-real-workflow/ }
     );
+  }
+);
+
+test.serial(
+  'deploy: syncs a collections-only change with no workflow changes',
+  async (t) => {
+    // live server state: two existing collections
+    await server.addProject({
+      ...myProject_v1,
+      collections: [
+        { id: 'coll-1', name: 'keep-me' },
+        { id: 'coll-2', name: 'remove-me' },
+      ],
+    });
+
+    await setup(projectYaml);
+
+    // user hand-edits openfn.yaml: keep one, drop one, add a new one -
+    // no workflow files are touched
+    const openfn: any = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
+    openfn.project.collections = ['keep-me', 'new-collection'];
+    await writeFile('/ws/openfn.yaml', jsonToYaml(openfn));
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    // a collections-only edit must not be treated as "nothing to deploy"
+    t.falsy(logger._find('success', /Nothing to deploy/));
+    t.truthy(logger._find('success', /Updated project at/));
+
+    const remoteCollections = server.state.projects[UUID].collections;
+    t.is(remoteCollections.length, 2);
+    t.deepEqual(remoteCollections[0], { id: 'coll-1', name: 'keep-me' });
+    t.is(remoteCollections[1].name, 'new-collection');
+
+    const created = remoteCollections.find(
+      (c: any) => c.name === 'new-collection'
+    );
+    t.truthy(created?.id);
+    t.falsy(created?.delete);
   }
 );
 
@@ -538,4 +621,73 @@ test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
 
   const diverged = hasRemoteDiverged(local, remote);
   t.deepEqual(diverged, ['w']);
+});
+
+test('collectionsChanged: false when the same names are on both sides', (t) => {
+  const local = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.false(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when a name was added locally', (t) => {
+  const local = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when a name was removed locally', (t) => {
+  const local = {
+    collections: [{ name: 'a' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('deletedCollections: flags a remote name missing from the merged project', (t) => {
+  const merged = {
+    collections: [{ name: 'keep-me' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-keep', name: 'keep-me' },
+      { uuid: 'uuid-remove', name: 'remove-me' },
+    ],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), [
+    { id: 'uuid-remove', name: 'remove-me', delete: true },
+  ]);
+});
+
+test('deletedCollections: nothing to delete when every remote name survives', (t) => {
+  const merged = {
+    collections: [{ name: 'a' }, { name: 'b' }],
+  } as unknown as Project;
+  const remote = {
+    collections: [
+      { uuid: 'uuid-a', name: 'a' },
+      { uuid: 'uuid-b', name: 'b' },
+    ],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), []);
 });

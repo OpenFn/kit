@@ -27,3 +27,5 @@ export { mapWorkflow } from './parse/from-app-state';
 export { default as detectVersion } from './util/detect-version';
 
 export type { MergeProjectOptions } from './merge/merge-project';
+
+export { mergeCollections } from './merge/merge-project';

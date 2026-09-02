@@ -129,6 +129,29 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+export const collectionsChanged = (local: Project, remote: Project) => {
+  const names = (project: Project) =>
+    new Set((project.collections ?? []).map((c) => c.name));
+
+  const localNames = names(local);
+  const remoteNames = names(remote);
+
+  if (localNames.size !== remoteNames.size) return true;
+  return Array.from(localNames).some((name) => !remoteNames.has(name));
+};
+
+// Collections dropped from the merged project (ie, removed from
+// openfn.yaml) need an explicit delete entry in the deploy payload
+export const deletedCollections = (
+  merged: Project,
+  remote: Project
+): Provisioner.Collection[] => {
+  const keptNames = new Set((merged.collections ?? []).map((c) => c.name));
+  return (remote.collections ?? [])
+    .filter((c) => !keptNames.has(c.name) && c.uuid)
+    .map((c) => ({ id: c.uuid as string, name: c.name, delete: true }));
+};
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -194,11 +217,11 @@ const syncProjects = async (
   }
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = mergeCandidates.length
+  const workflowDiffs = mergeCandidates.length
     ? remoteProject.diff(localProject, mergeCandidates)
     : [];
-
-  if (!diffs.length) {
+  const didCollectionsChange = collectionsChanged(localProject, remoteProject);
+  if (!workflowDiffs.length && !didCollectionsChange) {
     logger.success('Nothing to deploy');
     return null;
   }
@@ -339,6 +362,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let locallyChangedWorkflows: string[] = [];
 
   if (options.new) {
+    // nothing to diff against - to-app-state.ts mints a uuid for every
+    // collection that doesn't already have one
     merged = localProject;
   } else {
     const syncResult = await syncProjects(
@@ -358,6 +383,13 @@ export async function handler(options: DeployOptions, logger: Logger) {
   const state = merged.serialize('state', {
     format: 'json',
   }) as Provisioner.Project_v1;
+
+  if (remoteProject) {
+    const deleted = deletedCollections(merged, remoteProject);
+    if (deleted.length) {
+      state.collections = (state.collections ?? []).concat(deleted);
+    }
+  }
 
   // TODO only do this if asked
   // or maybe write it to output with -o?

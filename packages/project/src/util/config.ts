@@ -36,6 +36,12 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
     project.forked_from = source.cli.forked_from;
   }
 
+  if (source.collections?.length) {
+    // openfn.yaml only ever carries collection names - no ids/uuids, those
+    // belong to the server.
+    project.collections = source.collections.map((c) => c.name);
+  }
+
   const workspace = {
     ...source.config,
   };

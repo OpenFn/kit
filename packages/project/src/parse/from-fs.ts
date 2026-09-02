@@ -37,7 +37,12 @@ export const parseProject = async (options: FromFsConfig) => {
   const proj: any = {
     id: options.name ? slugify(options.name) : context.project?.id,
     name: options.name ? slugify(options.name) : context.project?.name,
-    openfn: omit(context.project, ['id', 'forked_from']),
+    openfn: omit(context.project, ['id', 'forked_from', 'collections']),
+    // openfn.yaml only ever holds bare collection names - no uuids, those
+    // belong to the server
+    collections: context.project.collections?.map((name: string) => ({
+      name,
+    })),
     config: config,
     workflows: [],
     cli: omitNil({
