@@ -1,6 +1,15 @@
 import test from 'ava';
 import execute from '../src/execute';
 
+const helpers = `
+const resolve = (state, value) => typeof value === 'function' ? value(state) : value;
+const upsert = (name, obj) => state => {
+  state.upserts ??= [];
+  state.upserts.push({ name, ...resolve(state, obj) });
+  return state;
+};
+`;
+
 test.serial(
   'use lazy-state in template literal & property access',
   async (t) => {
@@ -50,105 +59,55 @@ fn($.callMeMaybe($.data.name))`;
   t.deepEqual(result, { data: { name: 'John', greetings: 'Hello John' } });
 });
 
-// Note: language-common's fn() passes the resolved argument through as the
-// next state, so fn($.x) can be used to return state.x directly.
-// This helper is a minimal "adaptor operation" which resolves a lazy-state
-// argument the same way real adaptor operations do (via expandReferences).
-const helpers = `
-const resolve = (state, value) => typeof value === 'function' ? value(state) : value;
-const upsert = (name, obj) => state => {
-  state.upserts ??= [];
-  state.upserts.push({ name, ...resolve(state, obj) });
-  return state;
-};
-`;
-
-/*
- * Basic reads
- */
-
-test.serial('read a top-level boolean in a condition', async (t) => {
+test.serial('read a top level path', async (t) => {
   const state = { ready: true };
-  const job = `fnIf($.ready, fn(state => {
-  state.ran = true;
-  return state;
-}))`;
 
-  const result = await execute(job, state);
-  t.true(result.ran);
+  const result = await execute(`assert($.ready)`, state);
+  t.falsy(result.errors);
+
+  const failed = await execute(`assert(!$.ready)`, state);
+  t.is(failed.errors.src.message, 'assertion statement failed with false');
 });
 
 test.serial('read a nested path', async (t) => {
   const state = { data: { patient: { name: 'Alice' } } };
-  const job = `fnIf($.data.patient.name === 'Alice', fn(state => {
-  state.matched = true;
-  return state;
-}))`;
+  const job = `assert($.data.patient.name === 'Alice')`;
 
   const result = await execute(job, state);
-  t.true(result.matched);
+  t.falsy(result.errors);
 });
 
 test.serial('read an array index', async (t) => {
   const state = { data: { items: [{ id: 'first' }, { id: 'second' }] } };
-  const job = `fnIf($.data.items[1].id === 'second', fn(state => {
-  state.matched = true;
-  return state;
-}))`;
+  const job = `assert($.data.items[1].id === 'second')`;
 
   const result = await execute(job, state);
-  t.true(result.matched);
+  t.falsy(result.errors);
 });
 
 test.serial('read a missing path with optional chaining', async (t) => {
   const state = { data: {} };
-  const job = `fnIf($.data.missing?.id, fn(state => {
-  state.ran = true;
-  return state;
-}))`;
+  const job = `assert($.data.missing?.id === undefined)`;
 
   const result = await execute(job, state);
-  t.is(result.ran, undefined);
+  t.falsy(result.errors);
 });
-
-test.serial('return a value read from state as the next state', async (t) => {
-  const state = { data: { x: 1 }, other: 'stuff' };
-  const job = `fn($.data)`;
-
-  const result = await execute(job, state);
-  t.deepEqual(result, { x: 1 });
-});
-
-/*
- * Expressions
- */
 
 test.serial('use lazy-state in arithmetic', async (t) => {
   const state = { report: { revenue: 100, expenses: 40 } };
-  const job = `fnIf($.report.revenue - $.report.expenses === 60, fn(state => {
-  state.profit = true;
-  return state;
-}))`;
+  const job = `assert($.report.revenue - $.report.expenses === 60)`;
 
   const result = await execute(job, state);
-  t.true(result.profit);
+  t.falsy(result.errors);
 });
 
 test.serial('use lazy-state in logical expressions', async (t) => {
   const state = { a: true, b: false };
-  const job = `fnIf($.a && !$.b, fn(state => {
-  state.and = true;
-  return state;
-}))
-
-fnIf($.b || $.a, fn(state => {
-  state.or = true;
-  return state;
-}))`;
+  const job = `assert($.a && !$.b)
+assert($.b || $.a)`;
 
   const result = await execute(job, state);
-  t.true(result.and);
-  t.true(result.or);
+  t.falsy(result.errors);
 });
 
 test.serial('use lazy-state in a ternary', async (t) => {
@@ -168,10 +127,6 @@ fn(codes[$.location.country])`;
   const result = await execute(job, state);
   t.is(result as unknown as string, 'KE');
 });
-
-/*
- * Objects, mapping and iteration
- */
 
 test.serial('map state into an object argument', async (t) => {
   const state = { data: { first: 'Ada', last: 'Lovelace', age: 36 } };
@@ -233,10 +188,6 @@ test.serial('use lazy-state for both arguments of group()', async (t) => {
   });
 });
 
-/*
- * Scoping
- */
-
 test.serial('do not convert a $ parameter', async (t) => {
   const state = { data: {} };
   const job = `fn(($) => {
@@ -270,10 +221,6 @@ test.serial('do not convert $ inside a string', async (t) => {
   const result = await execute(job, state);
   t.deepEqual(result, { data: { str: '$.data.a' } });
 });
-
-/*
- * Illegal usage (compile-time errors)
- */
 
 test.serial('throw if $ is assigned to a variable', async (t) => {
   const state = { data: { url: 'x' } };
