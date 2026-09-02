@@ -28,4 +28,4 @@ export { default as detectVersion } from './util/detect-version';
 
 export type { MergeProjectOptions } from './merge/merge-project';
 
-export { mergeCollections } from './merge/merge-collections';
+export { mergeCollections } from './merge/merge-project';
