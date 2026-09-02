@@ -222,10 +222,7 @@ export const mapWorkflow = (
               return name === projectCredentialId;
             });
             if (mappedCredential && useUuids) {
-              // the mapped credential might have a uuid or an id depending on how it was fed in to us
-              // but this is bullshit right?
-              projectCredentialId =
-                mappedCredential.uuid ?? mappedCredential.id;
+              projectCredentialId = mappedCredential.uuid;
             }
 
             if (useUuids) {
