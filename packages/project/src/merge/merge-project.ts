@@ -148,7 +148,7 @@ export function merge(
             source.credentials,
             target.credentials
           ),
-          collections: target.collections,
+          collections: source.collections,
         }
       : {
           workflows: finalWorkflows,
