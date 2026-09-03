@@ -60,6 +60,8 @@ const printStepDiff = (steps: StepChange[], logger: Logger) => {
   }
 };
 
+// TODO need to include collection diffs
+// https://github.com/OpenFn/kit/issues/1524
 export const printRichDiff = (
   local: Project,
   remote: Project,

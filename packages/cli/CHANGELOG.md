@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.40.1
+
+### Patch Changes
+
+- f1942eb: deploy v2: Fix an issue where collections are not synced when deploying to another project
+- Updated dependencies [f1942eb]
+  - @openfn/project@0.20.1
+
 ## 1.40.0
 
 ### Minor Changes
