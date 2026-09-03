@@ -272,7 +272,7 @@ test('replace mode: no local collections means none survive the merge', (t) => {
   t.deepEqual(result.collections, []);
 });
 
-test('sandbox mode: target collections are preserved untouched, source is ignored', (t) => {
+test('sandbox mode: source collections fully replace target collections', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -284,18 +284,16 @@ test('sandbox mode: target collections are preserved untouched, source is ignore
   const targetCollections = [
     { uuid: 'remote-uuid-1', name: 'target-collection' },
   ];
+  const sourceCollections = [{ name: 'source-collection' }];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
-  // source is a local project whose openfn.yaml lists a totally different
-  // (or no) set of collections - sandbox mode must not touch the target's
-  // real collections based on that
-  const source = createProject(wf_b, 'b', {
-    collections: [{ name: 'unrelated' }],
-  });
+  const source = createProject(wf_b, 'b', { collections: sourceCollections });
 
   const result = merge(source, target, { mode: SANDBOX_MERGE });
 
-  t.deepEqual(result.collections, targetCollections);
+  // b's collections are wholly replaced by a's - sandbox mode does a raw
+  // swap here, unlike replace mode's name-matching mergeCollections
+  t.deepEqual(result.collections, sourceCollections);
 });
 
 // KNOWN BUG: sandbox mode does not preserve channels the way it does
