@@ -26,7 +26,7 @@ export default (project: Project) => {
       }
       delete base[wf.id];
     } else {
-      // If a workflow doens't appear in forked_from, we assume it's new
+      // If a workflow doesn't appear in forked_from, we assume it's new
       // (and so changed!)
       changed.push(wf);
     }
@@ -35,6 +35,7 @@ export default (project: Project) => {
   // Anything in forked_from that hasn't been handled
   // must have been removed (and so changed!)
   for (const removedId in base) {
+    // so the tests don't do this...
     changed.push({ id: removedId, $deleted: true } as unknown as Workflow);
   }
 
