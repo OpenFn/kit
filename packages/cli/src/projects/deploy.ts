@@ -286,6 +286,9 @@ const syncProjects = async (
   } else {
     // Otherwise only merge locally updated workflows
     mergeOptions.onlyUpdated = true;
+    // and remove anything on the remote that isn't in the local project,
+    // since deploy should make the remote match the local project exactly
+    mergeOptions.removeUnmapped = true;
   }
   const merged = Project.merge(localProject, remoteProject!, mergeOptions);
 

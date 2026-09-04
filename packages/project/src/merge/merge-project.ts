@@ -67,6 +67,18 @@ export function merge(
 
   const noMappings = isEmpty(options.workflowMappings);
 
+  // The full set of target-side ids that source still accounts for, regardless
+  // of onlyUpdated. onlyUpdated narrows sourceWorkflows below to only the
+  // ones that need re-merging, but an unchanged workflow is still present in
+  // source - it must not be treated as removed just because it didn't need
+  // to be re-merged this pass.
+  const scopedSourceIds = new Set(
+    (noMappings
+      ? source.workflows
+      : source.workflows.filter((w) => !!options.workflowMappings[w.id])
+    ).map((w) => options.workflowMappings?.[w.id] ?? w.id)
+  );
+
   if (options.onlyUpdated) {
     // only include workflows that have changed (since history or forked_from) in the list
     // unchanged target workflows will be added to the finalWorkflows list later
@@ -136,13 +148,16 @@ export function merge(
     }
   }
 
-  // do not remove unmapped means include them too.
-  if (!options?.removeUnmapped) {
-    // workflows from target that didn't get merged
-    for (const targetWorkflow of target.workflows) {
-      if (!usedTargetIds.has(targetWorkflow.id)) {
-        finalWorkflows.push(targetWorkflow);
-      }
+  // workflows from target that didn't get merged above
+  for (const targetWorkflow of target.workflows) {
+    if (usedTargetIds.has(targetWorkflow.id)) {
+      continue;
+    }
+    // Keep it if source still accounts for it (just not re-merged this pass,
+    // eg unchanged under onlyUpdated), or if the caller wants unmapped
+    // workflows kept regardless. Otherwise it's genuinely gone from source.
+    if (scopedSourceIds.has(targetWorkflow.id) || !options?.removeUnmapped) {
+      finalWorkflows.push(targetWorkflow);
     }
   }
 

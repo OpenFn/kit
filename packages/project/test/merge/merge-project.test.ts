@@ -1143,6 +1143,54 @@ test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
   t.is(result.workflows[1].jam, 'jar');
 });
 
+test('options: onlyUpdated & removeUnmapped=true does not drop unchanged workflows', (t) => {
+  const source = createProject([
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+    generateWorkflow('@id b x-y', { uuidSeed: 200, history: true }),
+  ]);
+  const target = createProject([
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+    generateWorkflow('@id b x-y', { uuidSeed: 200, history: true }),
+  ]);
+
+  // nothing has changed in either workflow
+  const result = merge(source, target, {
+    onlyUpdated: true,
+    removeUnmapped: true,
+  });
+
+  t.deepEqual(
+    result.workflows.map((w) => w.id),
+    ['a', 'b']
+  );
+});
+
+test('options: onlyUpdated & removeUnmapped=true still removes a workflow missing from source', (t) => {
+  const source = createProject([
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+  ]);
+  const target = createProject([
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+    generateWorkflow('@id b x-y', { uuidSeed: 200, history: true }),
+  ]);
+  // give source a forked_from baseline that remembers workflow b,
+  // so it's recognised as removed rather than just unknown
+  source.cli.forked_from = {
+    a: generateVersionHash(source.workflows[0]),
+    b: generateVersionHash(target.workflows[1]),
+  };
+
+  const result = merge(source, target, {
+    onlyUpdated: true,
+    removeUnmapped: true,
+  });
+
+  t.deepEqual(
+    result.workflows.map((w) => w.id),
+    ['a']
+  );
+});
+
 test.todo('options: only changed and 1 workflow');
 
 // this test it's important that the final project includes the unchanged workflow
