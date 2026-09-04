@@ -2,7 +2,7 @@ import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import type { CredentialState } from '@openfn/lexicon';
 
-import Project from '../../src';
+import Project, { generateVersionHash } from '../../src';
 import {
   merge,
   mergeCollections,
@@ -788,7 +788,7 @@ test('remove a workflow', (t) => {
   t.is(result.workflows.length, 1);
 });
 
-test('remove a workflow with onlyUpdated: true', (t) => {
+test('remove a workflow with onlyUpdated: true and no history', (t) => {
   const wf1 = assignUUIDs({
     name: 'wf1',
     steps: [],
@@ -800,6 +800,38 @@ test('remove a workflow with onlyUpdated: true', (t) => {
 
   const main = createProject([wf1, wf2], 'a');
   const staging = createProject([wf1], 'b');
+
+  t.is(main.workflows.length, 2);
+  t.is(staging.workflows.length, 1);
+
+  const result: any = merge(staging, main, { onlyUpdated: true });
+  t.is(result.workflows.length, 1);
+});
+
+test('remove a workflow with onlyUpdated: true and a full history', (t) => {
+  const wf1 = assignUUIDs({
+    name: 'wf1',
+    steps: [],
+  });
+  const wf1Version = generateVersionHash(wf1);
+
+  const wf2 = assignUUIDs({
+    name: 'wf2',
+    steps: [],
+  });
+  const wf2Version = generateVersionHash(wf2);
+
+  const main = createProject([wf1, wf2], 'a');
+  const staging = createProject([wf1], 'b');
+  // staging needs to have main in its history for this to work
+  // the presence of history makes a big difference with onlyUpdated on
+  staging.workflows[0].history.push(wf1Version);
+
+  // Include forked_from as well, which also affects changed workflows
+  staging.cli.forked_from = {
+    wf1: wf1Version,
+    wf2: wf2Version,
+  };
 
   t.is(main.workflows.length, 2);
   t.is(staging.workflows.length, 1);

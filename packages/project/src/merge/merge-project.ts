@@ -91,6 +91,10 @@ export function merge(
 
   const potentialConflicts: Record<string, string> = {};
   for (const sourceWorkflow of sourceWorkflows) {
+    if ((sourceWorkflow as any).$deleted) {
+      continue;
+    }
+
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
@@ -110,6 +114,10 @@ export function merge(
   }
 
   for (const sourceWorkflow of sourceWorkflows) {
+    if ((sourceWorkflow as any).$deleted) {
+      continue;
+    }
+
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
