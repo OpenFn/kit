@@ -70,9 +70,7 @@ export default (
     };
   }
 
-  // A deleted workflow only ever appears in state we've just sent to the
-  // provisioner (see to-app-state.ts) - Lightning itself never echoes one
-  // back, since it's just gone. Skipped here for posterity/round-tripping.
+  // a delete: true workflow only appears in state we sent to the provisioner (to-app-state.ts) - never echoed back
   proj.workflows = Object.values(stateJson.workflows)
     .filter((w) => !w.delete)
     .map((w) => mapWorkflow(w, proj.credentials));
@@ -114,9 +112,7 @@ export const mapWorkflow = (
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
 
-  // Deleted jobs/triggers/edges only ever appear in state we've just sent to
-  // the provisioner (see to-app-state.ts) - Lightning itself never echoes one
-  // back, since it's just gone. Filtered out here for posterity/round-tripping.
+  // a delete: true job/trigger/edge only appears in state we sent to the provisioner - never echoed back
   const liveJobs = Object.values(jobs).filter((j) => !j.delete);
   const liveTriggers = Object.values(triggers).filter((t) => !t.delete);
   const liveEdges = Object.values(edges).filter((e) => !e.delete);
