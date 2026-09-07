@@ -23,6 +23,14 @@ class Workflow {
       edges: {}, // edges by from-id id
       uuid: {}, // id to uuid
       id: {}, // uuid to ids
+
+      // Flags entities removed from this workflow via remove(), keyed by step
+      // id or by the edge's composite `from-to` id.
+      // Used when converting to app state to generate delete: true entries.
+      removed: {
+        self: false,
+        ids: {} as Record<string, boolean>,
+      },
     };
 
     this.workflow = clone(workflow);
@@ -126,6 +134,54 @@ class Workflow {
     }
 
     return item;
+  }
+
+  // Flag a step, an edge the whole workflow as removed
+  // to-app-state reads this to generate delete: true entries.
+  remove(): this;
+  remove(stepId: string): this;
+  remove(from: string, to: string): this;
+  remove(a?: string, b?: string): this {
+    if (a === undefined) {
+      this.index.removed.self = true;
+      return this;
+    }
+
+    if (b === undefined) {
+      if (!(a in this.index.steps)) {
+        throw new Error(`step with id "${a}" does not exist in workflow`);
+      }
+      this.index.removed.ids[a] = true;
+    } else {
+      const edgeId = `${a}-${b}`;
+      if (!(edgeId in this.index.edges)) {
+        throw new Error(`edge with id "${edgeId}" does not exist in workflow`);
+      }
+      this.index.removed.ids[edgeId] = true;
+    }
+
+    return this;
+  }
+
+  // Check whether a step, an edge, or (with no argument) the whole workflow
+  // has been flagged as removed via remove().
+  isRemoved(): boolean;
+  isRemoved(stepId: string): boolean;
+  isRemoved(from: string, to: string): boolean;
+  isRemoved(a?: string, b?: string): boolean {
+    if (a === undefined) {
+      return this.index.removed.self;
+    }
+
+    const id = b === undefined ? a : `${a}-${b}`;
+    return !!this.index.removed.ids[id];
+  }
+
+  // Whether the whole workflow was removed via remove(), plus the ids (step id,
+  // or edge composite `from-to` id) of everything flagged removed via remove().
+  // Used by to-app-state to generate `delete: true` entries.
+  get removed(): { self: boolean; ids: Record<string, boolean> } {
+    return this.index.removed;
   }
 
   // TODO needs unit tests and maybe setter
