@@ -32,6 +32,56 @@ export const makeProject = (id: string) => ({
   collections: [],
 });
 
+// A single workflow with two parallel jobs off the same trigger, so a step
+// (and its connecting edge) or just an edge can be removed independently
+export const makeProjectWithTwoJobs = (id: string): any => ({
+  id,
+  name: 'test-project',
+  workflows: [
+    {
+      id: 'my-workflow-1',
+      name: 'My Workflow',
+      jobs: [
+        {
+          id: 'my-job-1',
+          name: 'My Job',
+          body: 'fn(s => s)',
+          adaptor: '@openfn/language-common@latest',
+          project_credential_id: null,
+        },
+        {
+          id: 'other-job-1',
+          name: 'Other Job',
+          body: 'fn(s => s)',
+          adaptor: '@openfn/language-common@latest',
+          project_credential_id: null,
+        },
+      ],
+      triggers: [{ id: 'my-trigger-1', type: 'webhook', enabled: true }],
+      edges: [
+        {
+          id: 'my-edge-1',
+          condition_type: 'always',
+          source_trigger_id: 'my-trigger-1',
+          target_job_id: 'my-job-1',
+          enabled: true,
+        },
+        {
+          id: 'other-edge-1',
+          condition_type: 'always',
+          source_trigger_id: 'my-trigger-1',
+          target_job_id: 'other-job-1',
+          enabled: true,
+        },
+      ],
+      lock_version: 1,
+      deleted_at: null,
+    },
+  ],
+  project_credentials: [],
+  collections: [],
+});
+
 export const makeMultiProject = (id: string): any => ({
   id,
   name: 'test-project',

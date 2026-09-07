@@ -8,7 +8,11 @@ import createLightningServer, {
 import Project, { jsonToYaml, yamlToJson } from '@openfn/project';
 import { extractLogs, assertLog } from '../src/util';
 import { rimraf } from 'rimraf';
-import { makeProject, makeMultiProject } from './fixtures/projects';
+import {
+  makeProject,
+  makeMultiProject,
+  makeProjectWithTwoJobs,
+} from './fixtures/projects';
 
 let server: ReturnType<typeof createLightningServer>;
 
@@ -193,7 +197,6 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
 });
 
 /**
- * Joe notes
  *
  * 1. why is there no local version history?
  * 2. the remote change gets dropped in the merge
@@ -328,6 +331,174 @@ test.serial(
     t.is(collections[0].name, 'my-collection');
     t.truthy(collections[0].id);
     t.falsy(collections[0].delete);
+  }
+);
+
+/**
+ * These tests need organising better
+ *
+ * remoe all my notes
+ *
+ * we need to add forked_from for baseline comparisons
+ *
+ * Shouldn't that be done by the pull though?
+ */
+
+/**
+ *
+ * The merge drops the removed workflow from the local project, but nothing
+ * tells the provisioner to actually delete it server-side - it only ever
+ * upserts by id, so a workflow that's simply absent from the outgoing list
+ * is never visited at all, and survives untouched. This is the same shape
+ * of gap that deletedCollections() already solves for collections (see
+ * packages/cli/src/projects/deploy.ts) - workflows need the equivalent.
+ *
+ * Note this does NOT extend to steps/edges within a workflow that's still
+ * present - see the two tests below, which pass today, because an updated
+ * workflow has its jobs/edges/triggers wholesale-replaced server-side
+ * (lightning-mock's updateWorkflow does `{...existingWf, ...w}`), so a
+ * dropped step or edge is naturally gone once the workflow itself updates.
+ */
+
+// this fails because of "nothing to deploy"
+test.serial.only(
+  'deploy: remove a workflow by deleting its local directory',
+  async (t) => {
+    const projectId = 'iiiiiiii';
+    server.addProject(makeMultiProject(projectId) as any);
+
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+
+    // delete the whole workflow locally
+    await rimraf(path.join(tmpDir, 'workflows/another-workflow'));
+
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+    console.log(stdout);
+    assertLog(t, extractLogs(stdout), /Updated project/);
+
+    const proj = server.state.projects[projectId];
+    t.falsy(
+      Object.values(proj.workflows as any).find(
+        (w: any) => w.id === 'another-workflow-1'
+      )
+    );
+    // the untouched workflow must survive
+    t.truthy(
+      Object.values(proj.workflows as any).find(
+        (w: any) => w.id === 'my-workflow-1'
+      )
+    );
+  }
+);
+
+/**
+ *
+ * Same underlying gap as workflow removal, one level down: mergeWorkflows()
+ * in packages/project builds steps purely from source.steps, so a job
+ * deleted locally just vanishes from the merged workflow with no delete
+ * signal sent to the provisioner either. The job survives on the remote.
+ */
+test.serial(
+  'deploy: remove a step (and its edge) via the workflow yaml',
+  async (t) => {
+    const projectId = 'jjjjjjjj';
+    server.addProject(makeProjectWithTwoJobs(projectId) as any);
+
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+
+    const wfPath = path.resolve(
+      tmpDir,
+      'workflows/my-workflow/my-workflow.yaml'
+    );
+    const wf: any = yamlToJson(await fs.readFile(wfPath, 'utf8'));
+
+    // drop the 'other-job' step entirely
+    wf.steps = wf.steps.filter((s: any) => s.id !== 'other-job');
+    // and the edge that used to point at it
+    for (const step of wf.steps) {
+      if (step.next?.['other-job']) delete step.next['other-job'];
+    }
+    await fs.writeFile(wfPath, jsonToYaml(wf));
+    await fs.rm(path.join(tmpDir, 'workflows/my-workflow/other-job.js'), {
+      force: true,
+    });
+
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+    assertLog(t, extractLogs(stdout), /Updated project/);
+
+    const wfState: any = Object.values(
+      server.state.projects[projectId].workflows as any
+    ).find((w: any) => w.id === 'my-workflow-1');
+    t.falsy(
+      Object.values(wfState.jobs).find((j: any) => j.name === 'Other Job')
+    );
+    // the untouched job must survive
+    t.truthy(Object.values(wfState.jobs).find((j: any) => j.name === 'My Job'));
+  }
+);
+
+/**
+ *
+ * A narrower case than step removal: both jobs still exist, only the edge
+ * connecting the trigger to 'other-job' is deleted locally. Same gap -
+ * mergeWorkflows() only ever adds/updates edges found in source, it never
+ * signals that a target-side edge should be removed.
+ */
+test.serial(
+  'deploy: remove an edge without removing either step',
+  async (t) => {
+    const projectId = 'kkkkkkkk';
+    server.addProject(makeProjectWithTwoJobs(projectId) as any);
+
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+
+    const wfPath = path.resolve(
+      tmpDir,
+      'workflows/my-workflow/my-workflow.yaml'
+    );
+    const wf: any = yamlToJson(await fs.readFile(wfPath, 'utf8'));
+
+    // keep both steps, just drop the edge between the trigger and 'other-job'
+    for (const step of wf.steps) {
+      if (step.next?.['other-job']) delete step.next['other-job'];
+    }
+    await fs.writeFile(wfPath, jsonToYaml(wf));
+
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+    assertLog(t, extractLogs(stdout), /Updated project/);
+
+    const wfState: any = Object.values(
+      server.state.projects[projectId].workflows as any
+    ).find((w: any) => w.id === 'my-workflow-1');
+    // both jobs should still exist
+    t.truthy(Object.values(wfState.jobs).find((j: any) => j.name === 'My Job'));
+    t.truthy(
+      Object.values(wfState.jobs).find((j: any) => j.name === 'Other Job')
+    );
+    // but the edge to 'other-job' must be gone
+    t.falsy(
+      Object.values(wfState.edges).find(
+        (e: any) => e.target_job_id === wfState.jobs['other-job-1']?.id
+      )
+    );
   }
 );
 
