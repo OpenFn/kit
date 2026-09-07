@@ -350,6 +350,7 @@ export namespace Provisioner {
     source_trigger_id: string | null;
     target_job_id: string;
     enabled?: boolean;
+    delete?: boolean;
   };
 
   export type KafkaConfiguration = {

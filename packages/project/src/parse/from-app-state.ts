@@ -70,9 +70,12 @@ export default (
     };
   }
 
-  proj.workflows = Object.values(stateJson.workflows).map((w) =>
-    mapWorkflow(w, proj.credentials)
-  );
+  // A deleted workflow only ever appears in state we've just sent to the
+  // provisioner (see to-app-state.ts) - Lightning itself never echoes one
+  // back, since it's just gone. Skipped here for posterity/round-tripping.
+  proj.workflows = Object.values(stateJson.workflows)
+    .filter((w) => !w.delete)
+    .map((w) => mapWorkflow(w, proj.credentials));
 
   return new Project(proj as l.ProjectState, config);
 };
@@ -110,6 +113,14 @@ export const mapWorkflow = (
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
+
+  // Deleted jobs/triggers/edges only ever appear in state we've just sent to
+  // the provisioner (see to-app-state.ts) - Lightning itself never echoes one
+  // back, since it's just gone. Filtered out here for posterity/round-tripping.
+  const liveJobs = Object.values(jobs).filter((j) => !j.delete);
+  const liveTriggers = Object.values(triggers).filter((t) => !t.delete);
+  const liveEdges = Object.values(edges).filter((e) => !e.delete);
+
   const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
@@ -122,7 +133,7 @@ export const mapWorkflow = (
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
-  Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
+  liveTriggers.forEach((trigger: Provisioner.Trigger) => {
     const {
       type,
       enabled,
@@ -136,7 +147,7 @@ export const mapWorkflow = (
       mapped.start = type;
     }
 
-    const connectedEdges = Object.values(edges).filter(
+    const connectedEdges = liveEdges.filter(
       (e) => e.source_trigger_id === trigger.id
     );
     mapped.steps.push(
@@ -150,9 +161,7 @@ export const mapWorkflow = (
         webhook_response_config,
         openfn: renameKeys(otherProps, { id: 'uuid' }),
         next: connectedEdges.reduce((obj: any, edge) => {
-          const target = Object.values(jobs).find(
-            (j) => j.id === edge.target_job_id
-          );
+          const target = liveJobs.find((j) => j.id === edge.target_job_id);
           if (!target) {
             throw new Error(`Failed to find ${edge.target_job_id}`);
           }
@@ -164,8 +173,8 @@ export const mapWorkflow = (
     );
   });
 
-  Object.values(workflow.jobs).forEach((step: Provisioner.Job) => {
-    const outboundEdges = Object.values(edges).filter(
+  liveJobs.forEach((step: Provisioner.Job) => {
+    const outboundEdges = liveEdges.filter(
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );
 
@@ -197,9 +206,7 @@ export const mapWorkflow = (
 
     if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
-        const target = Object.values(jobs).find(
-          (j) => j.id === edge.target_job_id
-        );
+        const target = liveJobs.find((j) => j.id === edge.target_job_id);
         // @ts-ignore
         next[slugify(target.name)] = mapEdge(edge);
         return next;
