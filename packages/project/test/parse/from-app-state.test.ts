@@ -97,6 +97,15 @@ test('should create a Project from prov state with credentials', (t) => {
   t.deepEqual(project.credentials, []);
 });
 
+test('should exclude a workflow flagged delete: true', (t) => {
+  const stateWithDeletedWorkflow: any = cloneDeep(state);
+  stateWithDeletedWorkflow.workflows['my-workflow'].delete = true;
+
+  const project = fromAppState(stateWithDeletedWorkflow, meta);
+
+  t.is(project.workflows.length, 0);
+});
+
 test('should create a Project from prov state with positions', (t) => {
   const newState = cloneDeep(state);
 
@@ -346,6 +355,37 @@ test('mapWorkflow: map a job with project credentials onto job.configuration', (
       keychain_credential_id: 'k',
     },
   });
+});
+
+test('mapWorkflow: excludes a job flagged delete: true', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.jobs['transform-data'].delete = true;
+  // a real delete payload flags a job's edges too - an edge left pointing at
+  // a deleted job is malformed input, not something mapWorkflow guards against
+  wf.edges['trigger->transform-data'].delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  t.falsy(mapped.steps.find((s: any) => s.id === 'transform-data'));
+});
+
+test('mapWorkflow: excludes a trigger flagged delete: true', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.triggers.webhook.delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  t.falsy(mapped.steps.find((s: any) => s.id === 'webhook'));
+});
+
+test('mapWorkflow: excludes an edge flagged delete: true', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.edges['trigger->transform-data'].delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  const [trigger] = mapped.steps as any[];
+  t.deepEqual(trigger.next, {});
 });
 
 test('mapEdge: map enabled state', (t) => {
