@@ -23,13 +23,9 @@ class Workflow {
       edges: {}, // edges by from-id id
       uuid: {}, // id to uuid
       id: {}, // uuid to ids
-
-      // Flags entities removed from this workflow via remove(), keyed by step
-      // id or by the edge's composite `from-to` id.
-      // Used when converting to app state to generate delete: true entries.
       removed: {
         self: false,
-        ids: {} as Record<string, boolean>,
+        ids: {} as Record<string, boolean>, // step id, or edge's `from-to` id
       },
     };
 
@@ -136,8 +132,7 @@ class Workflow {
     return item;
   }
 
-  // Flag a step, an edge the whole workflow as removed
-  // to-app-state reads this to generate delete: true entries.
+  // Flags a step, edge, or (no args) the whole workflow removed - to-app-state reads this to generate delete: true entries
   remove(): this;
   remove(stepId: string): this;
   remove(from: string, to: string): this;
@@ -163,8 +158,6 @@ class Workflow {
     return this;
   }
 
-  // Check whether a step, an edge, or (with no argument) the whole workflow
-  // has been flagged as removed via remove().
   isRemoved(): boolean;
   isRemoved(stepId: string): boolean;
   isRemoved(from: string, to: string): boolean;
@@ -177,9 +170,6 @@ class Workflow {
     return !!this.index.removed.ids[id];
   }
 
-  // Whether the whole workflow was removed via remove(), plus the ids (step id,
-  // or edge composite `from-to` id) of everything flagged removed via remove().
-  // Used by to-app-state to generate `delete: true` entries.
   get removed(): { self: boolean; ids: Record<string, boolean> } {
     return this.index.removed;
   }

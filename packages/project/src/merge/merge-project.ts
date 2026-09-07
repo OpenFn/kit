@@ -64,13 +64,15 @@ export function merge(
   const finalWorkflows: Workflow[] = [];
   const usedTargetIds = new Set<string>();
   let sourceWorkflows = source.workflows;
+  let removedWorkflowIds: string[] = [];
 
   const noMappings = isEmpty(options.workflowMappings);
 
   if (options.onlyUpdated) {
     // only include workflows that have changed (since history or forked_from) in the list
     // unchanged target workflows will be added to the finalWorkflows list later
-    sourceWorkflows = findChangedWorkflows(source);
+    ({ changed: sourceWorkflows, removed: removedWorkflowIds } =
+      findChangedWorkflows(source));
   }
 
   if (!noMappings) {
@@ -91,10 +93,6 @@ export function merge(
 
   const potentialConflicts: Record<string, string> = {};
   for (const sourceWorkflow of sourceWorkflows) {
-    if ((sourceWorkflow as any).$deleted) {
-      continue;
-    }
-
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
@@ -114,10 +112,6 @@ export function merge(
   }
 
   for (const sourceWorkflow of sourceWorkflows) {
-    if ((sourceWorkflow as any).$deleted) {
-      continue;
-    }
-
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
@@ -133,6 +127,22 @@ export function merge(
       );
     } else {
       finalWorkflows.push(sourceWorkflow);
+    }
+  }
+
+  // A workflow findChangedWorkflows found in forked_from but not in source
+  // any more was deleted locally. Flag it removed rather than dropping it,
+  // so to-app-state can still tell the provisioner.
+  // Clone rather than mutate target's own instance - target (typically the
+  // fetched remote project) is often read again after merge (eg for
+  // diffing), and must keep describing what's actually on the server.
+  for (const removedId of removedWorkflowIds) {
+    const targetWorkflow = target.getWorkflow(removedId);
+    if (targetWorkflow) {
+      usedTargetIds.add(targetWorkflow.id);
+      const deletedWorkflow = new Workflow(targetWorkflow.toJSON() as any);
+      deletedWorkflow.remove();
+      finalWorkflows.push(deletedWorkflow);
     }
   }
 

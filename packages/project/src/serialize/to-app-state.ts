@@ -110,9 +110,7 @@ export const mapWorkflow = (
 ) => {
   const useUuids = !options.asSpec;
 
-  // Captured before toJSON(): building `lookup` below mints a fresh uuid for
-  // any step that doesn't already have one, so by that point we can no longer
-  // tell a real, previously-synced uuid from one just minted for this call.
+  // captured before toJSON(), since the `lookup` build below mints fresh uuids for anything missing one
   const removed =
     workflow instanceof Workflow
       ? workflow.removed
@@ -239,8 +237,7 @@ export const mapWorkflow = (
     }
 
     if (isRemoved) {
-      // a removed step's own edges are meaningless without being removed
-      // explicitly too, via workflow.remove(from, to) - see Workflow.ts
+      // a removed step's edges are meaningless without also being removed via workflow.remove(from, to)
       return;
     }
 
