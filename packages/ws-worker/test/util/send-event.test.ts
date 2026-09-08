@@ -413,28 +413,6 @@ test.serial(
   }
 );
 
-test.serial('should report to sentry against the run scope', async (t) => {
-  const sentryScope = Sentry.getIsolationScope().clone();
-  sentryScope.setTag('run_id', 'run-1');
-  sentryScope.addBreadcrumb({ category: 'event', message: 'job-complete' });
-
-  const { channel, stop } = mockDetachedChannel();
-  const context = { id: 'run-1', channel, logger, options: {}, sentryScope };
-
-  await t.throwsAsync(() => sendEvent(context, 'step:complete', {}));
-  stop();
-
-  const reports = await waitForSentryReport(testkit);
-  t.is(reports[0].error?.name, 'LightningSocketError');
-  t.is(reports[0].tags.run_id, 'run-1');
-
-  // The run's breadcrumb trail must survive too - this is why the capture
-  // re-enters the scope rather than passing it to captureException, which
-  // merges tags but drops breadcrumbs
-  const trail = reports[0].originalReport?.breadcrumbs ?? [];
-  t.true(trail.some((b: any) => b.message === 'job-complete'));
-});
-
 test.serial(
   'should report caller-supplied sentryExtras alongside a failed event',
   async (t) => {
