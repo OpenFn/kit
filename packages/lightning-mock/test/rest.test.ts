@@ -118,6 +118,49 @@ test.serial(
   }
 );
 
+test.serial(
+  'should actually delete a whole workflow flagged delete: true',
+  async (t) => {
+    const wf1Id = '72ca3eb0-042c-47a0-a2a1-a545ed4a8406';
+    const tempWorkflowId = 'temp-workflow';
+
+    const first = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: DEFAULT_PROJECT_ID,
+        name: 'aaa',
+        // wf1 must be included in every payload - a whole workflow (unlike
+        // its jobs/triggers/edges) has to be explicit about its own removal
+        workflows: [
+          { id: wf1Id, name: 'wf1' },
+          { id: tempWorkflowId, name: 'temp workflow' },
+        ],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+    t.is(first.status, 200);
+
+    const second = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: DEFAULT_PROJECT_ID,
+        name: 'aaa',
+        workflows: [
+          { id: wf1Id, name: 'wf1' },
+          { id: tempWorkflowId, delete: true },
+        ],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+    t.is(second.status, 200);
+
+    const res = await fetch(`${endpoint}/api/provision/${DEFAULT_PROJECT_ID}`);
+    const { data: proj } = await res.json();
+    t.falsy(proj.workflows.find((w: any) => w.id === tempWorkflowId));
+    t.truthy(proj.workflows.find((w: any) => w.id === wf1Id));
+  }
+);
+
 test.serial('should fetch many items from a collection', async (t) => {
   server.collections.createCollection('stuff');
   server.collections.upsert('stuff', 'x', { id: 'x' });
