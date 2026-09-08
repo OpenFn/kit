@@ -2,4 +2,4 @@
 '@openfn/cli': patch
 ---
 
-Fix issues removing workflows in `project deploy`
+`project deploy`: fix issues removing workflows, steps and edges while deploying.
