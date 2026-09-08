@@ -4,6 +4,7 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 
 import { Project } from '../Project';
+import Workflow from '../Workflow';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 import omitNil from '../util/omit-nil';
@@ -70,10 +71,36 @@ export default (
     };
   }
 
-  proj.workflows = Object.values(stateJson.workflows)
-    // Ignore provisioner  delete: true flags
-    .filter((w) => !w.delete)
-    .map((w) => mapWorkflow(w, proj.credentials));
+  // Identify any workflows, steps and edges which may have been deleted in the state,
+  // and ensure their deletion is reflected in in the parsed Project
+  proj.workflows = Object.values(stateJson.workflows).map((w) => {
+    const workflow = new Workflow(mapWorkflow(w, proj.credentials));
+
+    if (w.delete) {
+      workflow.remove();
+      return workflow;
+    }
+
+    const deletedUuids = new Set(
+      Object.values(w.jobs as any)
+        .concat(Object.values(w.triggers), Object.values(w.edges))
+        .filter((x: any) => x.delete)
+        .map((x: any) => x.id)
+    );
+
+    for (const step of workflow.steps as any[]) {
+      if (deletedUuids.has(step.openfn?.uuid)) {
+        workflow.remove(step.id);
+      }
+      for (const toId in step.next ?? {}) {
+        if (deletedUuids.has(step.next[toId].openfn?.uuid)) {
+          workflow.remove(step.id, toId);
+        }
+      }
+    }
+
+    return workflow;
+  }) as unknown as l.WorkflowState[];
 
   return new Project(proj as l.ProjectState, config);
 };
@@ -112,11 +139,6 @@ export const mapWorkflow = (
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
 
-  // a delete: true job/trigger/edge only appears in state we sent to the provisioner - never echoed back
-  const liveJobs = Object.values(jobs).filter((j) => !j.delete);
-  const liveTriggers = Object.values(triggers).filter((t) => !t.delete);
-  const liveEdges = Object.values(edges).filter((e) => !e.delete);
-
   const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
@@ -129,7 +151,7 @@ export const mapWorkflow = (
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
-  liveTriggers.forEach((trigger: Provisioner.Trigger) => {
+  Object.values(triggers).forEach((trigger: Provisioner.Trigger) => {
     const {
       type,
       enabled,
@@ -143,7 +165,7 @@ export const mapWorkflow = (
       mapped.start = type;
     }
 
-    const connectedEdges = liveEdges.filter(
+    const connectedEdges = Object.values(edges).filter(
       (e) => e.source_trigger_id === trigger.id
     );
     mapped.steps.push(
@@ -157,7 +179,9 @@ export const mapWorkflow = (
         webhook_response_config,
         openfn: renameKeys(otherProps, { id: 'uuid' }),
         next: connectedEdges.reduce((obj: any, edge) => {
-          const target = liveJobs.find((j) => j.id === edge.target_job_id);
+          const target = Object.values(jobs).find(
+            (j) => j.id === edge.target_job_id
+          );
           if (!target) {
             throw new Error(`Failed to find ${edge.target_job_id}`);
           }
@@ -169,8 +193,8 @@ export const mapWorkflow = (
     );
   });
 
-  liveJobs.forEach((step: Provisioner.Job) => {
-    const outboundEdges = liveEdges.filter(
+  Object.values(jobs).forEach((step: Provisioner.Job) => {
+    const outboundEdges = Object.values(edges).filter(
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );
 
@@ -202,7 +226,9 @@ export const mapWorkflow = (
 
     if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
-        const target = liveJobs.find((j) => j.id === edge.target_job_id);
+        const target = Object.values(jobs).find(
+          (j) => j.id === edge.target_job_id
+        );
         // @ts-ignore
         next[slugify(target.name)] = mapEdge(edge);
         return next;
