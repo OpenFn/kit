@@ -86,9 +86,17 @@ workflows:
 const ensureArray = (x: any): any[] =>
   Array.isArray(x) ? x : Object.values(x ?? {});
 
-// Removes jobs/triggers/edges with delete: true
-const stripDeleted = (x: any) =>
-  ensureArray(x).filter((item: any) => !item.delete);
+// Removes jobs/triggers/edges with delete: true - Lightning wouldn't persist or
+// return them, so neither should the mock.
+const stripDeleted = (x: any) => {
+  if (!x) return [];
+  if (Array.isArray(x)) {
+    return x.filter((item: any) => !item.delete);
+  }
+  return Object.fromEntries(
+    Object.entries(x).filter(([, item]: any) => !item.delete)
+  );
+};
 
 // Validates a provisioner payload, returning an error body if invalid or null if valid.
 // Mirrors Lightning's error format so deploy code sees realistic rejection responses.
