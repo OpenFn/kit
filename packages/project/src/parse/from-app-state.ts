@@ -4,6 +4,7 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 
 import { Project } from '../Project';
+import Workflow from '../Workflow';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 import omitNil from '../util/omit-nil';
@@ -70,9 +71,36 @@ export default (
     };
   }
 
-  proj.workflows = Object.values(stateJson.workflows).map((w) =>
-    mapWorkflow(w, proj.credentials)
-  );
+  // Identify any workflows, steps and edges which may have been deleted in the state,
+  // and ensure their deletion is reflected in in the parsed Project
+  proj.workflows = Object.values(stateJson.workflows).map((w) => {
+    const workflow = new Workflow(mapWorkflow(w, proj.credentials));
+
+    if (w.delete) {
+      workflow.remove();
+      return workflow;
+    }
+
+    const deletedUuids = new Set(
+      Object.values(w.jobs as any)
+        .concat(Object.values(w.triggers), Object.values(w.edges))
+        .filter((x: any) => x.delete)
+        .map((x: any) => x.id)
+    );
+
+    for (const step of workflow.steps as any[]) {
+      if (deletedUuids.has(step.openfn?.uuid)) {
+        workflow.remove(step.id);
+      }
+      for (const toId in step.next ?? {}) {
+        if (deletedUuids.has(step.next[toId].openfn?.uuid)) {
+          workflow.remove(step.id, toId);
+        }
+      }
+    }
+
+    return workflow;
+  }) as unknown as l.WorkflowState[];
 
   return new Project(proj as l.ProjectState, config);
 };
@@ -110,6 +138,7 @@ export const mapWorkflow = (
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
+
   const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
@@ -122,7 +151,7 @@ export const mapWorkflow = (
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
-  Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
+  Object.values(triggers).forEach((trigger: Provisioner.Trigger) => {
     const {
       type,
       enabled,
@@ -164,7 +193,7 @@ export const mapWorkflow = (
     );
   });
 
-  Object.values(workflow.jobs).forEach((step: Provisioner.Job) => {
+  Object.values(jobs).forEach((step: Provisioner.Job) => {
     const outboundEdges = Object.values(edges).filter(
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );

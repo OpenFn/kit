@@ -64,13 +64,13 @@ export function merge(
   const finalWorkflows: Workflow[] = [];
   const usedTargetIds = new Set<string>();
   let sourceWorkflows = source.workflows;
+  let removedWorkflowIds: string[] = [];
 
   const noMappings = isEmpty(options.workflowMappings);
 
   if (options.onlyUpdated) {
-    // only include workflows that have changed (since history or forked_from) in the list
-    // unchanged target workflows will be added to the finalWorkflows list later
-    sourceWorkflows = findChangedWorkflows(source);
+    ({ changed: sourceWorkflows, removed: removedWorkflowIds } =
+      findChangedWorkflows(source));
   }
 
   if (!noMappings) {
@@ -128,7 +128,18 @@ export function merge(
     }
   }
 
-  // do not remove unmapped means include them too.
+  // Flag any workflows which need removing and add to to final workflows
+  for (const removedId of removedWorkflowIds) {
+    const targetWorkflow = target.getWorkflow(removedId);
+    if (targetWorkflow) {
+      usedTargetIds.add(targetWorkflow.id);
+      const deletedWorkflow = new Workflow(targetWorkflow.toJSON() as any);
+      deletedWorkflow.remove();
+      finalWorkflows.push(deletedWorkflow);
+    }
+  }
+
+  // do not remove unmapped means include them too
   if (!options?.removeUnmapped) {
     // workflows from target that didn't get merged
     for (const targetWorkflow of target.workflows) {

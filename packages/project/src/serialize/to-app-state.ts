@@ -101,12 +101,35 @@ export const mapWorkflow = (
 ) => {
   const useUuids = !options.asSpec;
 
+  // captured before toJSON(), since the `lookup` build below mints fresh uuids for anything missing one
+  const removed =
+    workflow instanceof Workflow
+      ? workflow.removed
+      : { self: false, ids: {} as Record<string, boolean> };
+  const originalUuids: Record<string, string> =
+    workflow instanceof Workflow ? workflow.getUUIDMap() : {};
+
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();
   }
 
   const { uuid, ...originalOpenfnProps } = workflow.openfn ?? {};
+
+  if (useUuids && removed.self && uuid) {
+    // nothing else about a deleted workflow matters to the provisioner
+    return {
+      ...originalOpenfnProps,
+      id: uuid,
+      name: workflow.name,
+      delete: true,
+      jobs: {},
+      triggers: {},
+      edges: {},
+      lock_version: workflow.openfn?.lock_version ?? null,
+    } as Provisioner.Workflow;
+  }
+
   const wfState = {
     ...originalOpenfnProps,
     jobs: {},
@@ -142,55 +165,91 @@ export const mapWorkflow = (
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
+    const isRemoved = useUuids && !!removed.ids[s.id];
+    const nodeUuid = originalUuids[s.id];
+
+    if (isRemoved && !nodeUuid) {
+      // never synced to Lightning - nothing to delete server-side
+      return;
+    }
+
     if (s.type) {
       isTrigger = true;
 
-      const { type, id, next, openfn, ...rest } = s;
-      node = {
-        ...rest,
-        type: s.type ?? 'webhook', // this is mostly for tests
-        ...(useUuids ? renameKeys(openfn, { uuid: 'id' }) : {}),
-      } as Provisioner.Trigger;
-      wfState.triggers[node.type] = node;
+      if (isRemoved) {
+        node = { id: nodeUuid, delete: true } as Provisioner.Trigger;
+      } else {
+        const { type, id, next, openfn, ...rest } = s;
+        node = {
+          ...rest,
+          type: s.type ?? 'webhook', // this is mostly for tests
+          ...(useUuids ? renameKeys(openfn, { uuid: 'id' }) : {}),
+        } as Provisioner.Trigger;
+      }
+      wfState.triggers[s.type] = node;
     } else {
-      node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
-      const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
-      if (useUuids) {
-        node.id = uuid;
-      }
-      if (s.expression) {
-        node.body = s.expression;
-      }
-      if (
-        typeof s.configuration === 'string' &&
-        !s.configuration.endsWith('.json')
-      ) {
-        let projectCredentialId = s.configuration;
-        if (projectCredentialId) {
-          const mappedCredential = credentials.find((c) => {
-            const name = getCredentialName(c);
-            return name === projectCredentialId;
-          });
-          if (mappedCredential && useUuids) {
-            projectCredentialId = mappedCredential.uuid;
-          }
+      if (isRemoved) {
+        node = { id: nodeUuid, delete: true } as Provisioner.Job;
+      } else {
+        node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
+        const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
+        if (useUuids) {
+          node.id = uuid;
+        }
+        if (s.expression) {
+          node.body = s.expression;
+        }
+        if (
+          typeof s.configuration === 'string' &&
+          !s.configuration.endsWith('.json')
+        ) {
+          let projectCredentialId = s.configuration;
+          if (projectCredentialId) {
+            const mappedCredential = credentials.find((c) => {
+              const name = getCredentialName(c);
+              return name === projectCredentialId;
+            });
+            if (mappedCredential && useUuids) {
+              projectCredentialId = mappedCredential.uuid;
+            }
 
-          if (useUuids) {
-            otherOpenFnProps.project_credential_id = projectCredentialId;
-          } else {
-            otherOpenFnProps.credential = projectCredentialId;
+            if (useUuids) {
+              otherOpenFnProps.project_credential_id = projectCredentialId;
+            } else {
+              otherOpenFnProps.credential = projectCredentialId;
+            }
           }
         }
+
+        Object.assign(node, useUuids ? defaultJobProps : {}, otherOpenFnProps);
       }
 
-      Object.assign(node, useUuids ? defaultJobProps : {}, otherOpenFnProps);
-
       wfState.jobs[s.id ?? slugify(s.name)] = node;
+    }
+
+    if (isRemoved) {
+      // a removed step's edges are meaningless without also being removed via workflow.remove(from, to)
+      return;
     }
 
     // create an edge to each linked node
     Object.keys(s.next ?? {}).forEach((next) => {
       const rules = s.next[next];
+
+      const edgeIsRemoved = useUuids && !!removed.ids[`${s.id}-${next}`];
+      const edgeUuid = originalUuids[`${s.id}-${next}`];
+
+      if (edgeIsRemoved && !edgeUuid) {
+        return;
+      }
+
+      if (edgeIsRemoved) {
+        wfState.edges[`${s.id}->${next}`] = {
+          id: edgeUuid,
+          delete: true,
+        } as any;
+        return;
+      }
 
       const { uuid, ...otherOpenFnProps } = rules.openfn ?? {};
 

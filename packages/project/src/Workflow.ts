@@ -23,6 +23,10 @@ class Workflow {
       edges: {}, // edges by from-id id
       uuid: {}, // id to uuid
       id: {}, // uuid to ids
+      removed: {
+        self: false,
+        ids: {} as Record<string, boolean>, // step id, or edge's `from-to` id
+      },
     };
 
     this.workflow = clone(workflow);
@@ -126,6 +130,48 @@ class Workflow {
     }
 
     return item;
+  }
+
+  // Flags a step, edge, or (no args) the whole workflow removed - to-app-state reads this to generate delete: true entries
+  remove(): this;
+  remove(stepId: string): this;
+  remove(from: string, to: string): this;
+  remove(a?: string, b?: string): this {
+    if (a === undefined) {
+      this.index.removed.self = true;
+      return this;
+    }
+
+    if (b === undefined) {
+      if (!(a in this.index.steps)) {
+        throw new Error(`step with id "${a}" does not exist in workflow`);
+      }
+      this.index.removed.ids[a] = true;
+    } else {
+      const edgeId = `${a}-${b}`;
+      if (!(edgeId in this.index.edges)) {
+        throw new Error(`edge with id "${edgeId}" does not exist in workflow`);
+      }
+      this.index.removed.ids[edgeId] = true;
+    }
+
+    return this;
+  }
+
+  isRemoved(): boolean;
+  isRemoved(stepId: string): boolean;
+  isRemoved(from: string, to: string): boolean;
+  isRemoved(a?: string, b?: string): boolean {
+    if (a === undefined) {
+      return this.index.removed.self;
+    }
+
+    const id = b === undefined ? a : `${a}-${b}`;
+    return !!this.index.removed.ids[id];
+  }
+
+  get removed(): { self: boolean; ids: Record<string, boolean> } {
+    return this.index.removed;
   }
 
   // TODO needs unit tests and maybe setter
