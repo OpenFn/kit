@@ -13,6 +13,15 @@ import getCredentialName from '../util/get-credential-name';
 export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
   alias?: string;
+
+  // Step ids already written down locally, keyed by step name. An id we have
+  // used before wins over one derived from the name, so two names that shorten
+  // to the same thing cannot land on top of each other.
+  //
+  // Keyed by name rather than by the step's uuid because the workflow file does
+  // not carry uuids. That is why a rename still moves a step: there is nothing
+  // on disk tying the new name to the old id.
+  recordedStepIds?: Record<string, string>;
 };
 
 export default (
@@ -78,7 +87,7 @@ export default (
   }
 
   proj.workflows = Object.values(stateJson.workflows).map((w) =>
-    mapWorkflow(w, proj.credentials)
+    mapWorkflow(w, proj.credentials, config.recordedStepIds)
   );
 
   return new Project(proj as l.ProjectState, config);
@@ -109,14 +118,74 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   return e;
 };
 
+
+
+// The ids a project on disk has already given its steps, keyed by step name.
+// Feed this back into a pull so a step keeps the id it already has.
+export const recordedStepIdsOf = (project: any): Record<string, string> => {
+  const recorded: Record<string, string> = {};
+  for (const workflow of project?.workflows ?? []) {
+    for (const step of workflow?.steps ?? []) {
+      if (step?.name && step?.id) {
+        recorded[step.name] = step.id;
+      }
+    }
+  }
+  return recorded;
+};
+
+// Work out one id per step, before anything refers to them.
+//
+// Deriving an id from a name loses whatever is not url-safe, so two names that
+// differ only in emoji or accents shorten to the same thing and one step lands
+// on top of the other. An id we have already written down is kept. Anything
+// new is derived and then made unique, in uuid order, so two people pulling the
+// same project separately reach the same answer without talking to each other.
+export const resolveStepIds = (
+  jobs: Record<string, Provisioner.Job>,
+  recorded: Record<string, string> = {}
+): Record<string, string> => {
+  const byUuid: Record<string, string> = {};
+  const taken = new Set<string>();
+
+  const all = Object.values(jobs);
+
+  for (const job of all) {
+    const known = recorded[job.name];
+    if (known && !taken.has(known)) {
+      byUuid[job.id] = known;
+      taken.add(known);
+    }
+  }
+
+  const fresh = all
+    .filter((job) => !byUuid[job.id])
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  for (const job of fresh) {
+    const base = slugify(job.name) || 'step';
+    let candidate = base;
+    let n = 2;
+    while (taken.has(candidate)) {
+      candidate = `${base}-${n++}`;
+    }
+    byUuid[job.id] = candidate;
+    taken.add(candidate);
+  }
+
+  return byUuid;
+};
+
 // map a project workflow to a local cli workflow
 // TODO this probably gets easier if I index everything by name
 export const mapWorkflow = (
   workflow: Provisioner.Workflow,
-  credentials: l.CredentialState[] = []
+  credentials: l.CredentialState[] = [],
+  recordedStepIds: Record<string, string> = {}
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
+  const stepIds = resolveStepIds(jobs, recordedStepIds);
   const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
@@ -166,7 +235,7 @@ export const mapWorkflow = (
             throw new Error(`Failed to find ${edge.target_job_id}`);
           }
           // we use the name, not the id, to reference
-          obj[slugify(target.name)] = mapEdge(edge);
+          obj[stepIds[target.id]] = mapEdge(edge);
           return obj;
         }, {}),
       }) as l.Trigger
@@ -187,7 +256,7 @@ export const mapWorkflow = (
     } = step;
 
     const s: any /*l.Job*/ = {
-      id: slugify(name),
+      id: stepIds[step.id],
       name: name,
       expression,
       adaptor, // TODO is this wrong?
@@ -210,7 +279,7 @@ export const mapWorkflow = (
           (j) => j.id === edge.target_job_id
         );
         // @ts-ignore
-        next[slugify(target.name)] = mapEdge(edge);
+        next[stepIds[target.id]] = mapEdge(edge);
         return next;
       }, {});
     }

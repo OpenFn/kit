@@ -1,6 +1,6 @@
 import yargs from 'yargs';
 import path from 'node:path';
-import Project, { Workspace } from '@openfn/project';
+import Project, { Workspace, recordedStepIdsOf } from '@openfn/project';
 
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
@@ -286,6 +286,11 @@ export async function fetchRemoteProject(
     {
       ...workspace.getConfig(),
       alias: options.alias ?? localProject?.alias ?? 'main',
+      // Keep the ids the checked-out project already gave its steps, so a name
+      // that shortens to the same id as another does not overwrite it.
+      recordedStepIds: localProject
+        ? recordedStepIdsOf(localProject)
+        : undefined,
     }
   );
 

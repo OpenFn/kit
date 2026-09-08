@@ -22,7 +22,7 @@ export {
   match as versionsEqual,
 } from './util/version';
 
-export { mapWorkflow } from './parse/from-app-state';
+export { mapWorkflow, recordedStepIdsOf } from './parse/from-app-state';
 
 export { default as detectVersion } from './util/detect-version';
 

@@ -2,6 +2,7 @@ import test from 'ava';
 import fromAppState, {
   mapEdge,
   mapWorkflow,
+  recordedStepIdsOf,
 } from '../../src/parse/from-app-state';
 import { cloneDeep } from 'lodash-es';
 
@@ -547,4 +548,95 @@ workflows:
   t.is(project.workflows.length, 1);
   t.is(project.workflows[0].name, 'wf1');
   t.is(project.workflows[0].steps.length, 2);
+});
+
+// --- recorded step ids ---------------------------------------------------
+//
+// An id derived from a name loses whatever is not url-safe, so two names that
+// differ only in emoji or accents used to land on the same id and one step's
+// code was silently dropped on the way to disk.
+
+const twoStepsSharingAnId = () => ({
+  id: 'p1',
+  name: 'demo',
+  project_credentials: [],
+  workflows: [
+    {
+      id: 'wf-uuid',
+      name: 'My Workflow',
+      triggers: {},
+      edges: {},
+      jobs: {
+        j1: { id: 'bbbb-2222', name: 'step 👍', body: 'up()', adaptor: 'common' },
+        j2: { id: 'aaaa-1111', name: 'step 👎', body: 'down()', adaptor: 'common' },
+      },
+    },
+  ],
+});
+
+const stepIdsOf = (project: any) =>
+  (Object.values(project.workflows)[0] as any).steps.map((s: any) => s.id);
+
+test('two names that shorten to the same id still get distinct ids', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta);
+
+  const ids = stepIdsOf(project);
+
+  t.is(ids.length, 2);
+  t.is(new Set(ids).size, 2);
+});
+
+test('both step bodies reach the filesystem', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta);
+
+  const files = project.serialize('fs') as Record<string, string>;
+  const scripts = Object.keys(files).filter((f) => f.endsWith('.js'));
+
+  t.is(scripts.length, 2);
+  t.true(Object.values(files).some((c) => c.includes('up()')));
+  t.true(Object.values(files).some((c) => c.includes('down()')));
+});
+
+test('an id we have already written down is kept', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta, {
+    recordedStepIds: { 'step \u{1F44D}': 'thumbs-up', 'step \u{1F44E}': 'thumbs-down' },
+  });
+
+  t.deepEqual(stepIdsOf(project).sort(), ['thumbs-down', 'thumbs-up']);
+});
+
+test('a new step works around an id that is already taken', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta, {
+    recordedStepIds: { 'step \u{1F44E}': 'step' },
+  });
+
+  const ids = stepIdsOf(project);
+
+  t.true(ids.includes('step'));
+  t.is(new Set(ids).size, 2);
+});
+
+test('two people pulling separately arrive at the same ids', (t) => {
+  const first = stepIdsOf(fromAppState(twoStepsSharingAnId() as any, meta));
+
+  // the same workflow, with the jobs arriving the other way round
+  const reordered: any = twoStepsSharingAnId();
+  reordered.workflows[0].jobs = {
+    j2: reordered.workflows[0].jobs.j2,
+    j1: reordered.workflows[0].jobs.j1,
+  };
+  const second = stepIdsOf(fromAppState(reordered, meta));
+
+  t.deepEqual(first.sort(), second.sort());
+});
+
+test('a project on disk hands back the ids it already gave its steps', (t) => {
+  const first = fromAppState(twoStepsSharingAnId() as any, meta);
+
+  const recorded = recordedStepIdsOf(first);
+  const second = fromAppState(twoStepsSharingAnId() as any, meta, {
+    recordedStepIds: recorded,
+  });
+
+  t.deepEqual(stepIdsOf(first).sort(), stepIdsOf(second).sort());
 });
