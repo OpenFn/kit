@@ -3,6 +3,9 @@
   "include": ["src/**/*.ts", "test/**/*test.ts"],
   "compilerOptions": {
     "module": "ESNext",
+    // Unicode property escapes in slugify need ES2018 or later. Build output is
+    // controlled by tsup; this only affects type validation.
+    "target": "ES2020",
     "sourceMap": true
   }
 }
