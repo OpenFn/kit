@@ -488,6 +488,127 @@ a-(condition=x)-f
   t.is(a_f.condition_expression, 'x');
 });
 
+const removableWorkflowData: any = {
+  id: 'my-project',
+  workflows: [
+    {
+      id: 'wf',
+      name: 'wf',
+      openfn: { uuid: 'wf-uuid' },
+      steps: [
+        {
+          id: 'trigger',
+          type: 'webhook',
+          openfn: { uuid: 'trigger-uuid' },
+          next: {
+            step: { openfn: { uuid: 'edge-uuid' } },
+          },
+        },
+        {
+          id: 'step',
+          name: 'step',
+          expression: '.',
+          adaptor: 'common',
+          openfn: { uuid: 'step-uuid' },
+        },
+      ],
+    },
+  ],
+};
+
+test('a removed job becomes a minimal delete: true entry', (t) => {
+  const project = new Project(cloneDeep(removableWorkflowData));
+  project.getWorkflow('wf')!.remove('step');
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.workflows['wf'].jobs.step, {
+    id: 'step-uuid',
+    delete: true,
+  });
+});
+
+test('a removed trigger becomes a minimal delete: true entry', (t) => {
+  const project = new Project(cloneDeep(removableWorkflowData));
+  project.getWorkflow('wf')!.remove('trigger');
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.workflows['wf'].triggers.webhook, {
+    id: 'trigger-uuid',
+    delete: true,
+  });
+});
+
+test('a removed edge becomes a minimal delete: true entry', (t) => {
+  const project = new Project(cloneDeep(removableWorkflowData));
+  project.getWorkflow('wf')!.remove('trigger', 'step');
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.workflows['wf'].edges['trigger->step'], {
+    id: 'edge-uuid',
+    delete: true,
+  });
+});
+
+test('removing a job/trigger/edge that was never synced drops it entirely', (t) => {
+  // v2ProjectData's workflow has no openfn.uuid anywhere - nothing to tell
+  // Lightning to delete, so removed items are just dropped rather than sent
+  // with a made-up id
+  const project = new Project(cloneDeep(v2ProjectData), {
+    formats: { project: 'json' },
+  });
+  const wf = project.getWorkflow('my-workflow')!;
+  wf.remove('transform-data');
+  wf.remove('webhook', 'transform-data');
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.workflows['my-workflow'].jobs, {});
+  t.deepEqual(state.workflows['my-workflow'].edges, {});
+});
+
+test("removing a step doesn't remove its edges automatically", (t) => {
+  const project = new Project(cloneDeep(removableWorkflowData));
+  project.getWorkflow('wf')!.remove('step');
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  // the edge is still serialized normally, since only the step was flagged -
+  // removing connected edges is the caller's job, see Workflow.ts
+  t.falsy(state.workflows['wf'].edges['trigger->step'].delete);
+});
+
+test('a removed workflow becomes a minimal delete: true entry', (t) => {
+  const project = new Project(cloneDeep(removableWorkflowData));
+  project.getWorkflow('wf')!.remove();
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.deepEqual(state.workflows['wf'], {
+    id: 'wf-uuid',
+    name: 'wf',
+    delete: true,
+    jobs: {},
+    triggers: {},
+    edges: {},
+    lock_version: null,
+  });
+});
+
+test('asSpec ignores removed flags', (t) => {
+  const data = cloneDeep(removableWorkflowData);
+  const project = new Project(data);
+  project.getWorkflow('wf')!.remove('step');
+
+  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
+
+  // asSpec has no notion of delete: true - the step is serialized normally
+  t.truthy(result.workflows['wf'].jobs.step);
+  t.falsy(result.workflows['wf'].jobs.step.delete);
+});
+
 test('should serialize channels to app state', (t) => {
   const channels = [
     {

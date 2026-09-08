@@ -13,9 +13,10 @@ test('should return 0 changed workflows from forked_from', (t) => {
     [b.id]: generateHash(b),
   };
 
-  const changed = findChangedWorkflows(project);
+  const { changed, removed } = findChangedWorkflows(project);
 
   t.deepEqual(changed, []);
+  t.deepEqual(removed, []);
 });
 
 test('should return 1 changed workflows from forked_from', (t) => {
@@ -31,12 +32,13 @@ test('should return 1 changed workflows from forked_from', (t) => {
   // Now change b
   b.steps[0].name = 'x1';
 
-  const changed = findChangedWorkflows(project);
+  const { changed, removed } = findChangedWorkflows(project);
   t.is(changed.length, 1);
   t.is(changed[0].id, 'b');
+  t.deepEqual(removed, []);
 });
 
-test('should return 1 removed workflow', (t) => {
+test('should return 1 removed workflow id', (t) => {
   const project = generateProject('proj', ['@id a a-b', '@id b x-y']);
   const [a, b] = project.workflows;
 
@@ -48,9 +50,9 @@ test('should return 1 removed workflow', (t) => {
   // remove workflow b
   project.workflows.pop();
 
-  const changed = findChangedWorkflows(project);
-  t.is(changed.length, 1);
-  t.is(changed[0].id, 'b');
+  const { changed, removed } = findChangedWorkflows(project);
+  t.deepEqual(changed, []);
+  t.deepEqual(removed, ['b']);
 });
 
 test('should return 1 added workflow', (t) => {
@@ -62,9 +64,10 @@ test('should return 1 added workflow', (t) => {
     // Do not include b in forked_from - it's new!
   };
 
-  const changed = findChangedWorkflows(project);
+  const { changed, removed } = findChangedWorkflows(project);
   t.is(changed.length, 1);
   t.is(changed[0].id, 'b');
+  t.deepEqual(removed, []);
 });
 
 test.todo('changed from history');

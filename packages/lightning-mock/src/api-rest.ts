@@ -86,16 +86,31 @@ workflows:
 const filterCollections = (incoming: any[] = []): any[] =>
   incoming.filter((c) => !c.delete);
 
+const ensureArray = (x: any): any[] =>
+  Array.isArray(x) ? x : Object.values(x ?? {});
+
+// Removes jobs/triggers/edges with delete: true - Lightning wouldn't persist or
+// return them, so neither should the mock.
+const stripDeleted = (x: any) => {
+  if (!x) return [];
+  if (Array.isArray(x)) {
+    return x.filter((item: any) => !item.delete);
+  }
+  return Object.fromEntries(
+    Object.entries(x).filter(([, item]: any) => !item.delete)
+  );
+};
+
 // Validates a provisioner payload, returning an error body if invalid or null if valid.
 // Mirrors Lightning's error format so deploy code sees realistic rejection responses.
 export function validateProvisionPayload(
-  incoming: any
+  incoming: any,
+  existingProject?: any
 ): Record<string, any> | null {
   const workflowErrors: Record<string, any> = {};
 
-  const wfList: any[] = Array.isArray(incoming.workflows)
-    ? incoming.workflows
-    : Object.values(incoming.workflows ?? {});
+  const wfList: any[] = ensureArray(incoming.workflows);
+  const existingWfList: any[] = ensureArray(existingProject?.workflows);
 
   for (const wf of wfList) {
     const wfErrors: Record<string, any> = {};
@@ -105,9 +120,7 @@ export function validateProvisionPayload(
     }
 
     const edgeErrors: Record<string, any> = {};
-    const edgeList: any[] = Array.isArray(wf.edges)
-      ? wf.edges
-      : Object.values(wf.edges ?? {});
+    const edgeList: any[] = ensureArray(wf.edges);
 
     for (const edge of edgeList) {
       const key = edge.id ?? '->';
@@ -132,9 +145,7 @@ export function validateProvisionPayload(
     }
 
     const jobErrors: Record<string, any> = {};
-    const jobList: any[] = Array.isArray(wf.jobs)
-      ? wf.jobs
-      : Object.values(wf.jobs ?? {});
+    const jobList: any[] = ensureArray(wf.jobs);
 
     for (const job of jobList) {
       if (!job.id) {
@@ -148,9 +159,7 @@ export function validateProvisionPayload(
     }
 
     const triggerErrors: Record<string, any> = {};
-    const triggerList: any[] = Array.isArray(wf.triggers)
-      ? wf.triggers
-      : Object.values(wf.triggers ?? {});
+    const triggerList: any[] = ensureArray(wf.triggers);
 
     for (const trigger of triggerList) {
       if (!trigger.id) {
@@ -166,6 +175,17 @@ export function validateProvisionPayload(
     if (Object.keys(wfErrors).length > 0) {
       const wfKey = wf.name ?? wf.id ?? 'unknown';
       workflowErrors[wfKey] = wfErrors;
+    }
+  }
+
+  // a whole workflow, unlike its jobs/triggers/edges, must be explicit about removal
+  const incomingWfIds = new Set(wfList.map((wf: any) => wf.id));
+  for (const wf of existingWfList) {
+    if (!incomingWfIds.has(wf.id)) {
+      const wfKey = wf.name ?? wf.id ?? 'unknown';
+      workflowErrors[wfKey] = {
+        delete: ['missing from payload - flag delete: true to remove it'],
+      };
     }
   }
 
@@ -215,7 +235,10 @@ export default (
   router.post('/api/provision', (ctx) => {
     const incoming: any = ctx.request.body;
 
-    const validationErrors = validateProvisionPayload(incoming);
+    const validationErrors = validateProvisionPayload(
+      incoming,
+      state.projects[incoming.id]
+    );
     if (validationErrors) {
       ctx.response.status = 422;
       ctx.response.body = validationErrors;
@@ -246,7 +269,12 @@ export default (
       ? incoming.workflows
       : Object.values(incoming.workflows ?? {});
     wfList.forEach((wf: any) => {
-      app.updateWorkflow(incoming.id, wf);
+      app.updateWorkflow(incoming.id, {
+        ...wf,
+        jobs: stripDeleted(wf.jobs),
+        triggers: stripDeleted(wf.triggers),
+        edges: stripDeleted(wf.edges),
+      });
     });
 
     ctx.response.status = 200;
