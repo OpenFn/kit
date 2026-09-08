@@ -4,15 +4,13 @@ import { generateHash } from './version';
 
 export type ChangedWorkflows = {
   changed: Workflow[];
-  // ids of workflows present in forked_from/history but no longer in the
-  // project - ids only, since the removed workflow itself is gone from
-  // `project`. The caller needs the *target's* copy to flag via remove().
+  // ids of workflows present in forked_from/history but no longer in the project
   removed: string[];
 };
 
 /**
- * For a given Project, identify which workflows have changed
- * Uses forked_from as the base, or history if that's unavailable
+ * Identify which projects have changed or been removed since the last checkpoint.
+ * Prefers to use `forked_from` but will fallback to history
  */
 export default (project: Project): ChangedWorkflows => {
   const base: Record<string, string> =

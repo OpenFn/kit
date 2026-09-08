@@ -69,8 +69,6 @@ export function merge(
   const noMappings = isEmpty(options.workflowMappings);
 
   if (options.onlyUpdated) {
-    // only include workflows that have changed (since history or forked_from) in the list
-    // unchanged target workflows will be added to the finalWorkflows list later
     ({ changed: sourceWorkflows, removed: removedWorkflowIds } =
       findChangedWorkflows(source));
   }
@@ -130,12 +128,7 @@ export function merge(
     }
   }
 
-  // A workflow findChangedWorkflows found in forked_from but not in source
-  // any more was deleted locally. Flag it removed rather than dropping it,
-  // so to-app-state can still tell the provisioner.
-  // Clone rather than mutate target's own instance - target (typically the
-  // fetched remote project) is often read again after merge (eg for
-  // diffing), and must keep describing what's actually on the server.
+  // Flag any workflows which need removing and add to to final workflows
   for (const removedId of removedWorkflowIds) {
     const targetWorkflow = target.getWorkflow(removedId);
     if (targetWorkflow) {
@@ -146,7 +139,7 @@ export function merge(
     }
   }
 
-  // do not remove unmapped means include them too.
+  // do not remove unmapped means include them too
   if (!options?.removeUnmapped) {
     // workflows from target that didn't get merged
     for (const targetWorkflow of target.workflows) {

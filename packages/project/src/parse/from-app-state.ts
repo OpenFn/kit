@@ -77,8 +77,8 @@ export default (
     };
   }
 
-  // a delete: true workflow only appears in state we sent to the provisioner (to-app-state.ts) - never echoed back
   proj.workflows = Object.values(stateJson.workflows)
+    // Ignore provisioner  delete: true flags
     .filter((w) => !w.delete)
     .map((w) => mapWorkflow(w, proj.credentials));
 
