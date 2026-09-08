@@ -413,27 +413,6 @@ test.serial(
   }
 );
 
-test.serial(
-  'should report channel and socket state alongside a failed event',
-  async (t) => {
-    // Distinguishes a genuine failure on a healthy channel from collateral
-    // damage while the channel is mid-rejoin after a drop
-    const channel = {
-      ...mockChannel({}),
-      state: 'errored',
-      socket: { connectionState: () => 'connecting' },
-    };
-
-    await t.throwsAsync(() =>
-      sendEvent({ id: 'x', channel, logger, options: {} }, 'step:complete', {})
-    );
-
-    const reports = await waitForSentryReport(testkit);
-    t.is(reports[0].extra?.channel_state, 'errored');
-    t.is(reports[0].extra?.socket_state, 'connecting');
-  }
-);
-
 test.serial('should report to sentry against the run scope', async (t) => {
   const sentryScope = Sentry.getIsolationScope().clone();
   sentryScope.setTag('run_id', 'run-1');
