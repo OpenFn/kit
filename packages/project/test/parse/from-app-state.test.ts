@@ -2,7 +2,7 @@ import test from 'ava';
 import fromAppState, {
   mapEdge,
   mapWorkflow,
-  recordedStepIdsOf,
+  recordedIdsOf,
 } from '../../src/parse/from-app-state';
 import { cloneDeep } from 'lodash-es';
 
@@ -613,10 +613,13 @@ test('both step bodies reach the filesystem', (t) => {
 
 test('an id we have already written down is kept', (t) => {
   const project = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: {
-      'My Workflow': {
-        'step \u{1F44D}': 'thumbs-up',
-        'step \u{1F44E}': 'thumbs-down',
+    recordedIds: {
+      workflows: {},
+      steps: {
+        'My Workflow': {
+          'step \u{1F44D}': 'thumbs-up',
+          'step \u{1F44E}': 'thumbs-down',
+        },
       },
     },
   });
@@ -683,12 +686,12 @@ test('two workflows can each hold a step of the same name', (t) => {
   };
 
   const first = fromAppState(state, meta);
-  const recorded = recordedStepIdsOf(first);
+  const recorded = recordedIdsOf(first);
 
   // each workflow keeps its own entry rather than one overwriting the other
-  t.deepEqual(Object.keys(recorded).sort(), ['One', 'Two']);
+  t.deepEqual(Object.keys(recorded.steps).sort(), ['One', 'Two']);
 
-  const second = fromAppState(state, meta, { recordedStepIds: recorded });
+  const second = fromAppState(state, meta, { recordedIds: recorded });
   t.deepEqual(idsByName(second, 0), idsByName(first, 0));
   t.deepEqual(idsByName(second, 1), idsByName(first, 1));
 });
@@ -709,8 +712,9 @@ test('a step named like an object property does not pick one up', (t) => {
 
 test('an id from a project file that escapes the directory is ignored', (t) => {
   const project = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: {
-      'My Workflow': { 'step \u{1F44D}': '../../../../tmp/pwned' },
+    recordedIds: {
+      workflows: {},
+      steps: { 'My Workflow': { 'step \u{1F44D}': '../../../../tmp/pwned' } },
     },
   });
 
@@ -724,7 +728,7 @@ test('a project on disk hands back the ids it already gave its steps', (t) => {
   const first = fromAppState(twoStepsSharingAnId() as any, meta);
 
   const second = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: recordedStepIdsOf(first),
+    recordedIds: recordedIdsOf(first),
   });
 
   t.deepEqual(idsByName(second), idsByName(first));
@@ -732,12 +736,15 @@ test('a project on disk hands back the ids it already gave its steps', (t) => {
 
 test('the recorded ids are not written into the workspace config', (t) => {
   const project = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: { 'My Workflow': { 'step \u{1F44D}': 'thumbs-up' } },
+    recordedIds: {
+      workflows: {},
+      steps: { 'My Workflow': { 'step \u{1F44D}': 'thumbs-up' } },
+    },
   });
 
   const files = project.serialize('fs') as Record<string, string>;
 
-  t.false(JSON.stringify(files).includes('recordedStepIds'));
+  t.false(JSON.stringify(files).includes('recordedIds'));
 });
 
 test('renaming a step still moves its id', (t) => {
@@ -757,12 +764,45 @@ test('renaming a step still moves its id', (t) => {
   });
 
   const first = fromAppState(withName('Send data') as any, meta);
-  const recorded = recordedStepIdsOf(first);
+  const recorded = recordedIdsOf(first);
 
   const renamed = fromAppState(withName('Send data v2') as any, meta, {
-    recordedStepIds: recorded,
+    recordedIds: recorded,
   });
 
   t.is(idsByName(first)['Send data'], 'send-data');
   t.is(idsByName(renamed)['Send data v2'], 'send-data-v2');
+});
+
+test('two workflow names that shorten to the same id stay distinct', (t) => {
+  const state: any = {
+    id: 'p',
+    name: 'demo',
+    project_credentials: [],
+    workflows: [
+      {
+        id: 'w1',
+        name: 'wf \u{1F44D}',
+        triggers: {},
+        edges: {},
+        jobs: { a: { id: 'u-a', name: 'A', body: 'one()', adaptor: 'c' } },
+      },
+      {
+        id: 'w2',
+        name: 'wf \u{1F44E}',
+        triggers: {},
+        edges: {},
+        jobs: { b: { id: 'u-b', name: 'B', body: 'two()', adaptor: 'c' } },
+      },
+    ],
+  };
+
+  const project = fromAppState(state, meta);
+  const ids = Object.values(project.workflows).map((w: any) => w.id);
+
+  t.is(new Set(ids).size, 2);
+
+  // on main this throws `step not found: b`
+  const files = project.serialize('fs') as Record<string, string>;
+  t.is(Object.keys(files).filter((f) => f.endsWith('.js')).length, 2);
 });

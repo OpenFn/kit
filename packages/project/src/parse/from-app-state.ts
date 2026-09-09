@@ -14,7 +14,7 @@ export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
   alias?: string;
 
-  recordedStepIds?: RecordedStepIds;
+  recordedIds?: RecordedIds;
 };
 
 export default (
@@ -24,7 +24,7 @@ export default (
 ) => {
   let stateJson = ensureJson<Provisioner.Project>(state);
   delete config.format;
-  const { recordedStepIds, ...projectConfig } = config;
+  const { recordedIds, ...projectConfig } = config;
   config = projectConfig;
 
   const {
@@ -81,8 +81,18 @@ export default (
     };
   }
 
-  proj.workflows = Object.values(stateJson.workflows).map((w) =>
-    mapWorkflow(w, proj.credentials, recordedStepIds?.[w.name])
+  const allWorkflows = Object.values(stateJson.workflows);
+  const workflowIds = resolveWorkflowIds(
+    allWorkflows,
+    recordedIds?.workflows ?? {}
+  );
+  proj.workflows = allWorkflows.map((w) =>
+    mapWorkflow(
+      w,
+      proj.credentials,
+      recordedIds?.steps?.[w.name] ?? {},
+      workflowIds[w.id]
+    )
   );
 
   return new Project(proj as l.ProjectState, config);
@@ -113,74 +123,99 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   return e;
 };
 
-// Keyed by workflow name, then step name. The files carry no uuids to match on,
-// which is why a rename still moves a step.
-export type RecordedStepIds = Record<string, Record<string, string>>;
+// Ids a project has already given its workflows and steps. Matched by name,
+// since the files carry no uuids, which is why a rename still moves things.
+export type RecordedIds = {
+  workflows: Record<string, string>;
+  steps: Record<string, Record<string, string>>;
+};
 
 // An id becomes a directory and a file name, and a workflow file can come from
 // a repository somebody else prepared, so `../../..` is not to be trusted.
 const isSafeId = (id: unknown): id is string =>
   typeof id === 'string' && id.length > 0 && slugify(id) === id;
 
-export const recordedStepIdsOf = (project: {
-  workflows?: { name?: string; steps?: { id?: string; name?: string }[] }[];
-}): RecordedStepIds => {
-  const recorded: RecordedStepIds = Object.create(null);
+export const recordedIdsOf = (project: {
+  workflows?: {
+    id?: string;
+    name?: string;
+    steps?: { id?: string; name?: string }[];
+  }[];
+}): RecordedIds => {
+  const workflows: Record<string, string> = Object.create(null);
+  const steps: Record<string, Record<string, string>> = Object.create(null);
+
   for (const workflow of project?.workflows ?? []) {
     if (!workflow?.name) continue;
+    if (isSafeId(workflow.id)) {
+      workflows[workflow.name] = workflow.id!;
+    }
     const forWorkflow: Record<string, string> = Object.create(null);
     for (const step of workflow.steps ?? []) {
       if (step?.name && isSafeId(step.id)) {
         forWorkflow[step.name] = step.id!;
       }
     }
-    recorded[workflow.name] = forWorkflow;
+    steps[workflow.name] = forWorkflow;
   }
-  return recorded;
+
+  return { workflows, steps };
 };
 
 // Both passes run in uuid order so the result does not depend on how the server
-// listed the jobs.
-export const resolveStepIds = (
-  jobs: Record<string, Provisioner.Job>,
-  triggers: Record<string, Provisioner.Trigger> = {},
-  recorded: Record<string, string> = {}
+// listed things.
+const assignIds = (
+  items: { id: string; name?: string }[],
+  recorded: Record<string, string>,
+  fallback: string,
+  reserved: string[] = []
 ): Record<string, string> => {
   const byUuid: Record<string, string> = Object.create(null);
-  const taken = new Set<string>();
+  const taken = new Set(reserved);
 
-  // A trigger's id is its type and shares the directory, so reserve those first.
-  for (const trigger of Object.values(triggers)) {
-    if (trigger?.type) {
-      taken.add(trigger.type);
-    }
-  }
-
-  const inUuidOrder = Object.values(jobs)
+  const inUuidOrder = items
     .slice()
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  for (const job of inUuidOrder) {
-    const known = recorded[job.name];
+  for (const item of inUuidOrder) {
+    const known = item.name ? recorded[item.name] : undefined;
     if (isSafeId(known) && !taken.has(known)) {
-      byUuid[job.id] = known;
+      byUuid[item.id] = known;
       taken.add(known);
     }
   }
 
-  for (const job of inUuidOrder) {
-    if (byUuid[job.id]) continue;
-    const base = slugify(job.name) || 'step';
+  for (const item of inUuidOrder) {
+    if (byUuid[item.id]) continue;
+    const base = slugify(item.name ?? '') || fallback;
     let candidate = base;
     let n = 2;
     while (taken.has(candidate)) {
       candidate = `${base}-${n++}`;
     }
-    byUuid[job.id] = candidate;
+    byUuid[item.id] = candidate;
     taken.add(candidate);
   }
 
   return byUuid;
+};
+
+export const resolveWorkflowIds = (
+  workflows: Provisioner.Workflow[],
+  recorded: Record<string, string> = {}
+) => assignIds(workflows, recorded, 'workflow');
+
+export const resolveStepIds = (
+  jobs: Record<string, Provisioner.Job>,
+  triggers: Record<string, Provisioner.Trigger> = {},
+  recorded: Record<string, string> = {}
+): Record<string, string> => {
+  // A trigger's id is its type and shares the directory, so reserve those first.
+  const triggerIds = Object.values(triggers)
+    .map((trigger) => trigger?.type)
+    .filter(Boolean) as string[];
+
+  return assignIds(Object.values(jobs), recorded, 'step', triggerIds);
 };
 
 // map a project workflow to a local cli workflow
@@ -188,7 +223,8 @@ export const resolveStepIds = (
 export const mapWorkflow = (
   workflow: Provisioner.Workflow,
   credentials: l.CredentialState[] = [],
-  recordedStepIds: Record<string, string> = {}
+  recordedStepIds: Record<string, string> = {},
+  workflowId?: string
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
@@ -200,7 +236,7 @@ export const mapWorkflow = (
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
   if (workflow.name) {
-    mapped.id = slugify(workflow.name);
+    mapped.id = workflowId ?? slugify(workflow.name);
   }
 
   // TODO what do we do if the condition is disabled?
