@@ -39,14 +39,17 @@ export type DeployOptions = Pick<
   | 'logJson'
   | 'confirm'
 > & {
-  project?: string; // this is a CLI positional arg, not an option
-  workspace?: string;
-  dryRun?: boolean;
-  new?: boolean;
-  name?: string;
+  // CLI positional args, rather than options
+  project?: string;
+  target?: string;
+
   alias?: string;
+  dryRun?: boolean;
   jsonDiff?: boolean;
+  name?: string;
+  new?: boolean;
   workflow?: string[];
+  workspace?: string;
 };
 
 const options = [
@@ -74,7 +77,7 @@ const printProjectName = (project: Project) =>
   `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
 
 export const command: yargs.CommandModule<DeployOptions> = {
-  command: 'deploy [project]',
+  command: 'deploy [project] [target]',
   aliases: 'push',
   describe: `Deploy the passed or checked-out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
@@ -83,13 +86,25 @@ export const command: yargs.CommandModule<DeployOptions> = {
         describe:
           'The UUID, local id or local alias of the project to deploy to',
       })
+      .positional('target', {
+        describe:
+          'When deploying a local file, the UUID or alias of the remote project to deploy it to. Defaults to the UUID embedded in the file',
+      })
       .example(
         'deploy',
-        'Deploy the checked-out project its connected remote instance'
+        'Deploy the checked-out project to its connected remote instance'
       )
       .example(
         'deploy staging',
-        'Deploy the checkout-out project to the remote project with alias "staging"'
+        'Deploy the checked-out project to the remote project with alias "staging"'
+      )
+      .example(
+        'deploy project.yaml',
+        'Deploy project.yaml to its own tracked remote project'
+      )
+      .example(
+        'deploy project.yaml staging',
+        'Deploy project.yaml to the remote project with alias "staging"'
       ),
   handler: ensure('project-deploy', options),
 };
@@ -298,15 +313,36 @@ export async function handler(options: DeployOptions, logger: Logger) {
   );
   const config = loadAppAuthConfig(options, logger);
 
+  // Work out what we're deploying (a local file, or the checked-out
+  // workspace project) and, separately, which remote project to deploy it
+  // to. These are independent - a file can target any tracked remote, not
+  // just the one it came from.
+  let filePath: string | undefined;
+  let targetIdentifier: string | undefined;
+
+  if (options.project && options.target) {
+    // two positionals: `deploy <file> <target>` - the first is always a file
+    filePath = options.project;
+    targetIdentifier = options.target;
+  } else if (options.project) {
+    // one positional: a file (`deploy project.yaml`) or a target
+    // (`deploy staging`, deploying the checked-out project)
+    if (/\.(yaml|json)$/.test(options.project)) {
+      filePath = options.project;
+    } else {
+      targetIdentifier = options.project;
+    }
+  }
+
   // The local project that we want to actually deploy
   let localProject: Project;
-  let ws;
+  let ws: Workspace | undefined;
   let alias = options.alias ?? null;
 
-  if (options.project) {
+  if (filePath) {
     const localPath = path.resolve(
       options.workspace ?? process.cwd(),
-      options.project
+      filePath
     );
     logger.debug('Reading project from path ', localPath);
     localProject = await Project.from('path', localPath, {
@@ -342,16 +378,17 @@ export async function handler(options: DeployOptions, logger: Logger) {
   }
 
   // Track the remote we want to target
-  // If the user passed a project alias, we need to use that
-  // Otherwise just sync with the local project
+  // If the user passed an explicit target, we need to use that
+  // Otherwise just sync with the local project's own tracked remote
   let tracker;
   if (!options.new) {
-    tracker = ws?.get(options.project ?? localProject.uuid!);
+    ws ??= new Workspace(options.workspace || '.');
+    tracker = ws.get(targetIdentifier ?? localProject.uuid!);
     if (!tracker) {
-      // Is this really an error? Unlikely to happen I thuink
+      // Is this really an error? Unlikely to happen I think
       console.log(
         `ERROR: Failed to find tracked remote project ${
-          options.project ?? localProject.uuid!
+          targetIdentifier ?? localProject.uuid!
         } locally`
       );
       console.log('To deploy a new project, add --new to the command');
@@ -412,7 +449,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   /**
    * Questions:
-   * 1. When this serializses, should project_credentials have uuids?
+   * 1. When this serializes, should project_credentials have uuids?
    */
   const state = merged.serialize('state', {
     format: 'json',

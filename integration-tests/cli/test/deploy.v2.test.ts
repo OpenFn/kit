@@ -427,6 +427,91 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
 });
 
 test.serial(
+  'deploy a pulled v2 state file as a new project',
+  async (t) => {
+    const projectId = 'iiiiiiii';
+    server.addProject(makeProject(projectId) as any);
+
+    const before = Object.keys(server.state.projects);
+
+    // pull with an alias, producing a fetched v2 state file that has a uuid
+    const pullResult = await run(
+      `openfn project pull ${projectId} --alias og --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+
+    const pulledPath = path.join(tmpDir, '.projects', 'og@localhost.yaml');
+
+    // deploy that exact file back as a duplicate
+    const { stdout, stderr } = await run(
+      `openfn project deploy ${pulledPath} --new --name my-duplicate --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+
+    const logs = extractLogs(stdout);
+    assertLog(t, logs, /Created new project/);
+
+    const after = Object.keys(server.state.projects);
+    t.is(after.length, before.length + 1);
+
+    const newId = after.find((id) => !before.includes(id));
+    t.not(newId, projectId);
+
+    const proj = server.state.projects[newId!];
+    t.is(proj.name, 'my-duplicate');
+
+    const workflows = Object.values(proj.workflows) as any[];
+    t.is(workflows.length, 1);
+    t.is(workflows[0].name, 'My Workflow');
+  }
+);
+
+test.serial(
+  'deploy a pulled state file to a different tracked project',
+  async (t) => {
+    const mainId = 'llllllll-main';
+    const stagingId = 'llllllll-staging';
+
+    server.addProject(makeProject(mainId) as any);
+    const stagingFixture = makeProject(stagingId) as any;
+    // give staging a distinct id/name and content, otherwise it's
+    // indistinguishable from main once both are tracked locally
+    stagingFixture.name = 'staging-project';
+    stagingFixture.workflows[0].jobs[0].body = "post('STAGING')";
+    server.addProject(stagingFixture);
+
+    // track both locally, same as any other pull
+    await run(
+      `openfn project pull ${mainId} --alias main --log-json -l debug`
+    );
+    await run(
+      `openfn project pull ${stagingId} --alias staging --log-json -l debug`
+    );
+
+    const mainPath = path.join(tmpDir, '.projects', 'main@localhost.yaml');
+
+    // deploy main's pulled file, but target staging instead of main
+    const { stdout, stderr } = await run(
+      `openfn project deploy ${mainPath} staging --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+    assertLog(t, extractLogs(stdout), /Updated project/);
+
+    // staging's remote content now matches main's, replacing its own...
+    const stagingProj = server.state.projects[stagingId];
+    t.is(stagingProj.name, 'staging-project');
+    t.regex(
+      stagingProj.workflows['my-workflow-1'].jobs['my-job'].body,
+      /fn\(s => s\)/
+    );
+
+    // ...while main itself was left untouched
+    const mainProj = server.state.projects[mainId];
+    t.regex(mainProj.workflows[0].jobs[0].body, /fn\(s => s\)/);
+  }
+);
+
+test.serial(
   'deploy collections: add a collection via openfn.yaml',
   async (t) => {
     const projectId = 'gggggggg';
