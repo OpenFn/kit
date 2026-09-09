@@ -739,3 +739,30 @@ test('the recorded ids are not written into the workspace config', (t) => {
 
   t.false(JSON.stringify(files).includes('recordedStepIds'));
 });
+
+test('renaming a step still moves its id', (t) => {
+  const withName = (name: string) => ({
+    id: 'p',
+    name: 'demo',
+    project_credentials: [],
+    workflows: [
+      {
+        id: 'w',
+        name: 'My Workflow',
+        triggers: {},
+        edges: {},
+        jobs: { a: { id: 'u-a', name, body: 'code()', adaptor: 'c' } },
+      },
+    ],
+  });
+
+  const first = fromAppState(withName('Send data') as any, meta);
+  const recorded = recordedStepIdsOf(first);
+
+  const renamed = fromAppState(withName('Send data v2') as any, meta, {
+    recordedStepIds: recorded,
+  });
+
+  t.is(idsByName(first)['Send data'], 'send-data');
+  t.is(idsByName(renamed)['Send data v2'], 'send-data-v2');
+});
