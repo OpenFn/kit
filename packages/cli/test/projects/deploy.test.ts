@@ -111,6 +111,8 @@ test.serial(
   }
 );
 
+// TODO I think this NAUGHTILY overwrites the main alias
+// we probably shouldn't do that.
 test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);
@@ -167,6 +169,42 @@ test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
 });
+
+test.serial(
+  'deploy a stateful project as new from a file, with an alias',
+  async (t) => {
+    // Set up a project with a UUID
+    mockFs({
+      '/ws/.projects/main@localhost.yaml': projectYaml,
+      '/ws/openfn.yaml': '',
+    });
+
+    // Deploy it elsewhere
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/.projects/main@localhost.yaml',
+        new: true,
+        alias: 'staging',
+      } as any,
+      logger
+    );
+
+    // the new project should be saved locally under the alias we asked
+    // for, not the alias of the file we deployed from
+    t.true(fs.existsSync('/ws/.projects/staging@localhost.yaml'));
+
+    // the file we deployed FROM must not be clobbered with the new
+    // project's state
+    const mainAfter = fs.readFileSync(
+      '/ws/.projects/main@localhost.yaml',
+      'utf8'
+    );
+    t.regex(mainAfter, new RegExp(`uuid: ${UUID}`));
+  }
+);
 
 test.serial('deploy a new project creates ids for collections', async (t) => {
   const yamlWithCollections = projectYaml.replace(

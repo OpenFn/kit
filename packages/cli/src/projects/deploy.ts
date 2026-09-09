@@ -337,7 +337,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // The local project that we want to actually deploy
   let localProject: Project;
   let ws: Workspace | undefined;
-  let alias = options.alias ?? null;
+  let alias = options.alias;
 
   if (filePath) {
     const localPath = path.resolve(
@@ -345,8 +345,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
       filePath
     );
     logger.debug('Reading project from path ', localPath);
+
     localProject = await Project.from('path', localPath, {
       name: options.name,
+      alias,
     });
 
     // If the local project doesn't have stateful stuff,
@@ -356,6 +358,13 @@ export async function handler(options: DeployOptions, logger: Logger) {
         'Local project does not have a UUID: assuming this is a new project deployment'
       );
       options.new = true;
+
+      // Enforce a sensible alias for the new project
+      // else it might overwrite the default
+      if (!localProject.alias || localProject.alias === 'main') {
+        alias = options.name?.replace(/\s+/g, '-');
+        localProject.alias = alias ?? null;
+      }
 
       // TODO ensure the alias is unique if we're posting a new project
     }
@@ -367,8 +376,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
     const active = ws.getTrackedProject();
 
-    // messy
-    alias ??= active?.alias ?? null;
+    if (!alias && active?.alias) {
+      alias = active.alias;
+    }
 
     localProject = await Project.from('fs', {
       root: options.workspace || '.',
@@ -529,9 +539,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
       result as any,
       {
         endpoint: endpoint,
-        alias,
       },
-      merged.config
+      {
+        ...merged.config,
+        alias: alias as string | undefined,
+      }
     );
 
     updateForkedFrom(finalProject);
@@ -546,7 +558,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     );
 
     // TODO if this was marked as new, we probably need to ensure a unique alias here
-    const finalOutputPath = getSerializePath(localProject, options.workspace!);
+    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 
