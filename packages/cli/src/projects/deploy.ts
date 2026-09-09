@@ -359,13 +359,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
       );
       options.new = true;
 
-      // Enforce a sensible alias for the new project
-      // else it might overwrite the default
-      if (!localProject.alias || localProject.alias === 'main') {
-        alias = options.name?.replace(/\s+/g, '-');
-        localProject.alias = alias ?? null;
-      }
-
       // TODO ensure the alias is unique if we're posting a new project
     }
   } else {
@@ -415,6 +408,13 @@ export async function handler(options: DeployOptions, logger: Logger) {
     localProject.openfn = {
       endpoint: config.endpoint,
     };
+
+    // Enforce a sensible alias for the new project
+    // else it might overwrite the default
+    if (!localProject.alias || localProject.alias === 'main') {
+      alias = options.name?.replace(/\s+/g, '-');
+      localProject.alias = alias ?? null;
+    }
   }
 
   // Choose the target endpoint we want to deploy to
