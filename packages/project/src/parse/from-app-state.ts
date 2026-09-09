@@ -14,13 +14,6 @@ export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
   alias?: string;
 
-  // Step ids already written down locally, keyed by step name. An id we have
-  // used before wins over one derived from the name, so two names that shorten
-  // to the same thing cannot land on top of each other.
-  //
-  // Keyed by name rather than by the step's uuid because the workflow file does
-  // not carry uuids. That is why a rename still moves a step: there is nothing
-  // on disk tying the new name to the old id.
   recordedStepIds?: RecordedStepIds;
 };
 
@@ -31,7 +24,6 @@ export default (
 ) => {
   let stateJson = ensureJson<Provisioner.Project>(state);
   delete config.format;
-  // Not workspace config, so keep it out of what gets written back.
   const { recordedStepIds, ...projectConfig } = config;
   config = projectConfig;
 
@@ -121,20 +113,16 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   return e;
 };
 
-// Ids recorded per workflow, since two workflows can each hold a step of the
-// same name and their files sit in different directories. Keyed by workflow
-// name, and then step name, because the files carry no uuids to match on.
+// Keyed by workflow name, then step name. The files carry no uuids to match on,
+// which is why a rename still moves a step.
 export type RecordedStepIds = Record<string, Record<string, string>>;
 
-// An id has to survive being used as a directory and a file name. Anything a
-// project file offers us that is not already url-safe is ignored rather than
-// trusted: a workflow file can come from a repository somebody else prepared,
-// and `../../..` in a step id would otherwise be written straight to disk.
+// An id becomes a directory and a file name, and a workflow file can come from
+// a repository somebody else prepared, so `../../..` is not to be trusted.
 const isSafeId = (id: unknown): id is string =>
   typeof id === 'string' && id.length > 0 && slugify(id) === id;
 
-// The ids a project on disk has already given its steps, keyed by workflow id
-// and then step name. Feed this back into a pull so a step keeps its id.
+// Feed this back into a pull so a step keeps the id it already has.
 export const recordedStepIdsOf = (project: {
   workflows?: { name?: string; steps?: { id?: string; name?: string }[] }[];
 }): RecordedStepIds => {
@@ -152,16 +140,10 @@ export const recordedStepIdsOf = (project: {
   return recorded;
 };
 
-// Work out one id per step, before anything refers to them.
-//
-// Deriving an id from a name loses whatever is not url-safe, so two names that
-// differ only in emoji or accents shorten to the same thing and one step lands
-// on top of the other. An id we have already written down is kept. Anything new
-// is derived and then made unique.
-//
-// Both passes run in uuid order so the answer does not depend on the order the
-// server happened to list the jobs in. Two people pulling the same project reach
-// the same ids, so long as they start from the same recorded ones.
+// One id per step, resolved before anything refers to them. Deriving from the
+// name loses whatever is not url-safe, so two names differing only in an emoji
+// collapse onto each other. Both passes run in uuid order so the result does not
+// depend on how the server listed the jobs.
 export const resolveStepIds = (
   jobs: Record<string, Provisioner.Job>,
   triggers: Record<string, Provisioner.Trigger> = {},
@@ -170,8 +152,7 @@ export const resolveStepIds = (
   const byUuid: Record<string, string> = Object.create(null);
   const taken = new Set<string>();
 
-  // A trigger's id is its type, and it shares the directory with the steps, so
-  // a job called "Webhook" must not be handed the same id.
+  // A trigger's id is its type and shares the directory, so reserve those first.
   for (const trigger of Object.values(triggers)) {
     if (trigger?.type) {
       taken.add(trigger.type);
@@ -183,8 +164,7 @@ export const resolveStepIds = (
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   for (const job of inUuidOrder) {
-    // hasOwnProperty via call, so a step called `constructor` or `toString`
-    // does not find a function on the prototype and hand every step the same id.
+    // own property only, so a step called `toString` finds nothing.
     const known = Object.prototype.hasOwnProperty.call(recorded, job.name)
       ? recorded[job.name]
       : undefined;

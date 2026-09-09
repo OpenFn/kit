@@ -286,9 +286,7 @@ export async function fetchRemoteProject(
     {
       ...workspace.getConfig(),
       alias: options.alias ?? localProject?.alias ?? 'main',
-      // Keep the ids the project we resolved from the identifier already gave
-      // its steps, so a name that shortens to the same id as another does not
-      // overwrite it. Ids that are not already url-safe are ignored.
+      // Keep the ids this project already gave its steps.
       recordedStepIds: localProject
         ? recordedStepIdsOf(localProject)
         : undefined,
