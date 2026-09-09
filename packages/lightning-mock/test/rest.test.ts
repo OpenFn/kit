@@ -292,6 +292,7 @@ test('validateProvisionPayload: returns errors when edge has no source job or tr
     id: 'proj-1',
     workflows: [
       {
+        id: 'wf-1',
         name: 'wf1',
         edges: [
           {
