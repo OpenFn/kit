@@ -470,6 +470,65 @@ test.serial(
   }
 );
 
+test.serial('deploy a v2 project spec file as a new project', async (t) => {
+  const before = Object.keys(server.state.projects);
+
+  const specYaml = `id: exported-project
+name: My Exported Project
+schema_version: '4.0'
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    start: webhook
+    steps:
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data:
+            condition: always
+      - id: transform-data
+        name: Transform data
+        expression: 'fn(s => s)'
+        adaptor: '@openfn/language-common@latest'
+`;
+
+  const exportedPath = path.join(tmpDir, 'exported-project.yaml');
+  await fs.writeFile(exportedPath, specYaml);
+
+  // TODO: --name has no effect on file-based deploys yet (deploy.ts only
+  // reads options.name in the workspace/fs branch) - fix and add a test
+  const { stdout, stderr } = await run(
+    `openfn project deploy ${exportedPath} --name my-duplicate --no-confirm --log-json -l debug`
+  );
+  t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /Created new project/);
+
+  const after = Object.keys(server.state.projects);
+  t.is(after.length, before.length + 1);
+
+  const newId = after.find((id) => !before.includes(id));
+  const proj = server.state.projects[newId!];
+
+  const workflows = Object.values(proj.workflows) as any[];
+  t.is(workflows.length, 1);
+  t.is(workflows[0].name, 'My Workflow');
+
+  const jobs = Object.values(workflows[0].jobs) as any[];
+  t.is(jobs.length, 1);
+  t.is(jobs[0].body, 'fn(s => s)');
+  t.is(jobs[0].adaptor, '@openfn/language-common@latest');
+
+  const triggers = Object.values(workflows[0].triggers) as any[];
+  t.is(triggers.length, 1);
+  t.is(triggers[0].type, 'webhook');
+
+  const edges = Object.values(workflows[0].edges) as any[];
+  t.is(edges.length, 1);
+});
+
 test.serial(
   'deploy collections: remove a collection via openfn.yaml',
   async (t) => {
