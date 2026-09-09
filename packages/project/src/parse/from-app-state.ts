@@ -122,7 +122,6 @@ export type RecordedStepIds = Record<string, Record<string, string>>;
 const isSafeId = (id: unknown): id is string =>
   typeof id === 'string' && id.length > 0 && slugify(id) === id;
 
-// Feed this back into a pull so a step keeps the id it already has.
 export const recordedStepIdsOf = (project: {
   workflows?: { name?: string; steps?: { id?: string; name?: string }[] }[];
 }): RecordedStepIds => {
@@ -140,10 +139,8 @@ export const recordedStepIdsOf = (project: {
   return recorded;
 };
 
-// One id per step, resolved before anything refers to them. Deriving from the
-// name loses whatever is not url-safe, so two names differing only in an emoji
-// collapse onto each other. Both passes run in uuid order so the result does not
-// depend on how the server listed the jobs.
+// Both passes run in uuid order so the result does not depend on how the server
+// listed the jobs.
 export const resolveStepIds = (
   jobs: Record<string, Provisioner.Job>,
   triggers: Record<string, Provisioner.Trigger> = {},
@@ -164,10 +161,7 @@ export const resolveStepIds = (
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   for (const job of inUuidOrder) {
-    // own property only, so a step called `toString` finds nothing.
-    const known = Object.prototype.hasOwnProperty.call(recorded, job.name)
-      ? recorded[job.name]
-      : undefined;
+    const known = recorded[job.name];
     if (isSafeId(known) && !taken.has(known)) {
       byUuid[job.id] = known;
       taken.add(known);
