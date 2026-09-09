@@ -21,7 +21,7 @@ export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   // Keyed by name rather than by the step's uuid because the workflow file does
   // not carry uuids. That is why a rename still moves a step: there is nothing
   // on disk tying the new name to the old id.
-  recordedStepIds?: Record<string, string>;
+  recordedStepIds?: RecordedStepIds;
 };
 
 export default (
@@ -31,6 +31,9 @@ export default (
 ) => {
   let stateJson = ensureJson<Provisioner.Project>(state);
   delete config.format;
+  // Not workspace config, so keep it out of what gets written back.
+  const { recordedStepIds, ...projectConfig } = config;
+  config = projectConfig;
 
   const {
     id,
@@ -87,7 +90,7 @@ export default (
   }
 
   proj.workflows = Object.values(stateJson.workflows).map((w) =>
-    mapWorkflow(w, proj.credentials, config.recordedStepIds)
+    mapWorkflow(w, proj.credentials, recordedStepIds?.[w.name])
   );
 
   return new Project(proj as l.ProjectState, config);
@@ -118,18 +121,33 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   return e;
 };
 
+// Ids recorded per workflow, since two workflows can each hold a step of the
+// same name and their files sit in different directories. Keyed by workflow
+// name, and then step name, because the files carry no uuids to match on.
+export type RecordedStepIds = Record<string, Record<string, string>>;
 
+// An id has to survive being used as a directory and a file name. Anything a
+// project file offers us that is not already url-safe is ignored rather than
+// trusted: a workflow file can come from a repository somebody else prepared,
+// and `../../..` in a step id would otherwise be written straight to disk.
+const isSafeId = (id: unknown): id is string =>
+  typeof id === 'string' && id.length > 0 && slugify(id) === id;
 
-// The ids a project on disk has already given its steps, keyed by step name.
-// Feed this back into a pull so a step keeps the id it already has.
-export const recordedStepIdsOf = (project: any): Record<string, string> => {
-  const recorded: Record<string, string> = {};
+// The ids a project on disk has already given its steps, keyed by workflow id
+// and then step name. Feed this back into a pull so a step keeps its id.
+export const recordedStepIdsOf = (project: {
+  workflows?: { name?: string; steps?: { id?: string; name?: string }[] }[];
+}): RecordedStepIds => {
+  const recorded: RecordedStepIds = Object.create(null);
   for (const workflow of project?.workflows ?? []) {
-    for (const step of workflow?.steps ?? []) {
-      if (step?.name && step?.id) {
-        recorded[step.name] = step.id;
+    if (!workflow?.name) continue;
+    const forWorkflow: Record<string, string> = Object.create(null);
+    for (const step of workflow.steps ?? []) {
+      if (step?.name && isSafeId(step.id)) {
+        forWorkflow[step.name] = step.id!;
       }
     }
+    recorded[workflow.name] = forWorkflow;
   }
   return recorded;
 };
@@ -138,31 +156,46 @@ export const recordedStepIdsOf = (project: any): Record<string, string> => {
 //
 // Deriving an id from a name loses whatever is not url-safe, so two names that
 // differ only in emoji or accents shorten to the same thing and one step lands
-// on top of the other. An id we have already written down is kept. Anything
-// new is derived and then made unique, in uuid order, so two people pulling the
-// same project separately reach the same answer without talking to each other.
+// on top of the other. An id we have already written down is kept. Anything new
+// is derived and then made unique.
+//
+// Both passes run in uuid order so the answer does not depend on the order the
+// server happened to list the jobs in. Two people pulling the same project reach
+// the same ids, so long as they start from the same recorded ones.
 export const resolveStepIds = (
   jobs: Record<string, Provisioner.Job>,
+  triggers: Record<string, Provisioner.Trigger> = {},
   recorded: Record<string, string> = {}
 ): Record<string, string> => {
-  const byUuid: Record<string, string> = {};
+  const byUuid: Record<string, string> = Object.create(null);
   const taken = new Set<string>();
 
-  const all = Object.values(jobs);
+  // A trigger's id is its type, and it shares the directory with the steps, so
+  // a job called "Webhook" must not be handed the same id.
+  for (const trigger of Object.values(triggers)) {
+    if (trigger?.type) {
+      taken.add(trigger.type);
+    }
+  }
 
-  for (const job of all) {
-    const known = recorded[job.name];
-    if (known && !taken.has(known)) {
+  const inUuidOrder = Object.values(jobs)
+    .slice()
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  for (const job of inUuidOrder) {
+    // hasOwnProperty via call, so a step called `constructor` or `toString`
+    // does not find a function on the prototype and hand every step the same id.
+    const known = Object.prototype.hasOwnProperty.call(recorded, job.name)
+      ? recorded[job.name]
+      : undefined;
+    if (isSafeId(known) && !taken.has(known)) {
       byUuid[job.id] = known;
       taken.add(known);
     }
   }
 
-  const fresh = all
-    .filter((job) => !byUuid[job.id])
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-
-  for (const job of fresh) {
+  for (const job of inUuidOrder) {
+    if (byUuid[job.id]) continue;
     const base = slugify(job.name) || 'step';
     let candidate = base;
     let n = 2;
@@ -185,7 +218,7 @@ export const mapWorkflow = (
 ) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
-  const stepIds = resolveStepIds(jobs, recordedStepIds);
+  const stepIds = resolveStepIds(jobs, triggers, recordedStepIds);
   const mapped: l.WorkflowState = {
     name: workflow.name,
     steps: [],
@@ -234,7 +267,6 @@ export const mapWorkflow = (
           if (!target) {
             throw new Error(`Failed to find ${edge.target_job_id}`);
           }
-          // we use the name, not the id, to reference
           obj[stepIds[target.id]] = mapEdge(edge);
           return obj;
         }, {}),

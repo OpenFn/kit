@@ -553,8 +553,8 @@ workflows:
 // --- recorded step ids ---------------------------------------------------
 //
 // An id derived from a name loses whatever is not url-safe, so two names that
-// differ only in emoji or accents used to land on the same id and one step's
-// code was silently dropped on the way to disk.
+// differ only in emoji or an accent used to land on the same id and one step's
+// code was written over the other on the way to disk.
 
 const twoStepsSharingAnId = () => ({
   id: 'p1',
@@ -567,23 +567,37 @@ const twoStepsSharingAnId = () => ({
       triggers: {},
       edges: {},
       jobs: {
-        j1: { id: 'bbbb-2222', name: 'step 👍', body: 'up()', adaptor: 'common' },
-        j2: { id: 'aaaa-1111', name: 'step 👎', body: 'down()', adaptor: 'common' },
+        j1: {
+          id: 'bbbb',
+          name: 'step \u{1F44D}',
+          body: 'up()',
+          adaptor: 'common',
+        },
+        j2: {
+          id: 'aaaa',
+          name: 'step \u{1F44E}',
+          body: 'down()',
+          adaptor: 'common',
+        },
       },
     },
   ],
 });
 
-const stepIdsOf = (project: any) =>
-  (Object.values(project.workflows)[0] as any).steps.map((s: any) => s.id);
+// name -> id, so a test can tell "both are distinct" from "they swapped"
+const idsByName = (project: any, index = 0) =>
+  Object.fromEntries(
+    (Object.values(project.workflows)[index] as any).steps.map((s: any) => [
+      s.name,
+      s.id,
+    ])
+  );
 
 test('two names that shorten to the same id still get distinct ids', (t) => {
-  const project = fromAppState(twoStepsSharingAnId() as any, meta);
+  const ids = idsByName(fromAppState(twoStepsSharingAnId() as any, meta));
 
-  const ids = stepIdsOf(project);
-
-  t.is(ids.length, 2);
-  t.is(new Set(ids).size, 2);
+  t.is(Object.keys(ids).length, 2);
+  t.is(new Set(Object.values(ids)).size, 2);
 });
 
 test('both step bodies reach the filesystem', (t) => {
@@ -599,44 +613,129 @@ test('both step bodies reach the filesystem', (t) => {
 
 test('an id we have already written down is kept', (t) => {
   const project = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: { 'step \u{1F44D}': 'thumbs-up', 'step \u{1F44E}': 'thumbs-down' },
+    recordedStepIds: {
+      'My Workflow': {
+        'step \u{1F44D}': 'thumbs-up',
+        'step \u{1F44E}': 'thumbs-down',
+      },
+    },
   });
 
-  t.deepEqual(stepIdsOf(project).sort(), ['thumbs-down', 'thumbs-up']);
-});
-
-test('a new step works around an id that is already taken', (t) => {
-  const project = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: { 'step \u{1F44E}': 'step' },
+  t.deepEqual(idsByName(project), {
+    'step \u{1F44D}': 'thumbs-up',
+    'step \u{1F44E}': 'thumbs-down',
   });
-
-  const ids = stepIdsOf(project);
-
-  t.true(ids.includes('step'));
-  t.is(new Set(ids).size, 2);
 });
 
-test('two people pulling separately arrive at the same ids', (t) => {
-  const first = stepIdsOf(fromAppState(twoStepsSharingAnId() as any, meta));
-
-  // the same workflow, with the jobs arriving the other way round
-  const reordered: any = twoStepsSharingAnId();
-  reordered.workflows[0].jobs = {
-    j2: reordered.workflows[0].jobs.j2,
-    j1: reordered.workflows[0].jobs.j1,
+test('a step keeps its own id rather than swapping with its neighbour', (t) => {
+  const state: any = twoStepsSharingAnId();
+  const reversed: any = twoStepsSharingAnId();
+  reversed.workflows[0].jobs = {
+    j2: reversed.workflows[0].jobs.j2,
+    j1: reversed.workflows[0].jobs.j1,
   };
-  const second = stepIdsOf(fromAppState(reordered, meta));
 
-  t.deepEqual(first.sort(), second.sort());
+  t.deepEqual(
+    idsByName(fromAppState(state, meta)),
+    idsByName(fromAppState(reversed, meta))
+  );
+});
+
+test('a step named after a trigger does not take the trigger id', (t) => {
+  const state: any = twoStepsSharingAnId();
+  state.workflows[0].triggers = {
+    t: { id: 'tttt', type: 'webhook', enabled: true },
+  };
+  state.workflows[0].jobs.j1.name = 'Webhook';
+
+  const project = fromAppState(state, meta);
+  const files = project.serialize('fs') as Record<string, string>;
+
+  t.not(idsByName(project)['Webhook'], 'webhook');
+  t.is(Object.keys(files).filter((f) => f.endsWith('.js')).length, 2);
+});
+
+test('two workflows can each hold a step of the same name', (t) => {
+  const state: any = {
+    id: 'p',
+    name: 'demo',
+    project_credentials: [],
+    workflows: [
+      {
+        id: 'w1',
+        name: 'One',
+        triggers: {},
+        edges: {},
+        jobs: {
+          a: { id: 'u-a', name: 'Transform', body: 'one()', adaptor: 'c' },
+        },
+      },
+      {
+        id: 'w2',
+        name: 'Two',
+        triggers: {},
+        edges: {},
+        jobs: {
+          b: { id: 'u-b', name: 'Transform', body: 'two()', adaptor: 'c' },
+        },
+      },
+    ],
+  };
+
+  const first = fromAppState(state, meta);
+  const recorded = recordedStepIdsOf(first);
+
+  // each workflow keeps its own entry rather than one overwriting the other
+  t.deepEqual(Object.keys(recorded).sort(), ['One', 'Two']);
+
+  const second = fromAppState(state, meta, { recordedStepIds: recorded });
+  t.deepEqual(idsByName(second, 0), idsByName(first, 0));
+  t.deepEqual(idsByName(second, 1), idsByName(first, 1));
+});
+
+test('a step named like an object property does not pick one up', (t) => {
+  const state: any = twoStepsSharingAnId();
+  state.workflows[0].jobs.j1.name = 'constructor';
+  state.workflows[0].jobs.j2.name = 'toString';
+
+  const project = fromAppState(state, meta);
+  const ids = Object.values(idsByName(project));
+  const files = project.serialize('fs') as Record<string, string>;
+
+  t.true(ids.every((id) => typeof id === 'string' && id.length > 0));
+  t.is(new Set(ids).size, 2);
+  t.is(Object.keys(files).filter((f) => f.endsWith('.js')).length, 2);
+});
+
+test('an id from a project file that escapes the directory is ignored', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta, {
+    recordedStepIds: {
+      'My Workflow': { 'step \u{1F44D}': '../../../../tmp/pwned' },
+    },
+  });
+
+  const files = project.serialize('fs') as Record<string, string>;
+
+  t.false(Object.values(idsByName(project)).includes('../../../../tmp/pwned'));
+  t.false(Object.keys(files).some((f) => f.includes('..')));
 });
 
 test('a project on disk hands back the ids it already gave its steps', (t) => {
   const first = fromAppState(twoStepsSharingAnId() as any, meta);
 
-  const recorded = recordedStepIdsOf(first);
   const second = fromAppState(twoStepsSharingAnId() as any, meta, {
-    recordedStepIds: recorded,
+    recordedStepIds: recordedStepIdsOf(first),
   });
 
-  t.deepEqual(stepIdsOf(first).sort(), stepIdsOf(second).sort());
+  t.deepEqual(idsByName(second), idsByName(first));
+});
+
+test('the recorded ids are not written into the workspace config', (t) => {
+  const project = fromAppState(twoStepsSharingAnId() as any, meta, {
+    recordedStepIds: { 'My Workflow': { 'step \u{1F44D}': 'thumbs-up' } },
+  });
+
+  const files = project.serialize('fs') as Record<string, string>;
+
+  t.false(JSON.stringify(files).includes('recordedStepIds'));
 });

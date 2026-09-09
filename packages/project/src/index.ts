@@ -23,6 +23,7 @@ export {
 } from './util/version';
 
 export { mapWorkflow, recordedStepIdsOf } from './parse/from-app-state';
+export type { RecordedStepIds } from './parse/from-app-state';
 
 export { default as detectVersion } from './util/detect-version';
 
