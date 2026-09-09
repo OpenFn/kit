@@ -7,6 +7,7 @@ import fromProject from './from-project';
 export type FromPathConfig = l.WorkspaceConfig & {
   format: 'json' | 'yaml';
   alias?: string;
+  name?: string;
 };
 
 // Extract alias from filename in format: alias@domain.yaml or alias.yaml

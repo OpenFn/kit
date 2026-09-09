@@ -243,6 +243,17 @@ test('import v1 with custom config', async (t) => {
   });
 });
 
+test('import from a v1 state with a name override', async (t) => {
+  const proj = await Project.from('project', v1_yaml, { name: 'My Duplicate' });
+  t.is(proj.name, 'My Duplicate');
+});
+
+test('import from a v2 project with a name override', async (t) => {
+  // @ts-ignore
+  const proj = await Project.from('project', v2.json, { name: 'My Duplicate' });
+  t.is(proj.name, 'My Duplicate');
+});
+
 test('import v2 with custom config', async (t) => {
   const config = {
     x: 1234,

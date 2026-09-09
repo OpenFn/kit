@@ -17,10 +17,20 @@ export type SerializedWorkflow = l.WorkflowState;
 
 export default (
   data: l.ProjectState | SerializedProject | string,
-  config?: Partial<l.WorkspaceConfig> & { alias?: string; version?: number }
+  config?: Partial<l.WorkspaceConfig> & {
+    alias?: string;
+    version?: number;
+    name?: string;
+  }
 ) => {
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
+
+  // an explicit name override (eg deploying a downloaded project.yaml as a
+  // new/duplicate project) applies regardless of source format
+  if (config?.name) {
+    rawJson = { ...rawJson, name: config.name };
+  }
 
   if (detectVersion(rawJson) > 1) {
     return new Project(from_v2(rawJson as SerializedProject), config);

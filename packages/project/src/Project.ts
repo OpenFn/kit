@@ -99,7 +99,7 @@ export class Project {
   static async from(
     type: 'path',
     data: string,
-    options?: { config?: FromPathConfig }
+    options?: Partial<FromPathConfig>
   ): Promise<Project>;
   static async from(
     type: 'project' | 'state' | 'path' | 'fs',

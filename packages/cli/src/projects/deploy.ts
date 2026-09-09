@@ -309,7 +309,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       options.project
     );
     logger.debug('Reading project from path ', localPath);
-    localProject = await Project.from('path', localPath);
+    localProject = await Project.from('path', localPath, {
+      name: options.name,
+    });
 
     // If the local project doesn't have stateful stuff,
     // flag this as a new upload

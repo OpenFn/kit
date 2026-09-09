@@ -496,8 +496,6 @@ workflows:
   const exportedPath = path.join(tmpDir, 'exported-project.yaml');
   await fs.writeFile(exportedPath, specYaml);
 
-  // TODO: --name has no effect on file-based deploys yet (deploy.ts only
-  // reads options.name in the workspace/fs branch) - fix and add a test
   const { stdout, stderr } = await run(
     `openfn project deploy ${exportedPath} --name my-duplicate --no-confirm --log-json -l debug`
   );
@@ -511,6 +509,8 @@ workflows:
 
   const newId = after.find((id) => !before.includes(id));
   const proj = server.state.projects[newId!];
+
+  t.is(proj.name, 'my-duplicate');
 
   const workflows = Object.values(proj.workflows) as any[];
   t.is(workflows.length, 1);
