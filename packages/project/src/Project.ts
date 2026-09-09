@@ -87,7 +87,11 @@ export class Project {
   static async from(
     type: 'project',
     data: any,
-    config?: Partial<l.WorkspaceConfig>
+    config?: Partial<l.WorkspaceConfig> & {
+      alias?: string;
+      version?: number;
+      name?: string;
+    }
   ): Promise<Project>;
   static async from(
     type: 'state',
