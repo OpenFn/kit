@@ -91,6 +91,7 @@ export class Project {
       alias?: string;
       version?: number;
       name?: string;
+      asSpec?: boolean;
     }
   ): Promise<Project>;
   static async from(

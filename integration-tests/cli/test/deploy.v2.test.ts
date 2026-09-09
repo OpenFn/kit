@@ -426,45 +426,55 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
   assertLog(t, logs, /Projects have diverged/i);
 });
 
-test.serial(
-  'deploy a pulled v2 state file as a new project',
-  async (t) => {
-    const projectId = 'iiiiiiii';
-    server.addProject(makeProject(projectId) as any);
+test.serial('deploy a pulled v2 state file as a new project', async (t) => {
+  const projectId = 'iiiiiiii';
+  server.addProject(makeProject(projectId) as any);
 
-    const before = Object.keys(server.state.projects);
+  const before = Object.keys(server.state.projects);
 
-    // pull with an alias, producing a fetched v2 state file that has a uuid
-    const pullResult = await run(
-      `openfn project pull ${projectId} --alias og --log-json -l debug`
-    );
-    t.falsy(pullResult.stderr);
+  // pull with an alias, producing a fetched v2 state file that has a uuid
+  const pullResult = await run(
+    `openfn project pull ${projectId} --alias og --log-json -l debug`
+  );
+  t.falsy(pullResult.stderr);
 
-    const pulledPath = path.join(tmpDir, '.projects', 'og@localhost.yaml');
+  const pulledPath = path.join(tmpDir, '.projects', 'og@localhost.yaml');
 
-    // deploy that exact file back as a duplicate
-    const { stdout, stderr } = await run(
-      `openfn project deploy ${pulledPath} --new --name my-duplicate --no-confirm --log-json -l debug`
-    );
-    t.falsy(stderr);
+  // deploy that exact file back as a duplicate
+  const { stdout, stderr } = await run(
+    `openfn project deploy ${pulledPath} --new --name my-duplicate --no-confirm --log-json -l debug`
+  );
+  t.falsy(stderr);
 
-    const logs = extractLogs(stdout);
-    assertLog(t, logs, /Created new project/);
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /Created new project/);
 
-    const after = Object.keys(server.state.projects);
-    t.is(after.length, before.length + 1);
+  const after = Object.keys(server.state.projects);
+  t.is(after.length, before.length + 1);
 
-    const newId = after.find((id) => !before.includes(id));
-    t.not(newId, projectId);
+  const newId = after.find((id) => !before.includes(id));
+  t.not(newId, projectId);
 
-    const proj = server.state.projects[newId!];
-    t.is(proj.name, 'my-duplicate');
+  const proj = server.state.projects[newId!];
+  t.is(proj.name, 'my-duplicate');
 
-    const workflows = Object.values(proj.workflows) as any[];
-    t.is(workflows.length, 1);
-    t.is(workflows[0].name, 'My Workflow');
-  }
-);
+  const workflows = Object.values(proj.workflows) as any[];
+  t.is(workflows.length, 1);
+  t.is(workflows[0].name, 'My Workflow');
+
+  // --new must strip embedded state, not just the project's own uuid -
+  // the new workflow and step must get fresh ids too, not reuse the
+  // original project's
+  const original = server.state.projects[projectId];
+  const originalWorkflowId = original.workflows[0].id;
+  const originalJobId = original.workflows[0].jobs[0].id;
+
+  const newWorkflowId = Object.keys(proj.workflows)[0];
+  t.not(newWorkflowId, originalWorkflowId);
+
+  const newJobId = workflows[0].jobs['my-job'].id;
+  t.not(newJobId, originalJobId);
+});
 
 test.serial(
   'deploy a pulled state file to a different tracked project',
@@ -481,9 +491,7 @@ test.serial(
     server.addProject(stagingFixture);
 
     // track both locally, same as any other pull
-    await run(
-      `openfn project pull ${mainId} --alias main --log-json -l debug`
-    );
+    await run(`openfn project pull ${mainId} --alias main --log-json -l debug`);
     await run(
       `openfn project pull ${stagingId} --alias staging --log-json -l debug`
     );

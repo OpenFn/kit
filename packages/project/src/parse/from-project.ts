@@ -21,6 +21,13 @@ export default (
     alias?: string;
     version?: number;
     name?: string;
+    /**
+     * Load this project as a spec, stripping any embedded remote state
+     * (workflow/step/edge uuids) as it's parsed - eg when a stateful,
+     * previously-fetched project.yaml is being deployed as a brand new
+     * project, and its old ids must not carry over.
+     */
+    asSpec?: boolean;
   }
 ) => {
   // first ensure the data is in JSON format
@@ -33,7 +40,10 @@ export default (
   }
 
   if (detectVersion(rawJson) > 1) {
-    return new Project(from_v2(rawJson as SerializedProject), config);
+    return new Project(
+      from_v2(rawJson as SerializedProject, config?.asSpec),
+      config
+    );
   }
 
   return from_v1(rawJson as Provisioner.Project, config as fromAppStateConfig);
@@ -48,10 +58,39 @@ const from_v1 = (
 };
 
 // TODO this should return a Project really!
-const from_v2 = (data: SerializedProject) => {
+const from_v2 = (data: SerializedProject, asSpec?: boolean) => {
   // nothing to do
   // (When we add v3, we'll ned to migrate through this)
+  if (asSpec) {
+    return stripState(data);
+  }
   return {
     ...data,
   };
 };
+
+// Remove embedded remote-state uuids from every workflow, step and edge
+// (but not the project itself - callers handle that separately, since
+// they also need to set a fresh endpoint)
+const stripState = (data: SerializedProject) => ({
+  ...data,
+  workflows: (data.workflows ?? []).map((wf: any) => {
+    const { openfn, steps, ...restWf } = wf;
+    return {
+      ...restWf,
+      steps: (steps ?? []).map((step: any) => {
+        const { openfn: stepOpenfn, next, ...restStep } = step;
+        if (!next) return restStep;
+        return {
+          ...restStep,
+          next: Object.fromEntries(
+            Object.entries(next).map(([id, edge]: [string, any]) => {
+              const { openfn: edgeOpenfn, ...restEdge } = edge;
+              return [id, restEdge];
+            })
+          ),
+        };
+      }),
+    };
+  }),
+});

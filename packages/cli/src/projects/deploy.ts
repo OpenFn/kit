@@ -349,6 +349,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
     localProject = await Project.from('path', localPath, {
       name: options.name,
       alias,
+      // deploying an already-stateful file as new must not carry over its
+      // old workflow/step/edge ids - strip them as we parse
+      asSpec: !!options.new,
     });
 
     // If the local project doesn't have stateful stuff,
