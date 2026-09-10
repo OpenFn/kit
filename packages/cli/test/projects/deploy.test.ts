@@ -49,13 +49,13 @@ const mockFs = (paths: Record<string, string>) => {
   );
   // undici v8 reads its llhttp WASM from disk on the first request, so keep
   // that dir visible or fetches to the mock server fail with ENOENT
-  const undiciLlhttp = path.join(
+  const undicihttp = path.join(
     path.dirname(require.resolve('undici')),
     'lib/llhttp'
   );
   mock({
     [iconv]: mock.load(iconv, {}),
-    [undiciLlhttp]: mock.load(undiciLlhttp, {}),
+    [undicihttp]: mock.load(undicihttp, {}),
     ...paths,
   });
 };
@@ -205,6 +205,78 @@ test.serial(
     t.regex(mainAfter, new RegExp(`uuid: ${UUID}`));
   }
 );
+
+test.serial(
+  'deploy a file to a different target must use the file, not the checked-out baseline',
+  async (t) => {
+    // "dev" is a separate, already-existing remote project with its own content
+    await server.addProject(two_workflows_yaml);
+
+    // check out "main" - openfn.yaml now tracks MAIN's own fork history,
+    // which has nothing to do with "dev"
+    await setup(projectYaml);
+
+    // track "dev" locally too, alongside "main", without disturbing what's
+    // currently checked out
+    await writeFile('/ws/.projects/dev@localhost.yaml', two_workflows_yaml);
+
+    // deploy main's own (unmodified) file to "dev" - a different target.
+    // Nothing has changed relative to MAIN's own tracked baseline, but
+    // "dev" has completely different content and must be replaced with
+    // what's in the file
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/.projects/main@localhost.yaml',
+        target: 'dev',
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    const devProject: any = server.state.projects[TWO_WORKFLOWS_UUID];
+    const devWorkflows = Object.values(devProject.workflows) as any[];
+
+    // dev must now contain My Workflow (from main's file) - not be left
+    // with only its own original workflow-a/workflow-b
+    const hasMyWorkflow = devWorkflows.some((wf) => wf.name === 'My Workflow');
+    t.true(hasMyWorkflow);
+
+    const success = logger._find('success', /Updated project at/);
+    t.truthy(success);
+  }
+);
+
+test.serial('deploy an updated project direct to an endpoint', async (t) => {
+  const remoteProjectBefore: any = server.state.projects[UUID];
+  const wfBefore = remoteProjectBefore.workflows['my-workflow'];
+  t.is(wfBefore.jobs['transform-data'].body, 'fn()');
+
+  mockFs({
+    '/ws/dev@localhost.yaml': projectYaml.replace('fn()', 'jam()'),
+    '/ws/openfn.yaml': '',
+  });
+
+  // deploy the local project file directly
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      project: '/ws/dev@localhost.yaml',
+      target: 'dev',
+      confirm: false,
+      // log: 'debug',
+    } as any,
+    logger
+  );
+
+  const remoteProjectAfter: any = server.state.projects[UUID];
+  const wfAfter = remoteProjectAfter.workflows['my-workflow'];
+  t.is(wfAfter.jobs['transform-data'].body, 'jam()');
+});
 
 test.serial('deploy a new project creates ids for collections', async (t) => {
   const yamlWithCollections = projectYaml.replace(

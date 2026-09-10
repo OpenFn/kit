@@ -176,13 +176,17 @@ export type SyncResult = {
 // This function is responsible for syncing changes in the user's local project
 // with the remote app version
 // It returns a merged state object
+//
+// skipLocallyChangedCheck: merge every workflow in the source, not just those
+// edited since its own last snapshot (that check is meaningless for a file)
 const syncProjects = async (
   options: DeployOptions,
   config: Required<AuthOptions>,
   ws: Workspace,
   localProject: Project,
   trackedProject: Project, // the project we want to update
-  logger: Logger
+  logger: Logger,
+  skipLocallyChangedCheck = false
 ): Promise<SyncResult | null> => {
   // First step, fetch the latest version and write
   // this may throw!
@@ -227,6 +231,9 @@ const syncProjects = async (
       );
     }
     mergeCandidates = options.workflow;
+  } else if (skipLocallyChangedCheck) {
+    // the source is the spec, so every workflow in it is a candidate
+    mergeCandidates = localProject.workflows.map((w) => w.id);
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
   }
@@ -293,10 +300,10 @@ const syncProjects = async (
     mode: localProject.uuid === remoteProject.uuid ? 'replace' : 'sandbox',
     force: true,
   };
-  if (options.workflow?.length) {
-    // If --workflow is passed, force-include exactly the listed workflows via workflowMappings
+  if (options.workflow?.length || skipLocallyChangedCheck) {
+    // force-include exactly the candidate workflows
     mergeOptions.workflowMappings = Object.fromEntries(
-      options.workflow.map((id) => [id, id])
+      mergeCandidates.map((id) => [id, id])
     );
   } else {
     // Otherwise only merge locally updated workflows
@@ -387,9 +394,32 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // If the user passed an explicit target, we need to use that
   // Otherwise just sync with the local project's own tracked remote
   let tracker;
-  if (!options.new) {
+  if (options.new) {
+    // reset all metadata
+    localProject.openfn = {
+      endpoint: config.endpoint,
+    };
+
+    // Enforce a sensible alias for the new project
+    // else it might overwrite the default
+    if (!localProject.alias || localProject.alias === 'main') {
+      alias = options.name?.replace(/\s+/g, '-');
+      localProject.alias = alias ?? null;
+    }
+  } else {
     ws ??= new Workspace(options.workspace || '.');
     tracker = ws.get(targetIdentifier ?? localProject.uuid!);
+
+    // A project loaded from a file already knows which remote it belongs
+    // to, so it can serve as its own deploy destination - we don't need a
+    // locally tracked copy of it to sync against
+    if (!tracker && filePath && localProject.uuid) {
+      logger.debug(
+        'No locally tracked project found: deploying to the remote named in the file'
+      );
+      tracker = localProject;
+    }
+
     if (!tracker) {
       // Is this really an error? Unlikely to happen I think
       console.log(
@@ -405,18 +435,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
       );
 
       throw new Error('Failed to find remote project locally');
-    }
-  } else {
-    // reset all metadata
-    localProject.openfn = {
-      endpoint: config.endpoint,
-    };
-
-    // Enforce a sensible alias for the new project
-    // else it might overwrite the default
-    if (!localProject.alias || localProject.alias === 'main') {
-      alias = options.name?.replace(/\s+/g, '-');
-      localProject.alias = alias ?? null;
     }
   }
 
@@ -452,7 +470,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       ws!,
       localProject,
       tracker!,
-      logger
+      logger,
+      // a file's own snapshot tells us nothing about the target
+      !!filePath
     );
     if (!syncResult) {
       return;
