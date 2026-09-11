@@ -26,6 +26,7 @@ import {
   two_workflows_yaml as twowfs,
   TWO_WORKFLOWS_UUID,
   myProject_spec,
+  myProject_v1_spec,
 } from './fixtures';
 import { checkout } from '../../src/projects';
 
@@ -111,15 +112,13 @@ test.serial(
   }
 );
 
-// TODO I think this NAUGHTILY overwrites the main alias
-// we probably shouldn't do that.
 test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);
 
   // skip the usual setup and just set up the filesystem
   mockFs({
-    '/ws/.projects/main@localhost.yaml': myProject_spec,
+    '/ws/project.yaml': myProject_spec,
     '/ws/openfn.yaml': '', // TODO this shouldn't be needed
   });
 
@@ -127,7 +126,7 @@ test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
     {
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-      project: '/ws/.projects/main@localhost.yaml',
+      project: '/ws/project.yaml',
     } as any,
     logger
   );
@@ -165,6 +164,60 @@ test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   t.truthy(edge);
   t.is(edge.source_trigger_id, trigger.id);
   t.is(edge.target_job_id, job.id);
+
+  const success = logger._find('success', /Created new project at/);
+  t.truthy(success);
+});
+
+test.serial('deploy a project as new from a v1 spec yaml', async (t) => {
+  t.is(Object.keys(server.state.projects).length, 1);
+
+  mockFs({
+    '/ws/project.yaml': myProject_v1_spec,
+    '/ws/openfn.yaml': '',
+  });
+
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      project: '/ws/project.yaml',
+    } as any,
+    logger
+  );
+
+  t.is(Object.keys(server.state.projects).length, 2);
+
+  const newUuid = Object.keys(server.state.projects).find((id) => id !== UUID);
+  const newProject = server.state.projects[newUuid!];
+
+  // the spec's name-keyed credentials must become project_credentials.
+  // Only credentials actually referenced by a job are deployed, and just
+  // one job in the fixture names one
+  t.is(newProject.project_credentials.length, 1);
+  const credential = newProject.project_credentials[0];
+  t.is(credential.name, 'joes-test-credential');
+  t.is(credential.owner, 'jclark@openfn.org');
+
+  const workflows = Object.values(newProject.workflows) as any[];
+  t.is(workflows.length, 2);
+
+  // the three-job workflow must keep its shape
+  const multi = workflows.find((wf) => wf.name === 'my workflow');
+  t.is(Object.keys(multi.jobs).length, 3);
+  t.is(Object.keys(multi.edges).length, 3);
+
+  // every edge must join two DIFFERENT steps - no self-loops
+  for (const wf of workflows) {
+    for (const edge of Object.values(wf.edges) as any[]) {
+      t.not(edge.target_job_id, edge.source_job_id ?? edge.source_trigger_id);
+    }
+  }
+
+  // the job that named a credential should resolve to one of them
+  const eventWf = workflows.find((wf) => wf.name === 'Event-based workflow');
+  const transform = Object.values(eventWf.jobs)[0] as any;
+  t.truthy(transform.project_credential_id);
 
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
