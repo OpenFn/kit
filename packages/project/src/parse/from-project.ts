@@ -4,7 +4,7 @@ import Project from '../Project';
 import ensureJson from '../util/ensure-json';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import fromAppState, { fromAppStateConfig } from './from-app-state';
-import fromV1Spec, { isV1Spec } from './from-v1-spec';
+import fromAppSpec, { isAppSpec } from './from-app-spec';
 import detectVersion from '../util/detect-version';
 
 // Load a project from any JSON or yaml representation
@@ -50,8 +50,8 @@ export default (
   // a v1 spec has no uuids to preserve, so convert it to the v2 spec shape
   // and let the v2 parser take it - fromAppState is for v1 STATE, and its
   // uuid-based matching silently mangles a spec
-  if (isV1Spec(rawJson)) {
-    return new Project(fromV1Spec(rawJson), config);
+  if (isAppSpec(rawJson)) {
+    return new Project(fromAppSpec(rawJson), config);
   }
 
   return from_v1(rawJson as Provisioner.Project, config as fromAppStateConfig);

@@ -3,7 +3,8 @@
 //
 // A v1 spec has v1's keyed-object structure but, unlike v1 state, carries no
 // uuids at all - workflows, jobs, triggers and credentials are all
-// cross-referenced by their key in the owning map
+// cross-referenced by their key in the owning map. serialize/to-app-spec is
+// the inverse
 
 import * as l from '@openfn/lexicon';
 
@@ -13,7 +14,7 @@ import getCredentialName from '../util/get-credential-name';
 
 // v1 state always carries a `project_credentials` array; a spec instead uses a
 // name-keyed `credentials` map, and refers to steps by name rather than uuid
-export const isV1Spec = (json: any): boolean => {
+export const isAppSpec = (json: any): boolean => {
   if (!json || Array.isArray(json.project_credentials)) {
     return false;
   }
