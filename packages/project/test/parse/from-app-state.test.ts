@@ -97,6 +97,63 @@ test('should create a Project from prov state with credentials', (t) => {
   t.deepEqual(project.credentials, []);
 });
 
+test('should load a workflow flagged delete: true and flag it removed', (t) => {
+  const stateWithDeletedWorkflow: any = cloneDeep(state);
+  stateWithDeletedWorkflow.workflows['my-workflow'].delete = true;
+
+  const project = fromAppState(stateWithDeletedWorkflow, meta);
+
+  t.is(project.workflows.length, 1);
+  t.true(project.workflows[0].isRemoved());
+});
+
+test('should load a job flagged delete: true and flag it removed', (t) => {
+  const stateWithDeletedJob: any = cloneDeep(state);
+  stateWithDeletedJob.workflows['my-workflow'].jobs['transform-data'].delete =
+    true;
+
+  const project = fromAppState(stateWithDeletedJob, meta);
+  const wf = project.workflows[0];
+
+  t.truthy(wf.get('transform-data'));
+  t.true(wf.isRemoved('transform-data'));
+});
+
+test('should load a trigger flagged delete: true and flag it removed', (t) => {
+  const stateWithDeletedTrigger: any = cloneDeep(state);
+  stateWithDeletedTrigger.workflows['my-workflow'].triggers.webhook.delete =
+    true;
+
+  const project = fromAppState(stateWithDeletedTrigger, meta);
+  const wf = project.workflows[0];
+
+  t.truthy(wf.get('webhook'));
+  t.true(wf.isRemoved('webhook'));
+});
+
+test('should load an edge flagged delete: true and flag it removed', (t) => {
+  const stateWithDeletedEdge: any = cloneDeep(state);
+  stateWithDeletedEdge.workflows['my-workflow'].edges[
+    'trigger->transform-data'
+  ].delete = true;
+
+  const project = fromAppState(stateWithDeletedEdge, meta);
+  const wf = project.workflows[0];
+
+  t.true(wf.isRemoved('webhook', 'transform-data'));
+});
+
+test('a delete: true job survives a parse -> serialize round trip', (t) => {
+  const stateWithDeletedJob: any = cloneDeep(state);
+  stateWithDeletedJob.workflows['my-workflow'].jobs['transform-data'].delete =
+    true;
+
+  const project = fromAppState(stateWithDeletedJob, meta);
+  const reserialized = project.serialize('state', { format: 'json' }) as any;
+
+  t.true(reserialized.workflows['my-workflow'].jobs['transform-data'].delete);
+});
+
 test('should create a Project from prov state with positions', (t) => {
   const newState = cloneDeep(state);
 
@@ -346,6 +403,43 @@ test('mapWorkflow: map a job with project credentials onto job.configuration', (
       keychain_credential_id: 'k',
     },
   });
+});
+
+// mapWorkflow is a pure mapper - it maps delete: true jobs/triggers/edges just
+// like any other. Flagging them removed on the resulting Workflow is the
+// caller's job (see fromAppState), since that's the only place a uuid can be
+// resolved back to a local id.
+test('mapWorkflow: maps a job flagged delete: true like any other job', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.jobs['transform-data'].delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  const job: any = mapped.steps.find((s: any) => s.id === 'transform-data');
+  t.is(job?.openfn.uuid, '66add020-e6eb-4eec-836b-20008afca816');
+});
+
+test('mapWorkflow: maps a trigger flagged delete: true like any other trigger', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.triggers.webhook.delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  const trigger: any = mapped.steps.find((s: any) => s.id === 'webhook');
+  t.is(trigger?.openfn.uuid, '4a06289c-15aa-4662-8dc6-f0aaacd8a058');
+});
+
+test('mapWorkflow: maps an edge flagged delete: true like any other edge', (t) => {
+  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  wf.edges['trigger->transform-data'].delete = true;
+
+  const mapped = mapWorkflow(wf);
+
+  const [trigger] = mapped.steps as any[];
+  t.is(
+    trigger.next['transform-data'].openfn.uuid,
+    'a9a3adef-b394-4405-814d-3ac4323f4b4b'
+  );
 });
 
 test('mapEdge: map enabled state', (t) => {

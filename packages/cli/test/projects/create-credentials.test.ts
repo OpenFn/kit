@@ -51,7 +51,7 @@ test('sync-credentials: ignores duplicate references', (t) => {
   t.deepEqual(findCredentialIds(project), ['same']);
 });
 
-test.only('sync-credentials: creates credential yaml file', (t) => {
+test('sync-credentials: creates credential yaml file', (t) => {
   mock({ '/ws': {} });
 
   const project = new Project(

@@ -1,12 +1,18 @@
 import Project from '../Project';
-import type Workflow from '../Workflow';
+import Workflow from '../Workflow';
 import { generateHash } from './version';
 
+export type ChangedWorkflows = {
+  changed: Workflow[];
+  // ids of workflows present in forked_from/history but no longer in the project
+  removed: string[];
+};
+
 /**
- * For a given Project, identify which workflows have changed
- * Uses forked_from as the base, or history if that's unavailable
+ * Identify which projects have changed or been removed since the last checkpoint.
+ * Prefers to use `forked_from` but will fallback to history
  */
-export default (project: Project) => {
+export default (project: Project): ChangedWorkflows => {
   const base: Record<string, string> =
     project.cli.forked_from ??
     project.workflows.reduce((obj: any, wf) => {
@@ -16,7 +22,7 @@ export default (project: Project) => {
       return obj;
     }, {});
 
-  const changed = [];
+  const changed: Workflow[] = [];
 
   for (const wf of project.workflows) {
     if (wf.id in base) {
@@ -26,17 +32,14 @@ export default (project: Project) => {
       }
       delete base[wf.id];
     } else {
-      // If a workflow doens't appear in forked_from, we assume it's new
+      // If a workflow doesn't appear in forked_from, we assume it's new
       // (and so changed!)
       changed.push(wf);
     }
   }
 
-  // Anything in forked_from that hasn't been handled
-  // must have been removed (and so changed!)
-  for (const removedId in base) {
-    changed.push({ id: removedId, $deleted: true } as unknown as Workflow);
-  }
+  // Anything in forked_from that hasn't been handled must have been removed
+  const removed = Object.keys(base);
 
-  return changed;
+  return { changed, removed };
 };

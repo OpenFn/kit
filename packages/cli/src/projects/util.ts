@@ -184,7 +184,6 @@ export async function deployProject(
         // TODO html errors are too long to be useful... figure this out later
         logger?.error(content);
       }
-
       throw new CLIError(
         `Failed to deploy project ${state.name}: ${response.status}`
       );

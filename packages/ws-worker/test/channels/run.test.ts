@@ -44,6 +44,30 @@ test('should fail to join an run channel with an invalid token', async (t) => {
   }
 });
 
+test('should reject (not hang) when fetch:plan replies an error', async (t) => {
+  const logger = createMockLogger();
+  const socket = new MockSocket('www', {
+    'run:a': mockChannel({
+      join: () => ({ status: 'ok' }),
+      [GET_PLAN]: () => {
+        throw { reason: 'adaptor_not_ready' };
+      },
+    }),
+  });
+
+  // race against a short timeout so a hang fails fast instead of hanging CI
+  const result = await Promise.race([
+    joinRunChannel(socket, 'x.y.z', 'a', logger).then(
+      () => 'resolved',
+      () => 'rejected'
+    ),
+    new Promise((resolve) => setTimeout(() => resolve('timed-out'), 200)),
+  ]);
+
+  // 'timed-out' would mean joinRunChannel's promise never settled
+  t.is(result, 'rejected');
+});
+
 test('should log an error including channel state when the channel errors', async (t) => {
   const logger = createMockLogger();
   const channel = mockChannel({
