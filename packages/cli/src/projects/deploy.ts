@@ -39,14 +39,17 @@ export type DeployOptions = Pick<
   | 'logJson'
   | 'confirm'
 > & {
-  project?: string; // this is a CLI positional arg, not an option
-  workspace?: string;
-  dryRun?: boolean;
-  new?: boolean;
-  name?: string;
+  // CLI positional args, rather than options
+  project?: string;
+  target?: string;
+
   alias?: string;
+  dryRun?: boolean;
   jsonDiff?: boolean;
+  name?: string;
+  new?: boolean;
   workflow?: string[];
+  workspace?: string;
 };
 
 const options = [
@@ -74,22 +77,34 @@ const printProjectName = (project: Project) =>
   `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
 
 export const command: yargs.CommandModule<DeployOptions> = {
-  command: 'deploy [project]',
+  command: 'deploy [project] [target]',
   aliases: 'push',
-  describe: `Deploy the checked out project to a Lightning Instance`,
+  describe: `Deploy the passed or checked-out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
     build(options, yargs)
       .positional('project', {
         describe:
           'The UUID, local id or local alias of the project to deploy to',
       })
+      .positional('target', {
+        describe:
+          'When deploying a local file, the UUID or alias of the remote project to deploy it to. Defaults to the UUID embedded in the file',
+      })
       .example(
         'deploy',
-        'Deploy the checked-out project its connected remote instance'
+        'Deploy the checked-out project to its connected remote instance'
       )
       .example(
         'deploy staging',
-        'Deploy the checkout-out project to the remote project with alias "staging"'
+        'Deploy the checked-out project to the remote project with alias "staging"'
+      )
+      .example(
+        'deploy project.yaml',
+        'Deploy project.yaml to its own tracked remote project'
+      )
+      .example(
+        'deploy project.yaml staging',
+        'Deploy project.yaml to the remote project with alias "staging"'
       ),
   handler: ensure('project-deploy', options),
 };
@@ -161,13 +176,17 @@ export type SyncResult = {
 // This function is responsible for syncing changes in the user's local project
 // with the remote app version
 // It returns a merged state object
+//
+// skipLocallyChangedCheck: merge every workflow in the source, not just those
+// edited since its own last snapshot (that check is meaningless for a file)
 const syncProjects = async (
   options: DeployOptions,
   config: Required<AuthOptions>,
   ws: Workspace,
   localProject: Project,
   trackedProject: Project, // the project we want to update
-  logger: Logger
+  logger: Logger,
+  skipLocallyChangedCheck = false
 ): Promise<SyncResult | null> => {
   // First step, fetch the latest version and write
   // this may throw!
@@ -212,6 +231,9 @@ const syncProjects = async (
       );
     }
     mergeCandidates = options.workflow;
+  } else if (skipLocallyChangedCheck) {
+    // the source is the spec, so every workflow in it is a candidate
+    mergeCandidates = localProject.workflows.map((w) => w.id);
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
   }
@@ -278,10 +300,10 @@ const syncProjects = async (
     mode: localProject.uuid === remoteProject.uuid ? 'replace' : 'sandbox',
     force: true,
   };
-  if (options.workflow?.length) {
-    // If --workflow is passed, force-include exactly the listed workflows via workflowMappings
+  if (options.workflow?.length || skipLocallyChangedCheck) {
+    // force-include exactly the candidate workflows
     mergeOptions.workflowMappings = Object.fromEntries(
-      options.workflow.map((id) => [id, id])
+      mergeCandidates.map((id) => [id, id])
     );
   } else {
     // Otherwise only merge locally updated workflows
@@ -298,30 +320,111 @@ export async function handler(options: DeployOptions, logger: Logger) {
   );
   const config = loadAppAuthConfig(options, logger);
 
-  // TODO this is the hard way to load the local alias
-  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-  const ws = new Workspace(options.workspace || '.');
+  // Work out what we're deploying (a local file, or the checked-out
+  // workspace project) and, separately, which remote project to deploy it
+  // to. These are independent - a file can target any tracked remote, not
+  // just the one it came from.
+  let filePath: string | undefined;
+  let targetIdentifier: string | undefined;
 
-  const active = ws.getTrackedProject();
-  const alias = options.alias ?? active?.alias;
+  if (options.project && options.target) {
+    // two positionals: `deploy <file> <target>` - the first is always a file
+    filePath = options.project;
+    targetIdentifier = options.target;
+  } else if (options.project) {
+    // one positional: a file (`deploy project.yaml`) or a target
+    // (`deploy staging`, deploying the checked-out project)
+    if (/\.(yaml|json)$/.test(options.project)) {
+      filePath = options.project;
+    } else {
+      targetIdentifier = options.project;
+    }
+  }
 
-  const localProject = await Project.from('fs', {
-    root: options.workspace || '.',
-    alias,
-    name: options.name,
-  });
+  // The local project that we want to actually deploy
+  let localProject: Project;
+  let ws: Workspace | undefined;
+  let alias = options.alias;
+
+  if (filePath) {
+    const localPath = path.resolve(
+      options.workspace ?? process.cwd(),
+      filePath
+    );
+    logger.debug('Reading project from path ', localPath);
+
+    localProject = await Project.from('path', localPath, {
+      name: options.name,
+      alias,
+      // deploying an already-stateful file as new must not carry over its
+      // old workflow/step/edge ids - strip them as we parse
+      asSpec: !!options.new,
+    });
+
+    // If the local project doesn't have stateful stuff,
+    // flag this as a new upload
+    if (!localProject.uuid) {
+      logger.debug(
+        'Local project does not have a UUID: assuming this is a new project deployment'
+      );
+      options.new = true;
+
+      // TODO ensure the alias is unique if we're posting a new project
+    }
+  } else {
+    logger.debug('Reading checked-out project from workspace');
+    // TODO this is the hard way to load the local alias
+    // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+    ws = new Workspace(options.workspace || '.');
+
+    const active = ws.getTrackedProject();
+
+    if (!alias && active?.alias) {
+      alias = active.alias;
+    }
+
+    localProject = await Project.from('fs', {
+      root: options.workspace || '.',
+      alias,
+      name: options.name,
+    });
+  }
 
   // Track the remote we want to target
-  // If the user passed a project alias, we need to use that
-  // Otherwise just sync with the local project
+  // If the user passed an explicit target, we need to use that
+  // Otherwise just sync with the local project's own tracked remote
   let tracker;
-  if (!options.new) {
-    tracker = ws.get(options.project ?? localProject.uuid!);
+  if (options.new) {
+    // reset all metadata
+    localProject.openfn = {
+      endpoint: config.endpoint,
+    };
+
+    // Enforce a sensible alias for the new project
+    // else it might overwrite the default
+    if (!localProject.alias || localProject.alias === 'main') {
+      alias = options.name?.replace(/\s+/g, '-');
+      localProject.alias = alias ?? null;
+    }
+  } else {
+    ws ??= new Workspace(options.workspace || '.');
+    tracker = ws.get(targetIdentifier ?? localProject.uuid!);
+
+    // A project loaded from a file already knows which remote it belongs
+    // to, so it can serve as its own deploy destination - we don't need a
+    // locally tracked copy of it to sync against
+    if (!tracker && filePath && localProject.uuid) {
+      logger.debug(
+        'No locally tracked project found: deploying to the remote named in the file'
+      );
+      tracker = localProject;
+    }
+
     if (!tracker) {
-      // Is this really an error? Unlikely to happen I thuink
+      // Is this really an error? Unlikely to happen I think
       console.log(
         `ERROR: Failed to find tracked remote project ${
-          options.project ?? localProject.uuid!
+          targetIdentifier ?? localProject.uuid!
         } locally`
       );
       console.log('To deploy a new project, add --new to the command');
@@ -333,11 +436,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
       throw new Error('Failed to find remote project locally');
     }
-  } else {
-    // reset all metadata
-    localProject.openfn = {
-      endpoint: config.endpoint,
-    };
+
+    // the local copy belongs to the project we deployed at, not the one
+    // we deployed from
+    alias ??= tracker.alias ?? undefined;
   }
 
   // Choose the target endpoint we want to deploy to
@@ -369,10 +471,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const syncResult = await syncProjects(
       options,
       config,
-      ws,
+      ws!,
       localProject,
       tracker!,
-      logger
+      logger,
+      // a file's own snapshot tells us nothing about the target
+      !!filePath
     );
     if (!syncResult) {
       return;
@@ -380,6 +484,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
     ({ merged, remoteProject, locallyChangedWorkflows } = syncResult);
   }
 
+  /**
+   * Questions:
+   * 1. When this serializes, should project_credentials have uuids?
+   */
   const state = merged.serialize('state', {
     format: 'json',
   }) as Provisioner.Project_v1;
@@ -458,19 +566,26 @@ export async function handler(options: DeployOptions, logger: Logger) {
       result as any,
       {
         endpoint: endpoint,
-        alias,
       },
-      merged.config
+      {
+        ...merged.config,
+        alias: alias as string | undefined,
+      }
     );
 
     updateForkedFrom(finalProject);
     const configData = finalProject.generateConfig();
+
+    // Write the updated openfn.yaml
+    // TODO: allow us to suppress writing this stuff
+    // (useful if posting from spec)
     await writeFile(
-      path.resolve(options.workspace!, configData.path),
+      path.resolve(options.workspace ?? process.cwd(), configData.path),
       configData.content
     );
 
-    const finalOutputPath = getSerializePath(localProject, options.workspace!);
+    // TODO if this was marked as new, we probably need to ensure a unique alias here
+    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 

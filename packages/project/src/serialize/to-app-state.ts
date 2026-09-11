@@ -12,13 +12,6 @@ import getCredentialName from '../util/get-credential-name';
 
 type Options = {
   format?: 'json' | 'yaml';
-  /**
-   * Serialize the project into a v1 spec format (not state)
-   * This is awkward and ugly but should only be a temporary solution
-   * If we decide we need it long term, we should generate a separate
-   * to-app-spec function which does a more focused job of it.
-   */
-  asSpec?: boolean;
 };
 
 const defaultJobProps = {
@@ -58,35 +51,25 @@ export default function (
     name: c.name,
   }));
 
-  Object.assign(state, rest, project.options);
-  if (options.asSpec) {
-    for (const c of project.credentials) {
-      // note that credentials for a spec file are not the
-      // the same format as a state file,
-      // so typings break here
-      (state as any).credentials ??= {};
-      (state as any).credentials[getCredentialName(c)] = {
-        name: c.name,
-        owner: c.owner,
-      };
-    }
-  } else {
-    const credentialsWithUuids =
-      project.credentials?.map((c) => ({
-        ...c,
-        uuid: (c as CredentialState).uuid ?? randomUUID(),
-      })) ?? [];
+  // Ensure each credential has a UUID
+  project.credentials =
+    project.credentials?.map((c) => ({
+      ...c,
+      uuid: c.uuid ?? randomUUID(),
+    })) ?? [];
 
-    state.project_credentials = credentialsWithUuids.map((c) => ({
-      // note the subtle conversion here
-      id: c.uuid as string,
-      name: c.name,
-      owner: c.owner,
-    }));
-  }
+  Object.assign(state, rest, project.options);
+  state.project_credentials = project.credentials.map((c) => ({
+    // note the subtle conversion here: uuid -> id
+    // That's because the local Project uses the uuid key to track UUIDs
+    // but the provisioner spec uses id
+    id: c.uuid as string,
+    name: c.name,
+    owner: c.owner,
+  }));
 
   state.workflows = project.workflows
-    .map((w) => mapWorkflow(w, project.credentials, options))
+    .map((w) => mapWorkflow(w, project.credentials))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;
@@ -105,11 +88,8 @@ export default function (
 
 export const mapWorkflow = (
   workflow: Workflow,
-  credentials: CredentialState[] = [],
-  options: Options = {}
+  credentials: CredentialState[] = []
 ) => {
-  const useUuids = !options.asSpec;
-
   // captured before toJSON(), since the `lookup` build below mints fresh uuids for anything missing one
   const removed =
     workflow instanceof Workflow
@@ -125,7 +105,7 @@ export const mapWorkflow = (
 
   const { uuid, ...originalOpenfnProps } = workflow.openfn ?? {};
 
-  if (useUuids && removed.self && uuid) {
+  if (removed.self && uuid) {
     // nothing else about a deleted workflow matters to the provisioner
     return {
       ...originalOpenfnProps,
@@ -147,25 +127,21 @@ export const mapWorkflow = (
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
   } as Provisioner.Workflow;
 
-  if (useUuids) {
-    wfState.id = (workflow.openfn?.uuid ?? randomUUID()) as any;
-  }
+  wfState.id = (workflow.openfn?.uuid ?? randomUUID()) as any;
 
   if (workflow.name) {
     wfState.name = workflow.name;
   }
 
-  // lookup of local-ids to project-ids (only needed when using UUIDs)
+  // lookup of local-ids to project-ids
   const lookup = workflow.steps.reduce((obj, next) => {
-    if (useUuids) {
-      if (!next.openfn?.uuid) {
-        // If there's no tracked id, we generate one here
-        next.openfn ??= {};
-        next.openfn.uuid = randomUUID();
-      }
-      // @ts-ignore
-      obj[next.id] = next.openfn.uuid;
+    if (!next.openfn?.uuid) {
+      // If there's no tracked id, we generate one here
+      next.openfn ??= {};
+      next.openfn.uuid = randomUUID();
     }
+    // @ts-ignore
+    obj[next.id] = next.openfn.uuid;
     return obj;
   }, {}) as Record<string, string>;
 
@@ -174,7 +150,7 @@ export const mapWorkflow = (
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
-    const isRemoved = useUuids && !!removed.ids[s.id];
+    const isRemoved = !!removed.ids[s.id];
     const nodeUuid = originalUuids[s.id];
 
     if (isRemoved && !nodeUuid) {
@@ -192,7 +168,7 @@ export const mapWorkflow = (
         node = {
           ...rest,
           type: s.type ?? 'webhook', // this is mostly for tests
-          ...(useUuids ? renameKeys(openfn, { uuid: 'id' }) : {}),
+          ...renameKeys(openfn, { uuid: 'id' }),
         } as Provisioner.Trigger;
       }
       wfState.triggers[s.type] = node;
@@ -202,9 +178,7 @@ export const mapWorkflow = (
       } else {
         node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
         const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
-        if (useUuids) {
-          node.id = uuid;
-        }
+        node.id = uuid;
         if (s.expression) {
           node.body = s.expression;
         }
@@ -218,19 +192,15 @@ export const mapWorkflow = (
               const name = getCredentialName(c);
               return name === projectCredentialId;
             });
-            if (mappedCredential && useUuids) {
+            if (mappedCredential) {
               projectCredentialId = mappedCredential.uuid;
             }
 
-            if (useUuids) {
-              otherOpenFnProps.project_credential_id = projectCredentialId;
-            } else {
-              otherOpenFnProps.credential = projectCredentialId;
-            }
+            otherOpenFnProps.project_credential_id = projectCredentialId;
           }
         }
 
-        Object.assign(node, useUuids ? defaultJobProps : {}, otherOpenFnProps);
+        Object.assign(node, defaultJobProps, otherOpenFnProps);
       }
 
       wfState.jobs[s.id ?? slugify(s.name)] = node;
@@ -245,7 +215,7 @@ export const mapWorkflow = (
     Object.keys(s.next ?? {}).forEach((next) => {
       const rules = s.next[next];
 
-      const edgeIsRemoved = useUuids && !!removed.ids[`${s.id}-${next}`];
+      const edgeIsRemoved = !!removed.ids[`${s.id}-${next}`];
       const edgeUuid = originalUuids[`${s.id}-${next}`];
 
       if (edgeIsRemoved && !edgeUuid) {
@@ -262,31 +232,17 @@ export const mapWorkflow = (
 
       const { uuid, ...otherOpenFnProps } = rules.openfn ?? {};
 
-      let e: any;
-      if (useUuids) {
-        e = {
-          id: uuid ?? randomUUID(),
-          target_job_id: lookup[next],
-          enabled: !rules.disabled,
-          source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
-        } as Provisioner.Edge;
-        Object.assign(e, otherOpenFnProps);
-        if (isTrigger) {
-          e.source_trigger_id = node.id;
-        } else {
-          e.source_job_id = node.id;
-        }
+      const e: any = {
+        id: uuid ?? randomUUID(),
+        target_job_id: lookup[next],
+        enabled: !rules.disabled,
+        source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
+      } as Provisioner.Edge;
+      Object.assign(e, otherOpenFnProps);
+      if (isTrigger) {
+        e.source_trigger_id = node.id;
       } else {
-        e = {
-          enabled: !rules.disabled,
-          target_job: next,
-        };
-        Object.assign(e, otherOpenFnProps);
-        if (isTrigger) {
-          e.source_trigger = s.type;
-        } else {
-          e.source_job = s.id;
-        }
+        e.source_job_id = node.id;
       }
 
       if (rules.label) {
@@ -312,18 +268,16 @@ export const mapWorkflow = (
     });
   });
 
-  if (useUuids) {
-    // Sort edges by UUID (for more predictable comparisons in test)
-    wfState.edges = Object.keys(wfState.edges)
-      // convert edge ids to strings just in case a number creeps in (it might in test)
-      .sort((a, b) =>
-        `${wfState.edges[a].id}`.localeCompare('' + wfState.edges[b].id)
-      )
-      .reduce((obj: any, key) => {
-        obj[key] = wfState.edges[key];
-        return obj;
-      }, {});
-  }
+  // Sort edges by UUID (for more predictable comparisons in test)
+  wfState.edges = Object.keys(wfState.edges)
+    // convert edge ids to strings just in case a number creeps in (it might in test)
+    .sort((a, b) =>
+      `${wfState.edges[a].id}`.localeCompare('' + wfState.edges[b].id)
+    )
+    .reduce((obj: any, key) => {
+      obj[key] = wfState.edges[key];
+      return obj;
+    }, {});
 
   return wfState;
 };

@@ -238,7 +238,7 @@ test('should write openfn keys to objects', (t) => {
   t.is(state.workflows['wf'].edges['trigger->step'].x, 1);
 });
 
-test('should handle credentials', (t) => {
+test('should handle credentials with existing UUIDs', (t) => {
   const data = {
     id: 'my-project',
     credentials: [
@@ -279,6 +279,51 @@ test('should handle credentials', (t) => {
   const { step } = state.workflows['wf'].jobs;
   t.is(step.keychain_credential_id, 'k');
   t.is(step.project_credential_id, '123');
+});
+
+test('should handle credentials without UUIDs (ie new credentials)', (t) => {
+  const data = {
+    id: 'my-project',
+    credentials: [
+      {
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'admin@openfn.org|cred',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  const { step } = state.workflows['wf'].jobs;
+  t.is(step.keychain_credential_id, 'k');
+
+  // Should look like a UUID
+  t.is(typeof step.project_credential_id, 'string');
+  t.is(step.project_credential_id!.length, 36);
 });
 
 test('should force a UUID on project credentials', (t) => {
@@ -597,18 +642,6 @@ test('a removed workflow becomes a minimal delete: true entry', (t) => {
   });
 });
 
-test('asSpec ignores removed flags', (t) => {
-  const data = cloneDeep(removableWorkflowData);
-  const project = new Project(data);
-  project.getWorkflow('wf')!.remove('step');
-
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  // asSpec has no notion of delete: true - the step is serialized normally
-  t.truthy(result.workflows['wf'].jobs.step);
-  t.falsy(result.workflows['wf'].jobs.step.delete);
-});
-
 test('should serialize channels to app state', (t) => {
   const channels = [
     {
@@ -759,70 +792,6 @@ const v2ProjectData: any = {
     },
   ],
 };
-
-test('asSpec:true - edges use source_trigger/target_job keys, not UUIDs', (t) => {
-  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  const edge = Object.values(result.workflows['my-workflow'].edges)[0] as any;
-  t.truthy(edge.source_trigger);
-  t.truthy(edge.target_job);
-  t.falsy(edge.source_trigger_id);
-  t.falsy(edge.target_job_id);
-  t.falsy(edge.id);
-});
-
-test('asSpec:true - handle credentials', (t) => {
-  const data = cloneDeep(v2ProjectData);
-  data.credentials = [
-    {
-      name: 'x',
-      owner: 'a@b.org,',
-      uuid: '123',
-    },
-  ];
-  data.workflows[0].steps[1].configuration = `a@b.org|x`;
-
-  const project = new Project(data, { formats: { project: 'json' } });
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  t.deepEqual(result.credentials, {
-    'a@b.org,|x': { name: 'x', owner: 'a@b.org,' },
-  });
-  t.is(
-    result.workflows['my-workflow'].jobs['transform-data'].credential,
-    'a@b.org|x'
-  );
-});
-
-test('asSpec:true - source_trigger matches the trigger key', (t) => {
-  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  const wf = result.workflows['my-workflow'];
-  const edge = Object.values(wf.edges)[0] as any;
-  t.truthy(wf.triggers[edge.source_trigger]);
-});
-
-test('asSpec:true - target_job matches the job key', (t) => {
-  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  const wf = result.workflows['my-workflow'];
-  const edge = Object.values(wf.edges)[0] as any;
-  t.truthy(wf.jobs[edge.target_job]);
-});
-
-test('asSpec:true - triggers and jobs have no generated id', (t) => {
-  const project = new Project(v2ProjectData, { formats: { project: 'json' } });
-  const result = toAppState(project, { format: 'json', asSpec: true }) as any;
-
-  const wf = result.workflows['my-workflow'];
-  const trigger = Object.values(wf.triggers)[0] as any;
-  const job = Object.values(wf.jobs)[0] as any;
-  t.falsy(trigger.id);
-  t.falsy(job.id);
-});
 
 test.skip('should convert a project back to app state in yaml', (t) => {
   // this is a serialized project file
