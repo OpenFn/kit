@@ -202,8 +202,12 @@ export class Project {
 
   serialize(type: 'project', options?: any): SerializedProject | string;
   serialize(type: 'state', options?: any): Provisioner.Project | string;
+  serialize(type: 'spec', options?: any): Provisioner.Project | string;
   serialize(type: 'fs', options?: any): Record<string, string>;
-  serialize(type: 'project' | 'fs' | 'state' = 'project', options?: any) {
+  serialize(
+    type: 'project' | 'fs' | 'state' | 'spec' = 'project',
+    options?: any
+  ) {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this, options);
