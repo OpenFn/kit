@@ -436,6 +436,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
       throw new Error('Failed to find remote project locally');
     }
+
+    // the local copy belongs to the project we deployed at, not the one
+    // we deployed from
+    alias ??= tracker.alias ?? undefined;
   }
 
   // Choose the target endpoint we want to deploy to

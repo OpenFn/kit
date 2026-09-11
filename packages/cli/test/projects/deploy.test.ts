@@ -246,6 +246,18 @@ test.serial(
 
     const success = logger._find('success', /Updated project at/);
     t.truthy(success);
+
+    // the deploy landed on dev, so dev's local copy is the one to refresh
+    const devAfter = fs.readFileSync('/ws/.projects/dev@localhost.yaml', 'utf8');
+    t.regex(devAfter, /My Workflow/);
+
+    // and the file we deployed FROM must not be rewritten with dev's state
+    const mainAfter = fs.readFileSync(
+      '/ws/.projects/main@localhost.yaml',
+      'utf8'
+    );
+    t.regex(mainAfter, new RegExp(`uuid: ${UUID}`));
+    t.notRegex(mainAfter, new RegExp(TWO_WORKFLOWS_UUID));
   }
 );
 
