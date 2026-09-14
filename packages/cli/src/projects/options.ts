@@ -63,10 +63,10 @@ export const credentials: CLIOption = {
   yargs: {
     alias: ['creds', 'cred', 'c'],
     type: 'string',
-    default: 'all',
+    default: 'prune',
     coerce: parseCredentialsOption,
     description:
-      'Credential sync strategy: "none" (sync no credentials), "prune" (only credentials referenced by workflows), "all" (sync every credential in the project, default), or a comma-separated list of credential names to include, optionally remapped via name=alias:owner',
+      'Credential sync strategy: "prune" (only credentials referenced by workflows, default), "none" (sync no credentials), "all" (sync every credential declared in the project, even if unreferenced), or a comma-separated list of credential names to include, optionally remapped via name=alias:owner',
   },
 };
 

@@ -1,9 +1,9 @@
 // Parses the --credentials option for `project deploy`.
 //
 // Supported forms:
+//   prune                         only sync credentials referenced by workflows (default)
 //   none                          sync no credentials
-//   prune                         only sync credentials referenced by workflows
-//   all                           sync every credential in the project (default)
+//   all                           sync every credential declared in the project, even if unreferenced
 //   a,b,c=c:joe@openfn.org        sync only the named credentials, optionally
 //                                  remapped to a new name:owner via "="
 

@@ -21,6 +21,7 @@ import {
 } from './util';
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
+import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
@@ -455,8 +456,17 @@ export async function handler(options: DeployOptions, logger: Logger) {
     config.endpoint ??
     DEFAULT_ENDPOINT;
 
-  // generate a credential map
-  localProject.credentials = localProject.buildCredentialMap();
+  // A file/state-loaded project may already declare a credentials list
+  // (possibly wider than what's referenced); a checked-out workspace
+  // project has none, so fall back to what's actually referenced
+  if (!localProject.credentials?.length) {
+    localProject.credentials = localProject.buildCredentialMap();
+  }
+
+  remapCredentials(
+    localProject,
+    getCredentialsVisitor(localProject, options.credentials ?? 'prune')
+  );
 
   logger.success(
     `Loaded checked-out project ${printProjectName(localProject)}`
