@@ -1,6 +1,13 @@
 import resolvePath from '../util/resolve-path';
 import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
+import parseCredentialsOption from './parse-credentials-option';
+
+export type {
+  CredentialsStrategy,
+  CredentialsMap,
+  CredentialAlias,
+} from './parse-credentials-option';
 
 export type Opts = BaseOpts & {
   alias?: string;
@@ -48,6 +55,18 @@ export const creds: CLIOption = {
     default: true,
     description:
       'Create a credentials.yaml file and intialize with empty values',
+  },
+};
+
+export const credentials: CLIOption = {
+  name: 'credentials',
+  yargs: {
+    alias: ['creds', 'cred', 'c'],
+    type: 'string',
+    default: 'all',
+    coerce: parseCredentialsOption,
+    description:
+      'Credential sync strategy: "none" (sync no credentials), "prune" (only credentials referenced by workflows), "all" (sync every credential in the project, default), or a comma-separated list of credential names to include, optionally remapped via name=alias:owner',
   },
 };
 

@@ -25,6 +25,7 @@ import { printRichDiff } from './diff';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
+import type { CredentialsStrategy } from './options';
 
 export const DEFAULT_ENDPOINT = 'https://app.openfn.org';
 
@@ -44,6 +45,7 @@ export type DeployOptions = Pick<
   target?: string;
 
   alias?: string;
+  credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
   name?: string;
@@ -62,6 +64,7 @@ const options = [
   o2.alias,
   o2.jsonDiff,
   o2.workflow,
+  o2.credentials,
 
   // general options
   o.apiKey,
