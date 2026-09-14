@@ -4,6 +4,7 @@ type PropsOnly<T> = {
   [K in keyof T]: T[K] extends Function ? never : K;
 }[keyof T];
 
+// Keys which are null will be removed from the target
 export default function baseMerge<T>(
   target: T,
   source: T,
