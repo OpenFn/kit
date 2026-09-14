@@ -126,6 +126,49 @@ test('special: arrays are shallow merged', (t) => {
   });
 });
 
+test('null in source removes a key entirely (full merge)', (t) => {
+  const target = { key: 'one', title: 'target' };
+  const source = { key: 'two', title: null as any };
+  const result = baseMerge(target, source);
+
+  t.deepEqual(result, { key: 'two' });
+  t.false('title' in result);
+});
+
+test('null in a picked source key removes it entirely (partial merge)', (t) => {
+  const target = { key: 'one', title: 'target' };
+  const source = { key: null as any, title: 'source' };
+  const result = baseMerge(target, source, ['key']);
+
+  t.deepEqual(result, { title: 'target' });
+  t.false('key' in result);
+});
+
+test('null in assigns removes a key entirely', (t) => {
+  const target = { key: 'one', title: 'target' };
+  const source = { key: 'two', title: 'source' };
+  const result = baseMerge(target, source, ['key'], { title: null as any });
+
+  t.deepEqual(result, { key: 'two' });
+  t.false('title' in result);
+});
+
+test('a key simply absent from source (not null) leaves target untouched', (t) => {
+  const target = { key: 'one', title: 'target' };
+  const source: any = { key: 'two' }; // no title at all - not the same as null
+  const result = baseMerge(target, source, ['key', 'title']);
+
+  t.deepEqual(result, { key: 'two', title: 'target' });
+});
+
+test('a null already on target, untouched by source, is not removed', (t) => {
+  const target = { key: 'one', title: null as any };
+  const source = { key: 'two' };
+  const result = baseMerge(target, source, ['key']);
+
+  t.deepEqual(result, { key: 'two', title: null });
+});
+
 // TODO: should a merge create a union of two objects?
 test('special: objects are shallow merged', (t) => {
   const target = {

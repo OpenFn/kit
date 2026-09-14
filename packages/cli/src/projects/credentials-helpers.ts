@@ -133,11 +133,11 @@ export const remapCredentials = (
         rekeyed.has(step.configuration)
       ) {
         const newKey = rekeyed.get(step.configuration);
-        if (newKey === null) {
-          delete step.configuration;
-        } else {
-          step.configuration = newKey;
-        }
+        // null (not a delete) so a merge-based redeploy actually clears
+        // it - baseMerge only treats an explicit null as "remove this
+        // key"; an absent key means "leave target's value alone"
+        (step as { configuration?: string | null }).configuration =
+          newKey === null ? null : newKey;
       }
     }
   }

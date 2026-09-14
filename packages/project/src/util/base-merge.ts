@@ -12,5 +12,15 @@ export default function baseMerge<T>(
   assigns: Record<PropsOnly<T>, unknown> = {}
 ) {
   const pickedSource = sourceKeys ? pick(source, sourceKeys) : source;
-  return assign({}, target, { ...pickedSource, ...assigns });
+  const overrides: any = { ...pickedSource, ...assigns };
+  const merged: any = assign({}, target, overrides);
+
+  // null in an override (from source or assigns) is an explicit removal
+  for (const key of Object.keys(overrides)) {
+    if (overrides[key] === null) {
+      delete merged[key];
+    }
+  }
+
+  return merged;
 }

@@ -44,7 +44,9 @@ test('byNone drops every credential', (t) => {
   remapCredentials(project, byNone);
 
   t.deepEqual(project.credentials, []);
-  t.is(project.workflows[0].steps[0].configuration, undefined);
+  // null, not deleted - a merge-based redeploy needs an explicit removal
+  // signal to actually clear the target's existing reference
+  t.is(project.workflows[0].steps[0].configuration as any, null);
 });
 
 test('byAll keeps every credential and reference untouched', (t) => {
@@ -87,7 +89,7 @@ test('byMap drops credentials not named in the map', (t) => {
 
   t.deepEqual(project.credentials, [{ name: 'a', owner: 'joe@openfn.org' }]);
   t.is(project.workflows[0].steps[0].configuration, 'joe@openfn.org|a');
-  t.is(project.workflows[0].steps[1].configuration, undefined);
+  t.is(project.workflows[0].steps[1].configuration as any, null);
 });
 
 test('byMap renames a credential and rewrites its step references', (t) => {
