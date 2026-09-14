@@ -126,31 +126,30 @@ test('special: arrays are shallow merged', (t) => {
   });
 });
 
-test('null in source removes a key entirely (full merge)', (t) => {
+test('an explicit null in source overrides target (full merge)', (t) => {
   const target = { key: 'one', title: 'target' };
   const source = { key: 'two', title: null as any };
   const result = baseMerge(target, source);
 
-  t.deepEqual(result, { key: 'two' });
-  t.false('title' in result);
+  t.deepEqual(result, { key: 'two', title: null });
 });
 
-test('null in a picked source key removes it entirely (partial merge)', (t) => {
+test('an explicit null in a picked source key overrides target (partial merge)', (t) => {
   const target = { key: 'one', title: 'target' };
   const source = { key: null as any, title: 'source' };
   const result = baseMerge(target, source, ['key']);
 
-  t.deepEqual(result, { title: 'target' });
-  t.false('key' in result);
+  t.deepEqual(result, { key: null, title: 'target' });
 });
 
-test('null in assigns removes a key entirely', (t) => {
+test('an explicit null in assigns overrides target', (t) => {
   const target = { key: 'one', title: 'target' };
   const source = { key: 'two', title: 'source' };
-  const result = baseMerge(target, source, ['key'], { title: null as any });
+  const result = baseMerge(target, source, ['key'], {
+    title: null,
+  } as any);
 
-  t.deepEqual(result, { key: 'two' });
-  t.false('title' in result);
+  t.deepEqual(result, { key: 'two', title: null });
 });
 
 test('a key simply absent from source (not null) leaves target untouched', (t) => {

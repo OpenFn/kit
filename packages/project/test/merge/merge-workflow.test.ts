@@ -60,7 +60,7 @@ test('mergeWorkflows: a step explicitly clearing its credential reference (null)
 
   const merged: any = mergeWorkflows(source, target, mappings);
 
-  t.falsy(merged.steps[0].configuration);
+  t.is(merged.steps[0].configuration, null);
 });
 
 test("mergeWorkflows: a source step that simply omits configuration (not null) leaves target's reference untouched", (t) => {

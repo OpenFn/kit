@@ -57,6 +57,9 @@ export function mergeWorkflows(
         }
       }
 
+      // configuration must be null (not deleted) to clear a credential
+      // reference - pick() already takes an explicit null from source,
+      // it only treats a genuinely absent key as "leave target alone"
       newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
