@@ -3,6 +3,7 @@ import test from 'ava';
 
 import { setup } from './util';
 import { DEFAULT_PROJECT_ID, validateProvisionPayload } from '../src/api-rest';
+import createLightningServer from '../src/server';
 
 // @ts-ignore
 let server: any;
@@ -647,5 +648,107 @@ test.serial(
     t.is(response.status, 422);
     const body = await response.json();
     t.truthy(body.errors?.workflows?.wf1?.edges);
+  }
+);
+
+const credentialProjectPayload = (credentialId: string) => ({
+  id: 'creds-proj',
+  name: 'Creds Project',
+  project_credentials: [
+    {
+      id: credentialId,
+      name: 'joes-credential',
+      owner: 'joe@openfn.org',
+    },
+  ],
+  workflows: [
+    {
+      id: 'wf-uuid',
+      name: 'my workflow',
+      triggers: [],
+      edges: [],
+      jobs: [
+        {
+          id: 'job-1',
+          name: 'A',
+          project_credential_id: credentialId,
+        },
+      ],
+    },
+  ],
+});
+
+test.serial(
+  'strictCredentials: should return 422 when a job references a credential not declared on the server',
+  async (t) => {
+    const strictServer = createLightningServer({
+      port: 3335,
+      strictCredentials: true,
+    });
+
+    try {
+      const response = await fetch('http://localhost:3335/api/provision', {
+        method: 'POST',
+        body: JSON.stringify(credentialProjectPayload('not-a-real-cred')),
+        headers: { 'content-type': 'application/json' },
+      });
+
+      t.is(response.status, 422);
+      const body = await response.json();
+      t.deepEqual(body, {
+        errors: {
+          workflows: {
+            'my workflow': {
+              jobs: {
+                A: {
+                  project_credential_id: [
+                    "credential doesn't exist or isn't available in this project",
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+    } finally {
+      await strictServer.destroy();
+    }
+  }
+);
+
+test.serial(
+  'strictCredentials: should deploy successfully when a job references a credential declared on the server',
+  async (t) => {
+    const strictServer = createLightningServer({
+      port: 3336,
+      strictCredentials: true,
+    });
+    strictServer.addCredential('real-cred', { user: 'joe' });
+
+    try {
+      const response = await fetch('http://localhost:3336/api/provision', {
+        method: 'POST',
+        body: JSON.stringify(credentialProjectPayload('real-cred')),
+        headers: { 'content-type': 'application/json' },
+      });
+
+      t.is(response.status, 200);
+    } finally {
+      await strictServer.destroy();
+    }
+  }
+);
+
+test.serial(
+  'strictCredentials off (default): does not validate credentials, so an unregistered one still deploys',
+  async (t) => {
+    // uses the shared, non-strict server/endpoint from test.before
+    const response = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify(credentialProjectPayload('not-a-real-cred')),
+      headers: { 'content-type': 'application/json' },
+    });
+
+    t.is(response.status, 200);
   }
 );

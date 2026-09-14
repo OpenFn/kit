@@ -68,6 +68,10 @@ export type LightningOptions = {
   runPrivateKey?: string;
 
   socketDelay?: number; // add a delay to all web socket replies
+
+  // if true, deploying a job whose project_credential_id isn't a credential
+  // registered on the server (via app.addCredential) is rejected with a 422
+  strictCredentials?: boolean;
 };
 
 export type RunId = string;
