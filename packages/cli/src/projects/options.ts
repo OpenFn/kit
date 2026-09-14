@@ -1,13 +1,13 @@
 import resolvePath from '../util/resolve-path';
 import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
-import parseCredentialsOption from './parse-credentials-option';
+import parseCredentialsOption from './credentials-helpers';
 
 export type {
   CredentialsStrategy,
   CredentialsMap,
   CredentialAlias,
-} from './parse-credentials-option';
+} from './credentials-helpers';
 
 export type Opts = BaseOpts & {
   alias?: string;
