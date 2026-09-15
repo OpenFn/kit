@@ -846,6 +846,37 @@ jclark@openfn.org|joes-test-credential:
   }
 );
 
+test.serial(
+  '--credentials rejects a typo in the requested credential name',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            project: '/ws/project.yaml',
+            new: true,
+            // typo: the real credential is "joes-test-credential"
+            credentials: {
+              'joes-test-credentail': { name: 'renamed' },
+            },
+          } as any,
+          logger
+        ),
+      { message: /joes-test-credentail/ }
+    );
+
+    // nothing should have been deployed
+    t.is(Object.keys(server.state.projects).length, 1);
+  }
+);
+
 test('printRichDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
 

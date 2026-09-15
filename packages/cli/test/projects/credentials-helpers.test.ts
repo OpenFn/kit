@@ -199,6 +199,49 @@ test('getCredentialsVisitor: a credentials file path syncs only what it lists', 
   t.is(project.workflows[0].steps[1].configuration as any, null);
 });
 
+test('getCredentialsVisitor: throws when the --credentials map names a credential not in the project', (t) => {
+  const project = createProject(
+    [{ name: 'a', owner: 'joe@openfn.org' }],
+    [step('x', 'joe@openfn.org|a')]
+  );
+
+  const error = t.throws(() =>
+    getCredentialsVisitor(project, { typo: { name: 'typo' } })
+  );
+
+  t.regex(error!.message, /typo/);
+});
+
+test('getCredentialsVisitor: throws when a credentials.yaml file names a credential not in the project', (t) => {
+  mock({
+    '/ws/credentials.yaml': `joe@openfn.org|not-a-real-credential:
+  user: someuser
+`,
+  });
+
+  const project = createProject(
+    [{ name: 'a', owner: 'joe@openfn.org' }],
+    [step('x', 'joe@openfn.org|a')]
+  );
+
+  const error = t.throws(() =>
+    getCredentialsVisitor(project, 'credentials.yaml', '/ws')
+  );
+
+  t.regex(error!.message, /joe@openfn\.org\|not-a-real-credential/);
+});
+
+test('getCredentialsVisitor: does not throw when every named credential exists', (t) => {
+  const project = createProject(
+    [{ name: 'a', owner: 'joe@openfn.org' }],
+    [step('x', 'joe@openfn.org|a')]
+  );
+
+  t.notThrows(() =>
+    getCredentialsVisitor(project, { a: { name: 'renamed' } })
+  );
+});
+
 test('parseCredentialsOption: a credentials file path passes through unchanged', (t) => {
   t.is(parseCredentialsOption('./credentials.yaml'), './credentials.yaml');
   t.is(parseCredentialsOption('creds.yml'), 'creds.yml');

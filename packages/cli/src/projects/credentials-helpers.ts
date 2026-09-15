@@ -153,6 +153,25 @@ export function loadCredentialsMapFromFile(filePath: string): CredentialsMap {
   return map;
 }
 
+// Throws if the user named a credential (in a --credentials map or a
+// credentials.yaml file) that doesn't actually exist in the project -
+// almost certainly a typo, since a silently-ignored entry is confusing
+const assertMapKeysExist = (
+  map: CredentialsMap,
+  credentials: Credential[],
+  keyOf: (c: Credential) => string
+) => {
+  const known = new Set(credentials.map(keyOf));
+  const missing = Object.keys(map).filter((key) => !known.has(key));
+  if (missing.length) {
+    throw new Error(
+      `The following credentials were not found in the project: ${missing.join(
+        ', '
+      )}`
+    );
+  }
+};
+
 export const getCredentialsVisitor = (
   project: Project,
   strategy: CredentialsStrategy,
@@ -164,8 +183,11 @@ export const getCredentialsVisitor = (
   if (typeof strategy === 'string') {
     // any other string is a path to a credentials file (see parseCredentialsOption)
     const absolutePath = path.resolve(workspace, strategy);
-    return byCredentialsFile(loadCredentialsMapFromFile(absolutePath));
+    const map = loadCredentialsMapFromFile(absolutePath);
+    assertMapKeysExist(map, project.credentials, credentialKey);
+    return byCredentialsFile(map);
   }
+  assertMapKeysExist(strategy, project.credentials, (c) => c.name);
   return byMap(strategy);
 };
 
