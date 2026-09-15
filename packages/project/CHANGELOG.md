@@ -1,5 +1,20 @@
 # @openfn/project
 
+## 0.20.2
+
+### Patch Changes
+
+- 27ecb7b: Fix an issue where a step's credential reference or edges could be silently dropped or left stale during a project merge
+- 02ed700: Fix an issue where serializing a project without credential uuids to app state causes credentials on job bodies to be lost
+- 02ed700: Enable projects loaded from state files to be stateless
+- ea8b213: - Fix an issue where removing a workflow triggers an error on merge
+  - Allow Workflows to track deleted entities internally via the `removed` index
+  - Recognise `delete` state on workflows, steps and edges when parsing from/to app state
+- 02ed700: Fix an issue where --name doesn't apply to a project loaded from file
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+  - @openfn/lexicon@2.4.5
+
 ## 0.20.1
 
 ### Patch Changes

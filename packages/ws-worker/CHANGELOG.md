@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.29.4
+
+### Patch Changes
+
+- d521054: Fail a run cleanly instead of hanging when Lightning rejects the plan fetch after a claim
+- 81c9006: Ignore credential environment mismatch errors in sentry
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+  - @openfn/lexicon@2.4.5
+
 ## 1.29.3
 
 ### Patch Changes

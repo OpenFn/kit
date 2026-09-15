@@ -1,5 +1,27 @@
 # @openfn/cli
 
+## 1.41.0
+
+### Minor Changes
+
+- 27ecb7b: Added a `--credentials` option to `project deploy` to control which credentials get synced (none, prune, all, or a specific name/alias list)
+- 02ed700: Enable a v2 project yaml file to be deployed directly, eg, `openfn project deploy .projects/main@app.openfn.org.yaml
+
+### Patch Changes
+
+- ea8b213: `project deploy`: fix issues removing workflows, steps and edges while deploying.
+- 02ed700: Ensure that new projects don't overwrite existing aliases
+- 02ed700: Fix an issue where --name doesn't apply to a project loaded from file
+- Updated dependencies [27ecb7b]
+- Updated dependencies [02ed700]
+- Updated dependencies [02ed700]
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+  - @openfn/project@0.20.2
+  - @openfn/lexicon@2.4.5
+
 ## 1.40.1
 
 ### Patch Changes
