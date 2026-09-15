@@ -21,10 +21,12 @@ import {
 } from './util';
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
+import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
+import type { CredentialsStrategy } from './options';
 
 export const DEFAULT_ENDPOINT = 'https://app.openfn.org';
 
@@ -44,6 +46,7 @@ export type DeployOptions = Pick<
   target?: string;
 
   alias?: string;
+  credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
   name?: string;
@@ -62,6 +65,7 @@ const options = [
   o2.alias,
   o2.jsonDiff,
   o2.workflow,
+  o2.credentials,
 
   // general options
   o.apiKey,
@@ -452,8 +456,21 @@ export async function handler(options: DeployOptions, logger: Logger) {
     config.endpoint ??
     DEFAULT_ENDPOINT;
 
-  // generate a credential map
-  localProject.credentials = localProject.buildCredentialMap();
+  // A file/state-loaded project may already declare a credentials list
+  // (possibly wider than what's referenced); a checked-out workspace
+  // project has none, so fall back to what's actually referenced
+  if (!localProject.credentials?.length) {
+    localProject.credentials = localProject.buildCredentialMap();
+  }
+
+  remapCredentials(
+    localProject,
+    getCredentialsVisitor(
+      localProject,
+      options.credentials ?? 'prune',
+      options.workspace
+    )
+  );
 
   logger.success(
     `Loaded checked-out project ${printProjectName(localProject)}`

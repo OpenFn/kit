@@ -101,12 +101,23 @@ const stripDeleted = (x: any) => {
   );
 };
 
+export type ValidateProvisionOptions = {
+  // if true, a job's project_credential_id must match a credential
+  // registered on the server (see app.addCredential)
+  strictCredentials?: boolean;
+  // credentials registered on the server, keyed by id (ie state.credentials)
+  knownCredentials?: Record<string, any>;
+};
+
 // Validates a provisioner payload, returning an error body if invalid or null if valid.
 // Mirrors Lightning's error format so deploy code sees realistic rejection responses.
 export function validateProvisionPayload(
   incoming: any,
-  existingProject?: any
+  existingProject?: any,
+  options?: ValidateProvisionOptions
 ): Record<string, any> | null {
+  const strictCredentials = options?.strictCredentials ?? false;
+  const knownCredentials = options?.knownCredentials ?? {};
   const workflowErrors: Record<string, any> = {};
 
   const wfList: any[] = ensureArray(incoming.workflows);
@@ -148,9 +159,25 @@ export function validateProvisionPayload(
     const jobList: any[] = ensureArray(wf.jobs);
 
     for (const job of jobList) {
+      const fieldErrors: Record<string, any> = {};
+
       if (!job.id) {
+        fieldErrors.id = ["This field can't be blank"];
+      }
+
+      if (
+        strictCredentials &&
+        job.project_credential_id &&
+        !knownCredentials[job.project_credential_id]
+      ) {
+        fieldErrors.project_credential_id = [
+          "credential doesn't exist or isn't available in this project",
+        ];
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
         const key = job.name ?? 'unknown';
-        jobErrors[key] = { id: ["This field can't be blank"] };
+        jobErrors[key] = fieldErrors;
       }
     }
 
@@ -237,7 +264,11 @@ export default (
 
     const validationErrors = validateProvisionPayload(
       incoming,
-      state.projects[incoming.id]
+      state.projects[incoming.id],
+      {
+        strictCredentials: !!state.options.strictCredentials,
+        knownCredentials: state.credentials,
+      }
     );
     if (validationErrors) {
       ctx.response.status = 422;

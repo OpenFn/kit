@@ -31,9 +31,12 @@ import {
 import { checkout } from '../../src/projects';
 
 let server: any;
+let strictServer: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
 const port = 9876;
 const ENDPOINT = `http://localhost:${port}`;
+const strictPort = 9877;
+const STRICT_ENDPOINT = `http://localhost:${strictPort}`;
 
 // quick fix to the fixture yaml, otherwise the deploy code kicks off
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
@@ -77,6 +80,10 @@ const setup = async (yaml: string = projectYaml) => {
 
 test.before(async () => {
   server = await createLightningServer({ port });
+  strictServer = await createLightningServer({
+    port: strictPort,
+    strictCredentials: true,
+  });
 });
 
 test.beforeEach(() => {
@@ -301,7 +308,10 @@ test.serial(
     t.truthy(success);
 
     // the deploy landed on dev, so dev's local copy is the one to refresh
-    const devAfter = fs.readFileSync('/ws/.projects/dev@localhost.yaml', 'utf8');
+    const devAfter = fs.readFileSync(
+      '/ws/.projects/dev@localhost.yaml',
+      'utf8'
+    );
     t.regex(devAfter, /My Workflow/);
 
     // and the file we deployed FROM must not be rewritten with dev's state
@@ -684,6 +694,186 @@ test.serial(
         ),
       { message: /PROJECTS_DIVERGED/ }
     );
+  }
+);
+
+test.serial(
+  '--credentials all when deploying a new project: deploys every declared credential, even unreferenced ones',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'all',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(server.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = server.state.projects[newUuid!];
+
+    // unlike the default (prune), all 3 declared credentials are deployed
+    t.is(newProject.project_credentials.length, 3);
+    const names = newProject.project_credentials.map((c: any) => c.name).sort();
+    t.deepEqual(names, ['dasd', 'joe-credential-2', 'joes-test-credential']);
+  }
+);
+
+test.serial(
+  '--credentials none when deploying a new project: deploys no credentials at all (strict mode)',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await deploy(
+      {
+        endpoint: STRICT_ENDPOINT,
+        apiKey: 'test-api-key',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'none',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(strictServer.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = strictServer.state.projects[newUuid!];
+
+    t.is(newProject.project_credentials.length, 0);
+
+    const workflows = Object.values(newProject.workflows) as any[];
+    const wf = workflows.find((w) => w.name === 'Event-based workflow');
+    const job: any = Object.values(wf.jobs)[0];
+    t.falsy(job.project_credential_id);
+  }
+);
+
+test.serial(
+  '--credentials map when deploying a new project: redirecting to a second, already-registered credential still fails (strict mode)',
+  async (t) => {
+    strictServer.addCredential('other-credential-id', { user: 'other' });
+
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(() =>
+      deploy(
+        {
+          endpoint: STRICT_ENDPOINT,
+          apiKey: 'test-api-key',
+          project: '/ws/project.yaml',
+          new: true,
+          confirm: false,
+          credentials: {
+            'joes-test-credential': {
+              name: 'other-credential',
+              owner: 'other@openfn.org',
+            },
+          },
+        } as any,
+        logger
+      )
+    );
+
+    const error = logger._find(
+      'error',
+      /credential doesn't exist or isn't available/
+    );
+    t.truthy(error);
+  }
+);
+
+test.serial(
+  '--credentials <file> when deploying a new project: syncs only the credentials listed in the file, applying their alias',
+  async (t) => {
+    const credsYaml = `
+jclark@openfn.org|joes-test-credential:
+  alias: new@openfn.org|renamed-cred
+`;
+
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+      '/ws/credentials.yaml': credsYaml,
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'credentials.yaml',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(server.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = server.state.projects[newUuid!];
+
+    // dasd and joe-credential-2 are declared in the spec but not in the
+    // file, so only the one listed (renamed per its alias) gets synced
+    t.is(newProject.project_credentials.length, 1);
+    const [credential] = newProject.project_credentials;
+    t.is(credential.name, 'renamed-cred');
+    t.is(credential.owner, 'new@openfn.org');
+
+    const workflows = Object.values(newProject.workflows) as any[];
+    const eventWf = workflows.find((wf) => wf.name === 'Event-based workflow');
+    const job: any = Object.values(eventWf.jobs)[0];
+    t.is(job.project_credential_id, credential.id);
+
+    const success = logger._find('success', /Created new project at/);
+    t.truthy(success);
+  }
+);
+
+test.serial(
+  '--credentials rejects a typo in the requested credential name',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            project: '/ws/project.yaml',
+            new: true,
+            // typo: the real credential is "joes-test-credential"
+            credentials: {
+              'joes-test-credentail': { name: 'renamed' },
+            },
+          } as any,
+          logger
+        ),
+      { message: /joes-test-credentail/ }
+    );
+
+    // nothing should have been deployed
+    t.is(Object.keys(server.state.projects).length, 1);
   }
 );
 

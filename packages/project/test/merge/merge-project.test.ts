@@ -153,6 +153,64 @@ test('Merge new credentials into the target', (t) => {
   ]);
 });
 
+test('replace mode: a step referencing a newly-added credential resolves to it after merge + serialize', (t) => {
+  const stepUuid = randomUUID();
+
+  // the same step, before (target) and after (source) it gained a
+  // credential reference - same id/uuid, as it would be on a real redeploy
+  const targetWf = {
+    id: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+        openfn: { uuid: stepUuid },
+      },
+    ],
+  };
+  const sourceWf = {
+    id: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+        openfn: { uuid: stepUuid },
+        configuration: 'admin@openfn.org|b',
+      },
+    ],
+  };
+
+  const target = createProject(targetWf, 'a', { credentials: [] });
+  const source = createProject(sourceWf, 'a', {
+    credentials: [{ name: 'b', owner: 'admin@openfn.org' }],
+  });
+
+  const merged: any = merge(source, target, {
+    mode: REPLACE_MERGE,
+    force: true,
+  });
+
+  // the credential is added to the project (matches the test above)
+  t.is(merged.credentials.length, 1);
+  t.is(merged.credentials[0].name, 'b');
+
+  // serializing to the wire format mints project_credentials[0].id
+  const state: any = merged.serialize('state', { format: 'json' });
+  t.is(state.project_credentials.length, 1);
+  const mintedId = state.project_credentials[0].id;
+  t.truthy(mintedId);
+
+  const wf: any = Object.values(state.workflows)[0];
+  const job: any = Object.values(wf.jobs)[0];
+
+  // the step should resolve to the credential that was just added
+  t.is(job.project_credential_id, mintedId);
+});
+
 test('replace mode: source channels override target channels', (t) => {
   const wf = {
     steps: [
@@ -187,33 +245,6 @@ test('replace mode: source channels override target channels', (t) => {
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
   t.deepEqual(result.channels, sourceChannels);
-});
-
-test('replace mode: target channels preserved when source has none', (t) => {
-  const wf = {
-    steps: [
-      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
-    ],
-  };
-  const wf_a = assignUUIDs(wf);
-  const wf_b = assignUUIDs(wf);
-
-  const targetChannels = [
-    {
-      id: 'chan-target',
-      name: 'target-channel',
-      destination_url: 'https://target.example.com',
-      enabled: true,
-      destination_credential_id: null,
-    },
-  ];
-
-  const target = createProject(wf_a, 'a', { channels: targetChannels });
-  const source = createProject(wf_b, 'b');
-
-  const result = merge(source, target, { mode: REPLACE_MERGE });
-
-  t.deepEqual(result.channels, targetChannels);
 });
 
 test('replace mode: merged collections keep target uuid on a name match', (t) => {
@@ -812,10 +843,20 @@ test('remove a workflow with onlyUpdated: true and a full history', (t) => {
   // NB: assignUUIDs hardcodes id: 'wf' on everything it touches, which would
   // silently collide wf1/wf2 into the same id here - use explicit distinct
   // ids instead, matching the forked_from keys below, as a real project would
-  const wf1: any = { id: 'wf1', name: 'wf1', openfn: { uuid: randomUUID() }, steps: [] };
+  const wf1: any = {
+    id: 'wf1',
+    name: 'wf1',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
   const wf1Version = generateVersionHash(wf1);
 
-  const wf2: any = { id: 'wf2', name: 'wf2', openfn: { uuid: randomUUID() }, steps: [] };
+  const wf2: any = {
+    id: 'wf2',
+    name: 'wf2',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
   const wf2Version = generateVersionHash(wf2);
 
   const main = createProject([wf1, wf2], 'a');

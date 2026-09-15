@@ -57,13 +57,13 @@ export function mergeWorkflows(
         }
       }
 
-      // do a node merge
       newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
         'adaptor',
         'expression',
         'next',
+        'configuration',
       ]);
     } else {
       // TODO Do we need to generate a UUID here?
