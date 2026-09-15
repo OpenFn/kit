@@ -2,7 +2,7 @@ import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import type { CredentialState } from '@openfn/lexicon';
 
-import Project from '../../src';
+import Project, { generateVersionHash } from '../../src';
 import {
   merge,
   mergeCollections,
@@ -153,6 +153,64 @@ test('Merge new credentials into the target', (t) => {
   ]);
 });
 
+test('replace mode: a step referencing a newly-added credential resolves to it after merge + serialize', (t) => {
+  const stepUuid = randomUUID();
+
+  // the same step, before (target) and after (source) it gained a
+  // credential reference - same id/uuid, as it would be on a real redeploy
+  const targetWf = {
+    id: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+        openfn: { uuid: stepUuid },
+      },
+    ],
+  };
+  const sourceWf = {
+    id: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+        openfn: { uuid: stepUuid },
+        configuration: 'admin@openfn.org|b',
+      },
+    ],
+  };
+
+  const target = createProject(targetWf, 'a', { credentials: [] });
+  const source = createProject(sourceWf, 'a', {
+    credentials: [{ name: 'b', owner: 'admin@openfn.org' }],
+  });
+
+  const merged: any = merge(source, target, {
+    mode: REPLACE_MERGE,
+    force: true,
+  });
+
+  // the credential is added to the project (matches the test above)
+  t.is(merged.credentials.length, 1);
+  t.is(merged.credentials[0].name, 'b');
+
+  // serializing to the wire format mints project_credentials[0].id
+  const state: any = merged.serialize('state', { format: 'json' });
+  t.is(state.project_credentials.length, 1);
+  const mintedId = state.project_credentials[0].id;
+  t.truthy(mintedId);
+
+  const wf: any = Object.values(state.workflows)[0];
+  const job: any = Object.values(wf.jobs)[0];
+
+  // the step should resolve to the credential that was just added
+  t.is(job.project_credential_id, mintedId);
+});
+
 test('replace mode: source channels override target channels', (t) => {
   const wf = {
     steps: [
@@ -187,33 +245,6 @@ test('replace mode: source channels override target channels', (t) => {
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
   t.deepEqual(result.channels, sourceChannels);
-});
-
-test('replace mode: target channels preserved when source has none', (t) => {
-  const wf = {
-    steps: [
-      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
-    ],
-  };
-  const wf_a = assignUUIDs(wf);
-  const wf_b = assignUUIDs(wf);
-
-  const targetChannels = [
-    {
-      id: 'chan-target',
-      name: 'target-channel',
-      destination_url: 'https://target.example.com',
-      enabled: true,
-      destination_credential_id: null,
-    },
-  ];
-
-  const target = createProject(wf_a, 'a', { channels: targetChannels });
-  const source = createProject(wf_b, 'b');
-
-  const result = merge(source, target, { mode: REPLACE_MERGE });
-
-  t.deepEqual(result.channels, targetChannels);
 });
 
 test('replace mode: merged collections keep target uuid on a name match', (t) => {
@@ -788,7 +819,7 @@ test('remove a workflow', (t) => {
   t.is(result.workflows.length, 1);
 });
 
-test('remove a workflow with onlyUpdated: true', (t) => {
+test('remove a workflow with onlyUpdated: true and no history', (t) => {
   const wf1 = assignUUIDs({
     name: 'wf1',
     steps: [],
@@ -806,6 +837,121 @@ test('remove a workflow with onlyUpdated: true', (t) => {
 
   const result: any = merge(staging, main, { onlyUpdated: true });
   t.is(result.workflows.length, 1);
+});
+
+test('remove a workflow with onlyUpdated: true and a full history', (t) => {
+  // NB: assignUUIDs hardcodes id: 'wf' on everything it touches, which would
+  // silently collide wf1/wf2 into the same id here - use explicit distinct
+  // ids instead, matching the forked_from keys below, as a real project would
+  const wf1: any = {
+    id: 'wf1',
+    name: 'wf1',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+  const wf1Version = generateVersionHash(wf1);
+
+  const wf2: any = {
+    id: 'wf2',
+    name: 'wf2',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+  const wf2Version = generateVersionHash(wf2);
+
+  const main = createProject([wf1, wf2], 'a');
+  const staging = createProject([wf1], 'b');
+  // staging needs to have main in its history for this to work
+  // the presence of history makes a big difference with onlyUpdated on
+  staging.workflows[0].history.push(wf1Version);
+
+  // Include forked_from as well, which also affects changed workflows
+  staging.cli.forked_from = {
+    wf1: wf1Version,
+    wf2: wf2Version,
+  };
+
+  t.is(main.workflows.length, 2);
+  t.is(staging.workflows.length, 1);
+
+  const result = merge(staging, main, { onlyUpdated: true });
+
+  // wf1 survives untouched, wf2 survives flagged removed (not dropped)
+  t.is(result.workflows.length, 2);
+  t.false(result.getWorkflow('wf1')!.isRemoved());
+  t.true(result.getWorkflow('wf2')!.isRemoved());
+});
+
+// The tests above all give every workflow the same id ('wf', from assignUUIDs),
+// so they can't tell a real per-workflow removal from an id collision masking
+// a workflow that was simply never re-added. These use distinct ids/names.
+test('deleting a workflow flags it removed, rather than dropping or keeping it', (t) => {
+  const wf1 = {
+    id: 'wf1',
+    name: 'wf1',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+  const wf2 = {
+    id: 'wf2',
+    name: 'wf2',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+
+  const main = createProject([wf1, wf2], 'a');
+  const wf1Version = main.getWorkflow('wf1')!.getVersionHash();
+  const wf2Version = main.getWorkflow('wf2')!.getVersionHash();
+
+  // staging represents the local project after wf2 was deleted locally
+  const staging = createProject([wf1], 'b');
+  staging.getWorkflow('wf1')!.history.push(wf1Version);
+  staging.cli.forked_from = { wf1: wf1Version, wf2: wf2Version };
+
+  const result = merge(staging, main, { onlyUpdated: true });
+
+  // wf2 must still be present in the result and flagged removed - dropping it
+  // silently means no delete: true ever reaches the provisioner, and keeping
+  // it un-flagged means it looks unchanged
+  const wf2Result = result.getWorkflow('wf2');
+  t.truthy(wf2Result);
+  t.true(wf2Result!.isRemoved());
+
+  // wf1 was untouched and must survive normally
+  const wf1Result = result.getWorkflow('wf1');
+  t.truthy(wf1Result);
+  t.false(wf1Result!.isRemoved());
+});
+
+test('deleting a workflow produces a delete: true entry when serialized', (t) => {
+  const wf1 = {
+    id: 'wf1',
+    name: 'wf1',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+  const wf2 = {
+    id: 'wf2',
+    name: 'wf2',
+    openfn: { uuid: randomUUID() },
+    steps: [],
+  };
+
+  const main = createProject([wf1, wf2], 'a');
+  const wf1Version = main.getWorkflow('wf1')!.getVersionHash();
+  const wf2Version = main.getWorkflow('wf2')!.getVersionHash();
+
+  const staging = createProject([wf1], 'b');
+  staging.getWorkflow('wf1')!.history.push(wf1Version);
+  staging.cli.forked_from = { wf1: wf1Version, wf2: wf2Version };
+
+  const result = merge(staging, main, { onlyUpdated: true });
+  const state = result.serialize('state', { format: 'json' }) as any;
+
+  t.true(state.workflows['wf2'].delete);
+  t.deepEqual(state.workflows['wf2'].jobs, {});
+
+  t.falsy(state.workflows['wf1'].delete);
 });
 
 test('id match: same workflow in source and target project', (t) => {

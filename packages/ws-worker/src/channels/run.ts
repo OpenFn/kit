@@ -37,11 +37,16 @@ const joinRunChannel = (
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const run = await sendEvent<GetPlanReply>(
-            { channel, logger, id: runId, options: {} },
-            GET_PLAN
-          );
-          resolve({ channel, run });
+          try {
+            const run = await sendEvent<GetPlanReply>(
+              { channel, logger, id: runId, options: {} },
+              GET_PLAN
+            );
+            resolve({ channel, run });
+          } catch (err) {
+            channel?.leave();
+            reject(err);
+          }
         }
       })
       .receive('error', (err: any) => {

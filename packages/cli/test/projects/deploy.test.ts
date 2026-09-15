@@ -25,13 +25,18 @@ import {
   UUID,
   two_workflows_yaml as twowfs,
   TWO_WORKFLOWS_UUID,
+  myProject_spec,
+  myProject_v1_spec,
 } from './fixtures';
 import { checkout } from '../../src/projects';
 
 let server: any;
+let strictServer: any;
 const logger = createMockLogger(undefined, { level: 'debug' });
 const port = 9876;
 const ENDPOINT = `http://localhost:${port}`;
+const strictPort = 9877;
+const STRICT_ENDPOINT = `http://localhost:${strictPort}`;
 
 // quick fix to the fixture yaml, otherwise the deploy code kicks off
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
@@ -48,13 +53,13 @@ const mockFs = (paths: Record<string, string>) => {
   );
   // undici v8 reads its llhttp WASM from disk on the first request, so keep
   // that dir visible or fetches to the mock server fail with ENOENT
-  const undiciLlhttp = path.join(
+  const undicihttp = path.join(
     path.dirname(require.resolve('undici')),
     'lib/llhttp'
   );
   mock({
     [iconv]: mock.load(iconv, {}),
-    [undiciLlhttp]: mock.load(undiciLlhttp, {}),
+    [undicihttp]: mock.load(undicihttp, {}),
     ...paths,
   });
 };
@@ -75,6 +80,10 @@ const setup = async (yaml: string = projectYaml) => {
 
 test.before(async () => {
   server = await createLightningServer({ port });
+  strictServer = await createLightningServer({
+    port: strictPort,
+    strictCredentials: true,
+  });
 });
 
 test.beforeEach(() => {
@@ -84,18 +93,47 @@ test.beforeEach(() => {
   mock.restore();
 });
 
-test.serial('deploy a new project', async (t) => {
+test.serial(
+  'deploy a project as new from the checked out project',
+  async (t) => {
+    // the server should have 1 registered project by default - that's fine
+    t.is(Object.keys(server.state.projects).length, 1);
+
+    await setup();
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+      } as any,
+      logger
+    );
+
+    // We should now have a new project with a new UUID
+    t.is(Object.keys(server.state.projects).length, 2);
+
+    const success = logger._find('success', /Created new project at/);
+    t.truthy(success);
+  }
+);
+
+test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);
 
-  await setup();
+  // skip the usual setup and just set up the filesystem
+  mockFs({
+    '/ws/project.yaml': myProject_spec,
+    '/ws/openfn.yaml': '', // TODO this shouldn't be needed
+  });
 
   await deploy(
     {
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-      workspace: '/ws',
-      new: true,
+      project: '/ws/project.yaml',
     } as any,
     logger
   );
@@ -103,8 +141,216 @@ test.serial('deploy a new project', async (t) => {
   // We should now have a new project with a new UUID
   t.is(Object.keys(server.state.projects).length, 2);
 
+  const newUuid = Object.keys(server.state.projects).find((id) => id !== UUID);
+  const newProject = server.state.projects[newUuid!];
+
+  // credential should have been created with a generated uuid
+  t.is(newProject.project_credentials.length, 1);
+  const credential = newProject.project_credentials[0];
+  t.is(credential.name, 'http1');
+  t.is(credential.owner, 'super@openfn.org');
+  t.truthy(credential.id);
+
+  // only one workflow, keyed by a generated uuid rather than 'my-workflow'
+  const workflows = Object.values(newProject.workflows) as any[];
+  t.is(workflows.length, 1);
+  const workflow = workflows[0];
+  t.is(workflow.name, 'My Workflow');
+
+  const job = workflow.jobs['transform-data'];
+  t.is(job.body, 'fn()');
+  t.is(job.adaptor, '@openfn/language-common@latest');
+  // the job's configuration should resolve to the new credential
+  t.is(job.project_credential_id, credential.id);
+
+  const trigger = workflow.triggers['webhook'];
+  t.truthy(trigger);
+  t.is(trigger.type, 'webhook');
+
+  const edge = workflow.edges['webhook->transform-data'];
+  t.truthy(edge);
+  t.is(edge.source_trigger_id, trigger.id);
+  t.is(edge.target_job_id, job.id);
+
   const success = logger._find('success', /Created new project at/);
   t.truthy(success);
+});
+
+test.serial('deploy a project as new from a v1 spec yaml', async (t) => {
+  t.is(Object.keys(server.state.projects).length, 1);
+
+  mockFs({
+    '/ws/project.yaml': myProject_v1_spec,
+    '/ws/openfn.yaml': '',
+  });
+
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      project: '/ws/project.yaml',
+    } as any,
+    logger
+  );
+
+  t.is(Object.keys(server.state.projects).length, 2);
+
+  const newUuid = Object.keys(server.state.projects).find((id) => id !== UUID);
+  const newProject = server.state.projects[newUuid!];
+
+  // the spec's name-keyed credentials must become project_credentials.
+  // Only credentials actually referenced by a job are deployed, and just
+  // one job in the fixture names one
+  t.is(newProject.project_credentials.length, 1);
+  const credential = newProject.project_credentials[0];
+  t.is(credential.name, 'joes-test-credential');
+  t.is(credential.owner, 'jclark@openfn.org');
+
+  const workflows = Object.values(newProject.workflows) as any[];
+  t.is(workflows.length, 2);
+
+  // the three-job workflow must keep its shape
+  const multi = workflows.find((wf) => wf.name === 'my workflow');
+  t.is(Object.keys(multi.jobs).length, 3);
+  t.is(Object.keys(multi.edges).length, 3);
+
+  // every edge must join two DIFFERENT steps - no self-loops
+  for (const wf of workflows) {
+    for (const edge of Object.values(wf.edges) as any[]) {
+      t.not(edge.target_job_id, edge.source_job_id ?? edge.source_trigger_id);
+    }
+  }
+
+  // the job that named a credential should resolve to one of them
+  const eventWf = workflows.find((wf) => wf.name === 'Event-based workflow');
+  const transform = Object.values(eventWf.jobs)[0] as any;
+  t.truthy(transform.project_credential_id);
+
+  const success = logger._find('success', /Created new project at/);
+  t.truthy(success);
+});
+
+test.serial(
+  'deploy a stateful project as new from a file, with an alias',
+  async (t) => {
+    // Set up a project with a UUID
+    mockFs({
+      '/ws/.projects/main@localhost.yaml': projectYaml,
+      '/ws/openfn.yaml': '',
+    });
+
+    // Deploy it elsewhere
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/.projects/main@localhost.yaml',
+        new: true,
+        alias: 'staging',
+      } as any,
+      logger
+    );
+
+    // the new project should be saved locally under the alias we asked
+    // for, not the alias of the file we deployed from
+    t.true(fs.existsSync('/ws/.projects/staging@localhost.yaml'));
+
+    // the file we deployed FROM must not be clobbered with the new
+    // project's state
+    const mainAfter = fs.readFileSync(
+      '/ws/.projects/main@localhost.yaml',
+      'utf8'
+    );
+    t.regex(mainAfter, new RegExp(`uuid: ${UUID}`));
+  }
+);
+
+test.serial(
+  'deploy a file to a different target must use the file, not the checked-out baseline',
+  async (t) => {
+    // "dev" is a separate, already-existing remote project with its own content
+    await server.addProject(two_workflows_yaml);
+
+    // check out "main" - openfn.yaml now tracks MAIN's own fork history,
+    // which has nothing to do with "dev"
+    await setup(projectYaml);
+
+    // track "dev" locally too, alongside "main", without disturbing what's
+    // currently checked out
+    await writeFile('/ws/.projects/dev@localhost.yaml', two_workflows_yaml);
+
+    // deploy main's own (unmodified) file to "dev" - a different target.
+    // Nothing has changed relative to MAIN's own tracked baseline, but
+    // "dev" has completely different content and must be replaced with
+    // what's in the file
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/.projects/main@localhost.yaml',
+        target: 'dev',
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    const devProject: any = server.state.projects[TWO_WORKFLOWS_UUID];
+    const devWorkflows = Object.values(devProject.workflows) as any[];
+
+    // dev must now contain My Workflow (from main's file) - not be left
+    // with only its own original workflow-a/workflow-b
+    const hasMyWorkflow = devWorkflows.some((wf) => wf.name === 'My Workflow');
+    t.true(hasMyWorkflow);
+
+    const success = logger._find('success', /Updated project at/);
+    t.truthy(success);
+
+    // the deploy landed on dev, so dev's local copy is the one to refresh
+    const devAfter = fs.readFileSync(
+      '/ws/.projects/dev@localhost.yaml',
+      'utf8'
+    );
+    t.regex(devAfter, /My Workflow/);
+
+    // and the file we deployed FROM must not be rewritten with dev's state
+    const mainAfter = fs.readFileSync(
+      '/ws/.projects/main@localhost.yaml',
+      'utf8'
+    );
+    t.regex(mainAfter, new RegExp(`uuid: ${UUID}`));
+    t.notRegex(mainAfter, new RegExp(TWO_WORKFLOWS_UUID));
+  }
+);
+
+test.serial('deploy an updated project direct to an endpoint', async (t) => {
+  const remoteProjectBefore: any = server.state.projects[UUID];
+  const wfBefore = remoteProjectBefore.workflows['my-workflow'];
+  t.is(wfBefore.jobs['transform-data'].body, 'fn()');
+
+  mockFs({
+    '/ws/dev@localhost.yaml': projectYaml.replace('fn()', 'jam()'),
+    '/ws/openfn.yaml': '',
+  });
+
+  // deploy the local project file directly
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      project: '/ws/dev@localhost.yaml',
+      target: 'dev',
+      confirm: false,
+      // log: 'debug',
+    } as any,
+    logger
+  );
+
+  const remoteProjectAfter: any = server.state.projects[UUID];
+  const wfAfter = remoteProjectAfter.workflows['my-workflow'];
+  t.is(wfAfter.jobs['transform-data'].body, 'jam()');
 });
 
 test.serial('deploy a new project creates ids for collections', async (t) => {
@@ -448,6 +694,186 @@ test.serial(
         ),
       { message: /PROJECTS_DIVERGED/ }
     );
+  }
+);
+
+test.serial(
+  '--credentials all when deploying a new project: deploys every declared credential, even unreferenced ones',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'all',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(server.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = server.state.projects[newUuid!];
+
+    // unlike the default (prune), all 3 declared credentials are deployed
+    t.is(newProject.project_credentials.length, 3);
+    const names = newProject.project_credentials.map((c: any) => c.name).sort();
+    t.deepEqual(names, ['dasd', 'joe-credential-2', 'joes-test-credential']);
+  }
+);
+
+test.serial(
+  '--credentials none when deploying a new project: deploys no credentials at all (strict mode)',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await deploy(
+      {
+        endpoint: STRICT_ENDPOINT,
+        apiKey: 'test-api-key',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'none',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(strictServer.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = strictServer.state.projects[newUuid!];
+
+    t.is(newProject.project_credentials.length, 0);
+
+    const workflows = Object.values(newProject.workflows) as any[];
+    const wf = workflows.find((w) => w.name === 'Event-based workflow');
+    const job: any = Object.values(wf.jobs)[0];
+    t.falsy(job.project_credential_id);
+  }
+);
+
+test.serial(
+  '--credentials map when deploying a new project: redirecting to a second, already-registered credential still fails (strict mode)',
+  async (t) => {
+    strictServer.addCredential('other-credential-id', { user: 'other' });
+
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(() =>
+      deploy(
+        {
+          endpoint: STRICT_ENDPOINT,
+          apiKey: 'test-api-key',
+          project: '/ws/project.yaml',
+          new: true,
+          confirm: false,
+          credentials: {
+            'joes-test-credential': {
+              name: 'other-credential',
+              owner: 'other@openfn.org',
+            },
+          },
+        } as any,
+        logger
+      )
+    );
+
+    const error = logger._find(
+      'error',
+      /credential doesn't exist or isn't available/
+    );
+    t.truthy(error);
+  }
+);
+
+test.serial(
+  '--credentials <file> when deploying a new project: syncs only the credentials listed in the file, applying their alias',
+  async (t) => {
+    const credsYaml = `
+jclark@openfn.org|joes-test-credential:
+  alias: new@openfn.org|renamed-cred
+`;
+
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+      '/ws/credentials.yaml': credsYaml,
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'credentials.yaml',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(server.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = server.state.projects[newUuid!];
+
+    // dasd and joe-credential-2 are declared in the spec but not in the
+    // file, so only the one listed (renamed per its alias) gets synced
+    t.is(newProject.project_credentials.length, 1);
+    const [credential] = newProject.project_credentials;
+    t.is(credential.name, 'renamed-cred');
+    t.is(credential.owner, 'new@openfn.org');
+
+    const workflows = Object.values(newProject.workflows) as any[];
+    const eventWf = workflows.find((wf) => wf.name === 'Event-based workflow');
+    const job: any = Object.values(eventWf.jobs)[0];
+    t.is(job.project_credential_id, credential.id);
+
+    const success = logger._find('success', /Created new project at/);
+    t.truthy(success);
+  }
+);
+
+test.serial(
+  '--credentials rejects a typo in the requested credential name',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            project: '/ws/project.yaml',
+            new: true,
+            // typo: the real credential is "joes-test-credential"
+            credentials: {
+              'joes-test-credentail': { name: 'renamed' },
+            },
+          } as any,
+          logger
+        ),
+      { message: /joes-test-credentail/ }
+    );
+
+    // nothing should have been deployed
+    t.is(Object.keys(server.state.projects).length, 1);
   }
 );
 

@@ -1,6 +1,13 @@
 import resolvePath from '../util/resolve-path';
 import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
+import parseCredentialsOption from './credentials-helpers';
+
+export type {
+  CredentialsStrategy,
+  CredentialsMap,
+  CredentialAlias,
+} from './credentials-helpers';
 
 export type Opts = BaseOpts & {
   alias?: string;
@@ -48,6 +55,18 @@ export const creds: CLIOption = {
     default: true,
     description:
       'Create a credentials.yaml file and intialize with empty values',
+  },
+};
+
+export const credentials: CLIOption = {
+  name: 'credentials',
+  yargs: {
+    alias: ['creds', 'cred', 'c'],
+    type: 'string',
+    default: 'prune',
+    coerce: parseCredentialsOption,
+    description:
+      'Credential sync strategy: "prune" (used creds only), "none", "all", a comma-separated list or map (my-cred=you@openfn.org|your-cred), or a path to a credentials.yaml file.',
   },
 };
 

@@ -1,5 +1,12 @@
 # lexicon
 
+## 2.4.5
+
+### Patch Changes
+
+- 02ed700: Project credentials can optionally have a UUID
+- ea8b213: Recognize delete key in provisioner state
+
 ## 2.4.4
 
 ### Patch Changes

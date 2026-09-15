@@ -75,6 +75,20 @@ const setupDevAPI = (
     } else {
       project = JSON.parse(JSON.stringify(project));
     }
+
+    // Give every workflow a baseline version_history
+    const workflows: any[] = Array.isArray((project as any).workflows)
+      ? (project as any).workflows
+      : Object.values((project as any).workflows ?? {});
+
+    for (const wf of workflows) {
+      if (!wf.version_history?.length) {
+        wf.version_history = [
+          generateVersionHash(mapWorkflow(wf) as any, { source: 'app' }),
+        ];
+      }
+    }
+
     // @ts-ignore
     state.projects[project.id] = project;
   };

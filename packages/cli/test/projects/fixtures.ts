@@ -104,6 +104,118 @@ workflows:
     id: my-workflow
     start: webhook`;
 
+export const myProject_spec = `id: my-project
+name: My Project
+schema_version: '4.0'
+description: my lovely project
+collections: []
+credentials:
+  - name: http1
+    owner: super@openfn.org
+workflows:
+  - name: My Workflow
+    steps:
+      - id: transform-data
+        name: Transform data
+        expression: fn()
+        adaptor: '@openfn/language-common@latest'
+        configuration: super@openfn.org|http1
+      - id: webhook
+        type: webhook
+        enabled: true
+        next:
+          transform-data:
+            disabled: false
+            condition: always
+    id: my-workflow
+    start: webhook`;
+
+// A v1 spec, as exported from the Lightning app: no uuids anywhere, and
+// everything cross-referenced by name rather than id. Note that jobs use
+// `credential`, edges use `source_trigger`/`source_job`/`target_job`, and
+// credentials are a name-keyed map - none of which the v1 STATE parser reads.
+// The three-job workflow matters: a single-job workflow accidentally parses
+// fine even when edge matching is broken
+export const myProject_v1_spec = `name: joe-sync-1
+description: |
+  A test project for sync deploy. User story 1
+
+collections: null
+channels: null
+credentials:
+  jclark@openfn.org-dasd:
+    name: dasd
+    owner: jclark@openfn.org
+  jclark@openfn.org-joe-credential-2:
+    name: joe-credential-2
+    owner: jclark@openfn.org
+  jclark@openfn.org-joes-test-credential:
+    name: joes-test-credential
+    owner: jclark@openfn.org
+workflows:
+  Event-based-workflow:
+    name: Event-based workflow
+    jobs:
+      Transform-data:
+        name: Transform data
+        adaptor: '@openfn/language-common@latest'
+        credential: jclark@openfn.org-joes-test-credential
+        body: |
+          fn(state => state)
+    triggers:
+      webhook:
+        type: webhook
+        webhook_reply: after_completion
+        enabled: true
+    edges:
+      webhook->Transform-data:
+        source_trigger: webhook
+        target_job: Transform-data
+        condition_type: always
+        enabled: true
+  my-workflow:
+    name: my workflow
+    jobs:
+      'A':
+        name: 'A'
+        adaptor: '@openfn/language-http@7.0.3'
+        credential: null
+        body: |
+          get('https://jsonplaceholder.typicode.com/todos/3');
+      Common:
+        name: Common
+        adaptor: '@openfn/language-arcgis@1.0.5'
+        credential: null
+        body: |
+          fn(state => state)
+      Send-gmail-email:
+        name: Send gmail email
+        adaptor: '@openfn/language-gmail@latest'
+        credential: null
+        body: |
+          sendMessage({ to: 'recipient@example.com' });
+    triggers:
+      cron:
+        type: cron
+        cron_expression: '*/15 * * * *'
+        enabled: false
+    edges:
+      cron->A:
+        source_trigger: cron
+        target_job: 'A'
+        condition_type: always
+        enabled: true
+      A->Common:
+        source_job: 'A'
+        target_job: Common
+        condition_type: on_job_success
+        enabled: true
+      Common->Send-gmail-email:
+        source_job: Common
+        target_job: Send-gmail-email
+        condition_type: on_job_success
+        enabled: true`;
+
 export const TWO_WORKFLOWS_UUID = '4b09ddf1-35f4-4e40-9aa9-0d80c086dd9e';
 
 export const two_workflows_yaml = `id: my-project

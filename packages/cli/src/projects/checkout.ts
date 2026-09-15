@@ -11,7 +11,7 @@ import * as po from './options';
 
 import type { Opts } from './options';
 import { tidyWorkflowDir, updateForkedFrom } from './util';
-import { createProjectCredentials } from './create-credentials';
+import { createProjectCredentials } from './credentials-helpers';
 import abort from '../util/abort';
 
 export type CheckoutOptions = Pick<

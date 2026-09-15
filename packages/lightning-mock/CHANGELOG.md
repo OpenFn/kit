@@ -1,5 +1,24 @@
 # @openfn/lightning-mock
 
+## 2.5.0
+
+### Minor Changes
+
+- ea8b213: Improve support for removing workflows, steps and edges
+
+### Patch Changes
+
+- 27ecb7b: Optionally throw an error for an unmatched credential
+- Updated dependencies [27ecb7b]
+- Updated dependencies [02ed700]
+- Updated dependencies [02ed700]
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+- Updated dependencies [02ed700]
+- Updated dependencies [ea8b213]
+  - @openfn/project@0.20.2
+  - @openfn/lexicon@2.4.5
+
 ## 2.4.32
 
 ### Patch Changes

@@ -87,7 +87,12 @@ export class Project {
   static async from(
     type: 'project',
     data: any,
-    config?: Partial<l.WorkspaceConfig>
+    config?: Partial<l.WorkspaceConfig> & {
+      alias?: string;
+      version?: number;
+      name?: string;
+      asSpec?: boolean;
+    }
   ): Promise<Project>;
   static async from(
     type: 'state',
@@ -99,7 +104,7 @@ export class Project {
   static async from(
     type: 'path',
     data: string,
-    options?: { config?: FromPathConfig }
+    options?: Partial<FromPathConfig>
   ): Promise<Project>;
   static async from(
     type: 'project' | 'state' | 'path' | 'fs',
@@ -197,8 +202,12 @@ export class Project {
 
   serialize(type: 'project', options?: any): SerializedProject | string;
   serialize(type: 'state', options?: any): Provisioner.Project | string;
+  serialize(type: 'spec', options?: any): Provisioner.Project | string;
   serialize(type: 'fs', options?: any): Record<string, string>;
-  serialize(type: 'project' | 'fs' | 'state' = 'project', options?: any) {
+  serialize(
+    type: 'project' | 'fs' | 'state' | 'spec' = 'project',
+    options?: any
+  ) {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this, options);

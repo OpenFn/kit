@@ -94,6 +94,17 @@ test.serial('should use workspace config', async (t) => {
   t.deepEqual(project.openfn!.uuid, proj.openfn!.uuid);
 });
 
+test.serial('should apply a name override to a loaded project', async (t) => {
+  mock({
+    '/p1/main@openfn.org.yaml': v2.yaml,
+  });
+  const project = await fromPath('/p1/main@openfn.org.yaml', {
+    name: 'My Duplicate',
+  });
+
+  t.is(project.name, 'My Duplicate');
+});
+
 test('extractAliasFromFilename: should extract alias from alias@domain.yaml format', (t) => {
   const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
   t.is(alias, 'main');

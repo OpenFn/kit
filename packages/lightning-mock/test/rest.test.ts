@@ -3,6 +3,7 @@ import test from 'ava';
 
 import { setup } from './util';
 import { DEFAULT_PROJECT_ID, validateProvisionPayload } from '../src/api-rest';
+import createLightningServer from '../src/server';
 
 // @ts-ignore
 let server: any;
@@ -115,6 +116,110 @@ test.serial(
   }
 );
 
+test.serial('should actually delete a job flagged delete: true', async (t) => {
+  const response = await fetch(`${endpoint}/api/provision`, {
+    method: 'POST',
+    body: JSON.stringify({
+      id: DEFAULT_PROJECT_ID,
+      name: 'aaa',
+      workflows: [
+        {
+          id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          name: 'wf1',
+          jobs: [{ id: '66add020-e6eb-4eec-836b-20008afca816', delete: true }],
+        },
+      ],
+    }),
+    headers: { 'content-type': 'application/json' },
+  });
+  t.is(response.status, 200);
+
+  const res = await fetch(`${endpoint}/api/provision/${DEFAULT_PROJECT_ID}`);
+  const { data: proj } = await res.json();
+  const wf = proj.workflows.find(
+    (w: any) => w.id === '72ca3eb0-042c-47a0-a2a1-a545ed4a8406'
+  );
+  const jobs = Array.isArray(wf.jobs) ? wf.jobs : Object.values(wf.jobs ?? {});
+  t.is(jobs.length, 0);
+});
+
+test.serial(
+  'should delete a job that is simply omitted, same as delete: true',
+  async (t) => {
+    const workflowId = '72ca3eb0-042c-47a0-a2a1-a545ed4a8406';
+
+    // seed a job directly, rather than via a setup deploy
+    server.addNode(DEFAULT_PROJECT_ID, workflowId, {
+      id: 'temp-job',
+      name: 'Temp job',
+      adaptor: 'common',
+      body: 'fn(s => s)',
+    });
+
+    const response = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: DEFAULT_PROJECT_ID,
+        name: 'aaa',
+        workflows: [{ id: workflowId, name: 'wf1', jobs: [] }],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+    t.is(response.status, 200);
+
+    const res = await fetch(`${endpoint}/api/provision/${DEFAULT_PROJECT_ID}`);
+    const { data: proj } = await res.json();
+    const wf = proj.workflows.find((w: any) => w.id === workflowId);
+    const jobs = Array.isArray(wf.jobs)
+      ? wf.jobs
+      : Object.values(wf.jobs ?? {});
+    t.is(jobs.length, 0);
+  }
+);
+
+test.serial(
+  'should actually delete a whole workflow flagged delete: true',
+  async (t) => {
+    const wf1Id = '72ca3eb0-042c-47a0-a2a1-a545ed4a8406';
+    const tempWorkflowId = 'temp-workflow';
+
+    const first = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: DEFAULT_PROJECT_ID,
+        name: 'aaa',
+        // wf1 must be included in every payload - a whole workflow (unlike
+        // its jobs/triggers/edges) has to be explicit about its own removal
+        workflows: [
+          { id: wf1Id, name: 'wf1' },
+          { id: tempWorkflowId, name: 'temp workflow' },
+        ],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+    t.is(first.status, 200);
+
+    const second = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: DEFAULT_PROJECT_ID,
+        name: 'aaa',
+        workflows: [
+          { id: wf1Id, name: 'wf1' },
+          { id: tempWorkflowId, delete: true },
+        ],
+      }),
+      headers: { 'content-type': 'application/json' },
+    });
+    t.is(second.status, 200);
+
+    const res = await fetch(`${endpoint}/api/provision/${DEFAULT_PROJECT_ID}`);
+    const { data: proj } = await res.json();
+    t.falsy(proj.workflows.find((w: any) => w.id === tempWorkflowId));
+    t.truthy(proj.workflows.find((w: any) => w.id === wf1Id));
+  }
+);
+
 test.serial('should fetch many items from a collection', async (t) => {
   server.collections.createCollection('stuff');
   server.collections.upsert('stuff', 'x', { id: 'x' });
@@ -183,7 +288,44 @@ test('validateProvisionPayload: returns null for a valid edge with source_job_id
   t.is(validateProvisionPayload(payload), null);
 });
 
-test('validateProvisionPayload: returns errors when edge has no source', (t) => {
+test('validateProvisionPayload: returns errors when edge has no source job or trigger id', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            source_trigger_id: null,
+            target_job_id: '',
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+  const result = validateProvisionPayload(payload);
+  t.truthy(result);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          edges: {
+            'edge-1': {
+              source_job_id: [
+                'source_job_id or source_trigger_id must be present',
+              ],
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: for new edges allow source_job', (t) => {
   const payload = {
     id: 'proj-1',
     workflows: [
@@ -245,6 +387,127 @@ test('validateProvisionPayload: returns null when there are no edges', (t) => {
     id: 'proj-1',
     workflows: [{ id: 'wf-1', name: 'wf1', edges: [] }],
   };
+  t.is(validateProvisionPayload(payload), null);
+});
+
+// Unlike a whole workflow, an omitted job/trigger/edge is not an error - for
+// these, omission and delete: true mean exactly the same thing.
+test('validateProvisionPayload: a job silently vanishing is not an error', (t) => {
+  const existingProject = {
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        jobs: [{ id: 'job-1', name: 'Transform data' }],
+      },
+    ],
+  };
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ id: 'wf-1', name: 'wf1', jobs: [] }],
+  };
+
+  t.is(validateProvisionPayload(payload, existingProject), null);
+});
+
+test('validateProvisionPayload: returns null when a missing job is flagged delete: true', (t) => {
+  const existingProject = {
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        jobs: [{ id: 'job-1', name: 'Transform data' }],
+      },
+    ],
+  };
+  const payload = {
+    id: 'proj-1',
+    workflows: [
+      { id: 'wf-1', name: 'wf1', jobs: [{ id: 'job-1', delete: true }] },
+    ],
+  };
+
+  t.is(validateProvisionPayload(payload, existingProject), null);
+});
+
+test('validateProvisionPayload: a trigger silently vanishing is not an error', (t) => {
+  const existingProject = {
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        triggers: [{ id: 'trig-1', type: 'webhook' }],
+      },
+    ],
+  };
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ id: 'wf-1', name: 'wf1', triggers: [] }],
+  };
+
+  t.is(validateProvisionPayload(payload, existingProject), null);
+});
+
+test('validateProvisionPayload: an edge silently vanishing is not an error', (t) => {
+  const existingProject = {
+    workflows: [
+      {
+        id: 'wf-1',
+        name: 'wf1',
+        edges: [
+          {
+            id: 'edge-1',
+            source_trigger_id: 'trig-1',
+            target_job_id: 'job-1',
+          },
+        ],
+      },
+    ],
+  };
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ id: 'wf-1', name: 'wf1', edges: [] }],
+  };
+
+  t.is(validateProvisionPayload(payload, existingProject), null);
+});
+
+test('validateProvisionPayload: errors when a whole workflow silently vanishes without delete: true', (t) => {
+  const existingProject = {
+    workflows: [{ id: 'wf-1', name: 'wf1' }],
+  };
+  const payload = { id: 'proj-1', workflows: [] };
+
+  const result = validateProvisionPayload(payload, existingProject);
+  t.deepEqual(result, {
+    errors: {
+      workflows: {
+        wf1: {
+          delete: ['missing from payload - flag delete: true to remove it'],
+        },
+      },
+    },
+  });
+});
+
+test('validateProvisionPayload: returns null when a missing workflow is flagged delete: true', (t) => {
+  const existingProject = {
+    workflows: [{ id: 'wf-1', name: 'wf1' }],
+  };
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ id: 'wf-1', delete: true }],
+  };
+
+  t.is(validateProvisionPayload(payload, existingProject), null);
+});
+
+test('validateProvisionPayload: no existing project means nothing can have vanished', (t) => {
+  const payload = {
+    id: 'proj-1',
+    workflows: [{ id: 'wf-1', name: 'wf1', jobs: [], triggers: [], edges: [] }],
+  };
+
   t.is(validateProvisionPayload(payload), null);
 });
 
@@ -385,5 +648,107 @@ test.serial(
     t.is(response.status, 422);
     const body = await response.json();
     t.truthy(body.errors?.workflows?.wf1?.edges);
+  }
+);
+
+const credentialProjectPayload = (credentialId: string) => ({
+  id: 'creds-proj',
+  name: 'Creds Project',
+  project_credentials: [
+    {
+      id: credentialId,
+      name: 'joes-credential',
+      owner: 'joe@openfn.org',
+    },
+  ],
+  workflows: [
+    {
+      id: 'wf-uuid',
+      name: 'my workflow',
+      triggers: [],
+      edges: [],
+      jobs: [
+        {
+          id: 'job-1',
+          name: 'A',
+          project_credential_id: credentialId,
+        },
+      ],
+    },
+  ],
+});
+
+test.serial(
+  'strictCredentials: should return 422 when a job references a credential not declared on the server',
+  async (t) => {
+    const strictServer = createLightningServer({
+      port: 3335,
+      strictCredentials: true,
+    });
+
+    try {
+      const response = await fetch('http://localhost:3335/api/provision', {
+        method: 'POST',
+        body: JSON.stringify(credentialProjectPayload('not-a-real-cred')),
+        headers: { 'content-type': 'application/json' },
+      });
+
+      t.is(response.status, 422);
+      const body = await response.json();
+      t.deepEqual(body, {
+        errors: {
+          workflows: {
+            'my workflow': {
+              jobs: {
+                A: {
+                  project_credential_id: [
+                    "credential doesn't exist or isn't available in this project",
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+    } finally {
+      await strictServer.destroy();
+    }
+  }
+);
+
+test.serial(
+  'strictCredentials: should deploy successfully when a job references a credential declared on the server',
+  async (t) => {
+    const strictServer = createLightningServer({
+      port: 3336,
+      strictCredentials: true,
+    });
+    strictServer.addCredential('real-cred', { user: 'joe' });
+
+    try {
+      const response = await fetch('http://localhost:3336/api/provision', {
+        method: 'POST',
+        body: JSON.stringify(credentialProjectPayload('real-cred')),
+        headers: { 'content-type': 'application/json' },
+      });
+
+      t.is(response.status, 200);
+    } finally {
+      await strictServer.destroy();
+    }
+  }
+);
+
+test.serial(
+  'strictCredentials off (default): does not validate credentials, so an unregistered one still deploys',
+  async (t) => {
+    // uses the shared, non-strict server/endpoint from test.before
+    const response = await fetch(`${endpoint}/api/provision`, {
+      method: 'POST',
+      body: JSON.stringify(credentialProjectPayload('not-a-real-cred')),
+      headers: { 'content-type': 'application/json' },
+    });
+
+    t.is(response.status, 200);
   }
 );

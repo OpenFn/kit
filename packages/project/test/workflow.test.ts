@@ -213,6 +213,127 @@ test('map uuids to ids', (t) => {
   t.deepEqual(w.index.id[uuid_bc], 'b-c');
 });
 
+test('remove - flag a step as removed', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a');
+
+  t.true(w.removed.ids['a']);
+});
+
+test('remove - flagging a step does not touch the live workflow', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a');
+
+  t.notThrows(() => w.get('a'));
+  t.is(w.steps.length, 3);
+});
+
+test('remove - flag an edge as removed, via its two endpoints', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a', 'c');
+
+  t.true(w.removed.ids['a-c']);
+});
+
+test('remove - flagging an edge does not touch the live workflow', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a', 'c');
+
+  t.notThrows(() => w.get('a-c'));
+  const a: any = w.get('a');
+  t.truthy(a.next.c);
+});
+
+test('remove - flagging a step does not cascade to its edges', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('c');
+
+  t.true(w.removed.ids['c']);
+  t.falsy(w.removed.ids['a-c']);
+  t.falsy(w.removed.ids['b-c']);
+});
+
+test('remove - throws for an unknown step', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.throws(() => w.remove('x'), {
+    message: 'step with id "x" does not exist in workflow',
+  });
+});
+
+test('remove - throws for an unknown edge', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.throws(() => w.remove('a', 'x'), {
+    message: 'edge with id "a-x" does not exist in workflow',
+  });
+});
+
+test('remove - no argument marks the whole workflow removed', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.false(w.removed.self);
+
+  w.remove();
+
+  t.true(w.removed.self);
+});
+
+test('remove - removing the whole workflow leaves its steps untouched', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove();
+
+  t.is(w.steps.length, 3);
+});
+
+test('isRemoved - no argument checks the whole workflow', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.false(w.isRemoved());
+
+  w.remove();
+
+  t.true(w.isRemoved());
+});
+
+test('isRemoved - false for a step/edge that has not been removed', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.false(w.isRemoved('a'));
+  t.false(w.isRemoved('a', 'c'));
+});
+
+test('isRemoved - true for a removed step', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a');
+
+  t.true(w.isRemoved('a'));
+});
+
+test('isRemoved - true for a removed edge', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('a', 'c');
+
+  t.true(w.isRemoved('a', 'c'));
+});
+
+test('isRemoved - does not cascade to edges when their step is removed', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.remove('c');
+
+  t.false(w.isRemoved('a', 'c'));
+  t.false(w.isRemoved('b', 'c'));
+});
+
 test('canMergeInto: should merge same content source & target', (t) => {
   const main = generateWorkflow('trigger-x');
   const sbox = generateWorkflow('trigger-x');
