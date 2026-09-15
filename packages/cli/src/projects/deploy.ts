@@ -465,7 +465,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   remapCredentials(
     localProject,
-    getCredentialsVisitor(localProject, options.credentials ?? 'prune')
+    getCredentialsVisitor(
+      localProject,
+      options.credentials ?? 'prune',
+      options.workspace
+    )
   );
 
   logger.success(

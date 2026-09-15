@@ -18,8 +18,10 @@ const credentialKey = (c: Pick<Credential, 'name' | 'owner'>) =>
 //   prune                         only sync credentials referenced by workflows (default)
 //   none                          sync no credentials
 //   all                           sync every credential declared in the project, even if unreferenced
-//   a,b,c=c:joe@openfn.org        sync only the named credentials, optionally
-//                                  remapped to a new name:owner via "="
+//   a,b,c=joe@openfn.org|c        sync only the named credentials, optionally
+//                                  remapped to a new owner|name via "="
+//   ./credentials.yaml            sync only the credentials listed in this file - each entry
+//                                  may carry an `alias: owner|name` to rename/re-own it
 
 export type CredentialAlias = {
   name: string;
@@ -28,7 +30,27 @@ export type CredentialAlias = {
 
 export type CredentialsMap = Record<string, CredentialAlias>;
 
-export type CredentialsStrategy = 'none' | 'prune' | 'all' | CredentialsMap;
+// Parses the "owner|name" alias syntax used to identify credentials
+const parseAlias = (aliasStr: string): CredentialAlias => {
+  if (!aliasStr.includes('|')) {
+    return { name: aliasStr.trim(), owner: undefined };
+  }
+  const [owner, name] = aliasStr.split('|');
+  return {
+    name: name.trim(),
+    owner: owner.trim(),
+  };
+};
+
+// A CredentialsMap is always an object and the keywords are a fixed, known
+// set, so any other string is unambiguously a path to a credentials file -
+// resolved and loaded later, once options.workspace is known
+export type CredentialsStrategy =
+  | 'none'
+  | 'prune'
+  | 'all'
+  | CredentialsMap
+  | string;
 
 const KEYWORDS = ['none', 'prune', 'all'] as const;
 
@@ -44,6 +66,10 @@ export default function parseCredentialsOption(
     return value as CredentialsStrategy;
   }
 
+  if (/\.(ya?ml|json)$/.test(value)) {
+    return value;
+  }
+
   const map: CredentialsMap = {};
   for (const rawEntry of value.split(',')) {
     const entry = rawEntry.trim();
@@ -53,11 +79,7 @@ export default function parseCredentialsOption(
     const name = key.trim();
 
     if (aliasStr) {
-      const [aliasName, aliasOwner] = aliasStr.split(':');
-      map[name] = {
-        name: aliasName.trim(),
-        owner: aliasOwner?.trim(),
-      };
+      map[name] = parseAlias(aliasStr);
     } else {
       map[name] = { name };
     }
@@ -95,13 +117,55 @@ export const byMap = (map: CredentialsMap): CredentialVisitor => {
   };
 };
 
+// Only keep credentials whose owner|name key is listed in the map (as
+// loaded from a credentials.yaml file - see loadCredentialsMapFromFile).
+// A listed entry with no alias is kept unchanged; an unlisted one is dropped
+export const byCredentialsFile = (map: CredentialsMap): CredentialVisitor => {
+  return (credential) => {
+    const key = credentialKey(credential);
+    if (!(key in map)) return null;
+    const alias = map[key];
+    return alias
+      ? {
+          ...credential,
+          name: alias.name,
+          owner: alias.owner ?? credential.owner,
+        }
+      : credential;
+  };
+};
+
+// Reads a credentials.yaml (or .yml/.json) file and builds a CredentialsMap
+// keyed by the file's own owner|name entries. An entry may carry an
+// `alias: owner|name` string to rename/re-own the credential on sync;
+// without one, the entry just marks that credential as included, unchanged
+export function loadCredentialsMapFromFile(filePath: string): CredentialsMap {
+  const raw = loadCredentialMap(filePath);
+  const map: CredentialsMap = {};
+  for (const key of Object.keys(raw)) {
+    const entry = raw[key];
+    const aliasStr =
+      entry && typeof entry === 'object'
+        ? ((entry as any).alias as string | undefined)
+        : undefined;
+    map[key] = aliasStr ? parseAlias(aliasStr) : (undefined as any);
+  }
+  return map;
+}
+
 export const getCredentialsVisitor = (
   project: Project,
-  strategy: CredentialsStrategy
+  strategy: CredentialsStrategy,
+  workspace: string = process.cwd()
 ): CredentialVisitor => {
   if (strategy === 'none') return byNone;
   if (strategy === 'all') return byAll;
   if (strategy === 'prune') return byPrune(project);
+  if (typeof strategy === 'string') {
+    // any other string is a path to a credentials file (see parseCredentialsOption)
+    const absolutePath = path.resolve(workspace, strategy);
+    return byCredentialsFile(loadCredentialsMapFromFile(absolutePath));
+  }
   return byMap(strategy);
 };
 
@@ -135,8 +199,9 @@ export const remapCredentials = (
         // null (not a delete) so a merge-based redeploy actually clears
         // it - merge's pick() takes an explicit null from source, but
         // treats a genuinely absent key as "leave target's value alone"
-        (step as { configuration?: string | null }).configuration =
-          rekeyed.get(step.configuration);
+        (step as { configuration?: string | null }).configuration = rekeyed.get(
+          step.configuration
+        );
       }
     }
   }

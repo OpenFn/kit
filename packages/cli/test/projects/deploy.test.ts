@@ -798,6 +798,54 @@ test.serial(
   }
 );
 
+test.serial(
+  '--credentials <file> when deploying a new project: syncs only the credentials listed in the file, applying their alias',
+  async (t) => {
+    const credsYaml = `
+jclark@openfn.org|joes-test-credential:
+  alias: new@openfn.org|renamed-cred
+`;
+
+    mockFs({
+      '/ws/project.yaml': myProject_v1_spec,
+      '/ws/openfn.yaml': '',
+      '/ws/credentials.yaml': credsYaml,
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+        new: true,
+        credentials: 'credentials.yaml',
+      } as any,
+      logger
+    );
+
+    const newUuid = Object.keys(server.state.projects).find(
+      (id) => id !== UUID
+    );
+    const newProject: any = server.state.projects[newUuid!];
+
+    // dasd and joe-credential-2 are declared in the spec but not in the
+    // file, so only the one listed (renamed per its alias) gets synced
+    t.is(newProject.project_credentials.length, 1);
+    const [credential] = newProject.project_credentials;
+    t.is(credential.name, 'renamed-cred');
+    t.is(credential.owner, 'new@openfn.org');
+
+    const workflows = Object.values(newProject.workflows) as any[];
+    const eventWf = workflows.find((wf) => wf.name === 'Event-based workflow');
+    const job: any = Object.values(eventWf.jobs)[0];
+    t.is(job.project_credential_id, credential.id);
+
+    const success = logger._find('success', /Created new project at/);
+    t.truthy(success);
+  }
+);
+
 test('printRichDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
 

@@ -9,6 +9,9 @@ import {
   byAll,
   byPrune,
   byMap,
+  byCredentialsFile,
+  loadCredentialsMapFromFile,
+  getCredentialsVisitor,
   remapCredentials,
   findCredentialIds,
   createProjectCredentials,
@@ -109,6 +112,99 @@ test('byMap renames a credential and rewrites its step references', (t) => {
   t.is(project.workflows[0].steps[0].configuration, 'other@openfn.org|c');
 });
 
+test('byCredentialsFile drops credentials not listed in the file, keeps listed ones', (t) => {
+  const project = createProject(
+    [
+      { name: 'a', owner: 'joe@openfn.org' },
+      { name: 'b', owner: 'joe@openfn.org' },
+    ],
+    [step('x', 'joe@openfn.org|a'), step('y', 'joe@openfn.org|b')]
+  );
+
+  remapCredentials(
+    project,
+    byCredentialsFile({ 'joe@openfn.org|a': undefined as any })
+  );
+
+  t.deepEqual(project.credentials, [{ name: 'a', owner: 'joe@openfn.org' }]);
+  t.is(project.workflows[0].steps[0].configuration, 'joe@openfn.org|a');
+  t.is(project.workflows[0].steps[1].configuration as any, null);
+});
+
+test('byCredentialsFile renames a credential per its alias entry', (t) => {
+  const project = createProject(
+    [{ name: 'a', owner: 'joe@openfn.org' }],
+    [step('x', 'joe@openfn.org|a')]
+  );
+
+  remapCredentials(
+    project,
+    byCredentialsFile({
+      'joe@openfn.org|a': { name: 'renamed', owner: 'other@openfn.org' },
+    })
+  );
+
+  t.deepEqual(project.credentials, [
+    { name: 'renamed', owner: 'other@openfn.org' },
+  ]);
+  t.is(project.workflows[0].steps[0].configuration, 'other@openfn.org|renamed');
+});
+
+test('loadCredentialsMapFromFile: an entry with no alias just marks inclusion', (t) => {
+  mock({
+    '/ws/credentials.yaml': `joe@openfn.org|a:
+  user: someuser
+`,
+  });
+
+  const map = loadCredentialsMapFromFile('/ws/credentials.yaml');
+  t.deepEqual(map, { 'joe@openfn.org|a': undefined as any });
+});
+
+test('loadCredentialsMapFromFile: an entry with an alias carries it through', (t) => {
+  mock({
+    '/ws/credentials.yaml': `joe@openfn.org|a:
+  user: someuser
+  alias: other@openfn.org|renamed
+`,
+  });
+
+  const map = loadCredentialsMapFromFile('/ws/credentials.yaml');
+  t.deepEqual(map, {
+    'joe@openfn.org|a': { name: 'renamed', owner: 'other@openfn.org' },
+  });
+});
+
+test('getCredentialsVisitor: a credentials file path syncs only what it lists', (t) => {
+  mock({
+    '/ws/credentials.yaml': `joe@openfn.org|a:
+  user: someuser
+`,
+  });
+
+  const project = createProject(
+    [
+      { name: 'a', owner: 'joe@openfn.org' },
+      { name: 'b', owner: 'joe@openfn.org' },
+    ],
+    [step('x', 'joe@openfn.org|a'), step('y', 'joe@openfn.org|b')]
+  );
+
+  remapCredentials(
+    project,
+    getCredentialsVisitor(project, 'credentials.yaml', '/ws')
+  );
+
+  t.deepEqual(project.credentials, [{ name: 'a', owner: 'joe@openfn.org' }]);
+  t.is(project.workflows[0].steps[1].configuration as any, null);
+});
+
+test('parseCredentialsOption: a credentials file path passes through unchanged', (t) => {
+  t.is(parseCredentialsOption('./credentials.yaml'), './credentials.yaml');
+  t.is(parseCredentialsOption('creds.yml'), 'creds.yml');
+  t.is(parseCredentialsOption('creds.json'), 'creds.json');
+});
+
 test('parseCredentialsOption: none', (t) => {
   t.is(parseCredentialsOption('none'), 'none');
 });
@@ -136,14 +232,14 @@ test('parseCredentialsOption: a comma separated list of credential names', (t) =
 });
 
 test('parseCredentialsOption: a credential mapped to a new name and owner', (t) => {
-  const result = parseCredentialsOption('c=c:joe@openfn.org');
+  const result = parseCredentialsOption('c=joe@openfn.org|c');
   t.deepEqual(result, {
     c: { name: 'c', owner: 'joe@openfn.org' },
   });
 });
 
 test('parseCredentialsOption: a mix of plain names and aliased names', (t) => {
-  const result = parseCredentialsOption('a,b,c=c:joe@openfn.org');
+  const result = parseCredentialsOption('a,b,c=joe@openfn.org|c');
   t.deepEqual(result, {
     a: { name: 'a' },
     b: { name: 'b' },

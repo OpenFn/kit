@@ -66,7 +66,7 @@ export const credentials: CLIOption = {
     default: 'prune',
     coerce: parseCredentialsOption,
     description:
-      'Credential sync strategy: "prune" (used creds only), "none", "all", or a comma-separated list or map (my-cred=your-cred:you@openfn.org)',
+      'Credential sync strategy: "prune" (used creds only), "none", "all", a comma-separated list or map (my-cred=you@openfn.org|your-cred), or a path to a credentials.yaml file.',
   },
 };
 
