@@ -8,6 +8,7 @@ type IgnoredError = {
 // list of errors here!
 export const IGNORED_ERROR_PATTERNS: IgnoredError[] = [
   { pattern: /OAuth token has expired/i, severity: 'crash' },
+  { pattern: /Credential environment mismatch/i },
 ];
 
 const findIgnoredError = (message?: string | null) => {
