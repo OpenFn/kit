@@ -4,12 +4,9 @@ on:
     types: [opened, synchronize]
 jobs:
   contract:
-    name: "Integration Testing (${{ matrix.target }})"
+    name: test build against lightning
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    strategy:
-      matrix:
-        target: ["test build against Lightning"]
     services:
       postgres:
         image: postgres:17
