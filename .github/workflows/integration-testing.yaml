@@ -1,13 +1,15 @@
 name: Integration Testing
 on:
   pull_request:
-    types: [opened, synchronize, labeled]
+    types: [opened, synchronize]
 jobs:
   contract:
-    name: test build against lightning
-    if: contains(github.event.pull_request.labels.*.name, 'run_contract_tests')
+    name: "Integration Testing (${{ matrix.target }})"
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      matrix:
+        target: ["test build against Lightning"]
     services:
       postgres:
         image: postgres:17
