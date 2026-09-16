@@ -272,7 +272,7 @@ export class AdaptorError extends RTError {
 // Maybe JobError or Expression Error?
 export class JobError extends RTError {
   name = 'JobError';
-  severity = 'fail';
+  severity = 'crash';
   message: string = '';
   constructor(error: any) {
     super();
