@@ -110,7 +110,7 @@ const claim = (
     app.queueChannel
       .push<ClaimPayload>(CLAIM, {
         demand,
-        worker_name: NAME || null,
+        ...(NAME ? { worker_name: NAME } : {}),
         queues: workloop.queues,
       })
       .receive('ok', async ({ runs }: ClaimReply) => {

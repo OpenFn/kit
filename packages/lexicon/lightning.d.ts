@@ -144,7 +144,7 @@ export type CLAIM = 'claim';
 // This is the payload in the message sent to lightning
 export type ClaimPayload = {
   demand?: number;
-  worker_name: string | null;
+  worker_name?: string;
   queues?: string[];
 };
 
