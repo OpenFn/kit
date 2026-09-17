@@ -32,6 +32,14 @@ test('still success if a prior job has errors', (t) => {
   t.is(r.error_message, null);
 });
 
+test('built-in object properties are not treated as job errors', (t) => {
+  const r = calculateJobExitReason('constructor', { errors: {} } as any);
+
+  t.is(r.reason, 'success');
+  t.is(r.error_type, null);
+  t.is(r.error_message, null);
+});
+
 test('fail', (t) => {
   const jobId = 'a';
   const state: any = {

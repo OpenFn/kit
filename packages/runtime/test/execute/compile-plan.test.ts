@@ -144,6 +144,18 @@ test('should convert steps to an object', (t) => {
   t.is(workflow.steps.b.expression, 'y');
 });
 
+test('should preserve a step whose id is __proto__', (t) => {
+  const { workflow } = compilePlan({
+    workflow: {
+      steps: [{ id: '__proto__', expression: 'x' }],
+    },
+  });
+
+  t.deepEqual(Object.keys(workflow.steps), ['__proto__']);
+  t.is(workflow.steps.__proto__.id, '__proto__');
+  t.is(workflow.steps.__proto__.expression, 'x');
+});
+
 test('should set previous job with 2 steps', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
