@@ -1,0 +1,5 @@
+---
+'@openfn/compiler': minor
+---
+
+test
