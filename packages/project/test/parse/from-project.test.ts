@@ -59,12 +59,12 @@ test('import from a v1 state as JSON', async (t) => {
   const proj = await Project.from('project', state_v1, {});
 
   // make a few basic assertions about the project
-  t.is(proj.id, 'my-workflow');
-  t.is(proj.name, 'My Workflow');
+  t.is(proj.id, 'my-project');
+  t.is(proj.name, 'My Project');
   t.is(proj.openfn!.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
   t.is(proj.options.retention_policy, 'retain_all');
 
-  t.is(proj.workflows.length, 1);
+  t.is(proj.workflows.length, 2);
 });
 
 test('import from a v1 state as YAML', async (t) => {
