@@ -166,6 +166,7 @@ export const mapWorkflow = (
       cron_expression,
       webhook_reply,
       webhook_response_config,
+      cron_cursor_job_id: _, // ensure this doesn't go on other props
       ...otherProps
     } = trigger;
     let { cron_cursor_job_id } = trigger;
