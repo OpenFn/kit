@@ -18,7 +18,7 @@ const meta = {
 test('should create a Project from prov state with basic metadata', (t) => {
   const project = fromAppState(state, meta);
 
-  t.is(project.name, 'My Workflow');
+  t.is(project.name, 'My Project');
   t.is(project.description, 'a project');
 });
 
@@ -99,18 +99,19 @@ test('should create a Project from prov state with credentials', (t) => {
 
 test('should load a workflow flagged delete: true and flag it removed', (t) => {
   const stateWithDeletedWorkflow: any = cloneDeep(state);
-  stateWithDeletedWorkflow.workflows['my-workflow'].delete = true;
+  stateWithDeletedWorkflow.workflows['webhook-workflow'].delete = true;
 
   const project = fromAppState(stateWithDeletedWorkflow, meta);
 
-  t.is(project.workflows.length, 1);
+  t.is(project.workflows.length, 2);
   t.true(project.workflows[0].isRemoved());
 });
 
 test('should load a job flagged delete: true and flag it removed', (t) => {
   const stateWithDeletedJob: any = cloneDeep(state);
-  stateWithDeletedJob.workflows['my-workflow'].jobs['transform-data'].delete =
-    true;
+  stateWithDeletedJob.workflows['webhook-workflow'].jobs[
+    'transform-data'
+  ].delete = true;
 
   const project = fromAppState(stateWithDeletedJob, meta);
   const wf = project.workflows[0];
@@ -121,8 +122,9 @@ test('should load a job flagged delete: true and flag it removed', (t) => {
 
 test('should load a trigger flagged delete: true and flag it removed', (t) => {
   const stateWithDeletedTrigger: any = cloneDeep(state);
-  stateWithDeletedTrigger.workflows['my-workflow'].triggers.webhook.delete =
-    true;
+  stateWithDeletedTrigger.workflows[
+    'webhook-workflow'
+  ].triggers.webhook.delete = true;
 
   const project = fromAppState(stateWithDeletedTrigger, meta);
   const wf = project.workflows[0];
@@ -133,7 +135,7 @@ test('should load a trigger flagged delete: true and flag it removed', (t) => {
 
 test('should load an edge flagged delete: true and flag it removed', (t) => {
   const stateWithDeletedEdge: any = cloneDeep(state);
-  stateWithDeletedEdge.workflows['my-workflow'].edges[
+  stateWithDeletedEdge.workflows['webhook-workflow'].edges[
     'trigger->transform-data'
   ].delete = true;
 
@@ -145,13 +147,16 @@ test('should load an edge flagged delete: true and flag it removed', (t) => {
 
 test('a delete: true job survives a parse -> serialize round trip', (t) => {
   const stateWithDeletedJob: any = cloneDeep(state);
-  stateWithDeletedJob.workflows['my-workflow'].jobs['transform-data'].delete =
-    true;
+  stateWithDeletedJob.workflows['webhook-workflow'].jobs[
+    'transform-data'
+  ].delete = true;
 
   const project = fromAppState(stateWithDeletedJob, meta);
   const reserialized = project.serialize('state', { format: 'json' }) as any;
 
-  t.true(reserialized.workflows['my-workflow'].jobs['transform-data'].delete);
+  t.true(
+    reserialized.workflows['webhook-workflow'].jobs['transform-data'].delete
+  );
 });
 
 test('should create a Project from prov state with positions', (t) => {
@@ -160,7 +165,7 @@ test('should create a Project from prov state with positions', (t) => {
   // assign a fake positions object
   // the provisioner right now doesn't include positions
   // - but one day it will, and Project needs to be able to sync it
-  newState.workflows['my-workflow'].positions = {
+  newState.workflows['webhook-workflow'].positions = {
     step1: {
       x: 1,
       y: 1,
@@ -191,10 +196,10 @@ test('should handle project credentials', (t) => {
 test('should create a Project from prov state with a workflow', (t) => {
   const project = fromAppState(state, meta);
 
-  t.is(project.workflows.length, 1);
+  t.is(project.workflows.length, 2);
   t.deepEqual(project.workflows[0].toJSON(), {
-    id: 'my-workflow',
-    name: 'My Workflow',
+    id: 'webhook-workflow',
+    name: 'Webhook Workflow',
     history: [],
     start: 'webhook',
     steps: [
@@ -235,6 +240,17 @@ test('should create a Project from prov state with a workflow', (t) => {
   });
 });
 
+test('should create a Project from prov state with cron_cursor_job_id mapped to a step id', (t) => {
+  const project = fromAppState(state, meta);
+
+  const cronWorkflow = project.workflows.find(
+    (w) => w.id === 'cron-workflow'
+  )!;
+  const trigger = cronWorkflow.steps.find((s: any) => s.type === 'cron') as any;
+
+  t.is(trigger.cron_cursor_job_id, 'transform-data');
+});
+
 test('mapWorkflow: map a cron trigger', (t) => {
   const mapped = mapWorkflow({
     id: 'cron',
@@ -267,9 +283,41 @@ test('mapWorkflow: map a cron trigger', (t) => {
   });
 });
 
+test('mapWorkflow: cron_cursor_job_id is mapped to a step id, not left as a uuid', (t) => {
+  const mapped = mapWorkflow({
+    id: 'cron',
+    name: 'w',
+    deleted_at: null,
+    triggers: {
+      cron: {
+        id: '1234',
+        type: 'cron',
+        cron_expression: '0 1 0 0',
+        cron_cursor_job_id: 'job-uuid-1',
+        enabled: true,
+      },
+    },
+    jobs: {
+      a: {
+        id: 'job-uuid-1',
+        name: 'Cursor Job',
+        body: 'fn(s => s)',
+        adaptor: '@openfn/language-common@latest',
+        project_credential_id: null,
+        keychain_credential_id: null,
+      },
+    },
+    edges: {},
+  });
+
+  const [trigger] = mapped.steps as any[];
+
+  t.is(trigger.cron_cursor_job_id, 'cursor-job');
+});
+
 test('mapWorkflow: map a webhook trigger', (t) => {
   const mapped = mapWorkflow({
-    ...state.workflows['my-workflow'],
+    ...state.workflows['webhook-workflow'],
     triggers: {
       webhook: {
         id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
@@ -311,7 +359,7 @@ test('mapWorkflow: map a webhook trigger', (t) => {
 });
 
 test('mapWorkflow: use a triggers type as its id', (t) => {
-  const wf = state.workflows['my-workflow'];
+  const wf = state.workflows['webhook-workflow'];
 
   // trigger id in the state is a UUID
   t.is(wf.triggers.webhook.id, '4a06289c-15aa-4662-8dc6-f0aaacd8a058');
@@ -324,7 +372,7 @@ test('mapWorkflow: use a triggers type as its id', (t) => {
 });
 
 test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => {
-  const mapped = mapWorkflow(state.workflows['my-workflow']);
+  const mapped = mapWorkflow(state.workflows['webhook-workflow']);
 
   t.deepEqual(mapped.openfn, {
     lock_version: 1,
@@ -338,7 +386,7 @@ test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => 
 
 // TODO need to test various trigger conditions and states
 test('mapWorkflow: map a simple job', (t) => {
-  const mapped = mapWorkflow(state.workflows['my-workflow']);
+  const mapped = mapWorkflow(state.workflows['webhook-workflow']);
 
   const [_trigger, job] = mapped.steps;
   t.deepEqual(job, {
@@ -354,7 +402,7 @@ test('mapWorkflow: map a simple job', (t) => {
 });
 
 test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
-  const wf = withCreds.workflows['my-workflow'];
+  const wf = withCreds.workflows['webhook-workflow'];
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
@@ -377,7 +425,7 @@ test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
 });
 
 test('mapWorkflow: map a job with project credentials onto job.configuration', (t) => {
-  const wf = withCreds.workflows['my-workflow'];
+  const wf = withCreds.workflows['webhook-workflow'];
   const credentials = [
     {
       uuid: 'p',
@@ -410,7 +458,7 @@ test('mapWorkflow: map a job with project credentials onto job.configuration', (
 // caller's job (see fromAppState), since that's the only place a uuid can be
 // resolved back to a local id.
 test('mapWorkflow: maps a job flagged delete: true like any other job', (t) => {
-  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  const wf: any = cloneDeep(state.workflows['webhook-workflow']);
   wf.jobs['transform-data'].delete = true;
 
   const mapped = mapWorkflow(wf);
@@ -420,7 +468,7 @@ test('mapWorkflow: maps a job flagged delete: true like any other job', (t) => {
 });
 
 test('mapWorkflow: maps a trigger flagged delete: true like any other trigger', (t) => {
-  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  const wf: any = cloneDeep(state.workflows['webhook-workflow']);
   wf.triggers.webhook.delete = true;
 
   const mapped = mapWorkflow(wf);
@@ -430,7 +478,7 @@ test('mapWorkflow: maps a trigger flagged delete: true like any other trigger', 
 });
 
 test('mapWorkflow: maps an edge flagged delete: true like any other edge', (t) => {
-  const wf: any = cloneDeep(state.workflows['my-workflow']);
+  const wf: any = cloneDeep(state.workflows['webhook-workflow']);
   wf.edges['trigger->transform-data'].delete = true;
 
   const mapped = mapWorkflow(wf);
@@ -584,7 +632,7 @@ workflows:
   fromAppState(yaml, meta, {
     format: 'yaml',
   });
-  // const { next } = project.workflows['my-workflow'].steps[1];
+  // const { next } = project.workflows['webhook-workflow'].steps[1];
   // make sure that the condition_types get mapped to condition
   // also make sure that custom conditions work (both ways)
 });

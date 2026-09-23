@@ -7,6 +7,7 @@ import { Project } from '../src/Project';
  *
  * It should build it without type errors, then serialize to json and yaml formats
  */
+
 const project: ProjectSpec = {
   id: 'kitchen-sink',
   name: 'Kitchen Sink Test',
