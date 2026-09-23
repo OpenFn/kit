@@ -240,6 +240,17 @@ test('should create a Project from prov state with a workflow', (t) => {
   });
 });
 
+test('should create a Project from prov state with cron_cursor_job_id mapped to a step id', (t) => {
+  const project = fromAppState(state, meta);
+
+  const cronWorkflow = project.workflows.find(
+    (w) => w.id === 'cron-workflow'
+  )!;
+  const trigger = cronWorkflow.steps.find((s: any) => s.type === 'cron') as any;
+
+  t.is(trigger.cron_cursor_job_id, 'transform-data');
+});
+
 test('mapWorkflow: map a cron trigger', (t) => {
   const mapped = mapWorkflow({
     id: 'cron',
@@ -270,6 +281,38 @@ test('mapWorkflow: map a cron trigger', (t) => {
       uuid: '1234',
     },
   });
+});
+
+test('mapWorkflow: cron_cursor_job_id is mapped to a step id, not left as a uuid', (t) => {
+  const mapped = mapWorkflow({
+    id: 'cron',
+    name: 'w',
+    deleted_at: null,
+    triggers: {
+      cron: {
+        id: '1234',
+        type: 'cron',
+        cron_expression: '0 1 0 0',
+        cron_cursor_job_id: 'job-uuid-1',
+        enabled: true,
+      },
+    },
+    jobs: {
+      a: {
+        id: 'job-uuid-1',
+        name: 'Cursor Job',
+        body: 'fn(s => s)',
+        adaptor: '@openfn/language-common@latest',
+        project_credential_id: null,
+        keychain_credential_id: null,
+      },
+    },
+    edges: {},
+  });
+
+  const [trigger] = mapped.steps as any[];
+
+  t.is(trigger.cron_cursor_job_id, 'cursor-job');
 });
 
 test('mapWorkflow: map a webhook trigger', (t) => {

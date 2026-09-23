@@ -74,6 +74,9 @@ const state: Provisioner.Project = {
           enabled: true,
           id: '7ab78a65-81e7-4269-8aaf-ef70a80957ed',
           type: 'cron',
+          cron_expression: '0 0 * * *',
+          // this must map correctly on the internal structure: in prod it fails
+          cron_cursor_job_id: 'e0c6bd0b-3320-4e5f-ac08-36d2ae2405bc',
         },
       },
       lock_version: 1,
