@@ -44,6 +44,9 @@ importers:
       tar-stream:
         specifier: ^3.1.8
         version: 3.1.8
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
 
   integration-tests/cli:
     dependencies:
