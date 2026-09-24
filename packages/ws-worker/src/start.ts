@@ -109,6 +109,13 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
+  const lockRepo = args.repoLock !== false;
+  if (lockRepo && !args.repoDir) {
+    logger.warn(
+      'WARNING: repo lock is enabled but --repo-dir is not set; lock will be a no-op'
+    );
+  }
+
   const engineOptions = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
@@ -121,6 +128,7 @@ if (args.mock) {
     workerValidationRetries: args.engineValidationRetries,
     profile: args.profile,
     profilePollInterval: args.profilePollIntervalMs,
+    autoinstall: { lockRepo },
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);

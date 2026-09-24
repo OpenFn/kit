@@ -62,8 +62,8 @@ const plan = {
 
 const options = {
   autoinstall: {
-    handleInstall: async () => {},
-    handleIsInstalled: async () => false,
+    // No adaptors in these plans, so autoinstall has nothing to do.
+    skipRepoValidation: true,
   },
 } as Partial<EngineOptions>;
 

@@ -39,6 +39,7 @@ type Args = {
   profile?: boolean;
   profilePollIntervalMs?: number;
   repoDir?: string;
+  repoLock?: boolean;
   runMemory?: number;
   stateMemory?: number;
   secret?: string;
@@ -102,6 +103,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_PROFILE_POLL_INTERVAL_MS,
     WORKER_PROFILE,
     WORKER_REPO_DIR,
+    WORKER_NO_REPO_LOCK,
     WORKER_SECRET,
     WORKER_SENTRY_DSN,
     WORKER_SENTRY_ENV,
@@ -134,6 +136,11 @@ export default function parseArgs(argv: string[]): Args {
       alias: 'd',
       description:
         'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
+    })
+    .option('repo-lock', {
+      description:
+        'Enable a cross-worker filesystem lock that coordinates adaptor installs when multiple workers share a single --repo-dir. On by default; pass --no-repo-lock to disable. Env: WORKER_NO_REPO_LOCK=true also disables it.',
+      type: 'boolean',
     })
     .option('monorepo-dir', {
       alias: 'm',
@@ -327,6 +334,11 @@ export default function parseArgs(argv: string[]): Args {
       'ws://localhost:4000/worker'
     ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
+    repoLock:
+      args.repoLock ??
+      (WORKER_NO_REPO_LOCK !== undefined
+        ? !(WORKER_NO_REPO_LOCK === 'true' || WORKER_NO_REPO_LOCK === '1')
+        : true),
     batchLogs: setArg(args.batchLogs, WORKER_BATCH_LOGS, false),
     batchInterval: setArg(args.batchInterval, WORKER_BATCH_INTERVAL, 10),
     batchLimit: setArg(args.batchLimit, WORKER_BATCH_LIMIT, 50),

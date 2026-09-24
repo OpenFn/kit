@@ -22,11 +22,14 @@
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
-    "json-stream-stringify": "^3.1.6"
+    "json-stream-stringify": "^3.1.6",
+    "proper-lockfile": "^4.1.2"
   },
   "devDependencies": {
     "@types/node": "^18.19.130",
+    "@types/proper-lockfile": "^4.1.4",
     "ava": "5.3.1",
+    "esmock": "^2.7.5",
     "tslib": "^2.8.1",
     "tsm": "^2.3.0",
     "tsup": "^8.5.1",

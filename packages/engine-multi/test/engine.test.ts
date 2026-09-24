@@ -16,7 +16,9 @@ const options = {
   logger,
   repoDir: '.', // doesn't matter for the mock
   autoinstall: {
-    handleIsInstalled: async () => true,
+    // No adaptors are used in these tests so the install path is never hit;
+    // skipping repo validation keeps autoinstall from touching the cwd.
+    skipRepoValidation: true,
   },
 };
 
