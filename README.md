@@ -73,7 +73,7 @@ A good changeset is usually a single-sentence explanation of a change, suitable 
 
 ### Releasing
 
-When merging into main, new packages will be published to npm and new images built to docker hub.
+When merging into main, updated packages will be published to npm and new images built to docker hub.
 
 Before merging to main, check out the release branch locally and run the following steps:
 
@@ -81,6 +81,45 @@ Before merging to main, check out the release branch locally and run the followi
 1. Check that the updated changelogs look correct.
 1. Run `pnpm install`
 1. Commit and push the new version numbers and lockfile
+
+New packages need to be published directly using `pnpm publish:new`.
+
+### Publishing a new package
+
+npm's Trusted Publishing requires a package to already exist on the registry, so a brand new package can't go through the automated flow above for its first release. A maintainer with npm publish rights has to publish it once, from their own machine.
+
+```bash
+pnpm publish:new <package> <otp>
+```
+
+Use the short package name (e.g. `cli`, not `@openfn/cli`) and a fresh one-time password from your authenticator. This will:
+
+1. Build the package (skip with `--no-build`)
+1. Publish it to npm
+1. Tag the release and push the tag
+1. Configure [trusted publishing](https://docs.npmjs.com/trusted-publishers) for the package, and lock it so ad-hoc token publishes are no longer allowed (`npm access set mfa=publish`) — only the trusted CI workflow, or an interactive `npm publish` with 2FA, can publish it from here on
+
+If the trusted publishing step fails (because your OTP expired), you'll get a warning and told to run `pnpm trust <package> <otp>`.
+
+After this one-off run, every later release of that package goes through the normal automated flow above.
+
+### Trusted Publishing
+
+Published packages use npm's [Trusted Publishing](https://docs.npmjs.com/trusted-publishers): the `publish.yaml` workflow publishes via GitHub OIDC rather than a long-lived token, and each trusted package has token publishes disabled (`npm access set mfa=publish`) so only that workflow, or an interactive `npm publish` with 2FA, can publish it.
+
+To configure (or check) trust for a package that's already on npm but not yet trusted:
+
+```bash
+pnpm trust <package> <otp>
+```
+
+To configure every published package in the workspace in one run (skipping private packages automatically):
+
+```bash
+pnpm trust:all <otp> [--from <package>]
+```
+
+If a run's OTP expires partway through, `trust:all` will prompt for a fresh one and keep going.
 
 ## TypeSync
 
