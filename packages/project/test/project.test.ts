@@ -222,6 +222,65 @@ test('should merge two projects', (t) => {
   t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn!.uuid);
 });
 
+test('deploying a project with a step removed marks the step and its outgoing edges for deletion', async (t) => {
+  // "remote" is the kitchen-sink `state` fixture plus one extra job "y",
+  // with an edge from "y" into the existing "transform-data" job
+  const remoteState: Provisioner.Project = {
+    ...state,
+    workflows: {
+      wf1: {
+        ...state.workflows.wf1,
+        jobs: {
+          ...state.workflows.wf1.jobs,
+          y: {
+            id: 'b6b6b6b6-0000-4000-8000-000000000010',
+            name: 'Y',
+            body: 'fn(s => s)',
+            adaptor: '@openfn/language-common@latest',
+            project_credential_id: null,
+            keychain_credential_id: null,
+          },
+        },
+        edges: {
+          ...state.workflows.wf1.edges,
+          'y->transform-data': {
+            id: 'b6b6b6b6-0000-4000-8000-000000000011',
+            enabled: true,
+            source_job_id: 'b6b6b6b6-0000-4000-8000-000000000010',
+            source_trigger_id: null,
+            condition_type: 'always',
+            target_job_id: state.workflows.wf1.jobs['transform-data'].id,
+          },
+        },
+      },
+    },
+  };
+
+  const remote = await Project.from(
+    'state',
+    remoteState,
+    {},
+    { format: 'json' }
+  );
+  // the local file is just the original `state` - it never had "y", so
+  // deploying it should tell the provisioner to delete "y" and its edge
+  const local = await Project.from('state', state, {}, { format: 'json' });
+
+  const result = Project.merge(local, remote);
+  const newState = result.serialize('state', { format: 'json' }) as any;
+  const wfState = newState.workflows['wf1'];
+
+  // step y must be flagged for deletion, not silently dropped - a silent
+  // drop never reaches the provisioner as a delete: true
+  t.true(wfState.jobs['y']?.delete);
+  // its outgoing y -> transform-data edge is meaningless without y, and
+  // must also be flagged for deletion
+  t.true(wfState.edges['y->transform-data']?.delete);
+
+  // transform-data was untouched and must survive normally, unflagged
+  t.falsy(wfState.jobs['transform-data']?.delete);
+});
+
 test('should return UUIDs for everything', async (t) => {
   const project = await Project.from('state', state, {});
   const map = project.getUUIDMap();
