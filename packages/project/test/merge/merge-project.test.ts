@@ -701,6 +701,54 @@ test('remove a step from an existing workflow', (t) => {
   t.is(result.workflows[0].steps.length, 0);
 });
 
+test.only('removing a step also deletes its outgoing edges when serialized', (t) => {
+  // create a base workflow with an edge x -> y
+  const wf = {
+    name: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+        next: {
+          y: true,
+        },
+      },
+      {
+        id: 'y',
+        name: 'Y',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+      },
+    ],
+  };
+
+  // main/target still has both steps and the edge
+  const wf_a = assignUUIDs(wf, () => ++idgen);
+  // staging/source represents the local file after step x was deleted
+  const wf_b = assignUUIDs(wf, () => ++idgen);
+  wf_b.steps = wf_b.steps.filter((s: any) => s.id !== 'x');
+
+  const main = createProject(wf_a, 'a');
+  const staging = createProject(wf_b, 'b');
+
+  // merge staging into main
+  const result = merge(staging, main);
+  const state = result.serialize('state', { format: 'json' }) as any;
+  const wfState = state.workflows['wf'];
+
+  // step x must be flagged for deletion, not silently dropped - a silent
+  // drop never reaches the provisioner as a delete: true
+  t.true(wfState.jobs['x']?.delete);
+  // its outgoing x -> y edge is meaningless without x, and must also be
+  // flagged for deletion
+  t.true(wfState.edges['x->y']?.delete);
+
+  // y was untouched and must survive normally, unflagged
+  t.falsy(wfState.jobs['y']?.delete);
+});
+
 test('merge an id change in a single step with preserved uuids', (t) => {
   // create a base workflow
   const wf = {
