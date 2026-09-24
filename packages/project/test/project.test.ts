@@ -270,14 +270,13 @@ test('deploying a project with a step removed marks the step and its outgoing ed
   const newState = result.serialize('state', { format: 'json' }) as any;
   const wfState = newState.workflows['wf1'];
 
-  // step y must be flagged for deletion, not silently dropped - a silent
-  // drop never reaches the provisioner as a delete: true
+  // step y must be flagged for deletion
   t.true(wfState.jobs['y']?.delete);
-  // its outgoing y -> transform-data edge is meaningless without y, and
-  // must also be flagged for deletion
+
+  // The edge must also be removed
   t.true(wfState.edges['y->transform-data']?.delete);
 
-  // transform-data was untouched and must survive normally, unflagged
+  // transform-data is untouched
   t.falsy(wfState.jobs['transform-data']?.delete);
 });
 

@@ -120,7 +120,6 @@ export function merge(
       // Otherwise, merge these workflows, preserving UUIDs smartly
       const mappings = mapUuids(sourceWorkflow, targetWorkflow);
       finalWorkflows.push(
-        // @ts-ignore
         mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
       );
     } else {

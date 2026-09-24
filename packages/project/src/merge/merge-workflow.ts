@@ -20,7 +20,7 @@ export function mergeWorkflows(
   source: Workflow,
   target: Workflow,
   mappings: MappingResults
-) {
+): Workflow {
   // We probably need to vary this by the node type,
   // step or edge, but we're basically doing this
 
@@ -29,11 +29,16 @@ export function mergeWorkflows(
     targetNodes[targetStep.openfn?.uuid || targetStep.id!] = targetStep;
   }
 
+  // track which target steps get claimed by a source step, so steps left
+  // unclaimed afterwards can be identified as removed locally
+  const matchedTargetKeys = new Set<string>();
+
   const steps: Node[] = [];
   for (const sourceStep of source.steps) {
     let newNode: Node = clone(sourceStep);
     if (sourceStep.id! in mappings.nodes) {
       const preservedId = mappings.nodes[sourceStep.id!];
+      matchedTargetKeys.add(String(preservedId));
       const toNodeIds = Object.keys(
         typeof sourceStep.next === 'string'
           ? { [sourceStep.next]: true }
@@ -71,8 +76,25 @@ export function mergeWorkflows(
     steps.push(newNode);
   }
 
+  // steps present in target but never claimed by a source step were
+  // removed locally - keep them (with their original data and edges) so
+  // the merged workflow still knows their uuid, then flag them (and their
+  // outgoing edges) removed below
+  const removedStepIds: string[] = [];
+  const removedEdges: Array<[string, string]> = [];
+  for (const targetStep of target.steps) {
+    const key = String(targetStep.openfn?.uuid || targetStep.id!);
+    if (!matchedTargetKeys.has(key)) {
+      steps.push(clone(targetStep));
+      removedStepIds.push(targetStep.id!);
+      for (const next in (targetStep as any).next ?? {}) {
+        removedEdges.push([targetStep.id!, next]);
+      }
+    }
+  }
+
   const newSource = { ...source, steps };
-  return {
+  const merged = new Workflow({
     ...target,
     ...newSource,
     history: source.history ?? target.history,
@@ -86,5 +108,14 @@ export function mergeWorkflows(
       ...target.options,
       ...source.options,
     },
-  };
+  } as any);
+
+  for (const id of removedStepIds) {
+    merged.remove(id);
+  }
+  for (const [from, to] of removedEdges) {
+    merged.remove(from, to);
+  }
+
+  return merged;
 }
