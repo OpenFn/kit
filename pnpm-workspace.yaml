@@ -9,14 +9,12 @@ packages:
   - integration-tests/**
   - '!**/test/**'
 
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@openfn/*'
-
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - oxc-resolver
 
 overrides:
   path-to-regexp@8.3.0: ^8.4.0
