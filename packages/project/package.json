@@ -2,6 +2,11 @@
   "name": "@openfn/project",
   "version": "0.20.3",
   "description": "Read, serialize, replicate and sync OpenFn projects",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "repository": {
+    "url": "https://github.com/OpenFn/kit"
+  },
   "scripts": {
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
@@ -21,8 +26,6 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [],
-  "author": "Open Function Group <admin@openfn.org>",
-  "license": "ISC",
   "devDependencies": {
     "@types/lodash": "^4.17.24",
     "@types/mock-fs": "~4.13.4",

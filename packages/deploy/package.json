@@ -2,6 +2,9 @@
   "name": "@openfn/deploy",
   "version": "0.15.0",
   "description": "Deploy projects to Lightning instances",
+  "repository": {
+    "url": "https://github.com/OpenFn/kit"
+  },
   "type": "module",
   "exports": {
     ".": {
