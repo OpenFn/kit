@@ -76,10 +76,7 @@ export function mergeWorkflows(
     steps.push(newNode);
   }
 
-  // steps present in target but never claimed by a source step were
-  // removed locally - keep them (with their original data and edges) so
-  // the merged workflow still knows their uuid, then flag them (and their
-  // outgoing edges) removed below
+  // Identify steps and edges for removal (ie, present in target but not in source)
   const removedStepIds: string[] = [];
   const removedEdges: Array<[string, string]> = [];
   for (const targetStep of target.steps) {
