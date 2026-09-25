@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.41.1
+
+### Patch Changes
+
+- 4800227: Fix an issue where edges aren't properly removed
+- Updated dependencies [865afc2]
+- Updated dependencies [4800227]
+  - @openfn/project@0.20.3
+
 ## 1.41.0
 
 ### Minor Changes

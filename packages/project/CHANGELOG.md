@@ -1,5 +1,12 @@
 # @openfn/project
 
+## 0.20.3
+
+### Patch Changes
+
+- 865afc2: Fix an issue where a cron trigger's cursor job reference wasn't mapped to the correct step
+- 4800227: Fix an issue where edges aren't properly removed
+
 ## 0.20.2
 
 ### Patch Changes
