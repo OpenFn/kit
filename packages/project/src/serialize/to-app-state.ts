@@ -206,12 +206,6 @@ export const mapWorkflow = (
       wfState.jobs[s.id ?? slugify(s.name)] = node;
     }
 
-    if (isRemoved) {
-      // a removed step's edges are meaningless without also being removed via workflow.remove(from, to)
-      return;
-    }
-
-    // create an edge to each linked node
     Object.keys(s.next ?? {}).forEach((next) => {
       const rules = s.next[next];
 

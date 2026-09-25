@@ -164,11 +164,13 @@ export const mapWorkflow = (
       enabled,
       custom_path,
       cron_expression,
-      cron_cursor_job_id,
       webhook_reply,
       webhook_response_config,
+      cron_cursor_job_id: _, // ensure this doesn't go on other props
       ...otherProps
     } = trigger;
+    let { cron_cursor_job_id } = trigger;
+
     if (!mapped.start) {
       mapped.start = type;
     }
@@ -176,6 +178,17 @@ export const mapWorkflow = (
     const connectedEdges = Object.values(edges).filter(
       (e) => e.source_trigger_id === trigger.id
     );
+
+    // Make sure to map cron_cursor_job_id to a step id
+    if (cron_cursor_job_id) {
+      const cursorJob = Object.values(jobs).find(
+        (j) => j.id === cron_cursor_job_id
+      );
+      if (cursorJob) {
+        cron_cursor_job_id = slugify(cursorJob.name);
+      }
+    }
+
     mapped.steps.push(
       omitNil({
         id: type,
