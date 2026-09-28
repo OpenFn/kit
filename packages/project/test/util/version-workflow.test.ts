@@ -68,7 +68,6 @@ test('match lightning version', async (t) => {
 
   const wf = proj.workflows[0];
   const hash = wf.getVersionHash();
-  console.log(hash);
   t.log(expected);
   t.log(hash);
   t.is(parse(hash).hash, parse(expected).hash);
