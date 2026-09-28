@@ -12,7 +12,10 @@ const getOptions = () => ({
 
 const mapOpenFnPath = (cmd) => {
   if (!isProd) {
-    return cmd.replace(/^openfn/, 'pnpm -C ../../packages/cli openfn');
+    return cmd.replace(
+      /^openfn/,
+      'node --no-warnings ../../packages/cli/dist/index.js'
+    );
   }
   return cmd;
 };
