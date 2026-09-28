@@ -194,6 +194,9 @@ export interface WorkflowMeta {
 export interface NodeMeta {
   uuid?: UUID;
 
+  /** only meaningful on a trigger step */
+  enabled?: boolean;
+
   [key: string]: unknown;
 }
 
