@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.13.3
+
+### Patch Changes
+
+- 60a22f3: Remove unused production dependencies
+- Updated dependencies [60a22f3]
+  - @openfn/lexicon@2.4.6
+
 ## 1.13.2
 
 ### Patch Changes

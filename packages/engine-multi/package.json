@@ -1,6 +1,6 @@
 {
   "name": "@openfn/engine-multi",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "description": "Multi-process runtime engine",
   "repository": {
     "url": "https://github.com/OpenFn/kit"

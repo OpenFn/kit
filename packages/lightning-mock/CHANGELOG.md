@@ -1,5 +1,13 @@
 # @openfn/lightning-mock
 
+## 2.5.2
+
+### Patch Changes
+
+- Updated dependencies [60a22f3]
+  - @openfn/engine-multi@1.13.3
+  - @openfn/lexicon@2.4.6
+
 ## 2.5.1
 
 ### Patch Changes
