@@ -701,7 +701,7 @@ test('remove a step from an existing workflow', (t) => {
   t.is(result.workflows[0].steps.length, 0);
 });
 
-test.only('removing a step also deletes its outgoing edges when serialized', (t) => {
+test('removing a step also deletes its outgoing edges when serialized', (t) => {
   // create a base workflow with an edge x -> y
   const wf = {
     name: 'wf',
