@@ -603,9 +603,6 @@ importers:
       '@openfn/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@openfn/language-common':
-        specifier: 3.2.3
-        version: 3.2.3
       '@openfn/lexicon':
         specifier: workspace:^
         version: link:../lexicon
@@ -646,9 +643,6 @@ importers:
 
   packages/lexicon:
     dependencies:
-      ava:
-        specifier: ^5.3.1
-        version: 5.3.1
       source-map:
         specifier: ^0.7.6
         version: 0.7.6
@@ -918,12 +912,6 @@ importers:
       '@sentry/node':
         specifier: ^10.44.0
         version: 10.44.0
-      '@types/koa-logger':
-        specifier: ^3.1.5
-        version: 3.1.5
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       fast-safe-stringify:
         specifier: ^2.1.1
         version: 2.1.1
@@ -955,6 +943,9 @@ importers:
       '@types/koa':
         specifier: ^2.15.0
         version: 2.15.0
+      '@types/koa-logger':
+        specifier: ^3.1.5
+        version: 3.1.5
       '@types/koa__router':
         specifier: ^12.0.5
         version: 12.0.5
@@ -967,6 +958,9 @@ importers:
       '@types/phoenix':
         specifier: ^1.6.7
         version: 1.6.7
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@types/yargs':
         specifier: ^17.0.35
         version: 17.0.35
