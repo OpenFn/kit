@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.29.5
+
+### Patch Changes
+
+- 60a22f3: Remove unused production dependencies
+- Updated dependencies [60a22f3]
+  - @openfn/engine-multi@1.13.3
+  - @openfn/lexicon@2.4.6
+
 ## 1.29.4
 
 ### Patch Changes
