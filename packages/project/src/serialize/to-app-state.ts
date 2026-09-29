@@ -165,7 +165,7 @@ export const mapWorkflow = (
         node = { id: nodeUuid, delete: true } as Provisioner.Trigger;
       } else {
         const { type, id, next, openfn, ...rest } = s;
-        // from-app-state maps cron_cursor_job_id to a step id: map it back to that step's uuid
+        // map cron_cursor_job_id back to a uuid
         if (rest.cron_cursor_job_id && lookup[rest.cron_cursor_job_id]) {
           rest.cron_cursor_job_id = lookup[rest.cron_cursor_job_id];
         }
