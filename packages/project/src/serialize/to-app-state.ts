@@ -36,7 +36,7 @@ export default function (
   } = project.openfn ?? {};
 
   const state = omitBy(
-    pick(project, ['name', 'description', 'channels']),
+    pick(project, ['name', 'description']),
     isNil
   ) as Provisioner.Project;
 
@@ -57,6 +57,23 @@ export default function (
       ...c,
       uuid: c.uuid ?? randomUUID(),
     })) ?? [];
+
+  if (project.channels) {
+    state.channels = project.channels.map((c) => {
+      // like steps, a locally authored channel references its credential
+      // by name - resolve it to a uuid if we can
+      const cred = project.credentials.find(
+        (cred) => getCredentialName(cred) === c.destination_credential_id
+      );
+      return {
+        ...c,
+        // mint an id for any channel authored locally in channels.yaml
+        id: c.id ?? randomUUID(),
+        destination_credential_id: (cred?.uuid ??
+          c.destination_credential_id) as string,
+      };
+    });
+  }
 
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials.map((c) => ({

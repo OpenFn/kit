@@ -232,6 +232,38 @@ test.serial(
   }
 );
 
+test.serial('should load channels from channels.yaml', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/channels.yaml', {
+    'my-channel': {
+      destination_url: 'https://example.com',
+      enabled: false,
+      credential: 'me@openfn.org|my-cred',
+    },
+  });
+
+  const project = await parseProject({ root: '/ws' });
+  // credential is kept as a name - it's resolved to a uuid on deploy
+  t.deepEqual(project.channels, [
+    {
+      name: 'my-channel',
+      destination_url: 'https://example.com',
+      enabled: false,
+      destination_credential_id: 'me@openfn.org|my-cred',
+    },
+  ]);
+});
+
+test.serial(
+  'should return undefined channels when there is no channels.yaml',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    const project = await parseProject({ root: '/ws' });
+    t.is(project.channels, undefined);
+  }
+);
+
 test.serial('should override the name and id from options', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),

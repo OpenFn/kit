@@ -4,6 +4,7 @@ import type { RawSourceMap } from 'source-map';
 import {
   Credential,
   Collection,
+  Channel,
   Job,
   Trigger,
   ProjectSpec,
@@ -46,6 +47,10 @@ export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
   // all openfn.yaml ever carries) - the internal/state representation
   // tracks each collection's uuid once it's been created on the server
   collections?: Array<CollectionState>;
+
+  // override channels - locally authored channels (channels.yaml) have no
+  // id until they're deployed
+  channels?: Array<ChannelState>;
 
   /** Stuff only used by the CLI for this project */
   cli?: LocalMeta;
@@ -130,6 +135,10 @@ export interface CredentialState extends Credential {
 export interface CollectionState extends Collection {
   uuid?: UUID;
 }
+
+// Like step.configuration, destination_credential_id may hold a credential
+// name (owner|name) rather than a uuid until it's serialized for Lightning
+export type ChannelState = Omit<Channel, 'id'> & { id?: string };
 
 type FileFormats = 'yaml' | 'json';
 

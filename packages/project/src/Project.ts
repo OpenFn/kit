@@ -77,7 +77,7 @@ export class Project {
 
   collections?: Array<CollectionState>;
 
-  channels?: l.Channel[];
+  channels?: l.ChannelState[];
 
   credentials: Credential[];
 

@@ -1,6 +1,7 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
 import toFs, { extractWorkflow } from '../../src/serialize/to-fs';
+import { yamlToJson } from '../../src/util/yaml';
 
 const step = {
   id: 'step',
@@ -471,6 +472,43 @@ test('toFs: omits collections key when there are none', (t) => {
 
   const config = JSON.parse(files['openfn.json']);
   t.falsy(config.project.collections);
+});
+
+test('toFs: writes channels.yaml keyed by name, with credential names', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    credentials: [
+      { uuid: 'cred-uuid', name: 'my-cred', owner: 'me@openfn.org' },
+    ],
+    channels: [
+      {
+        id: 'chan-uuid',
+        name: 'my-channel',
+        destination_url: 'https://example.com',
+        enabled: true,
+        destination_credential_id: 'cred-uuid',
+      },
+    ],
+    workflows: [],
+  });
+
+  const files = toFs(project);
+
+  t.deepEqual(yamlToJson(files['channels.yaml']), {
+    'my-channel': {
+      destination_url: 'https://example.com',
+      enabled: true,
+      credential: 'me@openfn.org|my-cred',
+    },
+  });
+});
+
+test('toFs: does not write channels.yaml when channels are unknown', (t) => {
+  const project = new Project({ name: 'My Project', workflows: [] });
+
+  const files = toFs(project);
+
+  t.false('channels.yaml' in files);
 });
 
 // TODO we need many more tests on this, with options

@@ -281,6 +281,36 @@ test('should handle credentials with existing UUIDs', (t) => {
   t.is(step.project_credential_id, '123');
 });
 
+test('should mint ids for new channels and resolve credential names', (t) => {
+  const data = {
+    id: 'my-project',
+    credentials: [{ uuid: '123', name: 'cred', owner: 'admin@openfn.org' }],
+    channels: [
+      {
+        id: 'chan-1',
+        name: 'existing',
+        destination_url: 'https://a.example.com',
+        enabled: true,
+      },
+      {
+        name: 'new',
+        destination_url: 'https://b.example.com',
+        enabled: true,
+        destination_credential_id: 'admin@openfn.org|cred',
+      },
+    ],
+    workflows: [],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  const [existing, created] = state.channels!;
+  t.is(existing.id, 'chan-1');
+  t.truthy(created.id);
+  t.is(created.destination_credential_id, '123');
+});
+
 test('should handle credentials without UUIDs (ie new credentials)', (t) => {
   const data = {
     id: 'my-project',
