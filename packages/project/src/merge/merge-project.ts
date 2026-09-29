@@ -1,5 +1,9 @@
 import { defaultsDeep, isEmpty } from 'lodash-es';
-import { CredentialState, CollectionState } from '@openfn/lexicon';
+import {
+  CredentialState,
+  CollectionState,
+  ChannelState,
+} from '@openfn/lexicon';
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
 import mapUuids from './map-uuids';
@@ -159,6 +163,7 @@ export function merge(
             target.credentials
           ),
           collections: source.collections,
+          channels: mergeChannels(source.channels, target.channels),
         }
       : {
           workflows: finalWorkflows,
@@ -180,7 +185,7 @@ export function merge(
             target.credentials
           ),
           collections: mergeCollections(source.collections, target.collections),
-          channels: source.channels ?? target.channels,
+          channels: mergeChannels(source.channels, target.channels),
         };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
@@ -196,6 +201,19 @@ export function mergeCollections(
     name,
     uuid: targetByName.get(name)?.uuid,
   }));
+}
+
+// Source channels win, but keep the target's id on a name match.
+// If the source has no channels at all (no channels.yaml), keep the target's
+export function mergeChannels(
+  source: ChannelState[] | undefined,
+  target: ChannelState[] | undefined
+): ChannelState[] | undefined {
+  if (!source) {
+    return target;
+  }
+  const targetByName = new Map((target ?? []).map((c) => [c.name, c]));
+  return source.map((c) => ({ ...c, id: targetByName.get(c.name)?.id }));
 }
 
 export const replaceCredentials = (
