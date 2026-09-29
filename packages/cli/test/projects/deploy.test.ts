@@ -17,6 +17,8 @@ import {
   hasRemoteDiverged,
   collectionsChanged,
   deletedCollections,
+  channelsChanged,
+  deletedChannels,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
 import {
@@ -1116,4 +1118,58 @@ test('deletedCollections: nothing to delete when every remote name survives', (t
   } as unknown as Project;
 
   t.deepEqual(deletedCollections(merged, remote), []);
+});
+
+const channel = {
+  name: 'my-channel',
+  destination_url: 'https://example.com',
+  enabled: true,
+};
+
+test('channelsChanged: false when there is no local channels.yaml', (t) => {
+  const local = { channels: undefined } as unknown as Project;
+  const remote = {
+    channels: [{ ...channel, id: 'chan-1' }],
+  } as unknown as Project;
+
+  t.false(channelsChanged(local, remote));
+});
+
+test('channelsChanged: true when a channel is edited locally', (t) => {
+  const local = {
+    channels: [{ ...channel, enabled: false }],
+  } as unknown as Project;
+  const remote = {
+    channels: [{ ...channel, id: 'chan-1' }],
+  } as unknown as Project;
+
+  t.true(channelsChanged(local, remote));
+});
+
+test('channelsChanged: false when a credential name matches the remote uuid', (t) => {
+  const local = {
+    channels: [{ ...channel, destination_credential_id: 'me@openfn.org|cred' }],
+  } as unknown as Project;
+  const remote = {
+    credentials: [{ uuid: 'cred-uuid', name: 'cred', owner: 'me@openfn.org' }],
+    channels: [
+      { ...channel, id: 'chan-1', destination_credential_id: 'cred-uuid' },
+    ],
+  } as unknown as Project;
+
+  t.false(channelsChanged(local, remote));
+});
+
+test('deletedChannels: flags a remote channel missing from the merged project', (t) => {
+  const merged = { channels: [channel] } as unknown as Project;
+  const remote = {
+    channels: [
+      { ...channel, id: 'chan-1' },
+      { ...channel, id: 'chan-2', name: 'remove-me' },
+    ],
+  } as unknown as Project;
+
+  t.deepEqual(deletedChannels(merged, remote), [
+    { ...channel, id: 'chan-2', name: 'remove-me', delete: true },
+  ]);
 });

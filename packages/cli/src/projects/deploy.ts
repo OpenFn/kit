@@ -1,9 +1,11 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  toChannelsFile,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
+import { isEqual } from 'lodash-es';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -171,6 +173,27 @@ export const deletedCollections = (
     .map((c) => ({ id: c.uuid as string, name: c.name, delete: true }));
 };
 
+// A missing channels.yaml (local.channels undefined) means channels aren't
+// managed locally, so there's nothing to change
+export const channelsChanged = (local: Project, remote: Project) =>
+  !!local.channels &&
+  !isEqual(
+    toChannelsFile(local.channels, local.credentials),
+    toChannelsFile(remote.channels, remote.credentials)
+  );
+
+// Channels dropped from the merged project (ie, removed from
+// channels.yaml) need an explicit delete entry in the deploy payload
+export const deletedChannels = (merged: Project, remote: Project) => {
+  if (!merged.channels) {
+    return [];
+  }
+  const keptNames = new Set(merged.channels.map((c) => c.name));
+  return (remote.channels ?? [])
+    .filter((c) => !keptNames.has(c.name) && c.id)
+    .map((c) => ({ ...c, id: c.id as string, delete: true }));
+};
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -247,7 +270,8 @@ const syncProjects = async (
     ? remoteProject.diff(localProject, mergeCandidates)
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
-  if (!workflowDiffs.length && !didCollectionsChange) {
+  const didChannelsChange = channelsChanged(localProject, remoteProject);
+  if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
     logger.success('Nothing to deploy');
     return null;
   }
@@ -513,6 +537,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const deleted = deletedCollections(merged, remoteProject);
     if (deleted.length) {
       state.collections = (state.collections ?? []).concat(deleted);
+    }
+    const deletedChans = deletedChannels(merged, remoteProject);
+    if (deletedChans.length) {
+      state.channels = (state.channels ?? []).concat(deletedChans);
     }
   }
 
