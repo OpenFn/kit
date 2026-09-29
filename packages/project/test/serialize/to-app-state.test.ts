@@ -436,6 +436,44 @@ test('should ignore workflow start keys', (t) => {
   t.falsy(state.workflows['wf'].start);
 });
 
+test('should map cron_cursor_job_id back to the step uuid', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'cron',
+            type: 'cron',
+            cron_expression: '0 0 * * *',
+            cron_cursor_job_id: 'step',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            openfn: {
+              uuid: '66add020-e6eb-4eec-836b-20008afca816',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as any;
+  t.is(
+    state.workflows['wf'].triggers.cron.cron_cursor_job_id,
+    '66add020-e6eb-4eec-836b-20008afca816'
+  );
+});
+
 test('should handle edge labels', (t) => {
   const data = {
     id: 'my-project',

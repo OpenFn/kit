@@ -165,6 +165,10 @@ export const mapWorkflow = (
         node = { id: nodeUuid, delete: true } as Provisioner.Trigger;
       } else {
         const { type, id, next, openfn, ...rest } = s;
+        // map cron_cursor_job_id back to a uuid
+        if (rest.cron_cursor_job_id && lookup[rest.cron_cursor_job_id]) {
+          rest.cron_cursor_job_id = lookup[rest.cron_cursor_job_id];
+        }
         node = {
           ...rest,
           type: s.type ?? 'webhook', // this is mostly for tests
