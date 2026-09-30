@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import Project, { Workspace } from '@openfn/project';
+import type l from '@openfn/lexicon';
 import path from 'path';
 import fs from 'fs';
 import { rimraf } from 'rimraf';
@@ -24,12 +25,14 @@ export type CheckoutOptions = Pick<
   | 'force'
   | 'createCredentials'
   | 'branch'
+  | 'track'
 >;
 
 const options = [
   o.log,
   po.workspace,
   po.branch,
+  po.track,
   po.clean,
   o.force,
   po.creds,
@@ -119,6 +122,26 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
   // Check whether the checked out project has diverged from its forked from versions
 
+  // On a git branch, the checkout file binds the branch to a project.
+  // Checking out some other project is an ad-hoc checkout: expand its files,
+  // but keep the branch tracking the original project
+  const tracked = workspace.activeProject;
+  const isAdHoc = Boolean(
+    options.branch &&
+      !options.track &&
+      tracked &&
+      !isSameProject(tracked, switchProject)
+  );
+  if (isAdHoc) {
+    const trackedName = tracked!.alias ?? tracked!.id ?? tracked!.uuid;
+    logger?.warn(
+      `Branch ${options.branch} tracks project ${trackedName}. Expanding files from ${switchProject.alias} without changing tracking: deploy will still target ${trackedName}`
+    );
+    logger?.warn(
+      `Pass --track to make ${options.branch} track ${switchProject.alias} instead`
+    );
+  }
+
   // delete workflow dir before expanding project
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
@@ -139,6 +162,14 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const files: any = switchProject.serialize('fs', {
     branch: options.branch,
   });
+  if (isAdHoc) {
+    // Don't touch the workspace or checkout metadata
+    for (const { path: configPath } of switchProject.generateConfig(
+      options.branch
+    )) {
+      delete files[configPath];
+    }
+  }
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {
@@ -154,6 +185,13 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
 
   logger?.success(`Expanded project to ${workspacePath}`);
+};
+
+const isSameProject = (tracked: l.ProjectMeta, project: Project) => {
+  if (tracked.uuid && project.openfn?.uuid) {
+    return tracked.uuid === project.openfn.uuid;
+  }
+  return tracked.id === project.id;
 };
 
 // This function will tell us if the active/checked out project

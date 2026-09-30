@@ -22,6 +22,7 @@ export type Opts = BaseOpts & {
   clean?: boolean;
   createCredentials?: boolean;
   branch?: string | false;
+  track?: boolean;
 };
 
 // project specific options
@@ -47,6 +48,15 @@ export const clean: CLIOption = {
     description: 'Clean the working dir before checking out the new project',
     default: false,
     boolean: true,
+  },
+};
+
+export const track: CLIOption = {
+  name: 'track',
+  yargs: {
+    boolean: true,
+    description:
+      'When on a git branch, make this branch track the checked out project (by default, checking out a different project only expands its files)',
   },
 };
 
