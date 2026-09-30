@@ -268,6 +268,22 @@ openfn deploy
 - `-c, --config, --config-path` - path to the config file (defaults to `.config.json`)
 - `--no-confirm` - skip the confirmation prompt
 
+## Checking a Workflow's Version Hash
+
+`openfn project version` prints the version hash used to detect drift between a local and remote workflow (see `@openfn/project`'s `src/util/version.ts`). It accepts three kinds of input:
+
+- No arguments: prints the hash for every workflow in the checked-out project (or pass a workflow id/name to hash just one).
+- A path to a standalone workflow yaml/json file.
+- Workflow content piped in via stdin, e.g. from your clipboard.
+
+```bash
+openfn project version my-workflow.yaml
+xclip -selection clipboard -o | openfn project version   # Linux
+pbpaste | openfn project version                          # macOS
+```
+
+This is particularly useful for regenerating hardcoded version-hash fixtures in tests (in this package and in `@openfn/project`) whenever the hashing logic or a workflow's spec/state shape changes - run the command against the fixture's workflow content instead of hand-computing the new hash.
+
 ## Logging
 
 The CLI is actually a collection of packages, each of which will log with slightly different rules. To help understand where logs are coming from, each package prints a namespace or prefix at the start of its log.

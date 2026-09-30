@@ -156,7 +156,7 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   });
 });
 
-test('extractWorkflow: include trigger enabled state (true)', (t) => {
+test('extractWorkflow: excludes trigger enabled state (true)', (t) => {
   const project = new Project(
     {
       workflows: [
@@ -167,7 +167,9 @@ test('extractWorkflow: include trigger enabled state (true)', (t) => {
             {
               id: 'webhook',
               type: 'webhook',
-              enabled: true,
+              openfn: {
+                enabled: true,
+              },
             },
           ],
           openfn: {
@@ -188,11 +190,10 @@ test('extractWorkflow: include trigger enabled state (true)', (t) => {
   t.deepEqual(JSON.parse(content).steps[0], {
     id: 'webhook',
     type: 'webhook',
-    enabled: true,
   });
 });
 
-test('extractWorkflow: include trigger enabled state (false)', (t) => {
+test('extractWorkflow: excludes trigger enabled state (false)', (t) => {
   const project = new Project(
     {
       workflows: [
@@ -203,7 +204,9 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
             {
               id: 'webhook',
               type: 'webhook',
-              enabled: false,
+              openfn: {
+                enabled: false,
+              },
             },
           ],
           openfn: {
@@ -224,7 +227,6 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
   t.deepEqual(JSON.parse(content).steps[0], {
     id: 'webhook',
     type: 'webhook',
-    enabled: false,
   });
 });
 

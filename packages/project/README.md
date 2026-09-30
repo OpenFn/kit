@@ -93,3 +93,17 @@ a-b # can comment here to
 ```
 
 Use special names `webhook` and `cron` to create trigger nodes (when converting into app state, the difference between a step and a trigger becomes important).
+
+## Version Hashes
+
+`Workflow.getVersionHash()` (and the underlying `generateHash` in `src/util/version.ts`) derive a content hash for a workflow, used to detect drift between a local and remote copy. A number of tests hardcode expected hash strings as fixtures (e.g. `test/util/version-workflow.test.ts`, and the `history`/hash values baked into fixtures under `packages/cli/test/projects/fixtures.ts`).
+
+If you change what the hash covers - add or remove a hashed field, move a field between the spec and state representations, change `triggerKeys`/`stepKeys`/`edgeKeys` in `version.ts` - every hardcoded hash in these fixtures will need regenerating. Don't hand-compute them: use `openfn project version` (see the CLI README), which accepts a standalone workflow yaml/json file or workflow content piped via stdin, and prints the same hash this package would compute:
+
+```bash
+openfn project version path/to/workflow.yaml
+xclip -selection clipboard -o | openfn project version   # Linux
+pbpaste | openfn project version                          # macOS
+```
+
+Paste the printed hash back into the test or fixture.

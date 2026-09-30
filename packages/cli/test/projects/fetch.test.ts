@@ -433,8 +433,8 @@ test.serial(
             {
               id: 'webhook',
               type: 'webhook',
-              enabled: true,
               openfn: {
+                enabled: true,
                 uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
               },
               next: {
@@ -456,7 +456,7 @@ test.serial(
             lock_version: 1,
           },
           id: 'my-workflow',
-          history: ['cli:7126e08da251'],
+          history: ['cli:57c1e804512a'],
         },
       ],
     };
