@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import Project, { Workspace } from '@openfn/project';
+import type l from '@openfn/lexicon';
 import path from 'path';
 import fs from 'fs';
 import { rimraf } from 'rimraf';
@@ -23,9 +24,19 @@ export type CheckoutOptions = Pick<
   | 'clean'
   | 'force'
   | 'createCredentials'
+  | 'branch'
+  | 'track'
 >;
 
-const options = [o.log, po.workspace, po.clean, o.force, po.creds];
+const options = [
+  o.log,
+  po.workspace,
+  po.branch,
+  po.track,
+  po.clean,
+  o.force,
+  po.creds,
+];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -43,7 +54,9 @@ export default command;
 export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const projectIdentifier = options.project!;
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath, logger);
+  const workspace = new Workspace(workspacePath, logger, true, {
+    branch: options.branch,
+  });
 
   // get the config
   // TODO: try to retain the endpoint for the projects
@@ -109,18 +122,54 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
   // Check whether the checked out project has diverged from its forked from versions
 
+  // On a git branch, the checkout file binds the branch to a project.
+  // Checking out some other project is an ad-hoc checkout: expand its files,
+  // but keep the branch tracking the original project
+  const tracked = workspace.activeProject;
+  const isAdHoc = Boolean(
+    options.branch &&
+      !options.track &&
+      tracked &&
+      !isSameProject(tracked, switchProject)
+  );
+  if (isAdHoc) {
+    const trackedName = tracked!.alias ?? tracked!.id ?? tracked!.uuid;
+    logger?.warn(
+      `Branch ${options.branch} tracks project ${trackedName}. Expanding files from ${switchProject.alias} without changing tracking: deploy will still target ${trackedName}`
+    );
+    logger?.warn(
+      `Pass --track to make ${options.branch} track ${switchProject.alias} instead`
+    );
+  }
+
   // delete workflow dir before expanding project
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
   } else {
-    await tidyWorkflowDir(localProject, switchProject, false, workspacePath);
+    await tidyWorkflowDir(
+      localProject,
+      switchProject,
+      false,
+      workspacePath,
+      options.branch
+    );
   }
 
   // write the forked from map
   updateForkedFrom(switchProject);
 
   // expand project into directory
-  const files: any = switchProject.serialize('fs');
+  const files: any = switchProject.serialize('fs', {
+    branch: options.branch,
+  });
+  if (isAdHoc) {
+    // Don't touch the workspace or checkout metadata
+    for (const { path: configPath } of switchProject.generateConfig(
+      options.branch
+    )) {
+      delete files[configPath];
+    }
+  }
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {
@@ -136,6 +185,13 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
 
   logger?.success(`Expanded project to ${workspacePath}`);
+};
+
+const isSameProject = (tracked: l.ProjectMeta, project: Project) => {
+  if (tracked.uuid && project.openfn?.uuid) {
+    return tracked.uuid === project.openfn.uuid;
+  }
+  return tracked.id === project.id;
 };
 
 // This function will tell us if the active/checked out project

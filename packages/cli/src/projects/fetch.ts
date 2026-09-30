@@ -31,6 +31,7 @@ export type FetchOptions = Pick<
   | 'outputPath'
   | 'project'
   | 'workspace'
+  | 'branch'
 >;
 
 const options = [
@@ -47,6 +48,7 @@ const options = [
   po.outputPath,
   po.env,
   po.workspace,
+  po.branch,
   po.format,
 ];
 
@@ -75,7 +77,9 @@ const fetchV1 = async (options: FetchOptions, logger: Logger) => {
   const workspacePath = options.workspace ?? process.cwd();
   logger.debug('Using workspace at', workspacePath);
 
-  const workspace = new Workspace(workspacePath, logger, false);
+  const workspace = new Workspace(workspacePath, logger, false, {
+    branch: options.branch,
+  });
   // TODO we may need to resolve an alias to a UUID and endpoint
   const localProject = workspace.get(options.project!);
   if (localProject) {
@@ -123,7 +127,9 @@ export const fetchV2 = async (options: FetchOptions, logger: Logger) => {
   const workspacePath = options.workspace ?? process.cwd();
   logger.debug('Using workspace at', workspacePath);
 
-  const workspace = new Workspace(workspacePath, logger, false);
+  const workspace = new Workspace(workspacePath, logger, false, {
+    branch: options.branch,
+  });
   const { outputPath } = options;
 
   const remoteProject = await fetchRemoteProject(workspace, options, logger);

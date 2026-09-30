@@ -40,7 +40,10 @@ test.serial('pull a project', async (t) => {
 
   assertLog(t, extractLogs(stdout), /Checked out project locally/i);
 
-  const yaml = await fs.readFile(path.resolve(tmpDir, 'openfn.yaml'), 'utf8');
+  const yaml = await fs.readFile(
+    path.resolve(tmpDir, '.openfn/checkout.yaml'),
+    'utf8'
+  );
   t.regex(yaml, /uuid\: a/);
   t.regex(yaml, /id\: test-project/);
 });
@@ -56,7 +59,10 @@ test.serial('pull, change and re-deploy', async (t) => {
   t.falsy(pullResult.stderr);
   assertLog(t, extractLogs(pullResult.stdout), /Checked out project locally/i);
 
-  const yaml = await fs.readFile(path.resolve(tmpDir, 'openfn.yaml'), 'utf8');
+  const yaml = await fs.readFile(
+    path.resolve(tmpDir, '.openfn/checkout.yaml'),
+    'utf8'
+  );
   t.regex(yaml, /id\: test-project/);
 
   // modify expression to trigger a change
@@ -540,10 +546,10 @@ test.serial(
 
     const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
     const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
-    t.falsy(before.project.collections);
+    t.falsy(before.collections);
 
     // add a collection by hand - no workflow files are touched
-    before.project.collections = ['my-collection'];
+    before.collections = ['my-collection'];
     await fs.writeFile(openfnPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(
@@ -646,10 +652,10 @@ test.serial(
 
     const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
     const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
-    t.deepEqual(before.project.collections, ['my-collection']);
+    t.deepEqual(before.collections, ['my-collection']);
 
     // remove the collection by hand - no workflow files are touched
-    before.project.collections = [];
+    before.collections = [];
     await fs.writeFile(openfnPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(

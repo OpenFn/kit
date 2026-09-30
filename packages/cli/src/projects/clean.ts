@@ -12,10 +12,10 @@ import type { Opts } from './options';
 
 export type CleanOptions = Pick<
   Opts,
-  'command' | 'workspace' | 'log' | 'confirm' | 'force'
+  'command' | 'workspace' | 'log' | 'confirm' | 'force' | 'branch'
 >;
 
-const options = [o.log, o.confirm, o.force, po.workspace];
+const options = [o.log, o.confirm, o.force, po.workspace, po.branch];
 
 const command: yargs.CommandModule = {
   command: 'clean',
@@ -29,7 +29,9 @@ export default command;
 
 export const handler = async (options: CleanOptions, logger: Logger) => {
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath, logger);
+  const workspace = new Workspace(workspacePath, logger, true, {
+    branch: options.branch,
+  });
 
   const skip = options.force || options.confirm === false;
   const doIt = await logger.confirm(

@@ -215,14 +215,15 @@ export async function tidyWorkflowDir(
   currentProject: Project | undefined,
   incomingProject: Project | undefined,
   dryRun = false,
-  dirPath = '.'
+  dirPath = '.',
+  branch?: string | false
 ) {
   if (!currentProject || !incomingProject) {
     return [];
   }
 
-  const currentFiles = currentProject.serialize('fs');
-  const newFiles = incomingProject.serialize('fs');
+  const currentFiles = currentProject.serialize('fs', { branch });
+  const newFiles = incomingProject.serialize('fs', { branch });
 
   const toRemove: string[] = [];
   // any files not in the new list should be removed

@@ -694,14 +694,17 @@ test('remove a step from an existing workflow', (t) => {
   const main = createProject(wf_a, 'a');
   const staging = createProject(wf_b, 'b');
 
+  t.is(main.workflows[0].steps.length, 1);
+  t.is(staging.workflows[0].steps.length, 0);
+
   // merge staging into main
   const result: any = merge(staging, main);
 
   // The resulting project should have no steps
-  t.is(result.workflows[0].steps.length, 0);
+  t.true(result.workflows[0].isRemoved('x'));
 });
 
-test.only('removing a step also deletes its outgoing edges when serialized', (t) => {
+test('removing a step also deletes its outgoing edges when serialized', (t) => {
   // create a base workflow with an edge x -> y
   const wf = {
     name: 'wf',

@@ -25,6 +25,7 @@ export type PullOptions = Pick<
   | 'snapshots'
   | 'force'
   | 'createCredentials'
+  | 'branch'
 >;
 
 const options = [
@@ -33,6 +34,7 @@ const options = [
   o2.alias,
   o2.env,
   o2.workspace,
+  o2.branch,
   o2.creds,
 
   // general options
@@ -79,7 +81,9 @@ const ensureProjectId = (options: any, logger?: Logger) => {
     logger?.debug(
       'No project ID specified: looking up checked out project in Workspace'
     );
-    const ws = new Workspace(options.workspace);
+    const ws = new Workspace(options.workspace, undefined, true, {
+      branch: options.branch,
+    });
     if (ws.activeProject) {
       options.project = ws.activeProject.uuid;
       logger?.info(
