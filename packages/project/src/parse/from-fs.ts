@@ -40,14 +40,13 @@ export const parseProject = async (options: FromFsConfig) => {
     loadCheckoutFile(root, options.branch, context.project) ?? {};
 
   const proj: any = {
-    id: options.name ? slugify(options.name) : context.project?.id,
-    name: options.name ? slugify(options.name) : context.project?.name,
-    openfn: omit(context.project, ['id', 'forked_from', 'collections']),
+    id: options.name ? slugify(options.name) : checkout.id,
+    name: options.name ? slugify(options.name) : checkout.name,
+    openfn: omit(checkout, ['id', 'forked_from', 'collections']),
 
-    // TOOD where do collections live now?
     // openfn.yaml only ever holds bare collection names - no uuids, those
     // belong to the server
-    collections: context.project.collections?.map((name: string) => ({
+    collections: context.collections?.map((name: string) => ({
       name,
     })),
     config: config,

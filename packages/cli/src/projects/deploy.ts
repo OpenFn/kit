@@ -331,12 +331,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let filePath: string | undefined;
   let targetIdentifier: string | undefined;
 
-  // TODO this is the hard way to load the local alias
-  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-  let ws = new Workspace(options.workspace || '.', undefined, true, {
-    branch: options.branch,
-  });
-
   if (options.project && options.target) {
     // two positionals: `deploy <file> <target>` - the first is always a file
     filePath = options.project;
@@ -353,6 +347,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   // The local project that we want to actually deploy
   let localProject: Project;
+  let ws: Workspace | undefined;
   let alias = options.alias;
 
   if (filePath) {
@@ -384,7 +379,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
     logger.debug('Reading checked-out project from workspace');
     // TODO this is the hard way to load the local alias
     // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-    ws = new Workspace(options.workspace || '.');
+    ws = new Workspace(options.workspace || '.', undefined, true, {
+      branch: options.branch,
+    });
 
     const active = ws.getTrackedProject();
 
@@ -417,7 +414,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       localProject.alias = alias ?? null;
     }
   } else {
-    ws ??= new Workspace(options.workspace || '.');
+    ws ??= new Workspace(options.workspace || '.', undefined, true, {
+      branch: options.branch,
+    });
     tracker = ws.get(targetIdentifier ?? localProject.uuid!);
 
     // A project loaded from a file already knows which remote it belongs
@@ -597,8 +596,14 @@ export async function handler(options: DeployOptions, logger: Logger) {
     );
 
     updateForkedFrom(finalProject);
+    // Write the updated openfn.yaml and checkout file
+    // TODO: allow us to suppress writing this stuff
+    // (useful if posting from spec)
     for (const configData of finalProject.generateConfig(options.branch)) {
-      const configPath = path.resolve(options.workspace!, configData.path);
+      const configPath = path.resolve(
+        options.workspace ?? process.cwd(),
+        configData.path
+      );
       await mkdir(path.dirname(configPath), { recursive: true });
       await writeFile(configPath, configData.content);
     }

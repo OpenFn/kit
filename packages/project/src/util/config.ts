@@ -63,12 +63,6 @@ export const extractCheckout = (
     project.forked_from = source.cli.forked_from;
   }
 
-  if (source.collections?.length) {
-    // openfn.yaml only ever carries collection names - no ids/uuids, those
-    // belong to the server.
-    project.collections = source.collections.map((c) => c.name);
-  }
-
   return {
     path: getCheckoutPath(branch),
     content: jsonToYaml(sortKeys(project)),
@@ -98,9 +92,15 @@ export const loadCheckoutFile = (
 
 // Generate a workspace config (openfn.yaml) file for a project
 export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
-  const workspace = {
+  const workspace: any = {
     ...source.config,
   };
+
+  if (source.collections?.length) {
+    // openfn.yaml only ever carries collection names - no ids/uuids, those
+    // belong to the server
+    workspace.collections = source.collections.map((c) => c.name);
+  }
 
   format = format ?? workspace.formats.openfn;
   if (format === 'yaml') {
@@ -119,7 +119,7 @@ export const loadWorkspaceFile = (
   contents: string | l.WorkspaceFile | l.WorkspaceFileLegacy,
   format: 'yaml' | 'json' = 'yaml'
 ) => {
-  let project, workspace;
+  let project, workspace, collections: string[] | undefined;
   let json: any = contents;
   if (format === 'yaml') {
     json = yamlToJson(contents as any) ?? {};
@@ -142,8 +142,12 @@ export const loadWorkspaceFile = (
       dirs,
       project: _ /* ignore!*/,
       name,
+      collections: flatCollections,
       ...rest
     } = json;
+
+    // Collections live at the top level, but may be in a legacy project block
+    collections = flatCollections ?? project.collections;
 
     workspace = pickBy(
       {
@@ -156,9 +160,10 @@ export const loadWorkspaceFile = (
   } else {
     project = json.project ?? {};
     workspace = json.workspace ?? {};
+    collections = project.collections;
   }
 
-  return { project, workspace };
+  return { project, workspace, collections };
 };
 
 export const findWorkspaceFile = (dir: string = '.') => {
