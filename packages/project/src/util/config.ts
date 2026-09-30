@@ -5,6 +5,22 @@ import { pickBy, isNil } from 'lodash-es';
 import { yamlToJson, jsonToYaml } from './yaml';
 import Project from '../Project';
 
+// Recursively sort object keys so that config files serialize stably
+const sortKeys = (value: any): any => {
+  if (Array.isArray(value)) {
+    return value.map(sortKeys);
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value)
+      .sort()
+      .reduce((obj: any, key) => {
+        obj[key] = sortKeys(value[key]);
+        return obj;
+      }, {});
+  }
+  return value;
+};
+
 // Initialize and default Workspace (and Project) config
 
 export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
@@ -55,7 +71,7 @@ export const extractCheckout = (
 
   return {
     path: getCheckoutPath(branch),
-    content: jsonToYaml(project),
+    content: jsonToYaml(sortKeys(project)),
   };
 };
 
@@ -86,18 +102,16 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
     ...source.config,
   };
 
-  const content = { workspace };
-
   format = format ?? workspace.formats.openfn;
   if (format === 'yaml') {
     return {
       path: 'openfn.yaml',
-      content: jsonToYaml(content),
+      content: jsonToYaml(sortKeys(workspace)),
     };
   }
   return {
     path: 'openfn.json',
-    content: JSON.stringify(content, null, 2),
+    content: JSON.stringify(sortKeys(workspace), null, 2),
   };
 };
 
@@ -113,6 +127,8 @@ export const loadWorkspaceFile = (
     json = JSON.parse(contents);
   }
 
+  // Flat format: top level keys are workspace config (plus a legacy project block)
+  // Nested format: { workspace, project }
   const legacy = !json.workspace && !json.projects;
   if (legacy) {
     project = json.project ?? {};
