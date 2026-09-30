@@ -160,9 +160,9 @@ test('pull a new project', async (t) => {
   t.regex(proj_yaml, /id: patients/);
   t.regex(proj_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
 
-  const openfn_yaml = read('openfn.yaml');
-  t.regex(openfn_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
-  t.regex(openfn_yaml, new RegExp(`endpoint: ${endpoint}`));
+  const checkout_yaml = read('.openfn/checkout.yaml');
+  t.regex(checkout_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
+  t.regex(checkout_yaml, new RegExp(`endpoint: ${endpoint}`));
 
   const job = read('workflows/workflow/job.js');
   t.is(job, 'fn()');
@@ -188,9 +188,9 @@ test('pull a new project with an alias', async (t) => {
   t.regex(proj_yaml, /id: patients/);
   t.regex(proj_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
 
-  const openfn_yaml = read('openfn.yaml');
-  t.regex(openfn_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
-  t.regex(openfn_yaml, new RegExp(`endpoint: ${endpoint}`));
+  const checkout_yaml = read('.openfn/checkout.yaml');
+  t.regex(checkout_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
+  t.regex(checkout_yaml, new RegExp(`endpoint: ${endpoint}`));
 
   const job = read('workflows/workflow/job.js');
   t.is(job, 'fn()');
@@ -231,9 +231,9 @@ test('pull an update to project', async (t) => {
   t.regex(proj_yaml, /fn\(x\)/);
   t.regex(proj_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
 
-  const openfn_yaml = read('openfn.yaml');
-  t.regex(openfn_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
-  t.regex(openfn_yaml, new RegExp(`endpoint: ${endpoint}`));
+  const checkout_yaml = read('.openfn/checkout.yaml');
+  t.regex(checkout_yaml, new RegExp(`uuid: ${project.openfn.uuid}`));
+  t.regex(checkout_yaml, new RegExp(`endpoint: ${endpoint}`));
 
   const job_updated = read('workflows/workflow/job.js');
   t.is(job_updated, 'fn()');

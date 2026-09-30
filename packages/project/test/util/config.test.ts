@@ -1,6 +1,8 @@
 import test from 'ava';
 import {
+  extractCheckout,
   extractConfig,
+  getCheckoutPath,
   findWorkspaceFile,
   loadWorkspaceFile,
 } from '../../src/util/config';
@@ -158,7 +160,7 @@ test('find openfn.json', (t) => {
   t.deepEqual(result.content, { x: 1 });
 });
 
-test('generate openfn.yaml', (t) => {
+test('generate openfn.yaml (workspace config only)', (t) => {
   const proj = new Project(
     {
       id: 'my-project',
@@ -177,28 +179,65 @@ test('generate openfn.yaml', (t) => {
     }
   );
   const result = extractConfig(proj);
-  t.is(result.path, 'openfn.yaml'),
-    t.deepEqual(
-      result.content,
-      `project:
-  uuid: 1234
-  id: my-project
-  name: My Project
-  forked_from: abcd
-workspace:
-  credentials: credentials.yaml
-  formats:
-    openfn: yaml
-    project: yaml
-    workflow: yaml
-  dirs:
-    projects: .projects
-    workflows: workflows
+  t.is(result.path, 'openfn.yaml');
+  // keys are sorted alphabetically, and there's no project block
+  t.deepEqual(
+    result.content,
+    `credentials: credentials.yaml
+dirs:
+  projects: .projects
+  workflows: workflows
+formats:
+  openfn: yaml
+  project: yaml
+  workflow: yaml
 `
-    );
+  );
 });
 
-test("exclude forked_from if it's not set", (t) => {
+test('generate openfn.yaml with collection names', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    collections: [{ uuid: 'remote-uuid', name: 'my-collection' }],
+  });
+  const result = extractConfig(proj);
+  t.true(result.content.startsWith('collections:\n  - my-collection\n'));
+});
+
+test('generate checkout file with forked_from', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    name: 'My Project',
+    openfn: {
+      uuid: 1234,
+    },
+    cli: {
+      forked_from: 'abcd',
+    },
+  });
+  const result = extractCheckout(proj);
+  t.is(result.path, '.openfn/checkout.yaml');
+  t.deepEqual(
+    result.content,
+    `forked_from: abcd
+id: my-project
+name: My Project
+uuid: 1234
+`
+  );
+});
+
+test('getCheckoutPath: default and per-branch', (t) => {
+  t.is(getCheckoutPath(), '.openfn/checkout.yaml');
+  t.is(getCheckoutPath(false), '.openfn/checkout.yaml');
+  t.is(getCheckoutPath('dev'), '.openfn/branches/dev/checkout.yaml');
+  t.is(
+    getCheckoutPath('feature/x'),
+    '.openfn/branches/feature/x/checkout.yaml'
+  );
+});
+
+test("checkout file excludes forked_from if it's not set", (t) => {
   const proj = new Project(
     {
       id: 'my-project',
@@ -214,25 +253,15 @@ test("exclude forked_from if it's not set", (t) => {
       },
     }
   );
-  const result = extractConfig(proj);
-  t.is(result.path, 'openfn.yaml'),
-    t.deepEqual(
-      result.content,
-      `project:
-  uuid: 1234
-  id: my-project
-  name: My Project
-workspace:
-  credentials: credentials.yaml
-  formats:
-    openfn: yaml
-    project: yaml
-    workflow: yaml
-  dirs:
-    projects: .projects
-    workflows: workflows
+  const result = extractCheckout(proj, 'dev');
+  t.is(result.path, '.openfn/branches/dev/checkout.yaml');
+  t.deepEqual(
+    result.content,
+    `id: my-project
+name: My Project
+uuid: 1234
 `
-    );
+  );
 });
 
 test.todo('generate openfn.json');
@@ -242,9 +271,8 @@ test('include project name', (t) => {
     id: 'my-project',
     name: 'My Project',
   });
-  const result = extractConfig(proj, 'json');
-  const json = JSON.parse(result.content);
-  t.is(json.project.name, 'My Project');
+  const result = extractCheckout(proj);
+  t.true(result.content.includes('name: My Project'));
 });
 
 test.todo('include parent project name');

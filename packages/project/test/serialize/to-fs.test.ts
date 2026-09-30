@@ -1,6 +1,7 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
 import toFs, { extractWorkflow } from '../../src/serialize/to-fs';
+import { yamlToJson } from '../../src/util/yaml';
 
 const step = {
   id: 'step',
@@ -305,6 +306,7 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   // Ensure that all the right files have been created
   t.deepEqual(Object.keys(files), [
     'openfn.json',
+    '.openfn/checkout.yaml',
     'workflows/my-workflow/my-workflow.json',
     'workflows/my-workflow/step.js',
   ]);
@@ -313,15 +315,15 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   // (this should be validated in more detail by each step)
   const config = JSON.parse(files['openfn.json']);
   t.deepEqual(config, {
-    workspace: {
-      credentials: 'credentials.yaml',
-      formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
-      dirs: { projects: '.projects', workflows: 'workflows' },
-    },
-    project: {
-      id: 'my-project',
-      name: 'My Project',
-    },
+    credentials: 'credentials.yaml',
+    dirs: { projects: '.projects', workflows: 'workflows' },
+    formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+  });
+
+  const checkout = yamlToJson(files['.openfn/checkout.yaml']);
+  t.deepEqual(checkout, {
+    id: 'my-project',
+    name: 'My Project',
   });
 
   const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
@@ -358,6 +360,7 @@ test('toFs: extract a project with forked_from meta', (t) => {
   // Ensure that all the right files have been created
   t.deepEqual(Object.keys(files), [
     'openfn.json',
+    '.openfn/checkout.yaml',
     'workflows/my-workflow/my-workflow.json',
     'workflows/my-workflow/step.js',
   ]);
@@ -366,16 +369,16 @@ test('toFs: extract a project with forked_from meta', (t) => {
   // (this should be validated in more detail by each step)
   const config = JSON.parse(files['openfn.json']);
   t.deepEqual(config, {
-    workspace: {
-      credentials: 'credentials.yaml',
-      formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
-      dirs: { projects: '.projects', workflows: 'workflows' },
-    },
-    project: {
-      id: 'my-project',
-      name: 'My Project',
-      forked_from: 'abcd',
-    },
+    credentials: 'credentials.yaml',
+    dirs: { projects: '.projects', workflows: 'workflows' },
+    formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+  });
+
+  const checkout = yamlToJson(files['.openfn/checkout.yaml']);
+  t.deepEqual(checkout, {
+    id: 'my-project',
+    name: 'My Project',
+    forked_from: 'abcd',
   });
 
   const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
@@ -408,10 +411,7 @@ test('toFs: writes collection names into openfn.json (freshly authored, no uuid 
   const files = toFs(project);
 
   const config = JSON.parse(files['openfn.json']);
-  t.deepEqual(config.project.collections, [
-    'my-collection',
-    'another-collection',
-  ]);
+  t.deepEqual(config.collections, ['my-collection', 'another-collection']);
 });
 
 test('toFs: strips uuids from fetched collections when writing to openfn.json', (t) => {
@@ -442,10 +442,7 @@ test('toFs: strips uuids from fetched collections when writing to openfn.json', 
   const files = toFs(project);
 
   const config = JSON.parse(files['openfn.json']);
-  t.deepEqual(config.project.collections, [
-    'my-collection',
-    'another-collection',
-  ]);
+  t.deepEqual(config.collections, ['my-collection', 'another-collection']);
 });
 
 test('toFs: omits collections key when there are none', (t) => {
@@ -470,7 +467,7 @@ test('toFs: omits collections key when there are none', (t) => {
   const files = toFs(project);
 
   const config = JSON.parse(files['openfn.json']);
-  t.falsy(config.project.collections);
+  t.falsy(config.collections);
 });
 
 // TODO we need many more tests on this, with options

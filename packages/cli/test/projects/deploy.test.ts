@@ -567,7 +567,7 @@ test.serial(
     // user hand-edits openfn.yaml: keep one, drop one, add a new one -
     // no workflow files are touched
     const openfn: any = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
-    openfn.project.collections = ['keep-me', 'new-collection'];
+    openfn.collections = ['keep-me', 'new-collection'];
     await writeFile('/ws/openfn.yaml', jsonToYaml(openfn));
 
     await deploy(

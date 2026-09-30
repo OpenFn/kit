@@ -233,8 +233,10 @@ test.serial(
       logger
     );
 
-    const openfn = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
-    t.deepEqual(openfn.project.forked_from, {
+    const checkout = yamlToJson(
+      fs.readFileSync('/ws/.openfn/checkout.yaml', 'utf8')
+    );
+    t.deepEqual(checkout.forked_from, {
       'simple-workflow-main': 'a',
       'another-workflow-main': 'b',
     });
@@ -451,19 +453,24 @@ test.serial('respect openfn.yaml settings', async (t) => {
   const yaml = fs.readFileSync('/ws1/openfn.yaml', 'utf8');
   t.is(
     yaml,
-    `project:
-  uuid: <uuid:staging>
-  id: staging
-  name: Staging
-workspace:
-  credentials: credentials.yaml
-  dirs:
-    projects: p
-    workflows: w
-  formats:
-    openfn: yaml
-    project: json
-    workflow: json
+    `credentials: credentials.yaml
+dirs:
+  projects: p
+  workflows: w
+formats:
+  openfn: yaml
+  project: json
+  workflow: json
+`
+  );
+
+  // project metadata is written to the checkout file
+  const checkout = fs.readFileSync('/ws1/.openfn/checkout.yaml', 'utf8');
+  t.is(
+    checkout,
+    `id: staging
+name: Staging
+uuid: <uuid:staging>
 `
   );
 
@@ -756,10 +763,7 @@ test.serial(
 
     const openfn: any = yamlToJson(fs.readFileSync('/ws6/openfn.yaml', 'utf8'));
     // ids should never be written to disk - only bare names
-    t.deepEqual(openfn.project.collections, [
-      'my-collection',
-      'another-collection',
-    ]);
+    t.deepEqual(openfn.collections, ['my-collection', 'another-collection']);
   }
 );
 
@@ -913,8 +917,10 @@ test.serial(
     );
 
     // assert that staging was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'foo');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'foo');
 
     let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// abc');
@@ -931,8 +937,8 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    openfn = yamlToJson(fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8'));
+    t.is(openfn.id, 'bar');
 
     expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// 2');
@@ -960,8 +966,10 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'bar');
 
     let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// 2');
@@ -977,8 +985,8 @@ test.serial(
     );
 
     // assert that staging was checked out ok
-    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'foo');
+    openfn = yamlToJson(fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8'));
+    t.is(openfn.id, 'foo');
 
     expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// abc');
@@ -1005,8 +1013,10 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'bar');
 
     // Now make a change - on checkout, this change will be lost (it is not saved anywhere)
     fs.writeFileSync('/tmp/workflows/a/aaa.js', 'foobar');
