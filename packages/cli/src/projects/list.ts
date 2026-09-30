@@ -9,9 +9,9 @@ import * as po from './options';
 import type { Opts } from './options';
 import abort from '../util/abort';
 
-export type ProjectListOptions = Pick<Opts, 'log' | 'workspace'>;
+export type ProjectListOptions = Pick<Opts, 'log' | 'workspace' | 'branch'>;
 
-const options = [o.log, po.workspace];
+const options = [o.log, po.workspace, po.branch];
 
 const command: yargs.CommandModule = {
   command: 'list [project-path]',
@@ -28,7 +28,9 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
   logger.info(' ', options.workspace);
   logger.break();
 
-  const workspace = new Workspace(options.workspace!);
+  const workspace = new Workspace(options.workspace!, undefined, true, {
+    branch: options.branch,
+  });
 
   if (!workspace.valid) {
     // TODO how can we be more helpful here?

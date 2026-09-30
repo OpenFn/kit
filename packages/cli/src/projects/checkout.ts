@@ -23,9 +23,17 @@ export type CheckoutOptions = Pick<
   | 'clean'
   | 'force'
   | 'createCredentials'
+  | 'branch'
 >;
 
-const options = [o.log, po.workspace, po.clean, o.force, po.creds];
+const options = [
+  o.log,
+  po.workspace,
+  po.branch,
+  po.clean,
+  o.force,
+  po.creds,
+];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -43,7 +51,9 @@ export default command;
 export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const projectIdentifier = options.project!;
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath, logger);
+  const workspace = new Workspace(workspacePath, logger, true, {
+    branch: options.branch,
+  });
 
   // get the config
   // TODO: try to retain the endpoint for the projects
@@ -113,14 +123,22 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
   } else {
-    await tidyWorkflowDir(localProject, switchProject, false, workspacePath);
+    await tidyWorkflowDir(
+      localProject,
+      switchProject,
+      false,
+      workspacePath,
+      options.branch
+    );
   }
 
   // write the forked from map
   updateForkedFrom(switchProject);
 
   // expand project into directory
-  const files: any = switchProject.serialize('fs');
+  const files: any = switchProject.serialize('fs', {
+    branch: options.branch,
+  });
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {

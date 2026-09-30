@@ -12,7 +12,11 @@ import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
-import { buildConfig, extractConfig } from './util/config';
+import {
+  buildConfig,
+  extractCheckout,
+  extractConfig,
+} from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import {
   SandboxMeta,
@@ -301,11 +305,11 @@ export class Project {
   }
 
   /**
-   * Generates the contents of the openfn.yaml file,
-   * plus its file path
+   * Generates the contents of the openfn.yaml and checkout files,
+   * plus their file paths
    */
-  generateConfig() {
-    return extractConfig(this);
+  generateConfig(branch?: string | false | null) {
+    return [extractConfig(this), extractCheckout(this, branch)];
   }
 
   clone() {

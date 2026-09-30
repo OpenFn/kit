@@ -9,6 +9,7 @@ import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
+  loadCheckoutFile,
 } from '../util/config';
 import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
@@ -21,6 +22,8 @@ export type FromFsConfig = {
   logger?: Logger;
   alias?: string | null;
   name?: string;
+  // git branch, used to locate the checkout file
+  branch?: string | false | null;
 };
 
 // Parse a single project from a root folder
@@ -33,11 +36,15 @@ export const parseProject = async (options: FromFsConfig) => {
   const { type, content } = findWorkspaceFile(root);
   const context = loadWorkspaceFile(content, type as any);
   const config = buildConfig(options.config ?? context.workspace);
+  const checkout =
+    loadCheckoutFile(root, options.branch, context.project) ?? {};
 
   const proj: any = {
     id: options.name ? slugify(options.name) : context.project?.id,
     name: options.name ? slugify(options.name) : context.project?.name,
     openfn: omit(context.project, ['id', 'forked_from', 'collections']),
+
+    // TOOD where do collections live now?
     // openfn.yaml only ever holds bare collection names - no uuids, those
     // belong to the server
     collections: context.project.collections?.map((name: string) => ({
@@ -46,7 +53,7 @@ export const parseProject = async (options: FromFsConfig) => {
     config: config,
     workflows: [],
     cli: omitNil({
-      forked_from: context.project.forked_from,
+      forked_from: checkout.forked_from,
     }),
   };
 

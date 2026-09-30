@@ -22,8 +22,19 @@ export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
   },
 });
 
-// Generate a workspace config (openfn.yaml) file for a project
-export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
+// The checkout file tracks which project is expanded into the workflows dir,
+// plus any transient sync state. When on a git branch, each branch gets its
+// own checkout file so that merges don't clobber the target branch's checkout
+export const getCheckoutPath = (branch?: string | false | null) =>
+  branch
+    ? path.join('.openfn', 'branches', branch, 'checkout.yaml')
+    : path.join('.openfn', 'checkout.yaml');
+
+// Generate the checkout file for a project
+export const extractCheckout = (
+  source: Project,
+  branch?: string | false | null
+) => {
   const project: any = {
     ...(source.openfn || {}),
     id: source.id,
@@ -42,11 +53,40 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
     project.collections = source.collections.map((c) => c.name);
   }
 
+  return {
+    path: getCheckoutPath(branch),
+    content: jsonToYaml(project),
+  };
+};
+
+// Load project metadata from the checkout file
+// If there's no checkout file, fall back to the legacy project block
+// in openfn.yaml (which will be migrated on the next write)
+export const loadCheckoutFile = (
+  root: string = '.',
+  branch?: string | false | null,
+  legacyProject?: l.ProjectMeta
+): l.ProjectMeta | undefined => {
+  try {
+    const content = readFileSync(
+      path.resolve(root, getCheckoutPath(branch)),
+      'utf8'
+    );
+    return (yamlToJson(content) as l.ProjectMeta) ?? {};
+  } catch (e) {
+    if (legacyProject && Object.keys(legacyProject).length) {
+      return legacyProject;
+    }
+  }
+};
+
+// Generate a workspace config (openfn.yaml) file for a project
+export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
   const workspace = {
     ...source.config,
   };
 
-  const content = { project, workspace };
+  const content = { workspace };
 
   format = format ?? workspace.formats.openfn;
   if (format === 'yaml') {

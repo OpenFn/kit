@@ -3,20 +3,25 @@ import { omit } from 'lodash-es';
 
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
-import { extractConfig } from '../util/config';
+import { extractCheckout, extractConfig } from '../util/config';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
 type ToFsOptions = {
   // private: stamp schema_version on each workflow file. off by default
   includeSchemaVersion?: boolean;
+  // git branch, used to locate the checkout file
+  branch?: string | false | null;
 };
 
 export default function (project: Project, options: ToFsOptions = {}) {
   const files: Record<string, string> = {};
 
-  const { path, content } = extractConfig(project);
-  files[path] = content;
+  const config = extractConfig(project);
+  files[config.path] = config.content;
+
+  const checkout = extractCheckout(project, options.branch);
+  files[checkout.path] = checkout.content;
 
   for (const wf of project.workflows) {
     const { path, content } = extractWorkflow(project, wf.id, options);

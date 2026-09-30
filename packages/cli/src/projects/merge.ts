@@ -17,13 +17,16 @@ export type MergeOptions = Required<
     'command' | 'project' | 'workspace' | 'removeUnmapped' | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force' | 'outputPath' | 'workflow'> & { base?: string };
+  Pick<Opts, 'log' | 'force' | 'outputPath' | 'workflow' | 'branch'> & {
+    base?: string;
+  };
 
 const options = [
   po.removeUnmapped,
   po.workflowMappings,
   po.workflow,
   po.workspace,
+  po.branch,
   o.log,
   // custom output because we don't want defaults or anything
   {
@@ -60,7 +63,9 @@ export default command;
 
 export const handler = async (options: MergeOptions, logger: Logger) => {
   const workspacePath = options.workspace;
-  const workspace = new Workspace(workspacePath);
+  const workspace = new Workspace(workspacePath, undefined, true, {
+    branch: options.branch,
+  });
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
     return;
@@ -169,6 +174,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   await checkout(
     {
       workspace: workspacePath,
+      branch: options.branch,
       project: options.outputPath ? finalPath : final.id,
       log: options.log,
       // after the merge, we have to force the output to be checked out, ignoring divergence

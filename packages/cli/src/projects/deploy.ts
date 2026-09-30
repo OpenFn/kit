@@ -4,7 +4,7 @@ import Project, {
   versionsEqual,
   Workspace,
 } from '@openfn/project';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import * as o from '../options';
@@ -41,16 +41,15 @@ export type DeployOptions = Pick<
   | 'logJson'
   | 'confirm'
 > & {
-  // CLI positional args, rather than options
-  project?: string;
-  target?: string;
-
+  project?: string; // this is a CLI positional arg, not an option
   alias?: string;
+  branch?: string | false;
   credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
   name?: string;
   new?: boolean;
+  target?: string;
   workflow?: string[];
   workspace?: string;
 };
@@ -59,6 +58,7 @@ const options = [
   // local options
   o2.env,
   o2.workspace,
+  o2.branch,
   o2.dryRun,
   o2.new,
   o2.name,
@@ -331,6 +331,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let filePath: string | undefined;
   let targetIdentifier: string | undefined;
 
+  // TODO this is the hard way to load the local alias
+  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+  let ws = new Workspace(options.workspace || '.', undefined, true, {
+    branch: options.branch,
+  });
+
   if (options.project && options.target) {
     // two positionals: `deploy <file> <target>` - the first is always a file
     filePath = options.project;
@@ -347,7 +353,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   // The local project that we want to actually deploy
   let localProject: Project;
-  let ws: Workspace | undefined;
   let alias = options.alias;
 
   if (filePath) {
@@ -390,6 +395,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     localProject = await Project.from('fs', {
       root: options.workspace || '.',
       alias,
+      branch: options.branch,
       name: options.name,
     });
   }
@@ -591,15 +597,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
     );
 
     updateForkedFrom(finalProject);
-    const configData = finalProject.generateConfig();
-
-    // Write the updated openfn.yaml
-    // TODO: allow us to suppress writing this stuff
-    // (useful if posting from spec)
-    await writeFile(
-      path.resolve(options.workspace ?? process.cwd(), configData.path),
-      configData.content
-    );
+    for (const configData of finalProject.generateConfig(options.branch)) {
+      const configPath = path.resolve(options.workspace!, configData.path);
+      await mkdir(path.dirname(configPath), { recursive: true });
+      await writeFile(configPath, configData.content);
+    }
 
     // TODO if this was marked as new, we probably need to ensure a unique alias here
     const finalOutputPath = getSerializePath(finalProject, options.workspace!);

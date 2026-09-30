@@ -9,11 +9,18 @@ import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
+  loadCheckoutFile,
 } from './util/config';
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
 import matchProject from './util/match-project';
 import { extractAliasFromFilename } from './parse/from-path';
+
+export type WorkspaceOptions = {
+  // The git branch the workspace is on, which determines which checkout file
+  // to use. Pass false or null (or leave unset) to use the default checkout
+  branch?: string | false | null;
+};
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -24,6 +31,8 @@ export class Workspace {
 
   root: string;
 
+  branch?: string | false | null;
+
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
@@ -31,8 +40,14 @@ export class Workspace {
 
   // Set validate to false to suppress warnings if a Workspace doesn't exist
   // This is appropriate if, say, fetching a project for the first time
-  constructor(workspacePath: string, logger?: Logger, validate = true) {
+  constructor(
+    workspacePath: string,
+    logger?: Logger,
+    validate = true,
+    options: WorkspaceOptions = {}
+  ) {
     this.root = workspacePath;
+    this.branch = options.branch;
     this.logger = logger ?? createLogger('Workspace', { level: 'info' });
 
     let context = { workspace: undefined, project: undefined };
@@ -55,7 +70,11 @@ export class Workspace {
     // it's not super reliable
     // Actually would it not be better to find the ACTUAL project and just
     // reference that?
-    this.activeProject = context.project;
+    this.activeProject = loadCheckoutFile(
+      workspacePath,
+      this.branch,
+      context.project
+    );
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
     // dealing with projects
@@ -134,6 +153,7 @@ export class Workspace {
     return await Project.from('fs', {
       root: this.root,
       config: this.config,
+      branch: this.branch,
       // The checked out project can't meaningfully be said to have an alias
       // But we can force one if it makes sense from context
       alias: alias ?? null,
