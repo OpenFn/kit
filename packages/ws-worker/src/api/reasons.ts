@@ -3,6 +3,9 @@ import { Step } from '@openfn/runtime';
 import { ExitReason, ExitReasonStrings } from '@openfn/lexicon/lightning';
 import type { RunState } from '../types';
 
+const hasOwn = (target: object, key: PropertyKey) =>
+  Object.prototype.hasOwnProperty.call(target, key);
+
 // This takes the result state and error from the job
 const calculateJobExitReason = (
   jobId: string,
@@ -18,7 +21,11 @@ const calculateJobExitReason = (
     reason = error.severity ?? 'crash';
     error_message = error.message;
     error_type = error.subtype || error.type || error.name;
-  } else if (state.errors?.[jobId]) {
+  } else if (
+    state.errors &&
+    hasOwn(state.errors, jobId) &&
+    state.errors[jobId]
+  ) {
     reason = 'fail';
     ({ message: error_message, name: error_type } = state.errors[jobId]);
   }
