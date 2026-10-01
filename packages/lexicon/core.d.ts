@@ -1,7 +1,14 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 
-import { Credential, Collection, Job, ProjectSpec, WorkflowSpec } from './portability';
+import {
+  Credential,
+  Collection,
+  Job,
+  Trigger,
+  ProjectSpec,
+  WorkflowSpec,
+} from './portability';
 export {
   Step,
   StepId,
@@ -45,6 +52,9 @@ export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
 }
 
 export interface WorkflowState extends WithState<WorkflowSpec, WorkflowMeta> {
+  // override steps to include per-step state (uuid, trigger enabled, etc)
+  steps: Array<WithMeta<Job> | WithMeta<Trigger>>;
+
   /** holds version history information of a workflow **/
   history?: string[];
 
@@ -194,8 +204,18 @@ export interface WorkflowMeta {
 export interface NodeMeta {
   uuid?: UUID;
 
+  /** only meaningful on a trigger step */
+  enabled?: boolean;
+
   [key: string]: unknown;
 }
+
+/**
+ * Utility to append a .openfn state object to a step or edge
+ */
+export type WithMeta<T> = T & {
+  openfn?: NodeMeta;
+};
 
 /**
  * State is an object passed into a workflow and returned from a workflow

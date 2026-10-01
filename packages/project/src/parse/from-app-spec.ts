@@ -56,8 +56,20 @@ const mapWorkflow = (
   for (const [triggerKey, trigger] of Object.entries(
     workflow.triggers ?? {}
   ) as [string, any][]) {
+    const { enabled, ...rest } = trigger;
+
+    // Handle enabled state
+    if (typeof enabled === 'boolean') {
+      rest.openfn = Object.assign({}, rest.openfn, { enabled });
+    }
     // a trigger's id is its type, matching how v2 specs are written
-    addStep(triggerKey, omitNil({ ...trigger, id: trigger.type }));
+    addStep(
+      triggerKey,
+      omitNil({
+        ...rest,
+        id: trigger.type,
+      })
+    );
   }
 
   for (const [jobKey, job] of Object.entries(workflow.jobs ?? {}) as [

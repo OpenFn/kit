@@ -161,7 +161,6 @@ export const mapWorkflow = (
   Object.values(triggers).forEach((trigger: Provisioner.Trigger) => {
     const {
       type,
-      enabled,
       custom_path,
       cron_expression,
       webhook_reply,
@@ -193,7 +192,6 @@ export const mapWorkflow = (
       omitNil({
         id: type,
         type,
-        enabled,
         custom_path,
         cron_expression,
         cron_cursor_job_id,
