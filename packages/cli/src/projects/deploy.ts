@@ -604,7 +604,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
       }
     );
 
-    if (options.checkout) {
+    if (options.checkout !== false) {
       updateForkedFrom(finalProject);
       const configData = finalProject.generateConfig();
 
