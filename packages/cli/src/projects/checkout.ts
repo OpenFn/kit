@@ -131,6 +131,11 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       logger?.warn('WARNING! No content for file', f);
     }
   }
+  // Remove any resources.yaml left over from the previous project, so its
+  // channels don't get deployed to this one
+  if (!files['resources.yaml']) {
+    await rimraf(path.join(workspacePath, 'resources.yaml'));
+  }
   if (options.createCredentials) {
     createProjectCredentials(workspacePath, switchProject, logger);
   }

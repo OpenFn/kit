@@ -4,6 +4,7 @@ import { omit } from 'lodash-es';
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
 import { extractConfig } from '../util/config';
+import { RESOURCES_FILE, toResourceChannels } from '../util/resources';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
@@ -17,6 +18,14 @@ export default function (project: Project, options: ToFsOptions = {}) {
 
   const { path, content } = extractConfig(project);
   files[path] = content;
+
+  // Only write resources.yaml if the project knows about channels. A missing
+  // file means channels are not managed locally
+  if (project.channels) {
+    files[RESOURCES_FILE] = jsonToYaml({
+      channels: toResourceChannels(project.channels, project.credentials),
+    });
+  }
 
   for (const wf of project.workflows) {
     const { path, content } = extractWorkflow(project, wf.id, options);

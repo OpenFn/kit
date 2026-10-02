@@ -1,9 +1,11 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  toResourceChannels,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
+import { isEqual } from 'lodash-es';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -171,6 +173,15 @@ export const deletedCollections = (
     .map((c) => ({ id: c.uuid as string, name: c.name, delete: true }));
 };
 
+// A missing resources.yaml (local.channels undefined) means channels aren't
+// managed locally, so there's nothing to change
+export const channelsChanged = (local: Project, remote: Project) =>
+  !!local.channels &&
+  !isEqual(
+    toResourceChannels(local.channels, local.credentials),
+    toResourceChannels(remote.channels, remote.credentials)
+  );
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -244,10 +255,11 @@ const syncProjects = async (
 
   // TODO: what if remote diff and the version checked disagree for some reason?
   const workflowDiffs = mergeCandidates.length
-    ? remoteProject.diff(localProject, mergeCandidates)
+    ? remoteProject.diff(localProject, mergeCandidates).workflows
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
-  if (!workflowDiffs.length && !didCollectionsChange) {
+  const didChannelsChange = channelsChanged(localProject, remoteProject);
+  if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
     logger.success('Nothing to deploy');
     return null;
   }
