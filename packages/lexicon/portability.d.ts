@@ -81,8 +81,6 @@ export interface Trigger extends Step {
   /** cron schedule, only meaningful when type is 'cron' */
   cron_expression?: string;
 
-  enabled?: boolean;
-
   webhook_reply?: 'before_start' | 'after_completion';
   webhook_response_config?: {
     error_code?: number;

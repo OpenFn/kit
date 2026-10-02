@@ -4,9 +4,7 @@ import { generateHash, HashOptions } from './util/version';
 
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-export type WithMeta<T> = T & {
-  openfn?: l.NodeMeta;
-};
+export type WithMeta<T> = l.WithMeta<T>;
 
 class Workflow {
   workflow: l.WorkflowState; // this is the raw workflow JSON representation

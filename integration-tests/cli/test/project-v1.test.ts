@@ -147,7 +147,6 @@ start: webhook
 steps:
   - id: webhook
     type: webhook
-    enabled: true
     next:
       transform-data:
         disabled: false

@@ -44,9 +44,7 @@ export const myProject_v1: Provisioner.Project = {
       },
       lock_version: 1,
       deleted_at: null,
-      version_history: [
-        'cli:7126e08da251', // alterstate
-      ],
+      version_history: ['cli:57c1e804512a'],
     },
   },
   updated_at: '2025-04-23T11:15:59Z',
@@ -85,8 +83,8 @@ workflows:
           uuid: 66add020-e6eb-4eec-836b-20008afca816
       - id: webhook
         type: webhook
-        enabled: true
         openfn:
+          enabled: true
           uuid: 4a06289c-15aa-4662-8dc6-f0aaacd8a058
         next:
           transform-data:
@@ -95,7 +93,7 @@ workflows:
             openfn:
               uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
     history:
-      - cli:7126e08da251
+      - cli:57c1e804512a
     openfn:
       uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
       inserted_at: 2025-04-23T11:19:32Z
@@ -122,7 +120,6 @@ workflows:
         configuration: super@openfn.org|http1
       - id: webhook
         type: webhook
-        enabled: true
         next:
           transform-data:
             disabled: false
@@ -245,8 +242,8 @@ workflows:
           uuid: 3d4727b6-4052-4f58-a834-3a03e433ff1d
       - id: trigger-a
         type: webhook
-        enabled: true
         openfn:
+          enabled: true
           uuid: 1b1c1dd5-e8d9-432f-aeaf-4e09397cac98
         next:
           job-a:
@@ -270,8 +267,8 @@ workflows:
           uuid: 37e6e616-3840-4d71-b63c-a736ebc208b7
       - id: trigger-b
         type: webhook
-        enabled: true
         openfn:
+          enabled: true
           uuid: d65ed915-7f39-428b-af57-57ed2ecf507e
         next:
           job-b:
