@@ -253,28 +253,52 @@ test('diff: should detect added channel', (t) => {
   const a = withChannels([channel('one')]);
   const b = withChannels([channel('one'), channel('two')]);
 
-  t.deepEqual(diff(a, b).resources.channels, [{ id: 'two', type: 'added' }]);
+  t.deepEqual(diff(a, b).resources.channels, [
+    { id: 'two', name: 'two', type: 'added' },
+  ]);
 });
 
 test('diff: should detect removed channel', (t) => {
   const a = withChannels([channel('one'), channel('two')]);
   const b = withChannels([channel('one')]);
 
-  t.deepEqual(diff(a, b).resources.channels, [{ id: 'two', type: 'removed' }]);
+  t.deepEqual(diff(a, b).resources.channels, [
+    { id: 'two', name: 'two', type: 'removed' },
+  ]);
 });
 
 test('diff: should detect changed channel', (t) => {
   const a = withChannels([channel('one')]);
   const b = withChannels([channel('one', { enabled: false })]);
 
-  t.deepEqual(diff(a, b).resources.channels, [{ id: 'one', type: 'changed' }]);
+  t.deepEqual(diff(a, b).resources.channels, [
+    {
+      id: 'one',
+      name: 'one',
+      type: 'changed',
+      changes: { enabled: { from: true, to: false } },
+    },
+  ]);
 });
 
 test('diff: should match channels by key so a rename is a change', (t) => {
-  const a = withChannels([channel('one', { key: 'ch' })]);
-  const b = withChannels([channel('renamed', { key: 'ch' })]);
+  const a = withChannels([
+    channel('one', { key: 'ch', destination_url: 'https://x.com' }),
+  ]);
+  const b = withChannels([
+    channel('renamed', { key: 'ch', destination_url: 'https://x.com' }),
+  ]);
 
-  t.deepEqual(diff(a, b).resources.channels, [{ id: 'ch', type: 'changed' }]);
+  t.deepEqual(diff(a, b).resources.channels, [
+    {
+      id: 'ch',
+      name: 'renamed',
+      type: 'changed',
+      changes: {
+        name: { from: 'one', to: 'renamed' },
+      },
+    },
+  ]);
 });
 
 test('diff: should ignore channels if either project does not define them', (t) => {

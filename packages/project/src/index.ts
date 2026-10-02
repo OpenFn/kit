@@ -11,7 +11,7 @@ export { generateWorkflow, generateProject } from './gen/generator';
 export { diff } from './util/project-diff';
 export type {
   WorkflowDiff,
-  ResourceDiff,
+  ChannelDiff,
   ProjectDiff,
   DiffType,
 } from './util/project-diff';

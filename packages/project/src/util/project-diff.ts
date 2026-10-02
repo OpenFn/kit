@@ -9,15 +9,18 @@ export type WorkflowDiff = {
   type: DiffType;
 };
 
-export type ResourceDiff = {
+export type ChannelDiff = {
   id: string;
+  name: string;
   type: DiffType;
+  // for 'changed', each field that differs
+  changes?: Record<string, { from: unknown; to: unknown }>;
 };
 
 export type ProjectDiff = {
   workflows: WorkflowDiff[];
   resources: {
-    channels: ResourceDiff[];
+    channels: ChannelDiff[];
   };
 };
 
@@ -87,25 +90,33 @@ export function diff(
   return { workflows: diffs, resources: { channels: diffChannels(a, b) } };
 }
 
-const diffChannels = (a: Project, b: Project): ResourceDiff[] => {
+const diffChannels = (a: Project, b: Project): ChannelDiff[] => {
   if (!a.channels || !b.channels) {
     return [];
   }
 
   const channelsA = toResourceChannels(a.channels, a.credentials);
   const channelsB = toResourceChannels(b.channels, b.credentials);
-  const diffs: ResourceDiff[] = [];
+  const diffs: ChannelDiff[] = [];
 
   for (const id in channelsA) {
     if (!(id in channelsB)) {
-      diffs.push({ id, type: 'removed' });
+      diffs.push({ id, name: channelsA[id].name, type: 'removed' });
     } else if (!isEqual(channelsA[id], channelsB[id])) {
-      diffs.push({ id, type: 'changed' });
+      const changes: ChannelDiff['changes'] = {};
+      const from: Record<string, unknown> = channelsA[id];
+      const to: Record<string, unknown> = channelsB[id];
+      for (const key of Object.keys({ ...from, ...to })) {
+        if (!isEqual(from[key], to[key])) {
+          changes[key] = { from: from[key], to: to[key] };
+        }
+      }
+      diffs.push({ id, name: channelsB[id].name, type: 'changed', changes });
     }
   }
   for (const id in channelsB) {
     if (!(id in channelsA)) {
-      diffs.push({ id, type: 'added' });
+      diffs.push({ id, name: channelsB[id].name, type: 'added' });
     }
   }
   return diffs;
