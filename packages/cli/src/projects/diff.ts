@@ -1,5 +1,10 @@
 import c from 'chalk';
-import Project, { generateStepDiff, generateEdgeDiff } from '@openfn/project';
+import Project, {
+  generateStepDiff,
+  generateEdgeDiff,
+  toResourceChannels,
+} from '@openfn/project';
+import type { ResourceDiff } from '@openfn/project';
 import type { StepChange, EdgeChange } from '@openfn/project';
 import type { Logger } from '../util/logger';
 
@@ -60,6 +65,40 @@ const printStepDiff = (steps: StepChange[], logger: Logger) => {
   }
 };
 
+const printChannelDiff = (
+  channelDiffs: ResourceDiff[],
+  local: Project,
+  remote: Project,
+  logger: Logger
+) => {
+  const localChannels = toResourceChannels(local.channels, local.credentials);
+  const remoteChannels = toResourceChannels(
+    remote.channels,
+    remote.credentials
+  );
+
+  logger.always('Channels:');
+  for (const { id, type } of channelDiffs) {
+    if (type === 'added') {
+      logger.always(c.green(`  ${localChannels[id].name}: added`));
+    } else if (type === 'removed') {
+      logger.always(c.red(`  ${remoteChannels[id].name}: removed`));
+    } else {
+      const from: Record<string, any> = remoteChannels[id];
+      const to: Record<string, any> = localChannels[id];
+      logger.always(c.yellow(`  ${to.name}: changed`));
+      for (const key of Object.keys({ ...from, ...to })) {
+        if (from[key] !== to[key]) {
+          logger.always(
+            c.yellow(`    - ${key}: "${from[key] ?? ''}" -> "${to[key] ?? ''}"`)
+          );
+        }
+      }
+    }
+  }
+  logger.break();
+};
+
 // TODO need to include collection diffs
 // https://github.com/OpenFn/kit/issues/1524
 export const printRichDiff = (
@@ -68,8 +107,11 @@ export const printRichDiff = (
   locallyChangedWorkflows: string[],
   logger: Logger
 ) => {
-  const { workflows: diffs } = remote.diff(local, locallyChangedWorkflows);
-  if (diffs.length === 0) {
+  const { workflows: diffs, resources } = remote.diff(
+    local,
+    locallyChangedWorkflows
+  );
+  if (diffs.length === 0 && resources.channels.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
   }
@@ -110,6 +152,10 @@ export const printRichDiff = (
       logger.always(c.green(`${label}: added`));
     }
     logger.break();
+  }
+
+  if (resources.channels.length > 0) {
+    printChannelDiff(resources.channels, local, remote, logger);
   }
 
   return diffs;

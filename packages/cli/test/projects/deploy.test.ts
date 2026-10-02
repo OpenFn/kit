@@ -1158,3 +1158,56 @@ test('channelsChanged: false when a credential name matches the remote uuid', (t
 
   t.false(channelsChanged(local, remote));
 });
+
+const diffChannel = (name: string, extra = {}) => ({
+  name,
+  destination_url: `https://example.com/${name}`,
+  enabled: true,
+  ...extra,
+});
+
+test('printRichDiff: should report a channel-only change', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+  const remote = new Project({ name: 'remote', workflows: [], channels: [] });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /following changes to the remote project/));
+  t.truthy(logger._find('always', /Channels:/));
+  t.truthy(logger._find('always', /one: added/));
+});
+
+test('printRichDiff: should report removed channels', (t) => {
+  const local = new Project({ name: 'local', workflows: [], channels: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: removed/));
+});
+
+test('printRichDiff: should list changed channel fields', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    channels: [diffChannel('one', { enabled: false })],
+  });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: changed/));
+  t.truthy(logger._find('always', /enabled: "true" -> "false"/));
+});
