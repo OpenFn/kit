@@ -260,6 +260,28 @@ test('replace mode: source channels win, keeping target ids on a name match', (t
   ]);
 });
 
+test('replace mode: target channels missing from source are flagged as removed', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const removed = {
+    id: 'chan-1',
+    name: 'remove-me',
+    destination_url: 'https://remove.example.com',
+    enabled: true,
+  };
+
+  const target = createProject(wf, 'a', { channels: [removed] });
+  const source = createProject(wf, 'b', { channels: [] });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, []);
+  t.deepEqual(result.removedChannels, [removed]);
+});
+
 test('replace mode: merged collections keep target uuid on a name match', (t) => {
   const wf = {
     steps: [

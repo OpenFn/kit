@@ -74,6 +74,9 @@ export default function (
       };
     });
   }
+  for (const c of project.removedChannels) {
+    (state.channels ??= []).push({ ...c, id: c.id!, delete: true });
+  }
 
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials.map((c) => ({

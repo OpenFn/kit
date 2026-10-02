@@ -311,6 +311,31 @@ test('should mint ids for new channels and resolve credential names', (t) => {
   t.is(created.destination_credential_id, '123');
 });
 
+test('should send removed channels as deletes', (t) => {
+  const project = new Project({ id: 'my-project', channels: [], workflows: [] });
+  project.removedChannels = [
+    {
+      id: 'chan-1',
+      name: 'remove-me',
+      destination_url: 'https://a.example.com',
+      enabled: true,
+    },
+  ];
+
+  const state = toAppState(project, {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  t.deepEqual(state.channels, [
+    {
+      id: 'chan-1',
+      name: 'remove-me',
+      destination_url: 'https://a.example.com',
+      enabled: true,
+      delete: true,
+    },
+  ]);
+});
+
 test('should handle credentials without UUIDs (ie new credentials)', (t) => {
   const data = {
     id: 'my-project',

@@ -18,7 +18,6 @@ import {
   collectionsChanged,
   deletedCollections,
   channelsChanged,
-  deletedChannels,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
 import {
@@ -1158,18 +1157,4 @@ test('channelsChanged: false when a credential name matches the remote uuid', (t
   } as unknown as Project;
 
   t.false(channelsChanged(local, remote));
-});
-
-test('deletedChannels: flags a remote channel missing from the merged project', (t) => {
-  const merged = { channels: [channel] } as unknown as Project;
-  const remote = {
-    channels: [
-      { ...channel, id: 'chan-1' },
-      { ...channel, id: 'chan-2', name: 'remove-me' },
-    ],
-  } as unknown as Project;
-
-  t.deepEqual(deletedChannels(merged, remote), [
-    { ...channel, id: 'chan-2', name: 'remove-me', delete: true },
-  ]);
 });

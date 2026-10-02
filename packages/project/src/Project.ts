@@ -79,6 +79,9 @@ export class Project {
 
   channels?: l.ChannelState[];
 
+  // channels removed locally - to-app-state sends these as delete: true
+  removedChannels: l.ChannelState[] = [];
+
   credentials: Credential[];
 
   sandbox?: SandboxMeta;

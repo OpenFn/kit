@@ -182,18 +182,6 @@ export const channelsChanged = (local: Project, remote: Project) =>
     toChannelsFile(remote.channels, remote.credentials)
   );
 
-// Channels dropped from the merged project (ie, removed from
-// channels.yaml) need an explicit delete entry in the deploy payload
-export const deletedChannels = (merged: Project, remote: Project) => {
-  if (!merged.channels) {
-    return [];
-  }
-  const keptNames = new Set(merged.channels.map((c) => c.name));
-  return (remote.channels ?? [])
-    .filter((c) => !keptNames.has(c.name) && c.id)
-    .map((c) => ({ ...c, id: c.id as string, delete: true }));
-};
-
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -537,10 +525,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const deleted = deletedCollections(merged, remoteProject);
     if (deleted.length) {
       state.collections = (state.collections ?? []).concat(deleted);
-    }
-    const deletedChans = deletedChannels(merged, remoteProject);
-    if (deletedChans.length) {
-      state.channels = (state.channels ?? []).concat(deletedChans);
     }
   }
 

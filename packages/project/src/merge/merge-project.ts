@@ -189,7 +189,16 @@ export function merge(
         };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
-  return new Project(baseMerge(target, source, ['channels'], assigns as any));
+  const merged = new Project(
+    baseMerge(target, source, ['channels'], assigns as any)
+  );
+
+  // target channels with an id that the source dropped have been removed
+  const kept = new Set(source.channels?.map((c) => c.name));
+  merged.removedChannels = source.channels
+    ? (target.channels ?? []).filter((c) => c.id && !kept.has(c.name))
+    : [];
+  return merged;
 }
 
 export function mergeCollections(
