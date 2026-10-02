@@ -9,7 +9,12 @@ export { Workspace, yamlToJson, jsonToYaml };
 export { generateWorkflow, generateProject } from './gen/generator';
 
 export { diff } from './util/project-diff';
-export type { WorkflowDiff, ResourceDiff, ProjectDiff, DiffType } from './util/project-diff';
+export type {
+  WorkflowDiff,
+  ResourceDiff,
+  ProjectDiff,
+  DiffType,
+} from './util/project-diff';
 
 export { generateStepDiff, generateEdgeDiff } from './util/workflow-diff';
 export type {
