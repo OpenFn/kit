@@ -138,7 +138,9 @@ export interface CollectionState extends Collection {
 
 // Like step.configuration, destination_credential_id may hold a credential
 // name (owner|name) rather than a uuid until it's serialized for Lightning
-export type ChannelState = Omit<Channel, 'id'> & { id?: string };
+// `key` is the local id from resources.yaml, used to match channels on merge.
+// It's never sent to Lightning
+export type ChannelState = Omit<Channel, 'id'> & { id?: string; key?: string };
 
 type FileFormats = 'yaml' | 'json';
 

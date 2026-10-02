@@ -12,6 +12,7 @@ import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 import findChangedWorkflows from '../util/find-changed-workflows';
 import getCredentialName from '../util/get-credential-name';
+import { channelKey } from '../util/resources';
 
 export const SANDBOX_MERGE = 'sandbox';
 
@@ -194,9 +195,9 @@ export function merge(
   );
 
   // target channels with an id that the source dropped have been removed
-  const kept = new Set(source.channels?.map((c) => c.name));
+  const kept = new Set(source.channels?.map(channelKey));
   merged.removedChannels = source.channels
-    ? (target.channels ?? []).filter((c) => c.id && !kept.has(c.name))
+    ? (target.channels ?? []).filter((c) => c.id && !kept.has(channelKey(c)))
     : [];
   return merged;
 }
@@ -212,7 +213,8 @@ export function mergeCollections(
   }));
 }
 
-// Source channels win, but keep the target's id on a name match.
+// Source channels win, but keep the target's id on a key match. Matching on the
+// key rather than the name means renaming a channel keeps its id
 // If the source has no channels at all (no resources.yaml), keep the target's
 export function mergeChannels(
   source: ChannelState[] | undefined,
@@ -225,8 +227,11 @@ export function mergeChannels(
   if (!source) {
     return target;
   }
-  const targetByName = new Map((target ?? []).map((c) => [c.name, c]));
-  return source.map((c) => ({ ...c, id: targetByName.get(c.name)?.id }));
+  const targetByKey = new Map((target ?? []).map((c) => [channelKey(c), c]));
+  return source.map((c) => ({
+    ...c,
+    id: targetByKey.get(channelKey(c))?.id,
+  }));
 }
 
 export const replaceCredentials = (

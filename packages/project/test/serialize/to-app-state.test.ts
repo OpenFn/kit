@@ -293,6 +293,7 @@ test('should mint ids for new channels and resolve credential names', (t) => {
         enabled: true,
       },
       {
+        key: 'new',
         name: 'new',
         destination_url: 'https://b.example.com',
         enabled: true,
@@ -309,10 +310,16 @@ test('should mint ids for new channels and resolve credential names', (t) => {
   t.is(existing.id, 'chan-1');
   t.truthy(created.id);
   t.is(created.destination_credential_id, '123');
+  // the local key is never sent to Lightning
+  t.false('key' in created);
 });
 
 test('should send removed channels as deletes', (t) => {
-  const project = new Project({ id: 'my-project', channels: [], workflows: [] });
+  const project = new Project({
+    id: 'my-project',
+    channels: [],
+    workflows: [],
+  });
   project.removedChannels = [
     {
       id: 'chan-1',

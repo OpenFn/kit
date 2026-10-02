@@ -59,7 +59,8 @@ export default function (
     })) ?? [];
 
   if (project.channels) {
-    state.channels = project.channels.map((c) => {
+    // key is the local id from resources.yaml - Lightning doesn't know it
+    state.channels = project.channels.map(({ key, ...c }) => {
       // like steps, a locally authored channel references its credential
       // by name - resolve it to a uuid if we can
       const cred = project.credentials.find(

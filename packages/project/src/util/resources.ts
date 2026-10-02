@@ -15,6 +15,10 @@ type ResourceChannels = Record<
   }
 >;
 
+// The id a channel is matched by on merge. Remote channels have no local key,
+// so fall back to the name, slugified the same way as when it's written out
+export const channelKey = (c: l.ChannelState) => c.key ?? slugify(c.name);
+
 // Build the channels section of resources.yaml: keyed by an id slugified
 // from the name, no uuids, credentials referenced by name
 export const toResourceChannels = (
@@ -30,8 +34,8 @@ export const toResourceChannels = (
       ? getCredentialName(cred)
       : c.destination_credential_id ?? undefined;
 
-    // names are matched on merge, so the id only needs to be unique here
-    const base = slugify(c.name);
+    // keep a local key if there is one, so renames survive a round trip
+    const base = channelKey(c);
     let id = base;
     for (let i = 2; id in result; i++) {
       id = `${base}-${i}`;
@@ -54,6 +58,7 @@ export const fromResourceChannels = (
       throw new Error(`resources.yaml: channel "${id}" has no name`);
     }
     return {
+      key: id,
       name: c.name,
       destination_url: c.destination_url,
       enabled: c.enabled ?? true,

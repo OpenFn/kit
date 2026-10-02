@@ -282,6 +282,32 @@ test('replace mode: target channels missing from source are flagged as removed',
   t.deepEqual(result.removedChannels, [removed]);
 });
 
+test('replace mode: renaming a channel keeps its id', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const channel = {
+    destination_url: 'https://example.com',
+    enabled: true,
+  };
+
+  // target (remote) has no local key - it's matched by its slugified name
+  const target = createProject(wf, 'a', {
+    channels: [{ ...channel, id: 'chan-1', name: 'My Channel' }],
+  });
+  const source = createProject(wf, 'b', {
+    channels: [{ ...channel, key: 'my-channel', name: 'Renamed Channel' }],
+  });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.is(result.channels![0].id, 'chan-1');
+  t.is(result.channels![0].name, 'Renamed Channel');
+  t.deepEqual(result.removedChannels, []);
+});
+
 test('replace mode: merged collections keep target uuid on a name match', (t) => {
   const wf = {
     steps: [

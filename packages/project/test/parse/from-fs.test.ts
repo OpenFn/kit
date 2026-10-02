@@ -249,6 +249,7 @@ test.serial('should load channels from resources.yaml', async (t) => {
   // credential is kept as a name - it's resolved to a uuid on deploy
   t.deepEqual(project.channels, [
     {
+      key: 'my-channel',
       name: 'My Channel',
       destination_url: 'https://example.com',
       enabled: false,
