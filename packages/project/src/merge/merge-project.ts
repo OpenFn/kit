@@ -213,7 +213,7 @@ export function mergeCollections(
 }
 
 // Source channels win, but keep the target's id on a name match.
-// If the source has no channels at all (no channels.yaml), keep the target's
+// If the source has no channels at all (no resources.yaml), keep the target's
 export function mergeChannels(
   source: ChannelState[] | undefined,
   target: ChannelState[] | undefined

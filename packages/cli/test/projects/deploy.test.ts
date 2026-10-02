@@ -1125,7 +1125,7 @@ const channel = {
   enabled: true,
 };
 
-test('channelsChanged: false when there is no local channels.yaml', (t) => {
+test('channelsChanged: false when there is no local resources.yaml', (t) => {
   const local = { channels: undefined } as unknown as Project;
   const remote = {
     channels: [{ ...channel, id: 'chan-1' }],

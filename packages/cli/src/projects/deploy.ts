@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
-  toChannelsFile,
+  toResourceChannels,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
@@ -173,13 +173,13 @@ export const deletedCollections = (
     .map((c) => ({ id: c.uuid as string, name: c.name, delete: true }));
 };
 
-// A missing channels.yaml (local.channels undefined) means channels aren't
+// A missing resources.yaml (local.channels undefined) means channels aren't
 // managed locally, so there's nothing to change
 export const channelsChanged = (local: Project, remote: Project) =>
   !!local.channels &&
   !isEqual(
-    toChannelsFile(local.channels, local.credentials),
-    toChannelsFile(remote.channels, remote.credentials)
+    toResourceChannels(local.channels, local.credentials),
+    toResourceChannels(remote.channels, remote.credentials)
   );
 
 export type SyncResult = {

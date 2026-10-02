@@ -1,19 +1,20 @@
 import type l from '@openfn/lexicon';
 import getCredentialName from './get-credential-name';
 
-export const CHANNELS_FILE = 'channels.yaml';
+// resources.yaml holds server-side resources, keyed by type (channels, ...)
+export const RESOURCES_FILE = 'resources.yaml';
 
-type ChannelsFile = Record<
+type ResourceChannels = Record<
   string,
   { destination_url: string; enabled: boolean; credential?: string }
 >;
 
-// Build the user-facing channels.yaml content: keyed by name, no ids,
+// Build the channels section of resources.yaml: keyed by name, no ids,
 // credentials referenced by name
-export const toChannelsFile = (
+export const toResourceChannels = (
   channels: l.ChannelState[] = [],
   credentials: l.CredentialState[] = []
-): ChannelsFile =>
+): ResourceChannels =>
   Object.fromEntries(
     channels.map((c) => {
       const cred = credentials.find(
@@ -33,8 +34,10 @@ export const toChannelsFile = (
     })
   );
 
-export const fromChannelsFile = (file: ChannelsFile | null): l.ChannelState[] =>
-  Object.entries(file ?? {}).map(([name, c]) => ({
+export const fromResourceChannels = (
+  channels: ResourceChannels
+): l.ChannelState[] =>
+  Object.entries(channels).map(([name, c]) => ({
     name,
     destination_url: c.destination_url,
     enabled: c.enabled ?? true,

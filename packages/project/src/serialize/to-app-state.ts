@@ -67,7 +67,7 @@ export default function (
       );
       return {
         ...c,
-        // mint an id for any channel authored locally in channels.yaml
+        // mint an id for any channel authored locally in resources.yaml
         id: c.id ?? randomUUID(),
         destination_credential_id: (cred?.uuid ??
           c.destination_credential_id) as string,

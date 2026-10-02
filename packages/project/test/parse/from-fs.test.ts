@@ -232,13 +232,15 @@ test.serial(
   }
 );
 
-test.serial('should load channels from channels.yaml', async (t) => {
+test.serial('should load channels from resources.yaml', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
-  mockFile('/ws/channels.yaml', {
-    'my-channel': {
-      destination_url: 'https://example.com',
-      enabled: false,
-      credential: 'me@openfn.org|my-cred',
+  mockFile('/ws/resources.yaml', {
+    channels: {
+      'my-channel': {
+        destination_url: 'https://example.com',
+        enabled: false,
+        credential: 'me@openfn.org|my-cred',
+      },
     },
   });
 
@@ -255,9 +257,20 @@ test.serial('should load channels from channels.yaml', async (t) => {
 });
 
 test.serial(
-  'should return undefined channels when there is no channels.yaml',
+  'should return undefined channels when there is no resources.yaml',
   async (t) => {
     mockFile('/ws/openfn.yaml', buildConfig());
+
+    const project = await parseProject({ root: '/ws' });
+    t.is(project.channels, undefined);
+  }
+);
+
+test.serial(
+  'should return undefined channels when resources.yaml has no channels key',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+    mockFile('/ws/resources.yaml', { collections: ['my-collection'] });
 
     const project = await parseProject({ root: '/ws' });
     t.is(project.channels, undefined);

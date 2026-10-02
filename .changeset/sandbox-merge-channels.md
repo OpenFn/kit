@@ -4,4 +4,4 @@
 '@openfn/lexicon': patch
 ---
 
-Manage project channels locally through a new channels.yaml file
+Manage project channels locally through a new resources.yaml file

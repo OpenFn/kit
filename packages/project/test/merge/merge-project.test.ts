@@ -235,7 +235,7 @@ test('replace mode: source channels win, keeping target ids on a name match', (t
       enabled: true,
     },
   ];
-  // source (local): loaded from channels.yaml, no ids
+  // source (local): loaded from resources.yaml, no ids
   const sourceChannels = [
     {
       name: 'keep-me',

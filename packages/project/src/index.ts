@@ -30,4 +30,4 @@ export type { MergeProjectOptions } from './merge/merge-project';
 
 export { mergeCollections } from './merge/merge-project';
 
-export { toChannelsFile } from './util/channels';
+export { toResourceChannels } from './util/resources';

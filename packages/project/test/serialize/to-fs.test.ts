@@ -474,7 +474,7 @@ test('toFs: omits collections key when there are none', (t) => {
   t.falsy(config.project.collections);
 });
 
-test('toFs: writes channels.yaml keyed by name, with credential names', (t) => {
+test('toFs: writes channels to resources.yaml keyed by name, with credential names', (t) => {
   const project = new Project({
     name: 'My Project',
     credentials: [
@@ -494,21 +494,23 @@ test('toFs: writes channels.yaml keyed by name, with credential names', (t) => {
 
   const files = toFs(project);
 
-  t.deepEqual(yamlToJson(files['channels.yaml']), {
-    'my-channel': {
-      destination_url: 'https://example.com',
-      enabled: true,
-      credential: 'me@openfn.org|my-cred',
+  t.deepEqual(yamlToJson(files['resources.yaml']), {
+    channels: {
+      'my-channel': {
+        destination_url: 'https://example.com',
+        enabled: true,
+        credential: 'me@openfn.org|my-cred',
+      },
     },
   });
 });
 
-test('toFs: does not write channels.yaml when channels are unknown', (t) => {
+test('toFs: does not write resources.yaml when channels are unknown', (t) => {
   const project = new Project({ name: 'My Project', workflows: [] });
 
   const files = toFs(project);
 
-  t.false('channels.yaml' in files);
+  t.false('resources.yaml' in files);
 });
 
 // TODO we need many more tests on this, with options
