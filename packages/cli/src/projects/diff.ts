@@ -1,5 +1,6 @@
 import c from 'chalk';
 import Project, { generateStepDiff, generateEdgeDiff } from '@openfn/project';
+import type { ChannelDiff } from '@openfn/project';
 import type { StepChange, EdgeChange } from '@openfn/project';
 import type { Logger } from '../util/logger';
 
@@ -60,6 +61,26 @@ const printStepDiff = (steps: StepChange[], logger: Logger) => {
   }
 };
 
+const printChannelDiff = (channels: ChannelDiff[], logger: Logger) => {
+  logger.always('Channels:');
+  for (const { name, type, changes } of channels) {
+    if (type === 'added') {
+      logger.always(c.green(`  ${name}: added`));
+    } else if (type === 'removed') {
+      logger.always(c.red(`  ${name}: removed`));
+    } else {
+      logger.always(c.yellow(`  ${name}: changed`));
+      for (const key in changes) {
+        const { from, to } = changes[key];
+        logger.always(
+          c.yellow(`    - ${key}: "${from ?? ''}" -> "${to ?? ''}"`)
+        );
+      }
+    }
+  }
+  logger.break();
+};
+
 // TODO need to include collection diffs
 // https://github.com/OpenFn/kit/issues/1524
 export const printRichDiff = (
@@ -68,8 +89,11 @@ export const printRichDiff = (
   locallyChangedWorkflows: string[],
   logger: Logger
 ) => {
-  const diffs = remote.diff(local, locallyChangedWorkflows);
-  if (diffs.length === 0) {
+  const { workflows: diffs, resources } = remote.diff(
+    local,
+    locallyChangedWorkflows
+  );
+  if (diffs.length === 0 && resources.channels.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
   }
@@ -110,6 +134,10 @@ export const printRichDiff = (
       logger.always(c.green(`${label}: added`));
     }
     logger.break();
+  }
+
+  if (resources.channels?.length > 0) {
+    printChannelDiff(resources.channels, logger);
   }
 
   return diffs;

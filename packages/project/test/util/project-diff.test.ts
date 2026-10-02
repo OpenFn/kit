@@ -16,7 +16,7 @@ test('diff: should return empty array for identical projects', (t) => {
     workflows: [wf],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 0);
 });
@@ -37,7 +37,7 @@ test('diff: should detect changed workflow', (t) => {
     workflows: [wfB],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wfA.id, type: 'changed' });
@@ -59,7 +59,7 @@ test('diff: should only consider changed workflows from a filter list', (t) => {
     workflows: [wfB],
   });
 
-  const diffs = diff(projectA, projectB, ['xxx']);
+  const { workflows: diffs } = diff(projectA, projectB, ['xxx']);
 
   t.is(diffs.length, 0);
 });
@@ -78,7 +78,7 @@ test('diff: should detect added workflow', (t) => {
     workflows: [wf1, wf2],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
@@ -99,7 +99,7 @@ test('diff: should only consider added workflows from a filter list', (t) => {
     workflows: [wf1, wf2, wf3],
   });
 
-  const diffs = diff(projectA, projectB, ['b']);
+  const { workflows: diffs } = diff(projectA, projectB, ['b']);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
@@ -119,7 +119,7 @@ test('diff: should detect removed workflow', (t) => {
     workflows: [wf1],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
@@ -141,7 +141,7 @@ test('diff: should only consider removed workflows from a filter list', (t) => {
   });
 
   // only compare on b
-  const diffs = diff(projectA, projectB, ['b']);
+  const { workflows: diffs } = diff(projectA, projectB, ['b']);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
@@ -166,7 +166,7 @@ test('diff: should detect multiple changes at once', (t) => {
     workflows: [wf1, wf2Changed, wf4], // has a, b (changed), d (new)
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 3);
   t.deepEqual(
@@ -201,7 +201,7 @@ test('diff: should detect multiple workflows with same type of change', (t) => {
     workflows: [wf1Changed, wf2Changed, wf3],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 2);
   t.deepEqual(diffs[0], { id: 'a', type: 'changed' });
@@ -226,8 +226,98 @@ test('diff: should detect change when workflow has same ID but different name', 
     workflows: [wf2],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'my-workflow', type: 'changed' });
+});
+
+const channel = (name: string, extra = {}) => ({
+  name,
+  destination_url: `https://example.com/${name}`,
+  enabled: true,
+  ...extra,
+});
+
+const withChannels = (channels?: any[]) =>
+  new Project({ name: 'p', workflows: [], channels });
+
+test('diff: resources.channels is empty for identical channels', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one')]);
+
+  t.deepEqual(diff(a, b).resources.channels, []);
+});
+
+test('diff: should detect added channel', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one'), channel('two')]);
+
+  t.deepEqual(diff(a, b).resources.channels, [
+    { id: 'two', name: 'two', type: 'added' },
+  ]);
+});
+
+test('diff: should detect removed channel', (t) => {
+  const a = withChannels([channel('one'), channel('two')]);
+  const b = withChannels([channel('one')]);
+
+  t.deepEqual(diff(a, b).resources.channels, [
+    { id: 'two', name: 'two', type: 'removed' },
+  ]);
+});
+
+test('diff: should detect changed channel', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one', { enabled: false })]);
+
+  t.deepEqual(diff(a, b).resources.channels, [
+    {
+      id: 'one',
+      name: 'one',
+      type: 'changed',
+      changes: { enabled: { from: true, to: false } },
+    },
+  ]);
+});
+
+test('diff: should match channels by key so a rename is a change', (t) => {
+  const a = withChannels([
+    channel('one', { key: 'ch', destination_url: 'https://x.com' }),
+  ]);
+  const b = withChannels([
+    channel('renamed', { key: 'ch', destination_url: 'https://x.com' }),
+  ]);
+
+  t.deepEqual(diff(a, b).resources.channels, [
+    {
+      id: 'ch',
+      name: 'renamed',
+      type: 'changed',
+      changes: {
+        name: { from: 'one', to: 'renamed' },
+      },
+    },
+  ]);
+});
+
+test('diff: should ignore channels if either project does not define them', (t) => {
+  const withOne = withChannels([channel('one')]);
+  const none = withChannels(undefined);
+
+  t.deepEqual(diff(withOne, none).resources.channels, []);
+  t.deepEqual(diff(none, withOne).resources.channels, []);
+});
+
+test('diff: should report workflow and channel changes together', (t) => {
+  const a = new Project({ name: 'a', workflows: [], channels: [] });
+  const b = new Project({
+    name: 'b',
+    workflows: [generateWorkflow('trigger-x')],
+    channels: [channel('one')],
+  });
+
+  const result = diff(a, b);
+  t.is(result.workflows.length, 1);
+  t.is(result.resources.channels.length, 1);
 });

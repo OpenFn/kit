@@ -282,7 +282,7 @@ export class Project {
     return Object.values(creds);
   }
 
-  // Compare this project with another and return a list of workflow changes
+  // Compare this project with another and return the changes
   diff(project: Project, workflows: string[] = []) {
     return projectDiff(this, project, workflows);
   }
