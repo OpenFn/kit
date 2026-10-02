@@ -68,7 +68,7 @@ export const printRichDiff = (
   locallyChangedWorkflows: string[],
   logger: Logger
 ) => {
-  const diffs = remote.diff(local, locallyChangedWorkflows);
+  const { workflows: diffs } = remote.diff(local, locallyChangedWorkflows);
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;

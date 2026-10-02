@@ -255,7 +255,7 @@ const syncProjects = async (
 
   // TODO: what if remote diff and the version checked disagree for some reason?
   const workflowDiffs = mergeCandidates.length
-    ? remoteProject.diff(localProject, mergeCandidates)
+    ? remoteProject.diff(localProject, mergeCandidates).workflows
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
   const didChannelsChange = channelsChanged(localProject, remoteProject);

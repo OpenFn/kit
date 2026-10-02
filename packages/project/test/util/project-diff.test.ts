@@ -16,7 +16,7 @@ test('diff: should return empty array for identical projects', (t) => {
     workflows: [wf],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 0);
 });
@@ -37,7 +37,7 @@ test('diff: should detect changed workflow', (t) => {
     workflows: [wfB],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wfA.id, type: 'changed' });
@@ -59,7 +59,7 @@ test('diff: should only consider changed workflows from a filter list', (t) => {
     workflows: [wfB],
   });
 
-  const diffs = diff(projectA, projectB, ['xxx']);
+  const { workflows: diffs } = diff(projectA, projectB, ['xxx']);
 
   t.is(diffs.length, 0);
 });
@@ -78,7 +78,7 @@ test('diff: should detect added workflow', (t) => {
     workflows: [wf1, wf2],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
@@ -99,7 +99,7 @@ test('diff: should only consider added workflows from a filter list', (t) => {
     workflows: [wf1, wf2, wf3],
   });
 
-  const diffs = diff(projectA, projectB, ['b']);
+  const { workflows: diffs } = diff(projectA, projectB, ['b']);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
@@ -119,7 +119,7 @@ test('diff: should detect removed workflow', (t) => {
     workflows: [wf1],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
@@ -141,7 +141,7 @@ test('diff: should only consider removed workflows from a filter list', (t) => {
   });
 
   // only compare on b
-  const diffs = diff(projectA, projectB, ['b']);
+  const { workflows: diffs } = diff(projectA, projectB, ['b']);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
@@ -166,7 +166,7 @@ test('diff: should detect multiple changes at once', (t) => {
     workflows: [wf1, wf2Changed, wf4], // has a, b (changed), d (new)
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 3);
   t.deepEqual(
@@ -201,7 +201,7 @@ test('diff: should detect multiple workflows with same type of change', (t) => {
     workflows: [wf1Changed, wf2Changed, wf3],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 2);
   t.deepEqual(diffs[0], { id: 'a', type: 'changed' });
@@ -226,7 +226,7 @@ test('diff: should detect change when workflow has same ID but different name', 
     workflows: [wf2],
   });
 
-  const diffs = diff(projectA, projectB);
+  const { workflows: diffs } = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'my-workflow', type: 'changed' });

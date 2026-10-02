@@ -7,15 +7,19 @@ export type WorkflowDiff = {
   type: DiffType;
 };
 
+export type ProjectDiff = {
+  workflows: WorkflowDiff[];
+};
+
 /**
- * Compare two projects and return a list of workflow changes showing how
+ * Compare two projects and return the changes showing how
  * project B has diverged from project A.
  *
  * Workflows are identified by their ID and compared using version hashes.
  *
  * @param a - The baseline project (e.g., main branch)
  * @param b - The comparison project (e.g., staging branch)
- * @returns Array of workflow diffs indicating how B differs from A:
+ * @returns An object with a `workflows` array indicating how B differs from A:
  *   - 'added': workflow exists in B but not in A
  *   - 'removed': workflow exists in A but not in B
  *   - 'changed': workflow exists in both but has different version hashes
@@ -24,7 +28,7 @@ export type WorkflowDiff = {
  * ```typescript
  * const main = await Project.from('fs', { root: '.' });
  * const staging = await Project.from('state', stagingState);
- * const diffs = diff(main, staging);
+ * const { workflows } = diff(main, staging);
  * // Shows how staging has diverged from main
  * ```
  */
@@ -33,7 +37,7 @@ export function diff(
   b: Project,
   // only consider these workflows
   workflows?: string[]
-): WorkflowDiff[] {
+): ProjectDiff {
   const diffs: WorkflowDiff[] = [];
 
   // Check all of project A's workflows
@@ -65,5 +69,5 @@ export function diff(
     }
   }
 
-  return diffs;
+  return { workflows: diffs };
 }
