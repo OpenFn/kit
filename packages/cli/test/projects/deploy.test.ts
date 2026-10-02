@@ -120,6 +120,52 @@ test.serial(
   }
 );
 
+test.serial(
+  'deploy with checkout: true updates the local workspace',
+  async (t) => {
+    await setup();
+    const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+        checkout: true,
+      } as any,
+      logger
+    );
+
+    t.not(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
+  }
+);
+
+test.serial(
+  'deploy with checkout: false leaves the local workspace alone',
+  async (t) => {
+    await setup();
+    const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
+    const filesBefore = fs.readdirSync('/ws/.projects');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+        checkout: false,
+      } as any,
+      logger
+    );
+
+    t.is(Object.keys(server.state.projects).length, 2);
+    t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
+    t.deepEqual(fs.readdirSync('/ws/.projects'), filesBefore);
+    t.truthy(logger._find('success', /Created new project at/));
+  }
+);
+
 test.serial('deploy a project as new from a v2 spec yaml', async (t) => {
   // the server should have 1 registered project by default - that's fine
   t.is(Object.keys(server.state.projects).length, 1);

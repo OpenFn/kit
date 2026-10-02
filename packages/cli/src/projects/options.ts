@@ -20,6 +20,7 @@ export type Opts = BaseOpts & {
   format?: 'yaml' | 'json' | 'state';
   clean?: boolean;
   createCredentials?: boolean;
+  checkout?: boolean;
 };
 
 // project specific options
@@ -45,6 +46,21 @@ export const clean: CLIOption = {
     description: 'Clean the working dir before checking out the new project',
     default: false,
     boolean: true,
+  },
+};
+
+export const checkout: CLIOption = {
+  name: 'checkout',
+  yargs: {
+    boolean: true,
+    default: true,
+    description:
+      'Checkout the project after deploying. Use --no-checkout or OPENFN_NO_CHECKOUT_AFTER_DEPLOY=true to skip',
+  },
+  ensure: (opts: any) => {
+    if (process.env.OPENFN_NO_CHECKOUT_AFTER_DEPLOY === 'true') {
+      opts.checkout = false;
+    }
   },
 };
 
