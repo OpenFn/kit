@@ -237,6 +237,7 @@ test.serial('should load channels from resources.yaml', async (t) => {
   mockFile('/ws/resources.yaml', {
     channels: {
       'my-channel': {
+        name: 'My Channel',
         destination_url: 'https://example.com',
         enabled: false,
         credential: 'me@openfn.org|my-cred',
@@ -248,12 +249,25 @@ test.serial('should load channels from resources.yaml', async (t) => {
   // credential is kept as a name - it's resolved to a uuid on deploy
   t.deepEqual(project.channels, [
     {
-      name: 'my-channel',
+      name: 'My Channel',
       destination_url: 'https://example.com',
       enabled: false,
       destination_credential_id: 'me@openfn.org|my-cred',
     },
   ]);
+});
+
+test.serial('should throw if a channel has no name', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/resources.yaml', {
+    channels: {
+      'my-channel': { destination_url: 'https://example.com' },
+    },
+  });
+
+  await t.throwsAsync(() => parseProject({ root: '/ws' }), {
+    message: 'resources.yaml: channel "my-channel" has no name',
+  });
 });
 
 test.serial(

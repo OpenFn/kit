@@ -474,7 +474,7 @@ test('toFs: omits collections key when there are none', (t) => {
   t.falsy(config.project.collections);
 });
 
-test('toFs: writes channels to resources.yaml keyed by name, with credential names', (t) => {
+test('toFs: writes channels to resources.yaml keyed by id, with credential names', (t) => {
   const project = new Project({
     name: 'My Project',
     credentials: [
@@ -483,7 +483,7 @@ test('toFs: writes channels to resources.yaml keyed by name, with credential nam
     channels: [
       {
         id: 'chan-uuid',
-        name: 'my-channel',
+        name: 'My Channel',
         destination_url: 'https://example.com',
         enabled: true,
         destination_credential_id: 'cred-uuid',
@@ -497,6 +497,7 @@ test('toFs: writes channels to resources.yaml keyed by name, with credential nam
   t.deepEqual(yamlToJson(files['resources.yaml']), {
     channels: {
       'my-channel': {
+        name: 'My Channel',
         destination_url: 'https://example.com',
         enabled: true,
         credential: 'me@openfn.org|my-cred',

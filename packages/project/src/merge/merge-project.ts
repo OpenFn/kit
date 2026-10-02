@@ -218,6 +218,10 @@ export function mergeChannels(
   source: ChannelState[] | undefined,
   target: ChannelState[] | undefined
 ): ChannelState[] | undefined {
+  // No channels in the source means there's no resources.yaml (or no channels
+  // key in it). This protects projects synced before resources.yaml existed:
+  // treating a missing file as "no channels" would delete every channel on
+  // the server on their next deploy. To remove all channels, use `channels: {}`
   if (!source) {
     return target;
   }
