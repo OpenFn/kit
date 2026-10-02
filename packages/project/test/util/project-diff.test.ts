@@ -231,3 +231,69 @@ test('diff: should detect change when workflow has same ID but different name', 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'my-workflow', type: 'changed' });
 });
+
+const channel = (name: string, extra = {}) => ({
+  name,
+  destination_url: `https://example.com/${name}`,
+  enabled: true,
+  ...extra,
+});
+
+const withChannels = (channels?: any[]) =>
+  new Project({ name: 'p', workflows: [], channels });
+
+test('diff: resources.channels is empty for identical channels', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one')]);
+
+  t.deepEqual(diff(a, b).resources.channels, []);
+});
+
+test('diff: should detect added channel', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one'), channel('two')]);
+
+  t.deepEqual(diff(a, b).resources.channels, [{ id: 'two', type: 'added' }]);
+});
+
+test('diff: should detect removed channel', (t) => {
+  const a = withChannels([channel('one'), channel('two')]);
+  const b = withChannels([channel('one')]);
+
+  t.deepEqual(diff(a, b).resources.channels, [{ id: 'two', type: 'removed' }]);
+});
+
+test('diff: should detect changed channel', (t) => {
+  const a = withChannels([channel('one')]);
+  const b = withChannels([channel('one', { enabled: false })]);
+
+  t.deepEqual(diff(a, b).resources.channels, [{ id: 'one', type: 'changed' }]);
+});
+
+test('diff: should match channels by key so a rename is a change', (t) => {
+  const a = withChannels([channel('one', { key: 'ch' })]);
+  const b = withChannels([channel('renamed', { key: 'ch' })]);
+
+  t.deepEqual(diff(a, b).resources.channels, [{ id: 'ch', type: 'changed' }]);
+});
+
+test('diff: should ignore channels if either project does not define them', (t) => {
+  const withOne = withChannels([channel('one')]);
+  const none = withChannels(undefined);
+
+  t.deepEqual(diff(withOne, none).resources.channels, []);
+  t.deepEqual(diff(none, withOne).resources.channels, []);
+});
+
+test('diff: should report workflow and channel changes together', (t) => {
+  const a = new Project({ name: 'a', workflows: [], channels: [] });
+  const b = new Project({
+    name: 'b',
+    workflows: [generateWorkflow('trigger-x')],
+    channels: [channel('one')],
+  });
+
+  const result = diff(a, b);
+  t.is(result.workflows.length, 1);
+  t.is(result.resources.channels.length, 1);
+});

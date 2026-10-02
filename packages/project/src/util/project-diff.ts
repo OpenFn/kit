@@ -1,4 +1,6 @@
+import { isEqual } from 'lodash-es';
 import { Project } from '../Project';
+import { toResourceChannels } from './resources';
 
 export type DiffType = 'added' | 'changed' | 'removed';
 
@@ -7,8 +9,16 @@ export type WorkflowDiff = {
   type: DiffType;
 };
 
+export type ResourceDiff = {
+  id: string;
+  type: DiffType;
+};
+
 export type ProjectDiff = {
   workflows: WorkflowDiff[];
+  resources: {
+    channels: ResourceDiff[];
+  };
 };
 
 /**
@@ -19,7 +29,12 @@ export type ProjectDiff = {
  *
  * @param a - The baseline project (e.g., main branch)
  * @param b - The comparison project (e.g., staging branch)
- * @returns An object with a `workflows` array indicating how B differs from A:
+ * Channels are compared by their resources.yaml id. If either project has no
+ * channels defined (undefined) they are not managed, so no channel changes are
+ * reported.
+ *
+ * @returns An object with `workflows` and `resources` indicating how B differs
+ * from A. Each workflow diff is:
  *   - 'added': workflow exists in B but not in A
  *   - 'removed': workflow exists in A but not in B
  *   - 'changed': workflow exists in both but has different version hashes
@@ -69,5 +84,29 @@ export function diff(
     }
   }
 
-  return { workflows: diffs };
+  return { workflows: diffs, resources: { channels: diffChannels(a, b) } };
 }
+
+const diffChannels = (a: Project, b: Project): ResourceDiff[] => {
+  if (!a.channels || !b.channels) {
+    return [];
+  }
+
+  const channelsA = toResourceChannels(a.channels, a.credentials);
+  const channelsB = toResourceChannels(b.channels, b.credentials);
+  const diffs: ResourceDiff[] = [];
+
+  for (const id in channelsA) {
+    if (!(id in channelsB)) {
+      diffs.push({ id, type: 'removed' });
+    } else if (!isEqual(channelsA[id], channelsB[id])) {
+      diffs.push({ id, type: 'changed' });
+    }
+  }
+  for (const id in channelsB) {
+    if (!(id in channelsA)) {
+      diffs.push({ id, type: 'added' });
+    }
+  }
+  return diffs;
+};
