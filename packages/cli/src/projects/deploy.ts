@@ -48,6 +48,7 @@ export type DeployOptions = Pick<
   target?: string;
 
   alias?: string;
+  checkout?: boolean;
   credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
@@ -68,6 +69,7 @@ const options = [
   o2.jsonDiff,
   o2.workflow,
   o2.credentials,
+  o2.checkout,
 
   // general options
   o.apiKey,
@@ -602,21 +604,26 @@ export async function handler(options: DeployOptions, logger: Logger) {
       }
     );
 
-    updateForkedFrom(finalProject);
-    const configData = finalProject.generateConfig();
+    if (options.checkout) {
+      updateForkedFrom(finalProject);
+      const configData = finalProject.generateConfig();
 
-    // Write the updated openfn.yaml
-    // TODO: allow us to suppress writing this stuff
-    // (useful if posting from spec)
-    await writeFile(
-      path.resolve(options.workspace ?? process.cwd(), configData.path),
-      configData.content
-    );
+      // Write the updated openfn.yaml
+      // TODO: allow us to suppress writing this stuff
+      // (useful if posting from spec)
+      await writeFile(
+        path.resolve(options.workspace ?? process.cwd(), configData.path),
+        configData.content
+      );
 
-    // TODO if this was marked as new, we probably need to ensure a unique alias here
-    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
-    const fullFinalPath = await serialize(finalProject, finalOutputPath);
-    logger.debug('Updated local project at ', fullFinalPath);
+      // TODO if this was marked as new, we probably need to ensure a unique alias here
+      const finalOutputPath = getSerializePath(
+        finalProject,
+        options.workspace!
+      );
+      const fullFinalPath = await serialize(finalProject, finalOutputPath);
+      logger.debug('Updated local project at ', fullFinalPath);
+    }
 
     if (options.new) {
       logger.success('Created new project at', endpoint);
