@@ -9,7 +9,12 @@ export { Workspace, yamlToJson, jsonToYaml };
 export { generateWorkflow, generateProject } from './gen/generator';
 
 export { diff } from './util/project-diff';
-export type { WorkflowDiff, DiffType } from './util/project-diff';
+export type {
+  WorkflowDiff,
+  ChannelDiff,
+  ProjectDiff,
+  DiffType,
+} from './util/project-diff';
 
 export { generateStepDiff, generateEdgeDiff } from './util/workflow-diff';
 export type {
@@ -29,3 +34,5 @@ export { default as detectVersion } from './util/detect-version';
 export type { MergeProjectOptions } from './merge/merge-project';
 
 export { mergeCollections } from './merge/merge-project';
+
+export { toResourceChannels } from './util/resources';

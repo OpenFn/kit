@@ -1,7 +1,15 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 
-import { Credential, Collection, Job, ProjectSpec, WorkflowSpec } from './portability';
+import {
+  Credential,
+  Collection,
+  Channel,
+  Job,
+  Trigger,
+  ProjectSpec,
+  WorkflowSpec,
+} from './portability';
 export {
   Step,
   StepId,
@@ -40,11 +48,18 @@ export interface ProjectState extends WithState<ProjectSpec, ProjectMeta> {
   // tracks each collection's uuid once it's been created on the server
   collections?: Array<CollectionState>;
 
+  // override channels - locally authored channels (channels.yaml) have no
+  // id until they're deployed
+  channels?: Array<ChannelState>;
+
   /** Stuff only used by the CLI for this project */
   cli?: LocalMeta;
 }
 
 export interface WorkflowState extends WithState<WorkflowSpec, WorkflowMeta> {
+  // override steps to include per-step state (uuid, trigger enabled, etc)
+  steps: Array<WithMeta<Job> | WithMeta<Trigger>>;
+
   /** holds version history information of a workflow **/
   history?: string[];
 
@@ -121,6 +136,12 @@ export interface CollectionState extends Collection {
   uuid?: UUID;
 }
 
+// Like step.configuration, destination_credential_id may hold a credential
+// name (owner|name) rather than a uuid until it's serialized for Lightning
+// `key` is the local id from resources.yaml, used to match channels on merge.
+// It's never sent to Lightning
+export type ChannelState = Omit<Channel, 'id'> & { id?: string; key?: string };
+
 type FileFormats = 'yaml' | 'json';
 
 // This is the old workspace config file, up to 0.6
@@ -194,8 +215,18 @@ export interface WorkflowMeta {
 export interface NodeMeta {
   uuid?: UUID;
 
+  /** only meaningful on a trigger step */
+  enabled?: boolean;
+
   [key: string]: unknown;
 }
+
+/**
+ * Utility to append a .openfn state object to a step or edge
+ */
+export type WithMeta<T> = T & {
+  openfn?: NodeMeta;
+};
 
 /**
  * State is an object passed into a workflow and returned from a workflow

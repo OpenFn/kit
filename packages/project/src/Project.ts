@@ -77,7 +77,10 @@ export class Project {
 
   collections?: Array<CollectionState>;
 
-  channels?: l.Channel[];
+  channels?: l.ChannelState[];
+
+  // channels removed locally - to-app-state sends these as delete: true
+  removedChannels: l.ChannelState[] = [];
 
   credentials: Credential[];
 
@@ -279,7 +282,7 @@ export class Project {
     return Object.values(creds);
   }
 
-  // Compare this project with another and return a list of workflow changes
+  // Compare this project with another and return the changes
   diff(project: Project, workflows: string[] = []) {
     return projectDiff(this, project, workflows);
   }

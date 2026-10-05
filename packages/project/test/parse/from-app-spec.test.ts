@@ -151,8 +151,10 @@ test('a trigger becomes a step, and sets the workflow start', (t) => {
 
   const trigger = getStep(wf, 'cron');
   t.is(trigger.type, 'cron');
-  t.is(trigger.enabled, false);
   t.is(trigger.cron_expression, '*/15 * * * *');
+
+  // Note that enabled is not part of the spec structure
+  t.is(trigger.openfn.enabled, false);
 });
 
 test('edges hang off their source step, keyed by target', (t) => {
@@ -199,7 +201,10 @@ test('a js_expression condition keeps its expression', (t) => {
     workflows: {
       wf: {
         name: 'wf',
-        jobs: { A: { name: 'A', body: 'fn()' }, B: { name: 'B', body: 'fn()' } },
+        jobs: {
+          A: { name: 'A', body: 'fn()' },
+          B: { name: 'B', body: 'fn()' },
+        },
         triggers: {},
         edges: {
           'A->B': {

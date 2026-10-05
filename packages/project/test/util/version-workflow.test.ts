@@ -26,7 +26,7 @@ const example = {
       target_job_id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
     },
   ],
-  version_history: ['app:211291f6e6d5'],
+  version_history: ['app:6eb3b9b100a9'],
   inserted_at: '2025-12-19T15:26:49Z',
   jobs: [
     {
@@ -221,7 +221,7 @@ test('ordering: trigger keys appear in sorted order', (t) => {
   );
   // Trigger keys sorted: cron_expression, enabled, type
   const hash = workflow.getVersionHash({ sha: false });
-  t.is(hash, 'cli:wf* * *falsecroncodextruecron-x');
+  t.is(hash, 'cli:wf* * *croncodextruecron-x');
 });
 
 test('ordering: complete workflow with all elements', (t) => {

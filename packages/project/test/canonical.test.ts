@@ -36,7 +36,6 @@ const project: ProjectSpec = {
           id: 'webhook',
           name: 'Webhook Trigger',
           type: 'webhook',
-          enabled: true,
           webhook_reply: 'before_start',
           webhook_response_config: {
             success_code: 202,
@@ -88,7 +87,6 @@ const project: ProjectSpec = {
           id: 'cron',
           name: 'Cron Trigger',
           type: 'cron',
-          enabled: false,
           cron_expression: '0 0 * * *',
           cron_cursor_job_id: 'cron-job',
           webhook_reply: 'after_completion',
@@ -187,7 +185,6 @@ workflows:
       - id: webhook
         name: Webhook Trigger
         type: webhook
-        enabled: true
         webhook_reply: before_start
         webhook_response_config:
           success_code: 202
@@ -203,7 +200,6 @@ workflows:
       - id: cron
         name: Cron Trigger
         type: cron
-        enabled: false
         cron_expression: 0 0 * * *
         cron_cursor_job_id: cron-job
         webhook_reply: after_completion

@@ -206,8 +206,10 @@ test('should create a Project from prov state with a workflow', (t) => {
       {
         id: 'webhook',
         type: 'webhook',
-        enabled: true,
-        openfn: { uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
+        openfn: {
+          enabled: true,
+          uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+        },
         next: {
           'transform-data': {
             condition: 'always',
@@ -243,9 +245,7 @@ test('should create a Project from prov state with a workflow', (t) => {
 test('should create a Project from prov state with cron_cursor_job_id mapped to a step id', (t) => {
   const project = fromAppState(state, meta);
 
-  const cronWorkflow = project.workflows.find(
-    (w) => w.id === 'cron-workflow'
-  )!;
+  const cronWorkflow = project.workflows.find((w) => w.id === 'cron-workflow')!;
   const trigger = cronWorkflow.steps.find((s: any) => s.type === 'cron') as any;
 
   t.is(trigger.cron_cursor_job_id, 'transform-data');
@@ -274,10 +274,10 @@ test('mapWorkflow: map a cron trigger', (t) => {
     id: 'cron',
     type: 'cron',
     next: {},
-    enabled: true,
     cron_expression: '0 1 0 0',
     cron_cursor_job_id: 'x',
     openfn: {
+      enabled: true,
       uuid: '1234',
     },
   });
@@ -337,7 +337,6 @@ test('mapWorkflow: map a webhook trigger', (t) => {
   t.deepEqual(trigger, {
     id: 'webhook',
     type: 'webhook',
-    enabled: true,
     webhook_reply: 'before_start',
     webhook_response_config: {
       success_code: 202,
@@ -353,6 +352,7 @@ test('mapWorkflow: map a webhook trigger', (t) => {
       },
     },
     openfn: {
+      enabled: true,
       uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
     },
   });

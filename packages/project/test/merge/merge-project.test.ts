@@ -211,7 +211,7 @@ test('replace mode: a step referencing a newly-added credential resolves to it a
   t.is(job.project_credential_id, mintedId);
 });
 
-test('replace mode: source channels override target channels', (t) => {
+test('replace mode: source channels win, keeping target ids on a name match', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -220,22 +220,32 @@ test('replace mode: source channels override target channels', (t) => {
   const wf_a = assignUUIDs(wf);
   const wf_b = assignUUIDs(wf);
 
+  // target (remote): fetched from Lightning, has real ids
   const targetChannels = [
     {
-      id: 'chan-target',
-      name: 'target-channel',
-      destination_url: 'https://target.example.com',
+      id: 'chan-1',
+      name: 'keep-me',
+      destination_url: 'https://old.example.com',
       enabled: true,
-      destination_credential_id: null,
+    },
+    {
+      id: 'chan-2',
+      name: 'remove-me',
+      destination_url: 'https://remove.example.com',
+      enabled: true,
     },
   ];
+  // source (local): loaded from resources.yaml, no ids
   const sourceChannels = [
     {
-      id: 'chan-source',
-      name: 'source-channel',
-      destination_url: 'https://source.example.com',
+      name: 'keep-me',
+      destination_url: 'https://new.example.com',
       enabled: false,
-      destination_credential_id: null,
+    },
+    {
+      name: 'new-channel',
+      destination_url: 'https://new.example.com',
+      enabled: true,
     },
   ];
 
@@ -244,7 +254,58 @@ test('replace mode: source channels override target channels', (t) => {
 
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
-  t.deepEqual(result.channels, sourceChannels);
+  t.deepEqual(result.channels, [
+    { ...sourceChannels[0], id: 'chan-1' },
+    { ...sourceChannels[1], id: undefined },
+  ]);
+});
+
+test('replace mode: target channels missing from source are flagged as removed', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const removed = {
+    id: 'chan-1',
+    name: 'remove-me',
+    destination_url: 'https://remove.example.com',
+    enabled: true,
+  };
+
+  const target = createProject(wf, 'a', { channels: [removed] });
+  const source = createProject(wf, 'b', { channels: [] });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.channels, []);
+  t.deepEqual(result.removedChannels, [removed]);
+});
+
+test('replace mode: renaming a channel keeps its id', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const channel = {
+    destination_url: 'https://example.com',
+    enabled: true,
+  };
+
+  // target (remote) has no local key - it's matched by its slugified name
+  const target = createProject(wf, 'a', {
+    channels: [{ ...channel, id: 'chan-1', name: 'My Channel' }],
+  });
+  const source = createProject(wf, 'b', {
+    channels: [{ ...channel, key: 'my-channel', name: 'Renamed Channel' }],
+  });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.is(result.channels![0].id, 'chan-1');
+  t.is(result.channels![0].name, 'Renamed Channel');
+  t.deepEqual(result.removedChannels, []);
 });
 
 test('replace mode: merged collections keep target uuid on a name match', (t) => {
@@ -327,10 +388,7 @@ test('sandbox mode: source collections fully replace target collections', (t) =>
   t.deepEqual(result.collections, sourceCollections);
 });
 
-// KNOWN BUG: sandbox mode does not preserve channels the way it does
-// collections - see the collections test above for the correct behavior.
-// This test documents the bug and is expected to fail until it's fixed.
-test.skip('sandbox mode: target channels are preserved untouched, source is ignored', (t) => {
+test('sandbox mode: target channels are preserved when source has none', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -694,14 +752,17 @@ test('remove a step from an existing workflow', (t) => {
   const main = createProject(wf_a, 'a');
   const staging = createProject(wf_b, 'b');
 
+  t.is(main.workflows[0].steps.length, 1);
+  t.is(staging.workflows[0].steps.length, 0);
+
   // merge staging into main
   const result: any = merge(staging, main);
 
   // The resulting project should have no steps
-  t.is(result.workflows[0].steps.length, 0);
+  t.true(result.workflows[0].isRemoved('x'));
 });
 
-test.only('removing a step also deletes its outgoing edges when serialized', (t) => {
+test('removing a step also deletes its outgoing edges when serialized', (t) => {
   // create a base workflow with an edge x -> y
   const wf = {
     name: 'wf',

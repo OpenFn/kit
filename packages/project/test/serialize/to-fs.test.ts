@@ -1,6 +1,7 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
 import toFs, { extractWorkflow } from '../../src/serialize/to-fs';
+import { yamlToJson } from '../../src/util/yaml';
 
 const step = {
   id: 'step',
@@ -156,7 +157,7 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   });
 });
 
-test('extractWorkflow: include trigger enabled state (true)', (t) => {
+test('extractWorkflow: excludes trigger enabled state (true)', (t) => {
   const project = new Project(
     {
       workflows: [
@@ -167,7 +168,9 @@ test('extractWorkflow: include trigger enabled state (true)', (t) => {
             {
               id: 'webhook',
               type: 'webhook',
-              enabled: true,
+              openfn: {
+                enabled: true,
+              },
             },
           ],
           openfn: {
@@ -188,11 +191,10 @@ test('extractWorkflow: include trigger enabled state (true)', (t) => {
   t.deepEqual(JSON.parse(content).steps[0], {
     id: 'webhook',
     type: 'webhook',
-    enabled: true,
   });
 });
 
-test('extractWorkflow: include trigger enabled state (false)', (t) => {
+test('extractWorkflow: excludes trigger enabled state (false)', (t) => {
   const project = new Project(
     {
       workflows: [
@@ -203,7 +205,9 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
             {
               id: 'webhook',
               type: 'webhook',
-              enabled: false,
+              openfn: {
+                enabled: false,
+              },
             },
           ],
           openfn: {
@@ -224,7 +228,6 @@ test('extractWorkflow: include trigger enabled state (false)', (t) => {
   t.deepEqual(JSON.parse(content).steps[0], {
     id: 'webhook',
     type: 'webhook',
-    enabled: false,
   });
 });
 
@@ -469,6 +472,46 @@ test('toFs: omits collections key when there are none', (t) => {
 
   const config = JSON.parse(files['openfn.json']);
   t.falsy(config.project.collections);
+});
+
+test('toFs: writes channels to resources.yaml keyed by id, with credential names', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    credentials: [
+      { uuid: 'cred-uuid', name: 'my-cred', owner: 'me@openfn.org' },
+    ],
+    channels: [
+      {
+        id: 'chan-uuid',
+        name: 'My Channel',
+        destination_url: 'https://example.com',
+        enabled: true,
+        destination_credential_id: 'cred-uuid',
+      },
+    ],
+    workflows: [],
+  });
+
+  const files = toFs(project);
+
+  t.deepEqual(yamlToJson(files['resources.yaml']), {
+    channels: {
+      'my-channel': {
+        name: 'My Channel',
+        destination_url: 'https://example.com',
+        enabled: true,
+        credential: 'me@openfn.org|my-cred',
+      },
+    },
+  });
+});
+
+test('toFs: does not write resources.yaml when channels are unknown', (t) => {
+  const project = new Project({ name: 'My Project', workflows: [] });
+
+  const files = toFs(project);
+
+  t.false('resources.yaml' in files);
 });
 
 // TODO we need many more tests on this, with options

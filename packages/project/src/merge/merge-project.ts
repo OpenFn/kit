@@ -1,5 +1,9 @@
 import { defaultsDeep, isEmpty } from 'lodash-es';
-import { CredentialState, CollectionState } from '@openfn/lexicon';
+import {
+  CredentialState,
+  CollectionState,
+  ChannelState,
+} from '@openfn/lexicon';
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
 import mapUuids from './map-uuids';
@@ -8,6 +12,7 @@ import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 import findChangedWorkflows from '../util/find-changed-workflows';
 import getCredentialName from '../util/get-credential-name';
+import { channelKey } from '../util/resources';
 
 export const SANDBOX_MERGE = 'sandbox';
 
@@ -159,6 +164,7 @@ export function merge(
             target.credentials
           ),
           collections: source.collections,
+          channels: mergeChannels(source.channels, target.channels),
         }
       : {
           workflows: finalWorkflows,
@@ -180,11 +186,20 @@ export function merge(
             target.credentials
           ),
           collections: mergeCollections(source.collections, target.collections),
-          channels: source.channels ?? target.channels,
+          channels: mergeChannels(source.channels, target.channels),
         };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
-  return new Project(baseMerge(target, source, ['channels'], assigns as any));
+  const merged = new Project(
+    baseMerge(target, source, ['channels'], assigns as any)
+  );
+
+  // target channels with an id that the source dropped have been removed
+  const kept = new Set(source.channels?.map(channelKey));
+  merged.removedChannels = source.channels
+    ? (target.channels ?? []).filter((c) => c.id && !kept.has(channelKey(c)))
+    : [];
+  return merged;
 }
 
 export function mergeCollections(
@@ -195,6 +210,27 @@ export function mergeCollections(
   return source.map(({ name }) => ({
     name,
     uuid: targetByName.get(name)?.uuid,
+  }));
+}
+
+// Source channels win, but keep the target's id on a key match. Matching on the
+// key rather than the name means renaming a channel keeps its id
+// If the source has no channels at all (no resources.yaml), keep the target's
+export function mergeChannels(
+  source: ChannelState[] | undefined,
+  target: ChannelState[] | undefined
+): ChannelState[] | undefined {
+  // No channels in the source means there's no resources.yaml (or no channels
+  // key in it). This protects projects synced before resources.yaml existed:
+  // treating a missing file as "no channels" would delete every channel on
+  // the server on their next deploy. To remove all channels, use `channels: {}`
+  if (!source) {
+    return target;
+  }
+  const targetByKey = new Map((target ?? []).map((c) => [channelKey(c), c]));
+  return source.map((c) => ({
+    ...c,
+    id: targetByKey.get(channelKey(c))?.id,
   }));
 }
 
