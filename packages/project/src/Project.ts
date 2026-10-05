@@ -12,11 +12,7 @@ import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
-import {
-  buildConfig,
-  extractCheckout,
-  extractConfig,
-} from './util/config';
+import { buildConfig, extractCheckout, extractConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import {
   SandboxMeta,
