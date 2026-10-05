@@ -17,6 +17,7 @@ import {
   hasRemoteDiverged,
   collectionsChanged,
   deletedCollections,
+  channelsChanged,
 } from '../../src/projects/deploy';
 import { printRichDiff } from '../../src/projects/diff';
 import {
@@ -116,6 +117,60 @@ test.serial(
 
     const success = logger._find('success', /Created new project at/);
     t.truthy(success);
+  }
+);
+
+// project metadata lives in the checkout file, not openfn.yaml
+const readCheckout = () =>
+  fs.existsSync('/ws/.openfn/checkout.yaml')
+    ? fs.readFileSync('/ws/.openfn/checkout.yaml', 'utf8')
+    : undefined;
+
+test.serial(
+  'deploy with checkout: true updates the local workspace',
+  async (t) => {
+    await setup();
+    const before = readCheckout();
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+        checkout: true,
+      } as any,
+      logger
+    );
+
+    t.not(readCheckout(), before);
+  }
+);
+
+test.serial(
+  'deploy with checkout: false leaves the local workspace alone',
+  async (t) => {
+    await setup();
+    const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
+    const checkoutBefore = readCheckout();
+    const filesBefore = fs.readdirSync('/ws/.projects');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        new: true,
+        checkout: false,
+      } as any,
+      logger
+    );
+
+    t.is(Object.keys(server.state.projects).length, 2);
+    t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
+    t.is(readCheckout(), checkoutBefore);
+    t.deepEqual(fs.readdirSync('/ws/.projects'), filesBefore);
+    t.truthy(logger._find('success', /Created new project at/));
   }
 );
 
@@ -1116,4 +1171,97 @@ test('deletedCollections: nothing to delete when every remote name survives', (t
   } as unknown as Project;
 
   t.deepEqual(deletedCollections(merged, remote), []);
+});
+
+const channel = {
+  name: 'my-channel',
+  destination_url: 'https://example.com',
+  enabled: true,
+};
+
+test('channelsChanged: false when there is no local resources.yaml', (t) => {
+  const local = { channels: undefined } as unknown as Project;
+  const remote = {
+    channels: [{ ...channel, id: 'chan-1' }],
+  } as unknown as Project;
+
+  t.false(channelsChanged(local, remote));
+});
+
+test('channelsChanged: true when a channel is edited locally', (t) => {
+  const local = {
+    channels: [{ ...channel, enabled: false }],
+  } as unknown as Project;
+  const remote = {
+    channels: [{ ...channel, id: 'chan-1' }],
+  } as unknown as Project;
+
+  t.true(channelsChanged(local, remote));
+});
+
+test('channelsChanged: false when a credential name matches the remote uuid', (t) => {
+  const local = {
+    channels: [{ ...channel, destination_credential_id: 'me@openfn.org|cred' }],
+  } as unknown as Project;
+  const remote = {
+    credentials: [{ uuid: 'cred-uuid', name: 'cred', owner: 'me@openfn.org' }],
+    channels: [
+      { ...channel, id: 'chan-1', destination_credential_id: 'cred-uuid' },
+    ],
+  } as unknown as Project;
+
+  t.false(channelsChanged(local, remote));
+});
+
+const diffChannel = (name: string, extra = {}) => ({
+  name,
+  destination_url: `https://example.com/${name}`,
+  enabled: true,
+  ...extra,
+});
+
+test('printRichDiff: should report a channel-only change', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+  const remote = new Project({ name: 'remote', workflows: [], channels: [] });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /following changes to the remote project/));
+  t.truthy(logger._find('always', /Channels:/));
+  t.truthy(logger._find('always', /one: added/));
+});
+
+test('printRichDiff: should report removed channels', (t) => {
+  const local = new Project({ name: 'local', workflows: [], channels: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: removed/));
+});
+
+test('printRichDiff: should list changed channel fields', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    channels: [diffChannel('one', { enabled: false })],
+  });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    channels: [diffChannel('one')],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: changed/));
+  t.truthy(logger._find('always', /enabled: "true" -> "false"/));
 });

@@ -232,6 +232,66 @@ test.serial(
   }
 );
 
+test.serial('should load channels from resources.yaml', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/resources.yaml', {
+    channels: {
+      'my-channel': {
+        name: 'My Channel',
+        destination_url: 'https://example.com',
+        enabled: false,
+        credential: 'me@openfn.org|my-cred',
+      },
+    },
+  });
+
+  const project = await parseProject({ root: '/ws' });
+  // credential is kept as a name - it's resolved to a uuid on deploy
+  t.deepEqual(project.channels, [
+    {
+      key: 'my-channel',
+      name: 'My Channel',
+      destination_url: 'https://example.com',
+      enabled: false,
+      destination_credential_id: 'me@openfn.org|my-cred',
+    },
+  ]);
+});
+
+test.serial('should throw if a channel has no name', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/resources.yaml', {
+    channels: {
+      'my-channel': { destination_url: 'https://example.com' },
+    },
+  });
+
+  await t.throwsAsync(() => parseProject({ root: '/ws' }), {
+    message: 'resources.yaml: channel "my-channel" has no name',
+  });
+});
+
+test.serial(
+  'should return undefined channels when there is no resources.yaml',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    const project = await parseProject({ root: '/ws' });
+    t.is(project.channels, undefined);
+  }
+);
+
+test.serial(
+  'should return undefined channels when resources.yaml has no channels key',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+    mockFile('/ws/resources.yaml', { collections: ['my-collection'] });
+
+    const project = await parseProject({ root: '/ws' });
+    t.is(project.channels, undefined);
+  }
+);
+
 test.serial('should override the name and id from options', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),

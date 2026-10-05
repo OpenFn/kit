@@ -23,6 +23,7 @@ export type Opts = BaseOpts & {
   createCredentials?: boolean;
   branch?: string | false;
   track?: boolean;
+  checkout?: boolean;
 };
 
 // project specific options
@@ -57,6 +58,21 @@ export const track: CLIOption = {
     boolean: true,
     description:
       'When on a git branch, make this branch track the checked out project (by default, checking out a different project only expands its files)',
+  },
+};
+
+export const checkout: CLIOption = {
+  name: 'checkout',
+  yargs: {
+    boolean: true,
+    default: true,
+    description:
+      'Checkout the project after deploying. Use --no-checkout or OPENFN_NO_CHECKOUT_AFTER_DEPLOY=true to skip',
+  },
+  ensure: (opts: any) => {
+    if (process.env.OPENFN_NO_CHECKOUT_AFTER_DEPLOY === 'true') {
+      opts.checkout = false;
+    }
   },
 };
 

@@ -1,9 +1,11 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  toResourceChannels,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
+import { isEqual } from 'lodash-es';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -44,6 +46,7 @@ export type DeployOptions = Pick<
   project?: string; // this is a CLI positional arg, not an option
   alias?: string;
   branch?: string | false;
+  checkout?: boolean;
   credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
@@ -66,6 +69,7 @@ const options = [
   o2.jsonDiff,
   o2.workflow,
   o2.credentials,
+  o2.checkout,
 
   // general options
   o.apiKey,
@@ -171,6 +175,15 @@ export const deletedCollections = (
     .map((c) => ({ id: c.uuid as string, name: c.name, delete: true }));
 };
 
+// A missing resources.yaml (local.channels undefined) means channels aren't
+// managed locally, so there's nothing to change
+export const channelsChanged = (local: Project, remote: Project) =>
+  !!local.channels &&
+  !isEqual(
+    toResourceChannels(local.channels, local.credentials),
+    toResourceChannels(remote.channels, remote.credentials)
+  );
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -244,10 +257,11 @@ const syncProjects = async (
 
   // TODO: what if remote diff and the version checked disagree for some reason?
   const workflowDiffs = mergeCandidates.length
-    ? remoteProject.diff(localProject, mergeCandidates)
+    ? remoteProject.diff(localProject, mergeCandidates).workflows
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
-  if (!workflowDiffs.length && !didCollectionsChange) {
+  const didChannelsChange = channelsChanged(localProject, remoteProject);
+  if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
     logger.success('Nothing to deploy');
     return null;
   }
@@ -595,23 +609,29 @@ export async function handler(options: DeployOptions, logger: Logger) {
       }
     );
 
-    updateForkedFrom(finalProject);
-    // Write the updated openfn.yaml and checkout file
-    // TODO: allow us to suppress writing this stuff
-    // (useful if posting from spec)
-    for (const configData of finalProject.generateConfig(options.branch)) {
-      const configPath = path.resolve(
-        options.workspace ?? process.cwd(),
-        configData.path
-      );
-      await mkdir(path.dirname(configPath), { recursive: true });
-      await writeFile(configPath, configData.content);
-    }
+    if (options.checkout !== false) {
+      updateForkedFrom(finalProject);
 
-    // TODO if this was marked as new, we probably need to ensure a unique alias here
-    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
-    const fullFinalPath = await serialize(finalProject, finalOutputPath);
-    logger.debug('Updated local project at ', fullFinalPath);
+      // Write the updated openfn.yaml and checkout file
+      // TODO: allow us to suppress writing this stuff
+      // (useful if posting from spec)
+      for (const configData of finalProject.generateConfig(options.branch)) {
+        const configPath = path.resolve(
+          options.workspace ?? process.cwd(),
+          configData.path
+        );
+        await mkdir(path.dirname(configPath), { recursive: true });
+        await writeFile(configPath, configData.content);
+      }
+
+      // TODO if this was marked as new, we probably need to ensure a unique alias here
+      const finalOutputPath = getSerializePath(
+        finalProject,
+        options.workspace!
+      );
+      const fullFinalPath = await serialize(finalProject, finalOutputPath);
+      logger.debug('Updated local project at ', fullFinalPath);
+    }
 
     if (options.new) {
       logger.success('Created new project at', endpoint);

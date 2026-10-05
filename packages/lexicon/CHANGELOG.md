@@ -1,5 +1,12 @@
 # lexicon
 
+## 2.4.7
+
+### Patch Changes
+
+- 8f459f1: Remove trigger.enabled from project spec representations
+- dd7832e: Manage project channels locally through a new resources.yaml file
+
 ## 2.4.6
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.41.3",
+  "version": "1.42.0",
   "description": "CLI devtools for the OpenFn toolchain",
   "repository": {
     "url": "https://github.com/OpenFn/kit"

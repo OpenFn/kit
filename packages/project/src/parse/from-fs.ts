@@ -15,6 +15,7 @@ import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
 import slugify from '../util/slugify';
+import { RESOURCES_FILE, fromResourceChannels } from '../util/resources';
 
 export type FromFsConfig = {
   root: string;
@@ -55,6 +56,18 @@ export const parseProject = async (options: FromFsConfig) => {
       forked_from: checkout.forked_from,
     }),
   };
+
+  // resources.yaml is optional: if it's missing, or has no channels key,
+  // channels stay undefined and are left untouched on merge/deploy
+  const resources = await fs
+    .readFile(path.resolve(root, RESOURCES_FILE), 'utf-8')
+    .catch((e) => {
+      if (e.code !== 'ENOENT') throw e;
+    });
+  const channels = resources && yamlToJson(resources)?.channels;
+  if (channels) {
+    proj.channels = fromResourceChannels(channels);
+  }
 
   // now find all the workflows
   // this will find all json files in the workflows folder
