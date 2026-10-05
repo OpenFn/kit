@@ -92,6 +92,27 @@ test('Autoinstall basically works', async (t) => {
   });
 });
 
+test('autoinstall supports an adaptor named constructor', async (t) => {
+  const context = createContext(
+    {
+      handleInstall: mockHandleInstall,
+      handleIsInstalled: async () => false,
+    },
+    [{ adaptors: ['constructor@1.0.0'] }],
+    [/constructor/]
+  );
+
+  const paths = await autoinstall(context);
+
+  t.deepEqual(paths, {
+    'constructor@1.0.0': {
+      path: 'tmp/repo/node_modules/constructor_1.0.0',
+      version: '1.0.0',
+    },
+  });
+  t.deepEqual(context.versions.constructor, ['1.0.0']);
+});
+
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
     name: 'repo',
