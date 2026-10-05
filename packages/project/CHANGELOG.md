@@ -1,5 +1,19 @@
 # @openfn/project
 
+## 0.21.0
+
+### Minor Changes
+
+- dd7832e: Manage project channels locally through a new resources.yaml file
+
+### Patch Changes
+
+- 8f459f1: Remove trigger.enabled from project spec representations
+- dd7832e: Project diff now returns { workflows, resources } and includes channel changes
+- Updated dependencies [8f459f1]
+- Updated dependencies [dd7832e]
+  - @openfn/lexicon@2.4.7
+
 ## 0.20.4
 
 ### Patch Changes

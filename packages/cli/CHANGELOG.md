@@ -1,5 +1,22 @@
 # @openfn/cli
 
+## 1.42.0
+
+### Minor Changes
+
+- dd7832e: Manage project channels locally through a new resources.yaml file
+
+### Patch Changes
+
+- dd7832e: Show resource diffs on deploy
+- fb308d7: Add `--no-checkout` to deploy, alongside OPENFN_NO_CHECKOUT_AFTER_DEPLOY
+- 8f459f1: Remove trigger.enabled from workflow.yaml, so that it doesn't show up on git diffs.
+- Updated dependencies [8f459f1]
+- Updated dependencies [dd7832e]
+- Updated dependencies [dd7832e]
+  - @openfn/lexicon@2.4.7
+  - @openfn/project@0.21.0
+
 ## 1.41.3
 
 ### Patch Changes
