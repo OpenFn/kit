@@ -34,7 +34,7 @@ export class Workspace {
   branch?: string | false | null;
 
   private projects: Project[] = [];
-  private projectPaths = new Map<string, string>();
+  private projectPaths = new Map<Project, string>();
   private isValid: boolean = false;
   private logger: Logger;
 
@@ -97,7 +97,7 @@ export class Workspace {
               ...this.config,
               alias,
             });
-            this.projectPaths.set(project.id, stateFilePath);
+            this.projectPaths.set(project, stateFilePath);
             return project;
           } catch (e) {
             console.warn(`Failed to load project from ${stateFilePath}`);
@@ -138,14 +138,22 @@ export class Workspace {
     return matchProject(nameyThing, this.projects);
   }
 
-  getProjectPath(id: string) {
-    return this.projectPaths.get(id);
+  getProjectPath(project: Project) {
+    return this.projectPaths.get(project);
   }
 
   getTrackedProject() {
+    const { alias, endpoint, uuid, id } = this.activeProject ?? {};
+    const host =
+      alias && endpoint ? new URL(endpoint as string).hostname : undefined;
+    // Several local files can share a uuid or id, so prefer the alias
     return (
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
-      this.projects.find((p) => p.id === this.activeProject?.id)
+      (!!alias &&
+        this.projects.find(
+          (p) => p.alias === alias && (!host || p.host === host)
+        )) ||
+      this.projects.find((p) => p.openfn?.uuid === uuid) ||
+      this.projects.find((p) => p.id === id)
     );
   }
 

@@ -477,7 +477,8 @@ formats:
   const checkout = fs.readFileSync('/ws1/.openfn/checkout.yaml', 'utf8');
   t.is(
     checkout,
-    `id: staging
+    `alias: staging
+id: staging
 name: Staging
 uuid: <uuid:staging>
 `

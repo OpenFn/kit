@@ -220,7 +220,8 @@ test('generate checkout file with forked_from', (t) => {
   t.is(result.path, '.openfn/checkout.yaml');
   t.deepEqual(
     result.content,
-    `forked_from: abcd
+    `alias: main
+forked_from: abcd
 id: my-project
 name: My Project
 uuid: 1234
@@ -258,7 +259,8 @@ test("checkout file excludes forked_from if it's not set", (t) => {
   t.is(result.path, '.openfn/branches/dev/checkout.yaml');
   t.deepEqual(
     result.content,
-    `id: my-project
+    `alias: main
+id: my-project
 name: My Project
 uuid: 1234
 `
