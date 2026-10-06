@@ -446,7 +446,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
     ws ??= new Workspace(options.workspace || '.', undefined, true, {
       branch: options.branch,
     });
-    tracker = ws.get(targetIdentifier ?? localProject.uuid!);
+    tracker = targetIdentifier
+      ? ws.get(targetIdentifier)
+      : // A checked-out project is tracked by alias, which survives duplicate uuids
+        (!filePath && !!ws.activeProject?.alias && ws.getTrackedProject()) ||
+        ws.get(localProject.uuid!);
 
     // A project loaded from a file already knows which remote it belongs
     // to, so it can serve as its own deploy destination - we don't need a

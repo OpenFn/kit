@@ -299,6 +299,7 @@ test.serial(
 
     t.is(filePath, '/ws/.openfn/checkout.yaml');
     t.deepEqual(yamlToJson(fs.readFileSync(filePath, 'utf8')), {
+      alias: 'main',
       endpoint: 'https://app.openfn.org',
       forked_from: { wf: 'latest' },
       id: 'my-project',
