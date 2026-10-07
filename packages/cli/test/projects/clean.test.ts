@@ -137,3 +137,21 @@ test.serial(
     t.true(fs.existsSync('/ws/workflows/old-workflow/old-job.js'));
   }
 );
+
+test.serial(
+  'does not delete anything if there is no active project to restore',
+  async (t) => {
+    // a workspace with no projects and no checkout metadata at all
+    mock({
+      '/ws/workflows/old-workflow': { 'old-job.js': 'fn(s => s)' },
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      cleanHandler({ workspace: '/ws', force: true } as any, logger),
+      { message: /No active project found/ }
+    );
+
+    t.true(fs.existsSync('/ws/workflows/old-workflow/old-job.js'));
+  }
+);

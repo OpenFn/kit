@@ -8,6 +8,7 @@ import * as po from './options';
 
 import type { Opts } from './options';
 import abort from '../util/abort';
+import ensureCheckout from './ensure-checkout';
 
 export type ProjectListOptions = Pick<Opts, 'log' | 'workspace' | 'branch'>;
 
@@ -28,7 +29,7 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
   logger.info(' ', options.workspace);
   logger.break();
 
-  const workspace = new Workspace(options.workspace!, undefined, true, {
+  let workspace = new Workspace(options.workspace!, undefined, true, {
     branch: options.branch,
   });
 
@@ -41,6 +42,10 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
       fix: 'Run this command from a folder with an openfn.yaml file, or pass --workspace to set the workspace root',
     });
   }
+
+  // Listing works fine without a checkout: it just can't mark the active
+  // project, so there's no need to abort if we can't ask which it is
+  workspace = await ensureCheckout(workspace, logger, { required: false });
 
   logger.always(`Available openfn projects\n\n${workspace
     .list()

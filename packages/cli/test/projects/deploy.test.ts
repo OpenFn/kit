@@ -30,6 +30,7 @@ import {
   myProject_v1_spec,
 } from './fixtures';
 import { checkout } from '../../src/projects';
+import { rimraf } from 'rimraf';
 
 let server: any;
 let strictServer: any;
@@ -1433,5 +1434,68 @@ test.serial(
     ).catch(() => {});
 
     t.falsy(privateLogger._find('error', /No checked out project found/));
+  }
+);
+
+test.serial(
+  'deploy: merges the workspace into an explicit target on a fresh clone, without a checkout',
+  async (t) => {
+    await setup(projectYaml);
+
+    // simulate a fresh git clone: the workflows are there, nothing is checked
+    // out, and there's more than one tracked project
+    // (fs.rmSync is a no-op under mock-fs, hence rimraf)
+    await rimraf('/ws/.openfn');
+    t.false(fs.existsSync('/ws/.openfn'));
+    fs.writeFileSync('/ws/.projects/other@localhost.yaml', projectYaml);
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: 'main',
+        checkout: false,
+        force: true,
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Updated project at/));
+    t.is(
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ].body,
+      'log()'
+    );
+    // deploying doesn't set up a checkout
+    t.false(fs.existsSync('/ws/.openfn'));
+  }
+);
+
+test.serial(
+  'deploy: deploys a project file on a fresh clone, without a checkout',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_spec,
+      '/ws/openfn.yaml': '',
+      '/ws/.projects/main@localhost.yaml': projectYaml,
+      '/ws/.projects/other@localhost.yaml': projectYaml,
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Created new project at/));
+    t.is(Object.keys(server.state.projects).length, 2);
   }
 );

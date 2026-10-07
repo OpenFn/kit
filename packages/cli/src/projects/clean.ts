@@ -39,6 +39,14 @@ export const handler = async (options: CleanOptions, logger: Logger) => {
     logger
   );
 
+  // This has to be checked before deleting anything
+  const activeProject = workspace.activeProject;
+  if (!activeProject) {
+    throw new Error(
+      'No active project found in workspace. Run `project pull` first.'
+    );
+  }
+
   const skip = options.force || options.confirm === false;
   const doIt = await logger.confirm(
     `This will delete all files in ${workspace.workflowsPath}. Do you want to proceed?`,
@@ -49,13 +57,6 @@ export const handler = async (options: CleanOptions, logger: Logger) => {
   }
 
   await rimraf(workspace.workflowsPath);
-
-  const activeProject = workspace.activeProject;
-  if (!activeProject) {
-    throw new Error(
-      'No active project found in workspace. Run `project pull` first.'
-    );
-  }
 
   const projectId = String(activeProject.uuid ?? (activeProject as any).id);
   await checkout({ ...options, project: projectId, force: true }, logger);

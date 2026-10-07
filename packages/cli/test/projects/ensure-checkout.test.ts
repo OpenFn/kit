@@ -5,6 +5,7 @@ import { createMockLogger } from '@openfn/logger';
 import Project, { Workspace, yamlToJson } from '@openfn/project';
 
 import ensureCheckout, {
+  describeProject,
   getDefaultProject,
 } from '../../src/projects/ensure-checkout';
 
@@ -100,6 +101,9 @@ test.serial('prompts if there are several tracked projects', async (t) => {
     prompt,
   });
 
+  // explain why we're asking
+  t.truthy(logger._find('info', /stored locally.*fresh clone/));
+
   t.is(calls.length, 1);
   t.deepEqual(calls[0].projects.map((p: Project) => p.alias).sort(), [
     'main',
@@ -110,6 +114,23 @@ test.serial('prompts if there are several tracked projects', async (t) => {
   t.is(readCheckout().uuid, 'uuid-staging');
   t.is(result.activeProject?.uuid, 'uuid-staging');
 });
+
+test.serial(
+  'does not set anything up if the user skips the prompt',
+  async (t) => {
+    setup();
+    const workspace = new Workspace('/ws', logger);
+
+    const result = await ensureCheckout(workspace, logger, {
+      interactive: true,
+      prompt: async () => null,
+    });
+
+    t.is(result, workspace);
+    t.false(fs.existsSync('/ws/.openfn'));
+    t.truthy(logger._find('info', /Skipped/));
+  }
+);
 
 test.serial(
   'does not touch the workflows when setting up the checkout',
@@ -185,6 +206,37 @@ test.serial(
   }
 );
 
+test.serial(
+  'carries on without a checkout if not interactive and not required',
+  async (t) => {
+    setup();
+    const workspace = new Workspace('/ws', logger);
+
+    const result = await ensureCheckout(workspace, logger, {
+      interactive: false,
+      required: false,
+      prompt: neverPrompt,
+    });
+
+    t.is(result, workspace);
+    t.false(fs.existsSync('/ws/.openfn'));
+  }
+);
+
+test.serial('still prompts if interactive, even if not required', async (t) => {
+  setup();
+  const { prompt, calls } = pickPrompt('staging');
+
+  const result = await ensureCheckout(new Workspace('/ws', logger), logger, {
+    interactive: true,
+    required: false,
+    prompt,
+  });
+
+  t.is(calls.length, 1);
+  t.is(result.activeProject?.uuid, 'uuid-staging');
+});
+
 const projects = (aliases: string[]) =>
   aliases.map((alias) => ({ alias })) as unknown as Project[];
 
@@ -203,4 +255,32 @@ test('getDefaultProject: falls back to main', (t) => {
 
 test('getDefaultProject: falls back to the first project', (t) => {
   t.is(getDefaultProject(projects(['a', 'b']), 'feature').alias, 'a');
+});
+
+const described = (props: object) => describeProject(props as Project);
+
+test('describeProject: alias with id and uuid', (t) => {
+  t.is(
+    described({ alias: 'staging', id: 'my-project', openfn: { uuid: 'abcd' } }),
+    'staging (my-project | abcd)'
+  );
+});
+
+test('describeProject: copes with a missing uuid or id', (t) => {
+  t.is(
+    described({ alias: 'staging', id: 'my-project' }),
+    'staging (my-project)'
+  );
+  t.is(
+    described({ alias: 'staging', openfn: { uuid: 'abcd' } }),
+    'staging (abcd)'
+  );
+});
+
+test('describeProject: just the alias if there is no id or uuid', (t) => {
+  t.is(described({ alias: 'staging' }), 'staging');
+});
+
+test('describeProject: copes with a missing alias', (t) => {
+  t.is(described({ id: 'my-project' }), '(no alias) (my-project)');
 });

@@ -6,28 +6,45 @@ import abort from '../util/abort';
 import type { Logger } from '../util/logger';
 import { writeCheckoutFile } from './util';
 
+// Resolves to the chosen project, or null if the user skipped the question
 type Prompt = (
   projects: Project[],
   defaultProject: Project
-) => Promise<Project>;
+) => Promise<Project | null>;
 
 type EnsureCheckoutOptions = {
   // Can we ask the user questions? Defaults to whether stdin is a terminal
   interactive?: boolean;
   prompt?: Prompt;
+  // If false, carry on without a checkout when we can't ask the user, rather
+  // than aborting (for commands that can work without one)
+  required?: boolean;
 };
 
 const name = (project: Project) => project.alias ?? project.id;
 
+// eg `staging (my-project | 1234-abcd)`. Either id may be missing
+export const describeProject = (project: Project) => {
+  const ids = [project.id, project.openfn?.uuid].filter(Boolean).join(' | ');
+  return `${project.alias || '(no alias)'}${ids ? ` (${ids})` : ''}`;
+};
+
 const promptForProject: Prompt = (projects, defaultProject) =>
-  select({
+  select<Project | null>({
     message:
-      'No checked out project found. Which project are the files in this workspace from?',
-    choices: projects.map((project) => ({
-      name: `${name(project)} (${project.id})`,
-      value: project,
-      description: project.openfn?.endpoint,
-    })),
+      'No checked out project found. Select the project which is currently tracked.',
+    choices: [
+      ...projects.map((project) => ({
+        name: describeProject(project),
+        value: project as Project | null,
+        description: project.openfn?.endpoint,
+      })),
+      {
+        name: 'Skip checkout',
+        value: null,
+        description: 'Continue without setting the checked out project',
+      },
+    ],
     default: defaultProject,
   });
 
@@ -56,6 +73,7 @@ export default async (
   {
     interactive = Boolean(process.stdin.isTTY),
     prompt = promptForProject,
+    required = true,
   }: EnsureCheckoutOptions = {}
 ) => {
   if (!workspace.valid || hasCheckoutMeta(workspace.root, workspace.branch)) {
@@ -68,11 +86,22 @@ export default async (
     return workspace;
   }
 
-  let project: Project;
+  if (projects.length > 1 && !interactive && !required) {
+    logger.debug('No checked out project found: carrying on without one');
+    return workspace;
+  }
+
+  let project: Project | null = null;
   if (projects.length === 1) {
     project = projects[0];
     logger.info(`No checked out project found: using ${name(project)}`);
   } else if (interactive) {
+    logger.info(
+      'Failed to find a checkout.yaml file, which describes which project is currently checked out. This usually happens when pulling a project from git.'
+    );
+    logger.info(
+      "No problem - just pick which project is checked out. This won't affect your working tree, it'll just update local metadata and tell the CLI which remote project instance to track\n."
+    );
     project = await prompt(
       projects,
       getDefaultProject(projects, workspace.branch)
@@ -86,8 +115,13 @@ export default async (
     });
   }
 
-  await writeCheckoutFile(workspace.root, project!, workspace.branch);
-  logger.success(`Set the checked out project to ${name(project!)}`);
+  if (!project) {
+    logger.info('Skipped: no checked out project has been set');
+    return workspace;
+  }
+
+  await writeCheckoutFile(workspace.root, project, workspace.branch);
+  logger.success(`Set the checked out project to ${name(project)}`);
 
   return new Workspace(workspace.root, logger, true, {
     branch: workspace.branch,
