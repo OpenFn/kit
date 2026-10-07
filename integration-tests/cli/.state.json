@@ -1,0 +1,53 @@
+{
+  "workflows": {
+    "my-workflow": {
+      "id": "702bf73f-fde1-44ca-87c5-c9e508ec2407",
+      "name": "My Workflow",
+      "jobs": {
+        "transform-data": {
+          "id": "43d6474d-df15-4ce6-a1a3-52e6400a36a9",
+          "name": "Transform data",
+          "adaptor": "@openfn/language-common@latest",
+          "body": "fn(s => s)",
+          "project_credential_id": "0f750fd9-b34c-4cf1-a6a9-a97cc18a2f4c"
+        }
+      },
+      "triggers": {
+        "webhook": {
+          "id": "ca8358c9-b47b-4ad6-ba45-7a37384b81af",
+          "type": "webhook",
+          "enabled": true
+        }
+      },
+      "edges": {
+        "webhook->transform-data": {
+          "id": "7026ceb7-f841-4b4b-a182-b2470384a1c2",
+          "condition_type": null,
+          "target_job_id": "43d6474d-df15-4ce6-a1a3-52e6400a36a9",
+          "enabled": true,
+          "source_trigger_id": "ca8358c9-b47b-4ad6-ba45-7a37384b81af"
+        }
+      },
+      "lock_version": 1,
+      "inserted_at": "2026-10-05T14:49:28.664Z",
+      "updated_at": "2026-10-05T14:49:28.664Z",
+      "deleted_at": null,
+      "version_history": [
+        "app:d9287d0b8d8c"
+      ]
+    }
+  },
+  "id": "9351c38a-18ca-48ee-af7f-e4a479d92294",
+  "name": "My Project",
+  "project_credentials": {
+    "super@openfn.org|http1": {
+      "id": "0f750fd9-b34c-4cf1-a6a9-a97cc18a2f4c",
+      "name": "http1",
+      "owner": "super@openfn.org"
+    }
+  },
+  "collections": {},
+  "inserted_at": "2026-10-05T14:49:28.664Z",
+  "updated_at": "2026-10-05T14:49:28.664Z",
+  "channels": {}
+}

@@ -12,9 +12,12 @@ export { diff } from './util/project-diff';
 export type {
   WorkflowDiff,
   ChannelDiff,
+  CollectionDiff,
   ProjectDiff,
   DiffType,
 } from './util/project-diff';
+
+export { RESOURCES_FILE } from './util/resources';
 
 export { generateStepDiff, generateEdgeDiff } from './util/workflow-diff';
 export type {

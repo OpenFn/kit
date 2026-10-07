@@ -388,17 +388,12 @@ test('toFs: extract a project with forked_from meta', (t) => {
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
 
-test('toFs: writes collection names into openfn.json (freshly authored, no uuid yet)', (t) => {
+test('toFs: writes collections to resources.yaml keyed by name (freshly authored, no uuid yet)', (t) => {
   const project = new Project(
     {
       name: 'My Project',
       collections: [{ name: 'my-collection' }, { name: 'another-collection' }],
-      workflows: [
-        {
-          id: 'my-workflow',
-          steps: [step],
-        },
-      ],
+      workflows: [],
     },
     {
       formats: {
@@ -410,64 +405,67 @@ test('toFs: writes collection names into openfn.json (freshly authored, no uuid 
 
   const files = toFs(project);
 
-  const config = JSON.parse(files['openfn.json']);
-  t.deepEqual(config.collections, ['my-collection', 'another-collection']);
+  t.deepEqual(yamlToJson(files['resources.yaml']), {
+    collections: { 'my-collection': {}, 'another-collection': {} },
+  });
+  // collections don't belong in openfn.json
+  t.falsy(JSON.parse(files['openfn.json']).collections);
 });
 
-test('toFs: strips uuids from fetched collections when writing to openfn.json', (t) => {
-  const project = new Project(
-    {
-      name: 'My Project',
-      // this is the shape a freshly-fetched project's collections are in -
-      // uuids should never be written to openfn.yaml
-      collections: [
-        { uuid: 'remote-uuid-1', name: 'my-collection' },
-        { uuid: 'remote-uuid-2', name: 'another-collection' },
-      ],
-      workflows: [
-        {
-          id: 'my-workflow',
-          steps: [step],
-        },
-      ],
-    },
-    {
-      formats: {
-        openfn: 'json',
-        workflow: 'json',
-      },
-    }
-  );
+test('toFs: strips uuids from fetched collections when writing to resources.yaml', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    // this is the shape a freshly-fetched project's collections are in -
+    // uuids should never be written to disk
+    collections: [
+      { uuid: 'remote-uuid-1', name: 'my-collection' },
+      { uuid: 'remote-uuid-2', name: 'another-collection' },
+    ],
+    workflows: [],
+  });
 
   const files = toFs(project);
 
-  const config = JSON.parse(files['openfn.json']);
-  t.deepEqual(config.collections, ['my-collection', 'another-collection']);
+  t.deepEqual(yamlToJson(files['resources.yaml']), {
+    collections: { 'my-collection': {}, 'another-collection': {} },
+  });
 });
 
-test('toFs: omits collections key when there are none', (t) => {
-  const project = new Project(
-    {
-      name: 'My Project',
-      workflows: [
-        {
-          id: 'my-workflow',
-          steps: [step],
-        },
-      ],
-    },
-    {
-      formats: {
-        openfn: 'json',
-        workflow: 'json',
-      },
-    }
-  );
+test('toFs: writes an empty collections key when the project has none', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    collections: [],
+    workflows: [],
+  });
 
   const files = toFs(project);
 
-  const config = JSON.parse(files['openfn.json']);
-  t.falsy(config.collections);
+  // an empty key means "no collections", which is not the same as no key
+  t.deepEqual(yamlToJson(files['resources.yaml']), { collections: {} });
+});
+
+test('toFs: writes collections and channels to the same resources.yaml', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    collections: [{ name: 'my-collection' }],
+    channels: [
+      {
+        name: 'My Channel',
+        destination_url: 'https://example.com',
+        enabled: true,
+      },
+    ],
+    workflows: [],
+  });
+
+  const resources = yamlToJson(toFs(project)['resources.yaml']);
+  t.deepEqual(Object.keys(resources).sort(), ['channels', 'collections']);
+});
+
+test('toFs: does not write resources.yaml when collections are unknown', (t) => {
+  const project = new Project({ name: 'My Project', workflows: [] });
+
+  t.false('resources.yaml' in toFs(project));
 });
 
 test('toFs: writes channels to resources.yaml keyed by id, with credential names', (t) => {

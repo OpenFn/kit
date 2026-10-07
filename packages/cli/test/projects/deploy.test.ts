@@ -619,11 +619,12 @@ test.serial(
 
     await setup(projectYaml);
 
-    // user hand-edits openfn.yaml: keep one, drop one, add a new one -
+    // user hand-edits resources.yaml: keep one, drop one, add a new one -
     // no workflow files are touched
-    const openfn: any = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
-    openfn.collections = ['keep-me', 'new-collection'];
-    await writeFile('/ws/openfn.yaml', jsonToYaml(openfn));
+    await writeFile(
+      '/ws/resources.yaml',
+      jsonToYaml({ collections: { 'keep-me': {}, 'new-collection': {} } })
+    );
 
     await deploy(
       {
@@ -634,6 +635,11 @@ test.serial(
       } as any,
       logger
     );
+
+    // the diff should say what's being deleted and added
+    t.truthy(logger._find('always', /Collections:/));
+    t.truthy(logger._find('always', /remove-me: removed/));
+    t.truthy(logger._find('always', /new-collection: added/));
 
     // a collections-only edit must not be treated as "nothing to deploy"
     t.falsy(logger._find('success', /Nothing to deploy/));
@@ -649,6 +655,12 @@ test.serial(
     );
     t.truthy(created?.id);
     t.falsy(created?.delete);
+
+    // resources.yaml is kept in sync after the deploy
+    const resources: any = yamlToJson(
+      fs.readFileSync('/ws/resources.yaml', 'utf8')
+    );
+    t.deepEqual(resources.collections, { 'keep-me': {}, 'new-collection': {} });
   }
 );
 
@@ -1143,6 +1155,34 @@ test('collectionsChanged: true when a name was removed locally', (t) => {
   t.true(collectionsChanged(local, remote));
 });
 
+test('collectionsChanged: false when collections are not managed locally', (t) => {
+  // undefined means "leave alone", unlike an empty list
+  const local = {} as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.false(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when every collection was removed locally', (t) => {
+  const local = { collections: [] } as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('deletedCollections: nothing to delete when collections are not managed locally', (t) => {
+  const merged = {} as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), []);
+});
+
 test('deletedCollections: flags a remote name missing from the merged project', (t) => {
   const merged = {
     collections: [{ name: 'keep-me' }],
@@ -1246,6 +1286,62 @@ test('printRichDiff: should report removed channels', (t) => {
   printRichDiff(local, remote, [], logger);
 
   t.truthy(logger._find('always', /one: removed/));
+});
+
+test('printRichDiff: should report added and removed collections', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    collections: [{ name: 'keep-me' }, { name: 'new-one' }],
+  });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [
+      { uuid: 'a', name: 'keep-me' },
+      { uuid: 'b', name: 'old-one' },
+    ],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /following changes to the remote project/));
+  t.truthy(logger._find('always', /Collections:/));
+  t.truthy(logger._find('always', /new-one: added/));
+  t.truthy(logger._find('always', /old-one: removed/));
+});
+
+test('printRichDiff: should show every collection as removed when all are deleted', (t) => {
+  const local = new Project({ name: 'local', workflows: [], collections: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [
+      { uuid: 'a', name: 'one' },
+      { uuid: 'b', name: 'two' },
+    ],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: removed/));
+  t.truthy(logger._find('always', /two: removed/));
+});
+
+test('printRichDiff: should not report collections that are not managed locally', (t) => {
+  const local = new Project({ name: 'local', workflows: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [{ uuid: 'a', name: 'one' }],
+  });
+
+  // use a private logger: an absence check isn't safe on the shared one
+  const privateLogger = createMockLogger(undefined, { level: 'debug' });
+  printRichDiff(local, remote, [], privateLogger);
+
+  t.falsy(privateLogger._find('always', /Collections:/));
+  t.truthy(privateLogger._find('info', /No workflow changes detected/));
 });
 
 test('printRichDiff: should list changed channel fields', (t) => {

@@ -92,15 +92,9 @@ export const loadCheckoutFile = (
 
 // Generate a workspace config (openfn.yaml) file for a project
 export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
-  const workspace: any = {
+  const workspace = {
     ...source.config,
   };
-
-  if (source.collections?.length) {
-    // openfn.yaml only ever carries collection names - no ids/uuids, those
-    // belong to the server
-    workspace.collections = source.collections.map((c) => c.name);
-  }
 
   format = format ?? workspace.formats.openfn;
   if (format === 'yaml') {

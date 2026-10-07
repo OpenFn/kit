@@ -1,12 +1,13 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  RESOURCES_FILE,
   toResourceChannels,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
 import { isEqual } from 'lodash-es';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import * as o from '../options';
@@ -152,7 +153,11 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+// A missing collections key (local.collections undefined) means collections
+// aren't managed locally, so there's nothing to change
 export const collectionsChanged = (local: Project, remote: Project) => {
+  if (!local.collections) return false;
+
   const names = (project: Project) =>
     new Set((project.collections ?? []).map((c) => c.name));
 
@@ -164,11 +169,13 @@ export const collectionsChanged = (local: Project, remote: Project) => {
 };
 
 // Collections dropped from the merged project (ie, removed from
-// openfn.yaml) need an explicit delete entry in the deploy payload
+// resources.yaml) need an explicit delete entry in the deploy payload
 export const deletedCollections = (
   merged: Project,
   remote: Project
 ): Provisioner.Collection[] => {
+  if (!merged.collections) return [];
+
   const keptNames = new Set((merged.collections ?? []).map((c) => c.name));
   return (remote.collections ?? [])
     .filter((c) => !keptNames.has(c.name) && c.uuid)
@@ -622,6 +629,22 @@ export async function handler(options: DeployOptions, logger: Logger) {
         );
         await mkdir(path.dirname(configPath), { recursive: true });
         await writeFile(configPath, configData.content);
+      }
+
+      // Sync collections into resources.yaml (anything else in there is left alone)
+      const resourcesPath = path.resolve(
+        options.workspace ?? process.cwd(),
+        RESOURCES_FILE
+      );
+      const existingResources = await readFile(resourcesPath, 'utf8').catch(
+        (e) => {
+          if (e.code !== 'ENOENT') throw e;
+          return undefined;
+        }
+      );
+      const resources = finalProject.generateResources(existingResources);
+      if (resources.content) {
+        await writeFile(resourcesPath, resources.content);
       }
 
       // TODO if this was marked as new, we probably need to ensure a unique alias here

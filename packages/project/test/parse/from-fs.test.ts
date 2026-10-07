@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { parseProject } from '../../src/parse/from-fs';
-import { jsonToYaml } from '../../src/util/yaml';
+import { jsonToYaml, yamlToJson } from '../../src/util/yaml';
 import { buildConfig } from '../../src/util/config';
 
 test.afterEach(() => {
@@ -191,7 +191,29 @@ test.serial('should load the name from config', async (t) => {
   t.is(project.id, 'peaches-for-me');
 });
 
-test.serial('should load collections from config', async (t) => {
+test.serial(
+  'legacy collections move to resources.yaml when written back out',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', {
+      workspace: buildConfig(),
+      project: { id: 'my-project', collections: ['my-collection'] },
+    });
+    mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+      id: 'workflow-1',
+      name: 'Workflow 1',
+    });
+
+    const project = await parseProject({ root: '/ws' });
+    const written = project.serialize('fs');
+
+    t.deepEqual(yamlToJson(written['resources.yaml']), {
+      collections: { 'my-collection': {} },
+    });
+    t.false(written['openfn.yaml'].includes('collections'));
+  }
+);
+
+test.serial('should load legacy collections from openfn.yaml', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),
     project: {
@@ -216,6 +238,61 @@ test.serial('should load collections from config', async (t) => {
   // @ts-ignore
   t.falsy(project.openfn!.collections);
 });
+
+test.serial('should load collections from resources.yaml', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/resources.yaml', {
+    collections: { 'my-collection': {}, 'another-collection': {} },
+  });
+
+  const project = await parseProject({ root: '/ws' });
+  // in-memory shape is {name, uuid?}, resources.yaml itself has no uuids
+  t.deepEqual(project.collections, [
+    { name: 'my-collection' },
+    { name: 'another-collection' },
+  ]);
+});
+
+test.serial(
+  'resources.yaml collections take precedence over legacy',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', {
+      workspace: buildConfig(),
+      project: { id: 'my-project', collections: ['legacy-collection'] },
+    });
+    mockFile('/ws/resources.yaml', { collections: { 'new-collection': {} } });
+
+    const project = await parseProject({ root: '/ws' });
+    t.deepEqual(project.collections, [{ name: 'new-collection' }]);
+  }
+);
+
+test.serial(
+  'an empty collections key in resources.yaml means no collections',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', {
+      workspace: buildConfig(),
+      project: { id: 'my-project', collections: ['legacy-collection'] },
+    });
+    mockFile('/ws/resources.yaml', { collections: {} });
+
+    const project = await parseProject({ root: '/ws' });
+    t.deepEqual(project.collections, []);
+  }
+);
+
+test.serial(
+  'should leave collections undefined if resources.yaml has no collections key',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+    mockFile('/ws/resources.yaml', {
+      channels: { c: { name: 'c', destination_url: 'https://x.org' } },
+    });
+
+    const project = await parseProject({ root: '/ws' });
+    t.is(project.collections, undefined);
+  }
+);
 
 test.serial(
   'should return undefined collections when none are configured',

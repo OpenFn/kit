@@ -195,13 +195,13 @@ formats:
   );
 });
 
-test('generate openfn.yaml with collection names', (t) => {
+test('generate openfn.yaml does not include collections', (t) => {
   const proj = new Project({
     id: 'my-project',
     collections: [{ uuid: 'remote-uuid', name: 'my-collection' }],
   });
   const result = extractConfig(proj);
-  t.true(result.content.startsWith('collections:\n  - my-collection\n'));
+  t.false(result.content.includes('collections'));
 });
 
 test('generate checkout file with forked_from', (t) => {

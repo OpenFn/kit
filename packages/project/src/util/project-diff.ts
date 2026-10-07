@@ -17,10 +17,16 @@ export type ChannelDiff = {
   changes?: Record<string, { from: unknown; to: unknown }>;
 };
 
+export type CollectionDiff = {
+  name: string;
+  type: Exclude<DiffType, 'changed'>;
+};
+
 export type ProjectDiff = {
   workflows: WorkflowDiff[];
   resources: {
     channels: ChannelDiff[];
+    collections: CollectionDiff[];
   };
 };
 
@@ -34,7 +40,7 @@ export type ProjectDiff = {
  * @param b - The comparison project (e.g., staging branch)
  * Channels are compared by their resources.yaml id. If either project has no
  * channels defined (undefined) they are not managed, so no channel changes are
- * reported.
+ * reported. Collections are compared by name, and follow the same rule.
  *
  * @returns An object with `workflows` and `resources` indicating how B differs
  * from A. Each workflow diff is:
@@ -87,8 +93,31 @@ export function diff(
     }
   }
 
-  return { workflows: diffs, resources: { channels: diffChannels(a, b) } };
+  return {
+    workflows: diffs,
+    resources: {
+      channels: diffChannels(a, b),
+      collections: diffCollections(a, b),
+    },
+  };
 }
+
+const diffCollections = (a: Project, b: Project): CollectionDiff[] => {
+  if (!a.collections || !b.collections) {
+    return [];
+  }
+
+  const namesA = new Set(a.collections.map((c) => c.name));
+  const namesB = new Set(b.collections.map((c) => c.name));
+  return [
+    ...Array.from(namesA)
+      .filter((name) => !namesB.has(name))
+      .map((name) => ({ name, type: 'removed' as const })),
+    ...Array.from(namesB)
+      .filter((name) => !namesA.has(name))
+      .map((name) => ({ name, type: 'added' as const })),
+  ];
+};
 
 const diffChannels = (a: Project, b: Project): ChannelDiff[] => {
   if (!a.channels || !b.channels) {

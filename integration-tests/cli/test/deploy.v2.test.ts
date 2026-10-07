@@ -526,7 +526,7 @@ test.serial(
 );
 
 test.serial(
-  'deploy collections: add a collection via openfn.yaml',
+  'deploy collections: add a collection via resources.yaml',
   async (t) => {
     const projectId = 'gggggggg';
     server.addProject(makeProject(projectId) as any);
@@ -544,13 +544,13 @@ test.serial(
       /Checked out project locally/i
     );
 
-    const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
-    const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
-    t.falsy(before.collections);
+    const resourcesPath = path.resolve(tmpDir, 'resources.yaml');
+    const before: any = yamlToJson(await fs.readFile(resourcesPath, 'utf8'));
+    t.deepEqual(before.collections, {});
 
     // add a collection by hand - no workflow files are touched
-    before.collections = ['my-collection'];
-    await fs.writeFile(openfnPath, jsonToYaml(before));
+    before.collections = { 'my-collection': {} };
+    await fs.writeFile(resourcesPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(
       `openfn project deploy --no-confirm --log-json -l debug`
@@ -629,7 +629,7 @@ workflows:
 });
 
 test.serial(
-  'deploy collections: remove a collection via openfn.yaml',
+  'deploy collections: remove a collection via resources.yaml',
   async (t) => {
     const projectId = 'hhhhhhhh';
     server.addProject({
@@ -639,7 +639,7 @@ test.serial(
 
     t.is(server.state.projects[projectId].collections.length, 1);
 
-    // pull the project - openfn.yaml should list the fetched collection
+    // pull the project - resources.yaml should list the fetched collection
     const pullResult = await run(
       `openfn project pull ${projectId} --log-json -l debug`
     );
@@ -650,13 +650,13 @@ test.serial(
       /Checked out project locally/i
     );
 
-    const openfnPath = path.resolve(tmpDir, 'openfn.yaml');
-    const before: any = yamlToJson(await fs.readFile(openfnPath, 'utf8'));
-    t.deepEqual(before.collections, ['my-collection']);
+    const resourcesPath = path.resolve(tmpDir, 'resources.yaml');
+    const before: any = yamlToJson(await fs.readFile(resourcesPath, 'utf8'));
+    t.deepEqual(before.collections, { 'my-collection': {} });
 
     // remove the collection by hand - no workflow files are touched
-    before.collections = [];
-    await fs.writeFile(openfnPath, jsonToYaml(before));
+    before.collections = {};
+    await fs.writeFile(resourcesPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(
       `openfn project deploy --no-confirm --log-json -l debug`

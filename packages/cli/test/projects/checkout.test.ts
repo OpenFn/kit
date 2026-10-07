@@ -736,7 +736,7 @@ test.serial(
 );
 
 test.serial(
-  'checkout: writes fetched collections into openfn.yaml',
+  'checkout: writes fetched collections into resources.yaml',
   async (t) => {
     mock({
       '/ws6/workflows': {},
@@ -761,9 +761,18 @@ test.serial(
       logger
     );
 
+    const resources: any = yamlToJson(
+      fs.readFileSync('/ws6/resources.yaml', 'utf8')
+    );
+    // ids should never be written to disk - only names
+    t.deepEqual(resources.collections, {
+      'my-collection': {},
+      'another-collection': {},
+    });
+
+    // collections don't belong in openfn.yaml
     const openfn: any = yamlToJson(fs.readFileSync('/ws6/openfn.yaml', 'utf8'));
-    // ids should never be written to disk - only bare names
-    t.deepEqual(openfn.collections, ['my-collection', 'another-collection']);
+    t.falsy(openfn.collections);
   }
 );
 

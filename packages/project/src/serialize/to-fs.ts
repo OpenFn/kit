@@ -4,7 +4,7 @@ import { omit } from 'lodash-es';
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
 import { extractCheckout, extractConfig } from '../util/config';
-import { RESOURCES_FILE, toResourceChannels } from '../util/resources';
+import { RESOURCES_FILE, toResources } from '../util/resources';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
@@ -24,12 +24,11 @@ export default function (project: Project, options: ToFsOptions = {}) {
   const checkout = extractCheckout(project, options.branch);
   files[checkout.path] = checkout.content;
 
-  // Only write resources.yaml if the project knows about channels. A missing
-  // file means channels are not managed locally
-  if (project.channels) {
-    files[RESOURCES_FILE] = jsonToYaml({
-      channels: toResourceChannels(project.channels, project.credentials),
-    });
+  // Only write resources.yaml if the project knows about channels or
+  // collections. A missing key means they are not managed locally
+  const resources = toResources(project);
+  if (resources) {
+    files[RESOURCES_FILE] = resources;
   }
 
   for (const wf of project.workflows) {
