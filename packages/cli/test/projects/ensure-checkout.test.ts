@@ -168,6 +168,23 @@ test.serial('suggests the project matching the git branch', async (t) => {
   t.is(calls[0].defaultProject.alias, 'staging');
 });
 
+test.serial(
+  'suggests main if there is no git branch, even if it is not first',
+  async (t) => {
+    // projects are listed alphabetically, so main is not first here
+    setup(['alpha', 'main']);
+    const { prompt, calls } = pickPrompt('alpha');
+
+    await ensureCheckout(
+      new Workspace('/ws', logger, true, { branch: false }),
+      logger,
+      { interactive: true, prompt }
+    );
+
+    t.is(calls[0].defaultProject.alias, 'main');
+  }
+);
+
 test.serial('writes the checkout file for the branch', async (t) => {
   setup();
   const { prompt } = pickPrompt('staging');

@@ -49,11 +49,10 @@ const promptForProject: Prompt = (projects, defaultProject) =>
   });
 
 // Guess which project is checked out: one with an alias matching the git
-// branch, else the one called main, else just the first
-export const getDefaultProject = (
-  projects: Project[],
-  branch: string | false | null = 'main'
-) => projects.find((p) => p.alias === branch) ?? projects[0];
+// branch (or main, if there's no branch), else just the first.
+// Pass undefined, not null or false, if there is no branch
+export const getDefaultProject = (projects: Project[], branch = 'main') =>
+  projects.find((p) => p.alias === branch) ?? projects[0];
 
 /**
  * Make sure the workspace knows which project is checked out.
@@ -101,7 +100,7 @@ export default async (
     );
     project = await prompt(
       projects,
-      getDefaultProject(projects, workspace.branch)
+      getDefaultProject(projects, workspace.branch || undefined)
     );
   } else {
     abort(logger, 'No checked out project found', {
