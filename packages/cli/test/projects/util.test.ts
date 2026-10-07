@@ -6,6 +6,7 @@ import {
   findLocallyChangedWorkflows,
   tidyWorkflowDir,
   writeCheckoutFile,
+  ensureCheckoutIgnored,
 } from '../../src/projects/util';
 
 test.afterEach(() => {
@@ -338,5 +339,54 @@ test.serial(
     t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), 'credentials: creds.yaml');
     t.is(fs.readFileSync('/ws/workflows/wf/wf.yaml', 'utf8'), 'id: wf');
     t.deepEqual(fs.readdirSync('/ws/workflows/wf'), ['wf.yaml']);
+  }
+);
+
+test.serial(
+  'ensureCheckoutIgnored: makes git ignore everything in .openfn',
+  async (t) => {
+    mock({ '/ws': {} });
+
+    await ensureCheckoutIgnored('/ws');
+
+    t.is(fs.readFileSync('/ws/.openfn/.gitignore', 'utf8'), '*\n');
+  }
+);
+
+test.serial(
+  'ensureCheckoutIgnored: leaves an existing .gitignore alone',
+  async (t) => {
+    mock({ '/ws/.openfn/.gitignore': 'custom\n' });
+
+    await ensureCheckoutIgnored('/ws');
+
+    t.is(fs.readFileSync('/ws/.openfn/.gitignore', 'utf8'), 'custom\n');
+  }
+);
+
+test.serial(
+  'ensureCheckoutIgnored: does nothing if OPENFN_IGNORE_CHECKOUT_META is set',
+  async (t) => {
+    mock({ '/ws': {} });
+    process.env.OPENFN_IGNORE_CHECKOUT_META = 'true';
+
+    try {
+      await ensureCheckoutIgnored('/ws');
+    } finally {
+      delete process.env.OPENFN_IGNORE_CHECKOUT_META;
+    }
+
+    t.false(fs.existsSync('/ws/.openfn'));
+  }
+);
+
+test.serial(
+  'writeCheckoutFile: makes git ignore the checkout state',
+  async (t) => {
+    mock({ '/ws': {} });
+
+    await writeCheckoutFile('/ws', trackedProject());
+
+    t.is(fs.readFileSync('/ws/.openfn/.gitignore', 'utf8'), '*\n');
   }
 );

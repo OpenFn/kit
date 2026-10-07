@@ -222,6 +222,15 @@ test.serial('checkout: same id as active', async (t) => {
   );
 });
 
+test.serial('checkout: makes git ignore the checkout state', async (t) => {
+  await checkoutHandler(
+    { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+    logger
+  );
+
+  t.is(fs.readFileSync('/ws/.openfn/.gitignore', 'utf8'), '*\n');
+});
+
 test.serial(
   'checkout: writes forked_from based on version history',
   async (t) => {
