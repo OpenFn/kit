@@ -102,7 +102,8 @@ test.serial('prompts if there are several tracked projects', async (t) => {
   });
 
   // explain why we're asking
-  t.truthy(logger._find('info', /stored locally.*fresh clone/));
+  t.truthy(logger._find('info', /Failed to find a checkout.yaml file/));
+  t.truthy(logger._find('info', /just pick which project is checked out/));
 
   t.is(calls.length, 1);
   t.deepEqual(calls[0].projects.map((p: Project) => p.alias).sort(), [
@@ -245,12 +246,8 @@ test('getDefaultProject: prefers the alias matching the branch', (t) => {
   t.is(result.alias, 'staging');
 });
 
-test('getDefaultProject: falls back to main', (t) => {
-  t.is(
-    getDefaultProject(projects(['a', 'main', 'b']), 'feature').alias,
-    'main'
-  );
-  t.is(getDefaultProject(projects(['a', 'main', 'b']), false).alias, 'main');
+test('getDefaultProject: defaults to main if there is no branch', (t) => {
+  t.is(getDefaultProject(projects(['a', 'main', 'b'])).alias, 'main');
 });
 
 test('getDefaultProject: falls back to the first project', (t) => {
