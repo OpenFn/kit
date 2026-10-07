@@ -313,6 +313,13 @@ export class Project {
   }
 
   /**
+   * Generates the contents of the checkout file, plus its file path
+   */
+  generateCheckout(branch?: string | false | null) {
+    return extractCheckout(this, branch);
+  }
+
+  /**
    * Generates the contents of resources.yaml with this project's collections
    * merged into an existing file (other keys are left alone)
    */

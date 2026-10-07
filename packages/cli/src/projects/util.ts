@@ -260,6 +260,23 @@ export const updateForkedFrom = (proj: Project) => {
   return proj;
 };
 
+// Set up the checkout file for a project without touching anything else
+// (use this when the workflows are already on disk, like after a git clone)
+export const writeCheckoutFile = async (
+  workspacePath: string,
+  project: Project,
+  branch?: string | false
+) => {
+  updateForkedFrom(project);
+
+  const { path: checkoutPath, content } = project.generateCheckout(branch);
+  const filePath = path.resolve(workspacePath, checkoutPath);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, content);
+
+  return filePath;
+};
+
 // Compare a project to its version hashed when forked
 // This tells us whether the project was edited since it was created
 export const findLocallyChangedWorkflows = async (
