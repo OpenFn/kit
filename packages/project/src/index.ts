@@ -18,6 +18,7 @@ export type {
 } from './util/project-diff';
 
 export { RESOURCES_FILE } from './util/resources';
+export { hasCheckoutMeta } from './util/config';
 
 export { generateStepDiff, generateEdgeDiff } from './util/workflow-diff';
 export type {
