@@ -260,6 +260,21 @@ export const updateForkedFrom = (proj: Project) => {
   return proj;
 };
 
+// The checkout state in .openfn is local to each machine, so it shouldn't be
+// committed. Make git ignore everything in there.
+// Set OPENFN_IGNORE_CHECKOUT_META=true to skip this
+export const ensureCheckoutIgnored = async (workspacePath: string) => {
+  if (process.env.OPENFN_IGNORE_CHECKOUT_META === 'true') {
+    return;
+  }
+
+  const filePath = path.resolve(workspacePath, '.openfn', '.gitignore');
+  if (!fs.existsSync(filePath)) {
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, '*\n');
+  }
+};
+
 // Set up the checkout file for a project without touching anything else
 // (use this when the workflows are already on disk, like after a git clone)
 export const writeCheckoutFile = async (
@@ -268,6 +283,7 @@ export const writeCheckoutFile = async (
   branch?: string | false | null
 ) => {
   updateForkedFrom(project);
+  await ensureCheckoutIgnored(workspacePath);
 
   const { path: checkoutPath, content } = project.generateCheckout(branch);
   const filePath = path.resolve(workspacePath, checkoutPath);
