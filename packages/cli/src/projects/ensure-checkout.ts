@@ -52,11 +52,8 @@ const promptForProject: Prompt = (projects, defaultProject) =>
 // branch, else the one called main, else just the first
 export const getDefaultProject = (
   projects: Project[],
-  branch?: string | false | null
-) =>
-  (branch ? projects.find((p) => p.alias === branch) : undefined) ??
-  projects.find((p) => p.alias === 'main') ??
-  projects[0];
+  branch: string | false | null = 'main'
+) => projects.find((p) => p.alias === branch) ?? projects[0];
 
 /**
  * Make sure the workspace knows which project is checked out.
