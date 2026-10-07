@@ -305,11 +305,18 @@ export class Project {
   }
 
   /**
-   * Generates the contents of the openfn.yaml and checkout files,
-   * plus their file paths
+   * Generates the contents of the openfn.yaml file,
+   * plus its file path
    */
-  generateConfig(branch?: string | false | null) {
-    return [extractConfig(this), extractCheckout(this, branch)];
+  generateConfig() {
+    return extractConfig(this);
+  }
+
+  /**
+   * Generates the contents of the checkout file, plus its file path
+   */
+  generateCheckout(branch?: string | false | null) {
+    return extractCheckout(this, branch);
   }
 
   /**

@@ -1,9 +1,16 @@
 import test from 'ava';
-import Project, { generateWorkflow } from '@openfn/project';
+import fs from 'node:fs';
+import mock from 'mock-fs';
+import Project, { generateWorkflow, yamlToJson } from '@openfn/project';
 import {
   findLocallyChangedWorkflows,
   tidyWorkflowDir,
+  writeCheckoutFile,
 } from '../../src/projects/util';
+
+test.afterEach(() => {
+  mock.restore();
+});
 
 test('tidyWorkflowDir: removes workflows that no longer exist', async (t) => {
   const currentProject = new Project({
@@ -271,3 +278,65 @@ test('findLocallyChangedWorkflows: detect 1 locally removed workflow', async (t)
   const changed = await findLocallyChangedWorkflows(workspace, project);
   t.deepEqual(changed, ['b']);
 });
+
+const trackedProject = () =>
+  new Project({
+    id: 'my-project',
+    name: 'My Project',
+    openfn: { uuid: 'abcd', endpoint: 'https://app.openfn.org' },
+    workflows: [
+      { id: 'wf', name: 'wf', history: ['old', 'latest'], steps: [] },
+    ],
+  });
+
+test.serial(
+  'writeCheckoutFile: writes the project meta and forked_from to the checkout file',
+  async (t) => {
+    mock({ '/ws': {} });
+
+    const filePath = await writeCheckoutFile('/ws', trackedProject());
+
+    t.is(filePath, '/ws/.openfn/checkout.yaml');
+    t.deepEqual(yamlToJson(fs.readFileSync(filePath, 'utf8')), {
+      endpoint: 'https://app.openfn.org',
+      forked_from: { wf: 'latest' },
+      id: 'my-project',
+      name: 'My Project',
+      uuid: 'abcd',
+    });
+  }
+);
+
+test.serial(
+  'writeCheckoutFile: writes to the checkout file for a branch',
+  async (t) => {
+    mock({ '/ws': {} });
+
+    const filePath = await writeCheckoutFile('/ws', trackedProject(), 'dev');
+
+    t.is(filePath, '/ws/.openfn/branches/dev/checkout.yaml');
+    t.true(fs.existsSync(filePath));
+    t.false(fs.existsSync('/ws/.openfn/checkout.yaml'));
+  }
+);
+
+test.serial(
+  'writeCheckoutFile: does not touch the workspace config or workflows',
+  async (t) => {
+    mock({
+      '/ws/openfn.yaml': 'credentials: creds.yaml',
+      '/ws/workflows/wf/wf.yaml': 'id: wf',
+    });
+
+    await writeCheckoutFile('/ws', trackedProject());
+
+    t.deepEqual(fs.readdirSync('/ws').sort(), [
+      '.openfn',
+      'openfn.yaml',
+      'workflows',
+    ]);
+    t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), 'credentials: creds.yaml');
+    t.is(fs.readFileSync('/ws/workflows/wf/wf.yaml', 'utf8'), 'id: wf');
+    t.deepEqual(fs.readdirSync('/ws/workflows/wf'), ['wf.yaml']);
+  }
+);

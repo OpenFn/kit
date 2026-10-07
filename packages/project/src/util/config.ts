@@ -181,3 +181,22 @@ export const findWorkspaceFile = (dir: string = '.') => {
   }
   return { content, type };
 };
+
+// Does this workspace know which project is checked out?
+// True if there's checkout metadata in the checkout file, or in a legacy
+// project block in openfn.yaml. An empty checkout file doesn't count
+export const hasCheckoutMeta = (
+  root: string = '.',
+  branch?: string | false | null
+) => {
+  let legacyProject: l.ProjectMeta | undefined;
+  try {
+    const { type, content } = findWorkspaceFile(root);
+    legacyProject = loadWorkspaceFile(content, type as any).project;
+  } catch (e) {
+    // No workspace file: there can't be a legacy project block
+  }
+
+  const meta = loadCheckoutFile(root, branch, legacyProject);
+  return !!meta && Object.keys(meta).length > 0;
+};

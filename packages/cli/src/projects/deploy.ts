@@ -18,12 +18,13 @@ import {
   fetchProject,
   serialize,
   getSerializePath,
-  updateForkedFrom,
+  writeCheckoutFile,
   findLocallyChangedWorkflows,
   AuthOptions,
 } from './util';
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
+import ensureCheckout from './ensure-checkout';
 import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
@@ -404,6 +405,13 @@ export async function handler(options: DeployOptions, logger: Logger) {
       branch: options.branch,
     });
 
+    // We only need to know what's checked out if we're going to write the
+    // checkout back after deploying, and if the user hasn't told us which
+    // project to deploy to
+    if (options.checkout !== false && !targetIdentifier) {
+      ws = await ensureCheckout(ws, logger);
+    }
+
     const active = ws.getTrackedProject();
 
     if (!alias && active?.alias) {
@@ -617,25 +625,19 @@ export async function handler(options: DeployOptions, logger: Logger) {
     );
 
     if (options.checkout !== false) {
-      updateForkedFrom(finalProject);
+      const workspacePath = options.workspace ?? process.cwd();
 
       // Write the updated openfn.yaml and checkout file
       // TODO: allow us to suppress writing this stuff
       // (useful if posting from spec)
-      for (const configData of finalProject.generateConfig(options.branch)) {
-        const configPath = path.resolve(
-          options.workspace ?? process.cwd(),
-          configData.path
-        );
-        await mkdir(path.dirname(configPath), { recursive: true });
-        await writeFile(configPath, configData.content);
-      }
+      const configData = finalProject.generateConfig();
+      const configPath = path.resolve(workspacePath, configData.path);
+      await mkdir(path.dirname(configPath), { recursive: true });
+      await writeFile(configPath, configData.content);
+      await writeCheckoutFile(workspacePath, finalProject, options.branch);
 
       // Sync collections into resources.yaml (anything else in there is left alone)
-      const resourcesPath = path.resolve(
-        options.workspace ?? process.cwd(),
-        RESOURCES_FILE
-      );
+      const resourcesPath = path.resolve(workspacePath, RESOURCES_FILE);
       const existingResources = await readFile(resourcesPath, 'utf8').catch(
         (e) => {
           if (e.code !== 'ENOENT') throw e;
