@@ -1361,3 +1361,77 @@ test('printRichDiff: should list changed channel fields', (t) => {
   t.truthy(logger._find('always', /one: changed/));
   t.truthy(logger._find('always', /enabled: "true" -> "false"/));
 });
+
+const twoProjectsNoCheckout = () =>
+  mockFs({
+    '/ws/.projects/main@localhost.yaml': projectYaml,
+    '/ws/.projects/staging@localhost.yaml': projectYaml,
+    '/ws/openfn.yaml': '',
+  });
+
+test.serial(
+  'deploy: aborts if it is not known which project is checked out',
+  async (t) => {
+    twoProjectsNoCheckout();
+    const exitCode = process.exitCode;
+
+    await t.throwsAsync(
+      deploy(
+        {
+          endpoint: ENDPOINT,
+          apiKey: 'test-api-key',
+          workspace: '/ws',
+          confirm: false,
+        } as any,
+        logger
+      ),
+      { message: 'No checked out project found' }
+    );
+    process.exitCode = exitCode;
+  }
+);
+
+test.serial(
+  'deploy: does not look for the checked out project with checkout: false',
+  async (t) => {
+    twoProjectsNoCheckout();
+    // use a private logger: an absence check isn't safe on the shared one
+    const privateLogger = createMockLogger(undefined, { level: 'debug' });
+
+    // this deploy doesn't go anywhere, but it must not stop to ask
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        checkout: false,
+      } as any,
+      privateLogger
+    ).catch(() => {});
+
+    t.falsy(privateLogger._find('error', /No checked out project found/));
+  }
+);
+
+test.serial(
+  'deploy: does not look for the checked out project if there is an explicit target',
+  async (t) => {
+    twoProjectsNoCheckout();
+    const privateLogger = createMockLogger(undefined, { level: 'debug' });
+
+    // this deploy doesn't go anywhere, but it must not stop to ask
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        project: 'staging',
+      } as any,
+      privateLogger
+    ).catch(() => {});
+
+    t.falsy(privateLogger._find('error', /No checked out project found/));
+  }
+);

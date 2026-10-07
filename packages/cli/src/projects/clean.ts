@@ -4,6 +4,7 @@ import { rimraf } from 'rimraf';
 
 import { build, ensure } from '../util/command-builders';
 import { handler as checkout } from './checkout';
+import ensureCheckout from './ensure-checkout';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
 import * as po from './options';
@@ -29,9 +30,14 @@ export default command;
 
 export const handler = async (options: CleanOptions, logger: Logger) => {
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath, logger, true, {
-    branch: options.branch,
-  });
+
+  // Find out what's checked out before deleting anything
+  const workspace = await ensureCheckout(
+    new Workspace(workspacePath, logger, true, {
+      branch: options.branch,
+    }),
+    logger
+  );
 
   const skip = options.force || options.confirm === false;
   const doIt = await logger.confirm(

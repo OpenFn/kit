@@ -24,6 +24,7 @@ import {
 } from './util';
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
+import ensureCheckout from './ensure-checkout';
 import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
@@ -403,6 +404,13 @@ export async function handler(options: DeployOptions, logger: Logger) {
     ws = new Workspace(options.workspace || '.', undefined, true, {
       branch: options.branch,
     });
+
+    // We only need to know what's checked out if we're going to write the
+    // checkout back after deploying, and if the user hasn't told us which
+    // project to deploy to
+    if (options.checkout !== false && !targetIdentifier) {
+      ws = await ensureCheckout(ws, logger);
+    }
 
     const active = ws.getTrackedProject();
 

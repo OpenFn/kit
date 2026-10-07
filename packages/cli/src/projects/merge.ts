@@ -10,6 +10,7 @@ import * as po from './options';
 
 import type { Opts } from './options';
 import { handler as checkout } from './checkout';
+import ensureCheckout from './ensure-checkout';
 
 export type MergeOptions = Required<
   Pick<
@@ -63,12 +64,15 @@ export default command;
 
 export const handler = async (options: MergeOptions, logger: Logger) => {
   const workspacePath = options.workspace;
-  const workspace = new Workspace(workspacePath, undefined, true, {
+  let workspace = new Workspace(workspacePath, undefined, true, {
     branch: options.branch,
   });
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
     return;
+  }
+  if (!options.base) {
+    workspace = await ensureCheckout(workspace, logger);
   }
 
   let targetProject: Project;

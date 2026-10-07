@@ -265,7 +265,7 @@ export const updateForkedFrom = (proj: Project) => {
 export const writeCheckoutFile = async (
   workspacePath: string,
   project: Project,
-  branch?: string | false
+  branch?: string | false | null
 ) => {
   updateForkedFrom(project);
 
