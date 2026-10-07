@@ -164,11 +164,8 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   });
   if (isAdHoc) {
     // Don't touch the workspace or checkout metadata
-    for (const { path: configPath } of switchProject.generateConfig(
-      options.branch
-    )) {
-      delete files[configPath];
-    }
+    delete files[switchProject.generateConfig().path];
+    delete files[switchProject.generateCheckout(options.branch).path];
   }
   for (const f in files) {
     if (files[f]) {

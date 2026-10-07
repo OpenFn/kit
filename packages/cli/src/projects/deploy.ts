@@ -622,7 +622,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
       // Write the updated openfn.yaml and checkout file
       // TODO: allow us to suppress writing this stuff
       // (useful if posting from spec)
-      for (const configData of finalProject.generateConfig(options.branch)) {
+      for (const configData of [
+        finalProject.generateConfig(),
+        finalProject.generateCheckout(options.branch),
+      ]) {
         const configPath = path.resolve(
           options.workspace ?? process.cwd(),
           configData.path
