@@ -156,7 +156,8 @@ export class Workspace {
       const match = this.projects.find(
         (p) =>
           p.alias === alias &&
-          (!endpoint || sameOrigin(p.openfn?.endpoint, endpoint as string))
+          // Compare origins (not just hostnames) so that ports count
+          (!endpoint || sameOrigin(p.openfn?.endpoint, endpoint))
       );
       if (match) return match;
     }
@@ -202,7 +203,5 @@ export class Workspace {
   }
 }
 
-// Compare origins rather than hostnames so that ports count
-// (localhost:4000 and localhost:5000 are different servers)
 const sameOrigin = (a?: string, b?: string) =>
   !!a && !!b && new URL(a).origin === new URL(b).origin;
