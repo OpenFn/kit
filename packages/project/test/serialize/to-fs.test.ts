@@ -322,6 +322,7 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
 
   const checkout = yamlToJson(files['.openfn/checkout.yaml']);
   t.deepEqual(checkout, {
+    alias: 'main',
     id: 'my-project',
     name: 'My Project',
   });
@@ -376,6 +377,7 @@ test('toFs: extract a project with forked_from meta', (t) => {
 
   const checkout = yamlToJson(files['.openfn/checkout.yaml']);
   t.deepEqual(checkout, {
+    alias: 'main',
     id: 'my-project',
     name: 'My Project',
     forked_from: 'abcd',

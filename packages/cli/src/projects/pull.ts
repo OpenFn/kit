@@ -89,7 +89,10 @@ const ensureProjectId = async (options: any, logger: Logger) => {
       logger
     );
     if (ws.activeProject) {
-      options.project = ws.activeProject.uuid;
+      // Prefer alias@domain: other local copies may share the uuid
+      options.project =
+        (ws.activeProject.alias && ws.getTrackedProject()?.qname) ||
+        ws.activeProject.uuid;
       logger?.info(
         `Project id not provided: will default to ${options.project}`
       );

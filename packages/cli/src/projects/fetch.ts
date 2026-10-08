@@ -208,6 +208,8 @@ async function resolveOutputProject(
     } catch (e) {
       logger.debug('No project found at', options.outputPath);
     }
+    // An explicit path is the target: don't look in the workspace
+    return;
   }
   // if an alias is specified, we use that as the output
   if (options.alias) {
@@ -254,7 +256,12 @@ export async function fetchRemoteProject(
 
   // First, we need to see if the project argument, which might be a UUID, id or alias,
   // resolves to anything
-  const localProject = workspace.get(options.project!);
+  // A full UUID, endpoint and output path leave nothing to resolve locally,
+  // so don't trip over duplicate local copies
+  const localProject =
+    options.outputPath && options.endpoint && UUID_RE.test(options.project!)
+      ? undefined
+      : workspace.get(options.project!);
   if (
     localProject?.openfn?.uuid &&
     localProject.openfn.uuid !== options.project
@@ -302,6 +309,9 @@ export async function fetchRemoteProject(
   );
   return project;
 }
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function ensureTargetCompatible(
   options: FetchOptions,

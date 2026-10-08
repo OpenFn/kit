@@ -34,7 +34,7 @@ export class Workspace {
   branch?: string | false | null;
 
   private projects: Project[] = [];
-  private projectPaths = new Map<string, string>();
+  private projectPaths = new Map<Project, string>();
   private isValid: boolean = false;
   private logger: Logger;
 
@@ -97,7 +97,7 @@ export class Workspace {
               ...this.config,
               alias,
             });
-            this.projectPaths.set(project.id, stateFilePath);
+            this.projectPaths.set(project, stateFilePath);
             return project;
           } catch (e) {
             console.warn(`Failed to load project from ${stateFilePath}`);
@@ -138,15 +138,36 @@ export class Workspace {
     return matchProject(nameyThing, this.projects);
   }
 
-  getProjectPath(id: string) {
-    return this.projectPaths.get(id);
+  getProjectPath(project: Project) {
+    return this.projectPaths.get(project);
   }
 
+  /**
+   * Find the local copy of the checked-out project.
+   *
+   * Several local copies can share a uuid and id (eg main@app.openfn.org and
+   * staging@localhost), so the checkout's alias and endpoint are tried first.
+   * Older checkouts may not record an alias: fall back to uuid, then id.
+   */
   getTrackedProject() {
-    return (
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
-      this.projects.find((p) => p.id === this.activeProject?.id)
-    );
+    const { alias, endpoint, uuid, id } = this.activeProject ?? {};
+
+    if (alias) {
+      const match = this.projects.find(
+        (p) =>
+          p.alias === alias &&
+          // Compare origins (not just hostnames) so that ports count
+          (!endpoint || sameOrigin(p.openfn?.endpoint, endpoint))
+      );
+      if (match) return match;
+    }
+
+    if (uuid) {
+      const match = this.projects.find((p) => p.openfn?.uuid === uuid);
+      if (match) return match;
+    }
+
+    return this.projects.find((p) => p.id === id);
   }
 
   async getCheckedOutProject(alias?: string | null) {
@@ -181,3 +202,6 @@ export class Workspace {
     return this.isValid;
   }
 }
+
+const sameOrigin = (a?: string, b?: string) =>
+  !!a && !!b && new URL(a).origin === new URL(b).origin;

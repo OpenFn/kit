@@ -47,7 +47,7 @@ export const parseProject = async (options: FromFsConfig) => {
   const proj: any = {
     id: options.name ? slugify(options.name) : checkout.id,
     name: options.name ? slugify(options.name) : checkout.name,
-    openfn: omit(checkout, ['id', 'forked_from', 'collections']),
+    openfn: omit(checkout, ['id', 'alias', 'forked_from', 'collections']),
 
     // Legacy: collections used to be a list of names in openfn.yaml. A
     // collections key in resources.yaml takes precedence (see below)

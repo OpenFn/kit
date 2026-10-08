@@ -63,6 +63,10 @@ export const extractCheckout = (
     project.name = source.name;
   }
 
+  if (source.alias) {
+    project.alias = source.alias;
+  }
+
   if (source.cli.forked_from && Object.keys(source.cli.forked_from).length) {
     project.forked_from = source.cli.forked_from;
   }

@@ -76,8 +76,8 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   }
 
   let targetProject: Project;
-  if (options.base) {
-    const basePath = path.resolve(options.base);
+  const basePath = options.base && path.resolve(options.base);
+  if (basePath) {
     logger.debug('Loading target project from path', basePath);
     targetProject = await Project.from('path', basePath);
   } else {
@@ -143,7 +143,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   }
 
   const finalPath =
-    options.outputPath ?? workspace.getProjectPath(targetProject.id);
+    options.outputPath || basePath || workspace.getProjectPath(targetProject);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
