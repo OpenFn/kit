@@ -7,7 +7,7 @@ import { jsonToYaml } from '@openfn/project';
 // a workspace with several projects but no checkout metadata
 const noCheckoutProject = jsonToYaml({ id: 'my-project', workflows: [] });
 
-mock({
+const files: Record<string, any> = {
   'no-ws/': { 'some.yaml': 'name: smth' },
   '/no-checkout/openfn.yaml': '',
   '/no-checkout/.projects/main@app.openfn.org.yaml': noCheckoutProject,
@@ -133,7 +133,18 @@ mock({
       },
     ],
   }),
+};
+
+// the same workspace, with a workflow folder renamed to an alias
+files['/aliased/openfn.yaml'] = files['/ws/openfn.yaml'];
+files['/aliased/.projects/main@app.openfn.org.yaml'] =
+  files['/ws/.projects/main@app.openfn.org.yaml'];
+files['/aliased/workflows/sw/simple-workflow.yaml'] = jsonToYaml({
+  id: 'simple-workflow',
+  steps: [],
 });
+
+mock(files);
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -177,6 +188,17 @@ staging | my-project
     `,
     message as string
   );
+});
+
+test('shows workflow aliases on the active project', async (t) => {
+  const privateLogger = createMockLogger('', { level: 'debug' });
+  await list({ command: 'projects', workspace: '/aliased' }, privateLogger);
+
+  const { message } = privateLogger._find(
+    'always',
+    /available openfn projects/i
+  );
+  t.regex(message as string, /^    - simple-workflow \(sw\)$/m);
 });
 
 test.serial(
