@@ -39,8 +39,12 @@ export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
 });
 
 // The checkout file tracks which project is expanded into the workflows dir,
-// plus any transient sync state. When on a git branch, each branch gets its
-// own checkout file so that merges don't clobber the target branch's checkout
+// plus any transient sync state (like forked_from, which helps track divergence).
+//
+// It's local to each machine and git-ignored, so git can't switch it when you
+// change branch. To keep the CLI aware of what's checked out after a branch
+// switch (without the user having to re-run `openfn checkout`), each git
+// branch gets its own checkout file.
 export const getCheckoutPath = (branch?: string | false | null) =>
   branch
     ? path.join('.openfn', 'branches', branch, 'checkout.yaml')

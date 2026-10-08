@@ -192,10 +192,12 @@ const detectBranch = (cwd: string) => {
   }
 };
 
-// Must come after the workspace option so that the workspace path is resolved
+// --branch is used to force the CLI to load checkout metadata from a different
+// path in the .openfn folder. It is not likely to be used by users.
 export const branch: CLIOption = {
   name: 'branch',
   yargs: {
+    hidden: true,
     description:
       'The git branch to track the checked out project against. Detected automatically if not set. Pass --no-branch to ignore git.',
   },
