@@ -207,6 +207,26 @@ mock({
     'proj-1',
     'openfn.org'
   ),
+  // Two copies on different ports of the same host
+  '/ws6/openfn.yaml': '',
+  '/ws6/.openfn/checkout.yaml': jsonToYaml({
+    id: 'proj-1',
+    uuid: '222',
+    alias: 'local',
+    endpoint: 'http://localhost:5000',
+  }),
+  '/ws6/.projects/local@localhost.yaml': jsonToYaml({
+    id: 'proj-1',
+    version: 2,
+    openfn: { uuid: '111', endpoint: 'http://localhost:4000' },
+    workflows: [],
+  }),
+  '/ws6/.projects/other@localhost.yaml': jsonToYaml({
+    id: 'proj-1',
+    version: 2,
+    openfn: { uuid: '222', endpoint: 'http://localhost:5000' },
+    workflows: [],
+  }),
   '/ws4/openfn.yaml': '',
   '/ws4/.projects/main@openfn.org.yaml': gen(
     111,
@@ -350,6 +370,12 @@ test('getTrackedProject returns the checked out copy by alias', (t) => {
   const ws = new Workspace('/ws5');
 
   t.is(ws.getTrackedProject()?.alias, 'main');
+});
+
+test('getTrackedProject matches the alias on the same port only', (t) => {
+  const ws = new Workspace('/ws6');
+
+  t.is(ws.getTrackedProject()?.alias, 'other');
 });
 
 test('getProjectPath returns the file for each copy', (t) => {

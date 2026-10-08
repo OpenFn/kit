@@ -32,7 +32,7 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
     throw new MultipleMatchingProjectsError(
       `Failed to resolve unique identifier for "${name}", clashes with: ${matches
         .map((p) => p.qname)
-        .join(', ')}. Use an alias or alias@domain instead`
+        .join(', ')}. Use alias@domain or a path instead`
     );
   }
   return matches.length ? matches[0] : null;

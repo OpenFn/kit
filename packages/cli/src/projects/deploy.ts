@@ -446,16 +446,18 @@ export async function handler(options: DeployOptions, logger: Logger) {
     ws ??= new Workspace(options.workspace || '.', undefined, true, {
       branch: options.branch,
     });
-    tracker = targetIdentifier
-      ? ws.get(targetIdentifier)
-      : // A checked-out project is tracked by alias, which survives duplicate uuids
-        (!filePath && !!ws.activeProject?.alias && ws.getTrackedProject()) ||
-        ws.get(localProject.uuid!);
+    if (targetIdentifier) {
+      tracker = ws.get(targetIdentifier);
+    } else if (filePath) {
+      tracker = ws.get(localProject.uuid!);
+    } else {
+      tracker = ws.getTrackedProject();
+    }
 
     // A project loaded from a file already knows which remote it belongs
-    // to, so it can serve as its own deploy destination - we don't need a
-    // locally tracked copy of it to sync against
-    if (!tracker && filePath && localProject.uuid) {
+    // to, so it can serve as its own deploy destination if there's no
+    // locally tracked copy of it
+    if (!tracker && filePath) {
       logger.debug(
         'No locally tracked project found: deploying to the remote named in the file'
       );

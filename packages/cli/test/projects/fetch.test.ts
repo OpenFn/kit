@@ -618,3 +618,31 @@ test.serial(
     );
   }
 );
+
+test.serial('fetch by alias when local copies share the UUID', async (t) => {
+  mock({
+    '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
+    '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
+    '/ws/openfn.yaml': '',
+  });
+
+  await fetchHandler(
+    {
+      project: 'jam-backup',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  // Only the aliased copy is updated
+  const backup = await readFile(
+    '/ws/.projects/jam-backup@app.openfn.org.yaml',
+    'utf-8'
+  );
+  t.is(backup.trim(), yaml_v2);
+  const main = await readFile('/ws/.projects/jam@app.openfn.org.yaml', 'utf-8');
+  t.is(main, yaml_v1);
+});

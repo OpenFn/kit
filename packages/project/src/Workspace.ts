@@ -142,19 +142,31 @@ export class Workspace {
     return this.projectPaths.get(project);
   }
 
+  /**
+   * Find the local copy of the checked-out project.
+   *
+   * Several local copies can share a uuid and id (eg main@app.openfn.org and
+   * staging@localhost), so the checkout's alias and endpoint are tried first.
+   * Older checkouts may not record an alias: fall back to uuid, then id.
+   */
   getTrackedProject() {
     const { alias, endpoint, uuid, id } = this.activeProject ?? {};
-    const host =
-      alias && endpoint ? new URL(endpoint as string).hostname : undefined;
-    // Several local files can share a uuid or id, so prefer the alias
-    return (
-      (!!alias &&
-        this.projects.find(
-          (p) => p.alias === alias && (!host || p.host === host)
-        )) ||
-      this.projects.find((p) => p.openfn?.uuid === uuid) ||
-      this.projects.find((p) => p.id === id)
-    );
+
+    if (alias) {
+      const match = this.projects.find(
+        (p) =>
+          p.alias === alias &&
+          (!endpoint || sameOrigin(p.openfn?.endpoint, endpoint as string))
+      );
+      if (match) return match;
+    }
+
+    if (uuid) {
+      const match = this.projects.find((p) => p.openfn?.uuid === uuid);
+      if (match) return match;
+    }
+
+    return this.projects.find((p) => p.id === id);
   }
 
   async getCheckedOutProject(alias?: string | null) {
@@ -189,3 +201,8 @@ export class Workspace {
     return this.isValid;
   }
 }
+
+// Compare origins rather than hostnames so that ports count
+// (localhost:4000 and localhost:5000 are different servers)
+const sameOrigin = (a?: string, b?: string) =>
+  !!a && !!b && new URL(a).origin === new URL(b).origin;
