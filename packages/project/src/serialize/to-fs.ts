@@ -65,7 +65,7 @@ export const extractWorkflow = (
     (project.config as any).workflowRoot ??
     'workflows/';
 
-  const path = nodepath.join(root, workflow.id, workflow.id);
+  const path = nodepath.join(root, workflow.alias ?? workflow.id, workflow.id);
 
   const wf = Object.assign(
     {
@@ -115,7 +115,10 @@ export const extractStep = (
       project.config?.dirs.workflows ??
       (project.config as any)?.workflowRoot ??
       'workflows/';
-    const path = nodepath.join(root, `${workflow.id}/${step.id}.js`);
+    const path = nodepath.join(
+      root,
+      `${workflow.alias ?? workflow.id}/${step.id}.js`
+    );
     const content = step.expression;
 
     return { path, content };

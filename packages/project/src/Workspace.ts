@@ -175,6 +175,7 @@ export class Workspace {
       root: this.root,
       config: this.config,
       branch: this.branch,
+      logger: this.logger,
       // The checked out project can't meaningfully be said to have an alias
       // But we can force one if it makes sense from context
       alias: alias ?? null,
