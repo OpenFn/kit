@@ -9,12 +9,17 @@ import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
+  loadCheckoutFile,
 } from '../util/config';
 import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
 import slugify from '../util/slugify';
-import { RESOURCES_FILE, fromResourceChannels } from '../util/resources';
+import {
+  RESOURCES_FILE,
+  fromResourceChannels,
+  fromResourceCollections,
+} from '../util/resources';
 
 export type FromFsConfig = {
   root: string;
@@ -22,6 +27,8 @@ export type FromFsConfig = {
   logger?: Logger;
   alias?: string | null;
   name?: string;
+  // git branch, used to locate the checkout file
+  branch?: string | false | null;
 };
 
 // Parse a single project from a root folder
@@ -34,33 +41,41 @@ export const parseProject = async (options: FromFsConfig) => {
   const { type, content } = findWorkspaceFile(root);
   const context = loadWorkspaceFile(content, type as any);
   const config = buildConfig(options.config ?? context.workspace);
+  const checkout =
+    loadCheckoutFile(root, options.branch, context.project) ?? {};
 
   const proj: any = {
-    id: options.name ? slugify(options.name) : context.project?.id,
-    name: options.name ? slugify(options.name) : context.project?.name,
-    openfn: omit(context.project, ['id', 'forked_from', 'collections']),
-    // openfn.yaml only ever holds bare collection names - no uuids, those
-    // belong to the server
-    collections: context.project.collections?.map((name: string) => ({
+    id: options.name ? slugify(options.name) : checkout.id,
+    name: options.name ? slugify(options.name) : checkout.name,
+    openfn: omit(checkout, ['id', 'forked_from', 'collections']),
+
+    // Legacy: collections used to be a list of names in openfn.yaml. A
+    // collections key in resources.yaml takes precedence (see below)
+    collections: context.collections?.map((name: string) => ({
       name,
     })),
     config: config,
     workflows: [],
     cli: omitNil({
-      forked_from: context.project.forked_from,
+      forked_from: checkout.forked_from,
     }),
   };
 
-  // resources.yaml is optional: if it's missing, or has no channels key,
-  // channels stay undefined and are left untouched on merge/deploy
+  // resources.yaml is optional: if it's missing, or has no channels or
+  // collections key, they stay undefined and are left untouched on
+  // merge/deploy
   const resources = await fs
     .readFile(path.resolve(root, RESOURCES_FILE), 'utf-8')
     .catch((e) => {
       if (e.code !== 'ENOENT') throw e;
     });
-  const channels = resources && yamlToJson(resources)?.channels;
-  if (channels) {
-    proj.channels = fromResourceChannels(channels);
+  const parsed = resources ? yamlToJson(resources) : undefined;
+  if (parsed?.channels) {
+    proj.channels = fromResourceChannels(parsed.channels);
+  }
+  if (parsed && 'collections' in parsed) {
+    // an empty key means no collections (not the same as no key!)
+    proj.collections = fromResourceCollections(parsed.collections);
   }
 
   // now find all the workflows

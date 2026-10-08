@@ -30,6 +30,7 @@ import {
   myProject_v1_spec,
 } from './fixtures';
 import { checkout } from '../../src/projects';
+import { rimraf } from 'rimraf';
 
 let server: any;
 let strictServer: any;
@@ -120,11 +121,17 @@ test.serial(
   }
 );
 
+// project metadata lives in the checkout file, not openfn.yaml
+const readCheckout = () =>
+  fs.existsSync('/ws/.openfn/checkout.yaml')
+    ? fs.readFileSync('/ws/.openfn/checkout.yaml', 'utf8')
+    : undefined;
+
 test.serial(
   'deploy with checkout: true updates the local workspace',
   async (t) => {
     await setup();
-    const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
+    const before = readCheckout();
 
     await deploy(
       {
@@ -137,7 +144,7 @@ test.serial(
       logger
     );
 
-    t.not(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
+    t.not(readCheckout(), before);
   }
 );
 
@@ -146,6 +153,7 @@ test.serial(
   async (t) => {
     await setup();
     const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
+    const checkoutBefore = readCheckout();
     const filesBefore = fs.readdirSync('/ws/.projects');
 
     await deploy(
@@ -161,6 +169,7 @@ test.serial(
 
     t.is(Object.keys(server.state.projects).length, 2);
     t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
+    t.is(readCheckout(), checkoutBefore);
     t.deepEqual(fs.readdirSync('/ws/.projects'), filesBefore);
     t.truthy(logger._find('success', /Created new project at/));
   }
@@ -611,11 +620,12 @@ test.serial(
 
     await setup(projectYaml);
 
-    // user hand-edits openfn.yaml: keep one, drop one, add a new one -
+    // user hand-edits resources.yaml: keep one, drop one, add a new one -
     // no workflow files are touched
-    const openfn: any = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
-    openfn.project.collections = ['keep-me', 'new-collection'];
-    await writeFile('/ws/openfn.yaml', jsonToYaml(openfn));
+    await writeFile(
+      '/ws/resources.yaml',
+      jsonToYaml({ collections: { 'keep-me': {}, 'new-collection': {} } })
+    );
 
     await deploy(
       {
@@ -626,6 +636,11 @@ test.serial(
       } as any,
       logger
     );
+
+    // the diff should say what's being deleted and added
+    t.truthy(logger._find('always', /Collections:/));
+    t.truthy(logger._find('always', /remove-me: removed/));
+    t.truthy(logger._find('always', /new-collection: added/));
 
     // a collections-only edit must not be treated as "nothing to deploy"
     t.falsy(logger._find('success', /Nothing to deploy/));
@@ -641,6 +656,12 @@ test.serial(
     );
     t.truthy(created?.id);
     t.falsy(created?.delete);
+
+    // resources.yaml is kept in sync after the deploy
+    const resources: any = yamlToJson(
+      fs.readFileSync('/ws/resources.yaml', 'utf8')
+    );
+    t.deepEqual(resources.collections, { 'keep-me': {}, 'new-collection': {} });
   }
 );
 
@@ -1135,6 +1156,34 @@ test('collectionsChanged: true when a name was removed locally', (t) => {
   t.true(collectionsChanged(local, remote));
 });
 
+test('collectionsChanged: false when collections are not managed locally', (t) => {
+  // undefined means "leave alone", unlike an empty list
+  const local = {} as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.false(collectionsChanged(local, remote));
+});
+
+test('collectionsChanged: true when every collection was removed locally', (t) => {
+  const local = { collections: [] } as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.true(collectionsChanged(local, remote));
+});
+
+test('deletedCollections: nothing to delete when collections are not managed locally', (t) => {
+  const merged = {} as unknown as Project;
+  const remote = {
+    collections: [{ uuid: 'uuid-a', name: 'a' }],
+  } as unknown as Project;
+
+  t.deepEqual(deletedCollections(merged, remote), []);
+});
+
 test('deletedCollections: flags a remote name missing from the merged project', (t) => {
   const merged = {
     collections: [{ name: 'keep-me' }],
@@ -1240,6 +1289,62 @@ test('printRichDiff: should report removed channels', (t) => {
   t.truthy(logger._find('always', /one: removed/));
 });
 
+test('printRichDiff: should report added and removed collections', (t) => {
+  const local = new Project({
+    name: 'local',
+    workflows: [],
+    collections: [{ name: 'keep-me' }, { name: 'new-one' }],
+  });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [
+      { uuid: 'a', name: 'keep-me' },
+      { uuid: 'b', name: 'old-one' },
+    ],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /following changes to the remote project/));
+  t.truthy(logger._find('always', /Collections:/));
+  t.truthy(logger._find('always', /new-one: added/));
+  t.truthy(logger._find('always', /old-one: removed/));
+});
+
+test('printRichDiff: should show every collection as removed when all are deleted', (t) => {
+  const local = new Project({ name: 'local', workflows: [], collections: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [
+      { uuid: 'a', name: 'one' },
+      { uuid: 'b', name: 'two' },
+    ],
+  });
+
+  printRichDiff(local, remote, [], logger);
+
+  t.truthy(logger._find('always', /one: removed/));
+  t.truthy(logger._find('always', /two: removed/));
+});
+
+test('printRichDiff: should not report collections that are not managed locally', (t) => {
+  const local = new Project({ name: 'local', workflows: [] });
+  const remote = new Project({
+    name: 'remote',
+    workflows: [],
+    collections: [{ uuid: 'a', name: 'one' }],
+  });
+
+  // use a private logger: an absence check isn't safe on the shared one
+  const privateLogger = createMockLogger(undefined, { level: 'debug' });
+  printRichDiff(local, remote, [], privateLogger);
+
+  t.falsy(privateLogger._find('always', /Collections:/));
+  t.truthy(privateLogger._find('info', /No workflow changes detected/));
+});
+
 test('printRichDiff: should list changed channel fields', (t) => {
   const local = new Project({
     name: 'local',
@@ -1257,3 +1362,140 @@ test('printRichDiff: should list changed channel fields', (t) => {
   t.truthy(logger._find('always', /one: changed/));
   t.truthy(logger._find('always', /enabled: "true" -> "false"/));
 });
+
+const twoProjectsNoCheckout = () =>
+  mockFs({
+    '/ws/.projects/main@localhost.yaml': projectYaml,
+    '/ws/.projects/staging@localhost.yaml': projectYaml,
+    '/ws/openfn.yaml': '',
+  });
+
+test.serial(
+  'deploy: aborts if it is not known which project is checked out',
+  async (t) => {
+    twoProjectsNoCheckout();
+    const exitCode = process.exitCode;
+
+    await t.throwsAsync(
+      deploy(
+        {
+          endpoint: ENDPOINT,
+          apiKey: 'test-api-key',
+          workspace: '/ws',
+          confirm: false,
+        } as any,
+        logger
+      ),
+      { message: 'No checked out project found' }
+    );
+    process.exitCode = exitCode;
+  }
+);
+
+test.serial(
+  'deploy: does not look for the checked out project with checkout: false',
+  async (t) => {
+    twoProjectsNoCheckout();
+    // use a private logger: an absence check isn't safe on the shared one
+    const privateLogger = createMockLogger(undefined, { level: 'debug' });
+
+    // this deploy doesn't go anywhere, but it must not stop to ask
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        checkout: false,
+      } as any,
+      privateLogger
+    ).catch(() => {});
+
+    t.falsy(privateLogger._find('error', /No checked out project found/));
+  }
+);
+
+test.serial(
+  'deploy: does not look for the checked out project if there is an explicit target',
+  async (t) => {
+    twoProjectsNoCheckout();
+    const privateLogger = createMockLogger(undefined, { level: 'debug' });
+
+    // this deploy doesn't go anywhere, but it must not stop to ask
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+        project: 'staging',
+      } as any,
+      privateLogger
+    ).catch(() => {});
+
+    t.falsy(privateLogger._find('error', /No checked out project found/));
+  }
+);
+
+test.serial(
+  'deploy: merges the workspace into an explicit target on a fresh clone, without a checkout',
+  async (t) => {
+    await setup(projectYaml);
+
+    // simulate a fresh git clone: the workflows are there, nothing is checked
+    // out, and there's more than one tracked project
+    // (fs.rmSync is a no-op under mock-fs, hence rimraf)
+    await rimraf('/ws/.openfn');
+    t.false(fs.existsSync('/ws/.openfn'));
+    fs.writeFileSync('/ws/.projects/other@localhost.yaml', projectYaml);
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: 'main',
+        checkout: false,
+        force: true,
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Updated project at/));
+    t.is(
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ].body,
+      'log()'
+    );
+    // deploying doesn't set up a checkout
+    t.false(fs.existsSync('/ws/.openfn'));
+  }
+);
+
+test.serial(
+  'deploy: deploys a project file on a fresh clone, without a checkout',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': myProject_spec,
+      '/ws/openfn.yaml': '',
+      '/ws/.projects/main@localhost.yaml': projectYaml,
+      '/ws/.projects/other@localhost.yaml': projectYaml,
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Created new project at/));
+    t.is(Object.keys(server.state.projects).length, 2);
+  }
+);

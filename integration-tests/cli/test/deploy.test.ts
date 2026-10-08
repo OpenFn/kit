@@ -273,7 +273,10 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
   t.falsy(bootstrap.stderr);
   assertLog(t, extractLogs(bootstrap.stdout), /Detected openfn.yaml file/i);
 
-  const yaml = await fs.readFile(path.join(tmpDir, 'openfn.yaml'), 'utf8');
+  const yaml = await fs.readFile(
+    path.join(tmpDir, '.openfn/checkout.yaml'),
+    'utf8'
+  );
   t.regex(yaml, new RegExp(`uuid\\: ${projectId}`));
 
   const workflowYaml = await fs.readFile(

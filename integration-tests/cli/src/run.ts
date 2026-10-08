@@ -7,6 +7,8 @@ const getOptions = () => ({
   env: {
     ...process.env,
     OPENFN_REPO_DIR: path.resolve('repo'),
+    // workspaces live inside the kit git repo: don't pick up its branch
+    OPENFN_BRANCH: 'false',
   },
 });
 
