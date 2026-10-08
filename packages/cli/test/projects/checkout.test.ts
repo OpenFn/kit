@@ -252,6 +252,64 @@ test.serial(
   }
 );
 
+test.serial(
+  'checkout: preserves a renamed (aliased) workflow folder',
+  async (t) => {
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+      logger
+    );
+    fs.renameSync('/ws/workflows/simple-workflow-main', '/ws/workflows/wf');
+
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+      logger
+    );
+
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows').sort(),
+      ['another-workflow-main', 'wf'].sort()
+    );
+    t.true(fs.existsSync('/ws/workflows/wf/simple-workflow-main.yaml'));
+  }
+);
+
+test.serial(
+  'checkout: drops an alias that clashes with an incoming workflow id',
+  async (t) => {
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+      logger
+    );
+    fs.renameSync('/ws/workflows/simple-workflow-main', '/ws/workflows/wf');
+
+    // a workflow called "wf" gets added remotely
+    const statePath = '/ws/.projects/project@app.openfn.org.yaml';
+    const state = yamlToJson(fs.readFileSync(statePath, 'utf8'));
+    state.workflows.push({ ...state.workflows[1], name: 'wf', id: 'wf-id' });
+    fs.writeFileSync(statePath, jsonToYaml(state));
+
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'my-project',
+        workspace: '/ws',
+        force: true,
+      },
+      logger
+    );
+
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows').sort(),
+      ['another-workflow-main', 'simple-workflow-main', 'wf'].sort()
+    );
+    t.deepEqual(fs.readdirSync('/ws/workflows/wf').sort(), [
+      'transform-data-to-fhir-standard.js',
+      'wf.yaml',
+    ]);
+  }
+);
+
 test.serial('checkout: switching to and back between projects', async (t) => {
   // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');

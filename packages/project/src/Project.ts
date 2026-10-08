@@ -223,6 +223,7 @@ export class Project {
   getWorkflow(idOrName: string) {
     return (
       this.workflows.find((wf) => wf.id == idOrName) ||
+      this.workflows.find((wf) => wf.alias === idOrName) ||
       this.workflows.find((wf) => wf.name === idOrName) ||
       this.workflows.find((wf) => wf.openfn?.uuid === idOrName)
     );

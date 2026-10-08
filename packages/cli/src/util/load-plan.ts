@@ -65,7 +65,9 @@ const loadPlan = async (
     options.credentials ??= workspace.getConfig().credentials;
     options.collectionsEndpoint ??= proj?.openfn?.endpoint;
     // Set the cache path to be relative to the workflow
-    options.cachePath ??= workspace.workflowsPath + `/${name}/${CACHE_DIR}`;
+    options.cachePath ??=
+      workspace.workflowsPath +
+      `/${workflow.alias ?? workflow.id}/${CACHE_DIR}`;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {

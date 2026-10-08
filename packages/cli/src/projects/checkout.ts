@@ -146,6 +146,20 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
     );
   }
 
+  // Workflow aliases are just folder names, so carry them over from the
+  // checked out project to keep renamed folders in place
+  const incomingIds = new Set(switchProject.workflows.map((wf) => wf.id));
+  for (const wf of switchProject.workflows) {
+    const alias = localProject?.getWorkflow(wf.id)?.alias;
+    if (alias && incomingIds.has(alias)) {
+      logger?.warn(
+        `Dropping alias "${alias}" for workflow "${wf.id}": it clashes with another workflow`
+      );
+    } else {
+      wf.alias ??= alias;
+    }
+  }
+
   // delete workflow dir before expanding project
   if (options.clean) {
     await rimraf(workspace.workflowsPath);

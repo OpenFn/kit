@@ -268,6 +268,21 @@ openfn deploy
 - `-c, --config, --config-path` - path to the config file (defaults to `.config.json`)
 - `--no-confirm` - skip the confirmation prompt
 
+## Workflow Aliases
+
+Workflow ids can get long. To give a workflow a shorter name, rename its folder in the workspace:
+
+```bash
+mv workflows/my-really-long-workflow-name workflows/wf
+openfn wf
+```
+
+The folder name is the alias. It is local only: it's never deployed, and `pull` and `checkout` keep the folder in place.
+
+Aliases are matched to workflows by id, so if a workflow is renamed in the app (which changes its id), the next `pull` writes it back to a folder named after the new id. Just rename the folder again.
+
+An alias can't be the same as another workflow's id or alias. Clashing aliases are dropped with a warning, and the workflow goes back to a folder named after its id.
+
 ## Checking a Workflow's Version Hash
 
 `openfn project version` prints the version hash used to detect drift between a local and remote workflow (see `@openfn/project`'s `src/util/version.ts`). It accepts three kinds of input:
