@@ -67,6 +67,55 @@ test.serial('should include multiple workflows (legacy format)', async (t) => {
   t.is(wf2.name, 'Workflow 2');
 });
 
+test.serial('should treat a renamed workflow folder as an alias', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  mockFile('/ws/workflows/wf/my-long-workflow-name.yaml', {
+    id: 'my-long-workflow-name',
+    steps: [{ id: 'a', expression: 'a.js' }],
+  });
+  mockFile('/ws/workflows/wf/a.js', `fn(s => s)`);
+
+  const project = await parseProject({ root: '/ws' });
+
+  const wf = project.getWorkflow('wf')!;
+  t.is(wf.id, 'my-long-workflow-name');
+  t.is(wf.alias, 'wf');
+  t.is(wf.steps[0].expression, 'fn(s => s)');
+  t.falsy((wf.toJSON() as any).alias);
+});
+
+test.serial(
+  'should not set an alias when the folder matches the id',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+      id: 'my-workflow',
+      steps: [{ id: 'a' }],
+    });
+
+    const project = await parseProject({ root: '/ws' });
+
+    t.is(project.getWorkflow('my-workflow')!.alias, undefined);
+  }
+);
+
+test.serial(
+  'should ignore an alias that clashes with another id',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    mockFile('/ws/workflows/wf-a/wf-a.yaml', { id: 'wf-a', steps: [] });
+    mockFile('/ws/workflows/wf-a/wf-b.yaml', { id: 'wf-b', steps: [] });
+
+    const project = await parseProject({ root: '/ws' });
+
+    t.is(project.getWorkflow('wf-b')!.alias, undefined);
+    t.is(project.getWorkflow('wf-a')!.id, 'wf-a');
+  }
+);
+
 test.serial('should load a workflow expression (legacy format)', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 
