@@ -26,6 +26,7 @@ export type CheckoutOptions = Pick<
   | 'workspace'
   | 'log'
   | 'clean'
+  | 'confirm'
   | 'force'
   | 'createCredentials'
   | 'branch'
@@ -39,6 +40,7 @@ const options = [
   po.track,
   po.clean,
   o.force,
+  o.confirm,
   po.creds,
 ];
 
@@ -138,12 +140,42 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   );
   if (isAdHoc) {
     const trackedName = tracked!.alias ?? tracked!.id ?? tracked!.uuid;
+
+    logger?.warn('Watch out! Ad-hoc checkout detected!');
     logger?.warn(
-      `Branch ${options.branch} tracks project ${trackedName}. Expanding files from ${switchProject.alias} without changing tracking: deploy will still target ${trackedName}`
+      `You are on git branch ${options.branch}, which tracks project ${trackedName}`
     );
     logger?.warn(
-      `Pass --track to make ${options.branch} track ${switchProject.alias} instead`
+      `But you've asked to checkout project ${switchProject.alias}.`
     );
+    logger?.warn(
+      `This will leave your branch (${trackedName}) inconsistent with your checked out workflows (${switchProject.alias}).`
+    );
+    logger?.warn(
+      `Pass --track to update your local tracker so that ${options.branch} tracks ${switchProject.alias} instead.`
+    );
+
+    // -f and -y both skip the prompt
+    const skip = options.force || options.confirm === false;
+
+    // Without a terminal there's nobody to ask, and the prompt would hang
+    if (!skip && !process.stdin.isTTY) {
+      abort(logger!, 'Ad-hoc checkout needs to be confirmed', {
+        details: 'There is no terminal to ask for confirmation',
+        fix: `Pass --force (-f) or --confirm (-y) to continue anyway, or --track to make ${options.branch} track ${switchProject.alias}`,
+      });
+    }
+    const doIt = logger
+      ? await logger.confirm(
+          `Continue and checkout ${switchProject.alias} anyway?`,
+          skip
+        )
+      : true;
+
+    if (!doIt) {
+      logger?.info('Checkout cancelled: nothing has been changed');
+      return;
+    }
   }
 
   // delete workflow dir before expanding project

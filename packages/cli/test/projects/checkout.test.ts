@@ -1057,3 +1057,138 @@ test.serial(
     );
   }
 );
+
+// Ad-hoc checkouts: checking out a project on a git branch that tracks a
+// different project. dev tracks staging, and we try to checkout the main project
+const adHocSetup = () => {
+  fs.mkdirSync('/ws/.openfn/branches/dev', { recursive: true });
+  fs.writeFileSync(
+    '/ws/.openfn/branches/dev/checkout.yaml',
+    'id: staging\nuuid: <uuid:staging>\n'
+  );
+};
+
+// The prompt needs a terminal (without one, ad-hoc checkouts abort)
+const withTTY = async (fn: () => Promise<unknown>) => {
+  const stdin: any = process.stdin;
+  const original = stdin.isTTY;
+  stdin.isTTY = true;
+  try {
+    await fn();
+  } finally {
+    stdin.isTTY = original;
+  }
+};
+
+const adHocCheckout = (log: any, extra = {}) =>
+  checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'project',
+      workspace: '/ws',
+      branch: 'dev',
+      ...extra,
+    },
+    log
+  );
+
+// The real logger skips the prompt if confirm() is called with force=true,
+// but the mock always records and approves, so spy on the arguments instead
+const spyLogger = (answer = true) => {
+  const calls: Array<{ message: string; skip?: boolean }> = [];
+  const log: any = {
+    ...createMockLogger(undefined, { level: 'debug' }),
+    confirm: async (message: string, skip?: boolean) => {
+      calls.push({ message, skip });
+      return answer;
+    },
+  };
+  return { log, calls };
+};
+
+test.serial(
+  'checkout: asks for confirmation on an ad-hoc checkout',
+  async (t) => {
+    adHocSetup();
+    const { log, calls } = spyLogger();
+
+    await withTTY(() => adHocCheckout(log));
+
+    t.is(calls.length, 1);
+    t.regex(calls[0].message, /Continue and checkout .* anyway/);
+    t.falsy(calls[0].skip);
+    // the files were expanded
+    t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+    // but the branch still tracks staging
+    t.is(
+      fs.readFileSync('/ws/.openfn/branches/dev/checkout.yaml', 'utf8'),
+      'id: staging\nuuid: <uuid:staging>\n'
+    );
+  }
+);
+
+test.serial(
+  'checkout: does nothing if the user declines an ad-hoc checkout',
+  async (t) => {
+    adHocSetup();
+    const { log } = spyLogger(false);
+
+    await withTTY(() => adHocCheckout(log));
+
+    t.false(fs.existsSync('/ws/workflows/simple-workflow-main'));
+  }
+);
+
+test.serial('checkout: -f skips the ad-hoc confirmation', async (t) => {
+  adHocSetup();
+  const { log, calls } = spyLogger();
+
+  await adHocCheckout(log, { force: true });
+
+  t.true(calls[0].skip);
+  t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+});
+
+test.serial('checkout: -y skips the ad-hoc confirmation', async (t) => {
+  adHocSetup();
+  const { log, calls } = spyLogger();
+
+  await adHocCheckout(log, { confirm: false });
+
+  t.true(calls[0].skip);
+  t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+});
+
+test.serial(
+  'checkout: does not ask for confirmation if the branch is not tracking something else',
+  async (t) => {
+    fs.mkdirSync('/ws/.openfn/branches/dev', { recursive: true });
+    fs.writeFileSync(
+      '/ws/.openfn/branches/dev/checkout.yaml',
+      'id: main\nuuid: <uuid:main>\n'
+    );
+    const { log, calls } = spyLogger();
+
+    await adHocCheckout(log);
+
+    t.is(calls.length, 0);
+  }
+);
+
+test.serial(
+  'checkout: aborts an ad-hoc checkout with no terminal and no -f or -y',
+  async (t) => {
+    adHocSetup();
+    const { log, calls } = spyLogger();
+    const exitCode = process.exitCode;
+
+    await t.throwsAsync(adHocCheckout(log), {
+      message: 'Ad-hoc checkout needs to be confirmed',
+    });
+    // abort() flags the process as failed: don't let that leak out of the test
+    process.exitCode = exitCode;
+
+    t.is(calls.length, 0);
+    t.false(fs.existsSync('/ws/workflows/simple-workflow-main'));
+  }
+);
