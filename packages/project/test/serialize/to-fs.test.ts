@@ -334,6 +334,20 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
 
+test('toFs: writes an aliased workflow into its alias folder', (t) => {
+  const project = new Project({
+    name: 'My Project',
+    workflows: [{ id: 'my-long-workflow-name', steps: [step] }],
+  });
+  project.workflows[0].alias = 'wf';
+
+  const files = toFs(project);
+
+  t.truthy(files['workflows/wf/my-long-workflow-name.yaml']);
+  t.is(files['workflows/wf/step.js'], 'fn(s => s)');
+  t.falsy(files['workflows/my-long-workflow-name/my-long-workflow-name.yaml']);
+});
+
 test('toFs: extract a project with forked_from meta', (t) => {
   const project = new Project(
     {
