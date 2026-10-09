@@ -1,5 +1,27 @@
 # @openfn/cli
 
+## 1.43.0
+
+### Minor Changes
+
+- d3f1a1a: Restructure `openfn.yaml` to make it safer for merging on github.
+
+  Any checkout state (basically anything under the project key) have been moved into a new `.openfn` folder, which should not be tracked.
+
+  `openfn.yaml` now just contains workspace-wide configuration.
+
+### Patch Changes
+
+- d3f1a1a: Fix an issue where `project clean` can try to delete stuff even if nothing is checked out
+- d3f1a1a: Include collections and channels in sync diffs
+- e90bfde: Handle multiple local copies of the same project without reporting id conflicts
+- d3f1a1a: When running commands with v2 sync, if no checkout metadata is detected, prompt the user
+- d3f1a1a: Track collections in resources.yaml
+- Updated dependencies [d3f1a1a]
+- Updated dependencies [e90bfde]
+- Updated dependencies [d3f1a1a]
+  - @openfn/project@0.22.0
+
 ## 1.42.0
 
 ### Minor Changes
