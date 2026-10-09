@@ -149,12 +149,16 @@ test.serial(
 );
 
 test.serial(
-  'deploy with checkout: false leaves the local workspace alone',
+  'deploy with checkout: false leaves config and checkout alone but still writes the project file',
   async (t) => {
     await setup();
     const before = fs.readFileSync('/ws/openfn.yaml', 'utf8');
     const checkoutBefore = readCheckout();
     const filesBefore = fs.readdirSync('/ws/.projects');
+    const projectFileBefore = fs.readFileSync(
+      `/ws/.projects/${filesBefore[0]}`,
+      'utf8'
+    );
 
     await deploy(
       {
@@ -170,7 +174,14 @@ test.serial(
     t.is(Object.keys(server.state.projects).length, 2);
     t.is(fs.readFileSync('/ws/openfn.yaml', 'utf8'), before);
     t.is(readCheckout(), checkoutBefore);
+
+    // the final serialized project is the only thing written
+    // (it shares an alias with the original, so it replaces that file)
     t.deepEqual(fs.readdirSync('/ws/.projects'), filesBefore);
+    t.not(
+      fs.readFileSync(`/ws/.projects/${filesBefore[0]}`, 'utf8'),
+      projectFileBefore
+    );
     t.truthy(logger._find('success', /Created new project at/));
   }
 );

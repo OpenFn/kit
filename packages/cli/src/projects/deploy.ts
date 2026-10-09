@@ -630,9 +630,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       }
     );
 
-    if (options.checkout !== false) {
-      const workspacePath = options.workspace ?? process.cwd();
+    const workspacePath = options.workspace ?? process.cwd();
 
+    if (options.checkout !== false) {
       // Write the updated openfn.yaml and checkout file
       // TODO: allow us to suppress writing this stuff
       // (useful if posting from spec)
@@ -654,15 +654,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
       if (resources.content) {
         await writeFile(resourcesPath, resources.content);
       }
-
-      // TODO if this was marked as new, we probably need to ensure a unique alias here
-      const finalOutputPath = getSerializePath(
-        finalProject,
-        options.workspace!
-      );
-      const fullFinalPath = await serialize(finalProject, finalOutputPath);
-      logger.debug('Updated local project at ', fullFinalPath);
     }
+
+    // Always write the final project file (even with --no-checkout)
+    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
+    const fullFinalPath = await serialize(finalProject, finalOutputPath);
+    logger.debug('Updated local project at ', fullFinalPath);
 
     if (options.new) {
       logger.success('Created new project at', endpoint);
