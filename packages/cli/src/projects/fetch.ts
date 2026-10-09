@@ -15,6 +15,7 @@ import {
   getSerializePath,
 } from './util';
 import { writeFile } from 'node:fs/promises';
+import isUuid from '../util/is-uuid';
 
 export type FetchOptions = Pick<
   Opts,
@@ -259,7 +260,7 @@ export async function fetchRemoteProject(
   // A full UUID, endpoint and output path leave nothing to resolve locally,
   // so don't trip over duplicate local copies
   const localProject =
-    options.outputPath && options.endpoint && UUID_RE.test(options.project!)
+    options.outputPath && options.endpoint && isUuid(options.project)
       ? undefined
       : workspace.get(options.project!);
   if (
@@ -309,9 +310,6 @@ export async function fetchRemoteProject(
   );
   return project;
 }
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function ensureTargetCompatible(
   options: FetchOptions,

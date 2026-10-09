@@ -408,7 +408,7 @@ test.serial('deploy an updated project direct to an endpoint', async (t) => {
       apiKey: 'test-api-key',
       workspace: '/ws',
       project: '/ws/dev@localhost.yaml',
-      target: 'dev',
+      target: UUID,
       confirm: false,
       // log: 'debug',
     } as any,
@@ -1508,5 +1508,115 @@ test.serial(
 
     t.truthy(logger._find('success', /Created new project at/));
     t.is(Object.keys(server.state.projects).length, 2);
+  }
+);
+
+test.serial(
+  'deploy: deploys the checked-out project to an untracked remote project by uuid',
+  async (t) => {
+    const OTHER_UUID = 'a1b2c3d4-0000-4000-8000-000000000001';
+    server.addProject({ ...myProject_v1, id: OTHER_UUID });
+
+    await setup(projectYaml);
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: OTHER_UUID,
+        checkout: false,
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    t.truthy(logger._find('success', /Updated project at/));
+    const body = (id: string) =>
+      server.state.projects[id].workflows['my-workflow'].jobs['transform-data']
+        .body;
+    t.is(body(OTHER_UUID), 'log()');
+    // the project we deployed from is untouched
+    t.is(body(UUID), 'fn()');
+  }
+);
+
+test.serial(
+  'deploy: an explicit endpoint overrides the one in the project file',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': projectYaml
+        .replace(ENDPOINT, 'http://localhost:1')
+        .replace('fn()', 'jam()'),
+      '/ws/openfn.yaml': '',
+    });
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: '/ws/project.yaml',
+        confirm: false,
+      } as any,
+      logger
+    );
+
+    t.is(
+      server.state.projects[UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ].body,
+      'jam()'
+    );
+  }
+);
+
+test.serial(
+  'deploy: throws if the target is an alias that is not tracked locally',
+  async (t) => {
+    await setup(projectYaml);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            project: 'nope',
+            checkout: false,
+            confirm: false,
+          } as any,
+          logger
+        ),
+      { message: /Failed to find project nope/ }
+    );
+  }
+);
+
+test.serial(
+  'deploy: throws if a file is deployed to an alias that is not tracked locally',
+  async (t) => {
+    mockFs({
+      '/ws/project.yaml': projectYaml,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            project: '/ws/project.yaml',
+            target: 'typo',
+            confirm: false,
+          } as any,
+          logger
+        ),
+      { message: /Failed to find project typo/ }
+    );
   }
 );
