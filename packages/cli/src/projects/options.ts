@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import resolvePath from '../util/resolve-path';
 import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
@@ -20,6 +21,8 @@ export type Opts = BaseOpts & {
   format?: 'yaml' | 'json' | 'state';
   clean?: boolean;
   createCredentials?: boolean;
+  branch?: string | false;
+  track?: boolean;
   checkout?: boolean;
 };
 
@@ -46,6 +49,15 @@ export const clean: CLIOption = {
     description: 'Clean the working dir before checking out the new project',
     default: false,
     boolean: true,
+  },
+};
+
+export const track: CLIOption = {
+  name: 'track',
+  yargs: {
+    boolean: true,
+    description:
+      'When on a git branch, make this branch track the checked out project (by default, checking out a different project only expands its files)',
   },
 };
 
@@ -161,6 +173,44 @@ export const workspace: CLIOption = {
     } else {
       opts.workspace = resolvePath(ws);
     }
+  },
+};
+
+// Returns the current git branch, or false if not on a branch
+// (not a git repo, git not installed, detached HEAD)
+const detectBranch = (cwd: string) => {
+  try {
+    const branch = execSync('git symbolic-ref --short -q HEAD', {
+      cwd,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+    return branch || false;
+  } catch (e) {
+    return false;
+  }
+};
+
+// --branch is used to force the CLI to load checkout metadata from a different
+// path in the .openfn folder. It is not likely to be used by users.
+export const branch: CLIOption = {
+  name: 'branch',
+  yargs: {
+    hidden: true,
+    description:
+      'The git branch to track the checked out project against. Detected automatically if not set. Pass --no-branch to ignore git.',
+  },
+  ensure: (opts: any) => {
+    let value = opts.branch ?? process.env.OPENFN_BRANCH;
+    if (typeof value === 'string' && /^(false|null)?$/.test(value)) {
+      value = false;
+    }
+    if (value === undefined || value === true) {
+      const cwd = opts.workspace ?? process.env.OPENFN_WORKSPACE ?? '.';
+      value = detectBranch(resolvePath(cwd));
+    }
+    opts.branch = value === false ? false : String(value);
   },
 };
 

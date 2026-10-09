@@ -9,11 +9,18 @@ import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
+  loadCheckoutFile,
 } from './util/config';
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
 import matchProject from './util/match-project';
 import { extractAliasFromFilename } from './parse/from-path';
+
+export type WorkspaceOptions = {
+  // The git branch the workspace is on, which determines which checkout file
+  // to use. Pass false or null (or leave unset) to use the default checkout
+  branch?: string | false | null;
+};
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -24,15 +31,23 @@ export class Workspace {
 
   root: string;
 
+  branch?: string | false | null;
+
   private projects: Project[] = [];
-  private projectPaths = new Map<string, string>();
+  private projectPaths = new Map<Project, string>();
   private isValid: boolean = false;
   private logger: Logger;
 
   // Set validate to false to suppress warnings if a Workspace doesn't exist
   // This is appropriate if, say, fetching a project for the first time
-  constructor(workspacePath: string, logger?: Logger, validate = true) {
+  constructor(
+    workspacePath: string,
+    logger?: Logger,
+    validate = true,
+    options: WorkspaceOptions = {}
+  ) {
     this.root = workspacePath;
+    this.branch = options.branch;
     this.logger = logger ?? createLogger('Workspace', { level: 'info' });
 
     let context = { workspace: undefined, project: undefined };
@@ -55,7 +70,11 @@ export class Workspace {
     // it's not super reliable
     // Actually would it not be better to find the ACTUAL project and just
     // reference that?
-    this.activeProject = context.project;
+    this.activeProject = loadCheckoutFile(
+      workspacePath,
+      this.branch,
+      context.project
+    );
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
     // dealing with projects
@@ -78,7 +97,7 @@ export class Workspace {
               ...this.config,
               alias,
             });
-            this.projectPaths.set(project.id, stateFilePath);
+            this.projectPaths.set(project, stateFilePath);
             return project;
           } catch (e) {
             console.warn(`Failed to load project from ${stateFilePath}`);
@@ -119,21 +138,43 @@ export class Workspace {
     return matchProject(nameyThing, this.projects);
   }
 
-  getProjectPath(id: string) {
-    return this.projectPaths.get(id);
+  getProjectPath(project: Project) {
+    return this.projectPaths.get(project);
   }
 
+  /**
+   * Find the local copy of the checked-out project.
+   *
+   * Several local copies can share a uuid and id (eg main@app.openfn.org and
+   * staging@localhost), so the checkout's alias and endpoint are tried first.
+   * Older checkouts may not record an alias: fall back to uuid, then id.
+   */
   getTrackedProject() {
-    return (
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
-      this.projects.find((p) => p.id === this.activeProject?.id)
-    );
+    const { alias, endpoint, uuid, id } = this.activeProject ?? {};
+
+    if (alias) {
+      const match = this.projects.find(
+        (p) =>
+          p.alias === alias &&
+          // Compare origins (not just hostnames) so that ports count
+          (!endpoint || sameOrigin(p.openfn?.endpoint, endpoint))
+      );
+      if (match) return match;
+    }
+
+    if (uuid) {
+      const match = this.projects.find((p) => p.openfn?.uuid === uuid);
+      if (match) return match;
+    }
+
+    return this.projects.find((p) => p.id === id);
   }
 
   async getCheckedOutProject(alias?: string | null) {
     return await Project.from('fs', {
       root: this.root,
       config: this.config,
+      branch: this.branch,
       // The checked out project can't meaningfully be said to have an alias
       // But we can force one if it makes sense from context
       alias: alias ?? null,
@@ -161,3 +202,6 @@ export class Workspace {
     return this.isValid;
   }
 }
+
+const sameOrigin = (a?: string, b?: string) =>
+  !!a && !!b && new URL(a).origin === new URL(b).origin;

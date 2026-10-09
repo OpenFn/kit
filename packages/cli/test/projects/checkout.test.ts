@@ -222,6 +222,15 @@ test.serial('checkout: same id as active', async (t) => {
   );
 });
 
+test.serial('checkout: makes git ignore the checkout state', async (t) => {
+  await checkoutHandler(
+    { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+    logger
+  );
+
+  t.is(fs.readFileSync('/ws/.openfn/.gitignore', 'utf8'), '*\n');
+});
+
 test.serial(
   'checkout: writes forked_from based on version history',
   async (t) => {
@@ -233,8 +242,10 @@ test.serial(
       logger
     );
 
-    const openfn = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
-    t.deepEqual(openfn.project.forked_from, {
+    const checkout = yamlToJson(
+      fs.readFileSync('/ws/.openfn/checkout.yaml', 'utf8')
+    );
+    t.deepEqual(checkout.forked_from, {
       'simple-workflow-main': 'a',
       'another-workflow-main': 'b',
     });
@@ -451,19 +462,25 @@ test.serial('respect openfn.yaml settings', async (t) => {
   const yaml = fs.readFileSync('/ws1/openfn.yaml', 'utf8');
   t.is(
     yaml,
-    `project:
-  uuid: <uuid:staging>
-  id: staging
-  name: Staging
-workspace:
-  credentials: credentials.yaml
-  dirs:
-    projects: p
-    workflows: w
-  formats:
-    openfn: yaml
-    project: json
-    workflow: json
+    `credentials: credentials.yaml
+dirs:
+  projects: p
+  workflows: w
+formats:
+  openfn: yaml
+  project: json
+  workflow: json
+`
+  );
+
+  // project metadata is written to the checkout file
+  const checkout = fs.readFileSync('/ws1/.openfn/checkout.yaml', 'utf8');
+  t.is(
+    checkout,
+    `alias: staging
+id: staging
+name: Staging
+uuid: <uuid:staging>
 `
   );
 
@@ -729,7 +746,7 @@ test.serial(
 );
 
 test.serial(
-  'checkout: writes fetched collections into openfn.yaml',
+  'checkout: writes fetched collections into resources.yaml',
   async (t) => {
     mock({
       '/ws6/workflows': {},
@@ -754,12 +771,18 @@ test.serial(
       logger
     );
 
+    const resources: any = yamlToJson(
+      fs.readFileSync('/ws6/resources.yaml', 'utf8')
+    );
+    // ids should never be written to disk - only names
+    t.deepEqual(resources.collections, {
+      'my-collection': {},
+      'another-collection': {},
+    });
+
+    // collections don't belong in openfn.yaml
     const openfn: any = yamlToJson(fs.readFileSync('/ws6/openfn.yaml', 'utf8'));
-    // ids should never be written to disk - only bare names
-    t.deepEqual(openfn.project.collections, [
-      'my-collection',
-      'another-collection',
-    ]);
+    t.falsy(openfn.collections);
   }
 );
 
@@ -913,8 +936,10 @@ test.serial(
     );
 
     // assert that staging was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'foo');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'foo');
 
     let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// abc');
@@ -931,8 +956,8 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    openfn = yamlToJson(fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8'));
+    t.is(openfn.id, 'bar');
 
     expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// 2');
@@ -960,8 +985,10 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'bar');
 
     let expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// 2');
@@ -977,8 +1004,8 @@ test.serial(
     );
 
     // assert that staging was checked out ok
-    openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'foo');
+    openfn = yamlToJson(fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8'));
+    t.is(openfn.id, 'foo');
 
     expression = fs.readFileSync('/tmp/workflows/a/aaa.js', 'utf8');
     t.is(expression, '// abc');
@@ -1005,8 +1032,10 @@ test.serial(
     logger._reset();
 
     // assert that main was checked out ok
-    let openfn = yamlToJson(fs.readFileSync('/tmp/openfn.yaml', 'utf8'));
-    t.is(openfn.project.id, 'bar');
+    let openfn = yamlToJson(
+      fs.readFileSync('/tmp/.openfn/checkout.yaml', 'utf8')
+    );
+    t.is(openfn.id, 'bar');
 
     // Now make a change - on checkout, this change will be lost (it is not saved anywhere)
     fs.writeFileSync('/tmp/workflows/a/aaa.js', 'foobar');
@@ -1026,5 +1055,140 @@ test.serial(
         message: 'main has diverged from staging!',
       }
     );
+  }
+);
+
+// Ad-hoc checkouts: checking out a project on a git branch that tracks a
+// different project. dev tracks staging, and we try to checkout the main project
+const adHocSetup = () => {
+  fs.mkdirSync('/ws/.openfn/branches/dev', { recursive: true });
+  fs.writeFileSync(
+    '/ws/.openfn/branches/dev/checkout.yaml',
+    'id: staging\nuuid: <uuid:staging>\n'
+  );
+};
+
+// The prompt needs a terminal (without one, ad-hoc checkouts abort)
+const withTTY = async (fn: () => Promise<unknown>) => {
+  const stdin: any = process.stdin;
+  const original = stdin.isTTY;
+  stdin.isTTY = true;
+  try {
+    await fn();
+  } finally {
+    stdin.isTTY = original;
+  }
+};
+
+const adHocCheckout = (log: any, extra = {}) =>
+  checkoutHandler(
+    {
+      command: 'project-checkout',
+      project: 'project',
+      workspace: '/ws',
+      branch: 'dev',
+      ...extra,
+    },
+    log
+  );
+
+// The real logger skips the prompt if confirm() is called with force=true,
+// but the mock always records and approves, so spy on the arguments instead
+const spyLogger = (answer = true) => {
+  const calls: Array<{ message: string; skip?: boolean }> = [];
+  const log: any = {
+    ...createMockLogger(undefined, { level: 'debug' }),
+    confirm: async (message: string, skip?: boolean) => {
+      calls.push({ message, skip });
+      return answer;
+    },
+  };
+  return { log, calls };
+};
+
+test.serial(
+  'checkout: asks for confirmation on an ad-hoc checkout',
+  async (t) => {
+    adHocSetup();
+    const { log, calls } = spyLogger();
+
+    await withTTY(() => adHocCheckout(log));
+
+    t.is(calls.length, 1);
+    t.regex(calls[0].message, /Continue and checkout .* anyway/);
+    t.falsy(calls[0].skip);
+    // the files were expanded
+    t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+    // but the branch still tracks staging
+    t.is(
+      fs.readFileSync('/ws/.openfn/branches/dev/checkout.yaml', 'utf8'),
+      'id: staging\nuuid: <uuid:staging>\n'
+    );
+  }
+);
+
+test.serial(
+  'checkout: does nothing if the user declines an ad-hoc checkout',
+  async (t) => {
+    adHocSetup();
+    const { log } = spyLogger(false);
+
+    await withTTY(() => adHocCheckout(log));
+
+    t.false(fs.existsSync('/ws/workflows/simple-workflow-main'));
+  }
+);
+
+test.serial('checkout: -f skips the ad-hoc confirmation', async (t) => {
+  adHocSetup();
+  const { log, calls } = spyLogger();
+
+  await adHocCheckout(log, { force: true });
+
+  t.true(calls[0].skip);
+  t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+});
+
+test.serial('checkout: -y skips the ad-hoc confirmation', async (t) => {
+  adHocSetup();
+  const { log, calls } = spyLogger();
+
+  await adHocCheckout(log, { confirm: false });
+
+  t.true(calls[0].skip);
+  t.true(fs.existsSync('/ws/workflows/simple-workflow-main'));
+});
+
+test.serial(
+  'checkout: does not ask for confirmation if the branch is not tracking something else',
+  async (t) => {
+    fs.mkdirSync('/ws/.openfn/branches/dev', { recursive: true });
+    fs.writeFileSync(
+      '/ws/.openfn/branches/dev/checkout.yaml',
+      'id: main\nuuid: <uuid:main>\n'
+    );
+    const { log, calls } = spyLogger();
+
+    await adHocCheckout(log);
+
+    t.is(calls.length, 0);
+  }
+);
+
+test.serial(
+  'checkout: aborts an ad-hoc checkout with no terminal and no -f or -y',
+  async (t) => {
+    adHocSetup();
+    const { log, calls } = spyLogger();
+    const exitCode = process.exitCode;
+
+    await t.throwsAsync(adHocCheckout(log), {
+      message: 'Ad-hoc checkout needs to be confirmed',
+    });
+    // abort() flags the process as failed: don't let that leak out of the test
+    process.exitCode = exitCode;
+
+    t.is(calls.length, 0);
+    t.false(fs.existsSync('/ws/workflows/simple-workflow-main'));
   }
 );

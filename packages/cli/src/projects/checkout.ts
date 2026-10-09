@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import Project, { Workspace } from '@openfn/project';
+import type l from '@openfn/lexicon';
 import path from 'path';
 import fs from 'fs';
 import { rimraf } from 'rimraf';
@@ -10,7 +11,11 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { tidyWorkflowDir, updateForkedFrom } from './util';
+import {
+  ensureCheckoutIgnored,
+  tidyWorkflowDir,
+  updateForkedFrom,
+} from './util';
 import { createProjectCredentials } from './credentials-helpers';
 import abort from '../util/abort';
 
@@ -21,11 +26,23 @@ export type CheckoutOptions = Pick<
   | 'workspace'
   | 'log'
   | 'clean'
+  | 'confirm'
   | 'force'
   | 'createCredentials'
+  | 'branch'
+  | 'track'
 >;
 
-const options = [o.log, po.workspace, po.clean, o.force, po.creds];
+const options = [
+  o.log,
+  po.workspace,
+  po.branch,
+  po.track,
+  po.clean,
+  o.force,
+  o.confirm,
+  po.creds,
+];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -43,7 +60,9 @@ export default command;
 export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const projectIdentifier = options.project!;
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath, logger);
+  const workspace = new Workspace(workspacePath, logger, true, {
+    branch: options.branch,
+  });
 
   // get the config
   // TODO: try to retain the endpoint for the projects
@@ -109,18 +128,82 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
   // Check whether the checked out project has diverged from its forked from versions
 
+  // On a git branch, the checkout file binds the branch to a project.
+  // Checking out some other project is an ad-hoc checkout: expand its files,
+  // but keep the branch tracking the original project
+  const tracked = workspace.activeProject;
+  const isAdHoc = Boolean(
+    options.branch &&
+      !options.track &&
+      tracked &&
+      !isSameProject(tracked, switchProject)
+  );
+  if (isAdHoc) {
+    const trackedName = tracked!.alias ?? tracked!.id ?? tracked!.uuid;
+
+    logger?.warn('Watch out! Ad-hoc checkout detected!');
+    logger?.warn(
+      `You are on git branch ${options.branch}, which tracks project ${trackedName}`
+    );
+    logger?.warn(
+      `But you've asked to checkout project ${switchProject.alias}.`
+    );
+    logger?.warn(
+      `This will leave your branch (${trackedName}) inconsistent with your checked out workflows (${switchProject.alias}).`
+    );
+    logger?.warn(
+      `Pass --track to update your local tracker so that ${options.branch} tracks ${switchProject.alias} instead.`
+    );
+
+    // -f and -y both skip the prompt
+    const skip = options.force || options.confirm === false;
+
+    // Without a terminal there's nobody to ask, and the prompt would hang
+    if (!skip && !process.stdin.isTTY) {
+      abort(logger!, 'Ad-hoc checkout needs to be confirmed', {
+        details: 'There is no terminal to ask for confirmation',
+        fix: `Pass --force (-f) or --confirm (-y) to continue anyway, or --track to make ${options.branch} track ${switchProject.alias}`,
+      });
+    }
+    const doIt = logger
+      ? await logger.confirm(
+          `Continue and checkout ${switchProject.alias} anyway?`,
+          skip
+        )
+      : true;
+
+    if (!doIt) {
+      logger?.info('Checkout cancelled: nothing has been changed');
+      return;
+    }
+  }
+
   // delete workflow dir before expanding project
   if (options.clean) {
     await rimraf(workspace.workflowsPath);
   } else {
-    await tidyWorkflowDir(localProject, switchProject, false, workspacePath);
+    await tidyWorkflowDir(
+      localProject,
+      switchProject,
+      false,
+      workspacePath,
+      options.branch
+    );
   }
 
   // write the forked from map
   updateForkedFrom(switchProject);
 
   // expand project into directory
-  const files: any = switchProject.serialize('fs');
+  const files: any = switchProject.serialize('fs', {
+    branch: options.branch,
+  });
+  if (isAdHoc) {
+    // Don't touch the workspace or checkout metadata
+    delete files[switchProject.generateConfig().path];
+    delete files[switchProject.generateCheckout(options.branch).path];
+  }
+  await ensureCheckoutIgnored(workspacePath);
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {
@@ -141,6 +224,13 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   }
 
   logger?.success(`Expanded project to ${workspacePath}`);
+};
+
+const isSameProject = (tracked: l.ProjectMeta, project: Project) => {
+  if (tracked.uuid && project.openfn?.uuid) {
+    return tracked.uuid === project.openfn.uuid;
+  }
+  return tracked.id === project.id;
 };
 
 // This function will tell us if the active/checked out project

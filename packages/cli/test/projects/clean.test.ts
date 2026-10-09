@@ -115,3 +115,43 @@ test.serial(
     );
   }
 );
+
+test.serial(
+  'does not delete anything if it is not known which project is checked out',
+  async (t) => {
+    // two tracked projects, but no checkout metadata anywhere
+    mock({
+      '/ws/workflows/old-workflow': { 'old-job.js': 'fn(s => s)' },
+      '/ws/openfn.yaml': '',
+      '/ws/.projects/main@app.openfn.org.yaml': projectStateFile,
+      '/ws/.projects/staging@app.openfn.org.yaml': projectStateFile,
+    });
+    const exitCode = process.exitCode;
+
+    await t.throwsAsync(
+      cleanHandler({ workspace: '/ws', force: true } as any, logger),
+      { message: 'No checked out project found' }
+    );
+    process.exitCode = exitCode;
+
+    t.true(fs.existsSync('/ws/workflows/old-workflow/old-job.js'));
+  }
+);
+
+test.serial(
+  'does not delete anything if there is no active project to restore',
+  async (t) => {
+    // a workspace with no projects and no checkout metadata at all
+    mock({
+      '/ws/workflows/old-workflow': { 'old-job.js': 'fn(s => s)' },
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      cleanHandler({ workspace: '/ws', force: true } as any, logger),
+      { message: /No active project found/ }
+    );
+
+    t.true(fs.existsSync('/ws/workflows/old-workflow/old-job.js'));
+  }
+);

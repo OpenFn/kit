@@ -540,3 +540,109 @@ test.serial('force merge a diverged project', async (t) => {
   // The file should be overwritten
   t.regex(fileContent, /fn\(\)/);
 });
+
+test.serial(
+  'fetch by UUID to an output path when local copies share the UUID',
+  async (t) => {
+    mock({
+      '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
+      '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
+      '/ws/openfn.yaml': '',
+    });
+
+    await fetchHandler(
+      {
+        project: PROJECT_UUID,
+        outputPath: '/ws/out.yaml',
+
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+      } as any,
+      logger
+    );
+
+    const fileContent = await readFile('/ws/out.yaml', 'utf-8');
+    t.is(fileContent.trim(), yaml_v2);
+  }
+);
+
+test.serial(
+  'error: fetch by UUID to an output path without an endpoint when local copies share the UUID',
+  async (t) => {
+    mock({
+      '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
+      '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        fetchHandler(
+          {
+            project: PROJECT_UUID,
+            outputPath: '/ws/out.yaml',
+
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+          } as any,
+          logger
+        ),
+      { message: /Failed to resolve unique identifier/ }
+    );
+  }
+);
+
+test.serial(
+  'error: fetch by UUID without an output path when local copies share the UUID',
+  async (t) => {
+    mock({
+      '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
+      '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
+      '/ws/openfn.yaml': '',
+    });
+
+    await t.throwsAsync(
+      () =>
+        fetchHandler(
+          {
+            project: PROJECT_UUID,
+
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+          } as any,
+          logger
+        ),
+      { message: /Failed to resolve unique identifier/ }
+    );
+  }
+);
+
+test.serial('fetch by alias when local copies share the UUID', async (t) => {
+  mock({
+    '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
+    '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
+    '/ws/openfn.yaml': '',
+  });
+
+  await fetchHandler(
+    {
+      project: 'jam-backup',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  // Only the aliased copy is updated
+  const backup = await readFile(
+    '/ws/.projects/jam-backup@app.openfn.org.yaml',
+    'utf-8'
+  );
+  t.is(backup.trim(), yaml_v2);
+  const main = await readFile('/ws/.projects/jam@app.openfn.org.yaml', 'utf-8');
+  t.is(main, yaml_v1);
+});

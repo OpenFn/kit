@@ -12,11 +12,23 @@ import type { Opts } from './options';
 export type VersionOptions = Required<
   Pick<
     Opts,
-    'command' | 'workflow' | 'workspace' | 'workflowMappings' | 'json' | 'log'
+    | 'command'
+    | 'workflow'
+    | 'workspace'
+    | 'workflowMappings'
+    | 'json'
+    | 'log'
+    | 'branch'
   >
 >;
 
-const options = [o.workflow, po.workspace, po.workflowMappings, o.log];
+const options = [
+  o.workflow,
+  o.log,
+  po.workspace,
+  po.branch,
+  po.workflowMappings,
+];
 
 const command: yargs.CommandModule = {
   command: 'version [workflow]',
@@ -95,7 +107,9 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
   }
 
   logger.debug('Reading workflow(s) from checked-out workspace project');
-  const workspace = new Workspace(options.workspace);
+  const workspace = new Workspace(options.workspace, undefined, true, {
+    branch: options.branch,
+  });
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
     return;

@@ -191,6 +191,42 @@ mock({
   }),
 
   // aliasing
+  // Two local copies of the same project, with "main" checked out
+  '/ws5/openfn.yaml': jsonToYaml({
+    project: { id: 'proj-1', uuid: '111', alias: 'main' },
+  }),
+  '/ws5/.projects/main@openfn.org.yaml': gen(
+    111,
+    'main',
+    'proj-1',
+    'openfn.org'
+  ),
+  '/ws5/.projects/backup@openfn.org.yaml': gen(
+    111,
+    'backup',
+    'proj-1',
+    'openfn.org'
+  ),
+  // Two copies on different ports of the same host
+  '/ws6/openfn.yaml': '',
+  '/ws6/.openfn/checkout.yaml': jsonToYaml({
+    id: 'proj-1',
+    uuid: '222',
+    alias: 'local',
+    endpoint: 'http://localhost:5000',
+  }),
+  '/ws6/.projects/local@localhost.yaml': jsonToYaml({
+    id: 'proj-1',
+    version: 2,
+    openfn: { uuid: '111', endpoint: 'http://localhost:4000' },
+    workflows: [],
+  }),
+  '/ws6/.projects/other@localhost.yaml': jsonToYaml({
+    id: 'proj-1',
+    version: 2,
+    openfn: { uuid: '222', endpoint: 'http://localhost:5000' },
+    workflows: [],
+  }),
   '/ws4/openfn.yaml': '',
   '/ws4/.projects/main@openfn.org.yaml': gen(
     111,
@@ -320,4 +356,37 @@ test('get project throws on ambiguous match', (t) => {
 
   t.truthy(error);
   t.regex(error!.message, /Failed to resolve unique identifier/);
+});
+
+test('get a duplicated project by uuid throws', (t) => {
+  const ws = new Workspace('/ws5');
+
+  t.throws(() => ws.get('111'), {
+    message: /Failed to resolve unique identifier/,
+  });
+});
+
+test('getTrackedProject returns the checked out copy by alias', (t) => {
+  const ws = new Workspace('/ws5');
+
+  t.is(ws.getTrackedProject()?.alias, 'main');
+});
+
+test('getTrackedProject matches the alias on the same port only', (t) => {
+  const ws = new Workspace('/ws6');
+
+  t.is(ws.getTrackedProject()?.alias, 'other');
+});
+
+test('getProjectPath returns the file for each copy', (t) => {
+  const ws = new Workspace('/ws5');
+
+  t.is(
+    ws.getProjectPath(ws.get('main')!),
+    '/ws5/.projects/main@openfn.org.yaml'
+  );
+  t.is(
+    ws.getProjectPath(ws.get('backup')!),
+    '/ws5/.projects/backup@openfn.org.yaml'
+  );
 });

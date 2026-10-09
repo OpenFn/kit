@@ -143,6 +143,17 @@ test('throw if ambiguous - id matches one, alias matches another', (t) => {
   });
 });
 
+test('match a copy by alias when other copies share its id', (t) => {
+  const projects = [
+    p('<uuid:1>', 'main', 'my-project'),
+    p('<uuid:1>', 'my-project', 'my-project'),
+  ];
+
+  const result = matchProject('my-project', projects);
+
+  t.is(result?.alias, 'my-project');
+});
+
 test('throw if ambiguous uuid', (t) => {
   const projects = [
     p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging-a', 'project-a'),

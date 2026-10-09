@@ -345,7 +345,7 @@ test('replace mode: merged collections keep target uuid on a name match', (t) =>
   t.falsy(result.collections?.find((c) => c.name === 'remove-me'));
 });
 
-test('replace mode: no local collections means none survive the merge', (t) => {
+test('replace mode: an empty local collections list means none survive the merge', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -357,11 +357,31 @@ test('replace mode: no local collections means none survive the merge', (t) => {
   const targetCollections = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
-  const source = createProject(wf_b, 'b');
+  const source = createProject(wf_b, 'b', { collections: [] });
 
   const result = merge(source, target, { mode: REPLACE_MERGE });
 
   t.deepEqual(result.collections, []);
+});
+
+test('replace mode: undefined local collections leave the target collections alone', (t) => {
+  const wf = {
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  };
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const targetCollections = [{ uuid: 'remote-uuid-1', name: 'my-collection' }];
+
+  const target = createProject(wf_a, 'a', { collections: targetCollections });
+  // no collections key means they're not managed locally
+  const source = createProject(wf_b, 'b');
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.deepEqual(result.collections, targetCollections);
 });
 
 test('sandbox mode: source collections fully replace target collections', (t) => {
