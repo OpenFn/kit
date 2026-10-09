@@ -25,6 +25,7 @@ import {
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
 import ensureCheckout from './ensure-checkout';
+import isUuid from '../util/is-uuid';
 import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
@@ -192,6 +193,13 @@ export const channelsChanged = (local: Project, remote: Project) =>
     toResourceChannels(remote.channels, remote.credentials)
   );
 
+// The remote project to deploy to. This is all we need to fetch it,
+// so it does not have to exist in the local workspace
+type DeployTarget = {
+  uuid: string;
+  endpoint: string;
+};
+
 export type SyncResult = {
   merged: Project;
   remoteProject: Project;
@@ -209,30 +217,31 @@ const syncProjects = async (
   config: Required<AuthOptions>,
   ws: Workspace,
   localProject: Project,
-  trackedProject: Project, // the project we want to update
+  target: DeployTarget, // the remote project we want to update
   logger: Logger,
   skipLocallyChangedCheck = false
 ): Promise<SyncResult | null> => {
-  // First step, fetch the latest version and write
+  // First step, fetch the latest version (held in memory, not written to disk)
+  // The target may not be tracked locally at all: all we need is a uuid and endpoint
   // this may throw!
   let remoteProject: Project;
   try {
-    logger.info('Fetching remote target ', printProjectName(trackedProject));
-    // TODO should we prefer endpoint over alias?
-    // maybe if it's explicitly passed?
-    const endpoint = trackedProject.openfn?.endpoint ?? config.endpoint;
+    logger.info(
+      'Fetching remote target ',
+      `${target.uuid} at ${target.endpoint}`
+    );
     const { data } = await fetchProject(
-      endpoint,
+      target.endpoint,
       config.apiKey,
-      trackedProject.uuid!,
+      target.uuid,
       logger
     );
 
     remoteProject = await Project.from('state', data!, {
-      endpoint: endpoint,
+      endpoint: target.endpoint,
     });
 
-    logger.info('Downloaded latest version of project at ', endpoint);
+    logger.info('Downloaded latest version of project at ', target.endpoint);
   } catch (e) {
     logger.error(e);
     throw e;
@@ -429,7 +438,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Track the remote we want to target
   // If the user passed an explicit target, we need to use that
   // Otherwise just sync with the local project's own tracked remote
-  let tracker;
+  let tracker: Project | null | undefined;
+  let targetUuid: string | undefined;
   if (options.new) {
     // reset all metadata
     localProject.openfn = {
@@ -454,45 +464,44 @@ export async function handler(options: DeployOptions, logger: Logger) {
       tracker = ws.getTrackedProject();
     }
 
-    // A project loaded from a file already knows which remote it belongs
-    // to, so it can serve as its own deploy destination if there's no
-    // locally tracked copy of it
-    if (!tracker && filePath) {
-      logger.debug(
-        'No locally tracked project found: deploying to the remote named in the file'
-      );
-      tracker = localProject;
+    // If the target isn't tracked locally we can still deploy to it, as long
+    // as we know its uuid: we'll fetch it from the endpoint
+    // (an alias can't be resolved without a local copy)
+    if (tracker) {
+      targetUuid = tracker.uuid ?? undefined;
+      // the local copy belongs to the project we deployed at, not the one
+      // we deployed from
+      alias ??= tracker.alias ?? undefined;
+    } else if (targetIdentifier && isUuid(targetIdentifier)) {
+      targetUuid = targetIdentifier;
+    } else if (filePath && !targetIdentifier) {
+      // A project loaded from a file already knows which remote it belongs to
+      targetUuid = localProject.uuid ?? undefined;
     }
 
-    if (!tracker) {
-      // Is this really an error? Unlikely to happen I think
-      console.log(
-        `ERROR: Failed to find tracked remote project ${
-          targetIdentifier ?? localProject.uuid!
-        } locally`
+    if (!targetUuid) {
+      throw new Error(
+        `Failed to find project ${
+          targetIdentifier ?? ''
+        } in the workspace. Pass a project UUID to deploy to a project that is not tracked locally, or add --new to create a new project`
       );
-      console.log('To deploy a new project, add --new to the command');
-      // TODO can we automate the fetch bit?
-      // If it's a UUID it should be ok?
-      console.log(
-        'You may need to fetch the project before you can safely deploy'
-      );
-
-      throw new Error('Failed to find remote project locally');
     }
-
-    // the local copy belongs to the project we deployed at, not the one
-    // we deployed from
-    alias ??= tracker.alias ?? undefined;
+    logger.debug(
+      tracker
+        ? 'Deploying to locally tracked project'
+        : 'No locally tracked project found: fetching target from the remote'
+    );
   }
 
   // Choose the target endpoint we want to deploy to
   // If the user explicity passed --endpoint, use that
   // If the local project is tracking an endpoint, use that (90% of cases)
   // Otherwise fallback to to the auto-loaded config (probably coming from env)
-  let endpoint: string =
+  // (an untracked file deploy falls back to the endpoint in the file)
+  const endpoint: string =
     options.endpoint ??
     tracker?.openfn?.endpoint ??
+    (targetUuid && !tracker ? localProject.openfn?.endpoint : undefined) ??
     config.endpoint ??
     DEFAULT_ENDPOINT;
 
@@ -530,7 +539,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
       config,
       ws!,
       localProject,
-      tracker!,
+      { uuid: targetUuid!, endpoint },
       logger,
       // a file's own snapshot tells us nothing about the target
       !!filePath
@@ -630,9 +639,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       }
     );
 
-    if (options.checkout !== false) {
-      const workspacePath = options.workspace ?? process.cwd();
+    const workspacePath = options.workspace ?? process.cwd();
 
+    if (options.checkout !== false) {
       // Write the updated openfn.yaml and checkout file
       // TODO: allow us to suppress writing this stuff
       // (useful if posting from spec)
@@ -654,15 +663,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
       if (resources.content) {
         await writeFile(resourcesPath, resources.content);
       }
-
-      // TODO if this was marked as new, we probably need to ensure a unique alias here
-      const finalOutputPath = getSerializePath(
-        finalProject,
-        options.workspace!
-      );
-      const fullFinalPath = await serialize(finalProject, finalOutputPath);
-      logger.debug('Updated local project at ', fullFinalPath);
     }
+
+    // Always write the final project file (even with --no-checkout)
+    const finalOutputPath = getSerializePath(finalProject, options.workspace!);
+    const fullFinalPath = await serialize(finalProject, finalOutputPath);
+    logger.debug('Updated local project at ', fullFinalPath);
 
     if (options.new) {
       logger.success('Created new project at', endpoint);
