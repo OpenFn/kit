@@ -4,3 +4,5 @@ import { cmd } from './cli';
 
 const opts = cmd.parseSync();
 runInChildProcess(opts);
+
+// test
