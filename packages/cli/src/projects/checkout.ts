@@ -11,11 +11,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import {
-  ensureCheckoutIgnored,
-  tidyWorkflowDir,
-  updateForkedFrom,
-} from './util';
+import { tidyWorkflowDir, updateForkedFrom } from './util';
 import { createProjectCredentials } from './credentials-helpers';
 import abort from '../util/abort';
 
@@ -203,7 +199,6 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
     delete files[switchProject.generateConfig().path];
     delete files[switchProject.generateCheckout(options.branch).path];
   }
-  await ensureCheckoutIgnored(workspacePath);
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {
