@@ -17,9 +17,9 @@ test("execute: expressionPath'.'", (t) => {
   t.assert(options.expressionPath === 'job.js');
 });
 
-test('execute: default outputPath to ./output.json', (t) => {
+test('execute: outputPath has no parse-time default', (t) => {
   const options = parse('execute tmp/job.js');
-  t.assert(options.outputPath === 'tmp/output.json');
+  t.is(options.outputPath, undefined);
 });
 
 test('execute: set outputPath to ./output.json', (t) => {

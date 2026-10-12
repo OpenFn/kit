@@ -463,10 +463,12 @@ export const outputPath: CLIOption = {
     } else {
       if (opts.outputStdout) {
         delete opts.outputPath;
-      } else {
+      } else if (opts.command !== 'execute') {
         const base = getBaseDir(opts);
         setDefaultValue(opts, 'outputPath', nodePath.join(base, 'output.json'));
       }
+      // For execute, the default is resolved late: relative to the workflow
+      // in loadPlan, or tmp/output.json in the cwd in the execute handler
     }
     // remove the alias
     delete (opts as { o?: string }).o;
