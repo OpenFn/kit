@@ -691,3 +691,31 @@ dirs:
     t.is(opts.credentials, '/creds.yaml');
   }
 );
+
+test.serial(
+  'outputPath: default to tmp/output.json beside a workflow',
+  async (t) => {
+    const opts: any = { workflowPath: 'test/wf.json', expandAdaptors: true };
+
+    await loadPlan(opts, logger);
+    t.is(opts.outputPath, 'test/tmp/output.json');
+  }
+);
+
+test.serial('outputPath: do not override an explicit path', async (t) => {
+  const opts: any = {
+    workflowPath: 'test/wf.json',
+    expandAdaptors: true,
+    outputPath: 'out.json',
+  };
+
+  await loadPlan(opts, logger);
+  t.is(opts.outputPath, 'out.json');
+});
+
+test.serial('outputPath: do not default for an expression', async (t) => {
+  const opts: any = { expressionPath: 'test/job.js', expandAdaptors: true };
+
+  await loadPlan(opts, logger);
+  t.is(opts.outputPath, undefined);
+});

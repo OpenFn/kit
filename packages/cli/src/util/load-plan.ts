@@ -15,6 +15,8 @@ import resolvePath from './resolve-path';
 import { CREDENTIALS_KEY } from '../execute/apply-credential-map';
 import { CACHE_DIR } from './cache';
 
+export const DEFAULT_OUTPUT = 'tmp/output.json';
+
 const loadPlan = async (
   options: Pick<
     Opts,
@@ -30,6 +32,7 @@ const loadPlan = async (
     | 'credentials'
     | 'collectionsEndpoint'
     | 'cachePath'
+    | 'outputPath'
   > & {
     workflow?: Opts['workflow'];
     workspace?: string; // from project opts
@@ -65,14 +68,17 @@ const loadPlan = async (
     options.credentials ??= workspace.getConfig().credentials;
     options.collectionsEndpoint ??= proj?.openfn?.endpoint;
     // Set the cache path to be relative to the workflow
-    options.cachePath ??=
-      workspace.workflowsPath +
-      `/${workflow.alias ?? workflow.id}/${CACHE_DIR}`;
+    const workflowDir = `${workspace.workflowsPath}/${
+      workflow.alias ?? workflow.id
+    }`;
+    options.cachePath ??= `${workflowDir}/${CACHE_DIR}`;
+    options.outputPath ??= `${workflowDir}/${DEFAULT_OUTPUT}`;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
     const content = await fs.readFile(path.resolve(options.path), 'utf-8');
     options.baseDir = dirname(options.path);
+    options.outputPath ??= path.join(dirname(options.path), DEFAULT_OUTPUT);
     workflowObj = yamlToJson(content);
     const { options: o, ...rest } = workflowObj;
     // restructure the workflow so that options are not on the workflow object,
@@ -90,6 +96,9 @@ const loadPlan = async (
 
   if (jsonPath && !options.baseDir) {
     options.baseDir = path.dirname(jsonPath);
+  }
+  if (jsonPath) {
+    options.outputPath ??= path.join(path.dirname(jsonPath), DEFAULT_OUTPUT);
   }
 
   workflowObj = workflowObj ?? (await loadJson(jsonPath!, logger));

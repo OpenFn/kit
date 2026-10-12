@@ -18,7 +18,7 @@ test('correct default options', (t) => {
   t.is(options.immutable, false);
   t.is(options.expressionPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
-  t.is(options.outputPath, 'output.json');
+  t.is(options.outputPath, undefined);
   t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.is(options.skipAdaptorValidation, false);

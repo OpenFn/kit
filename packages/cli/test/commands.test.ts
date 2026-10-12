@@ -54,7 +54,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
 
   const expressionPath = options.expressionPath || 'job.js';
   const statePath = options.statePath || 'state.json';
-  const outputPath = options.outputPath || 'output.json';
+  const outputPath = options.outputPath || 'tmp/output.json';
   const state =
     JSON.stringify(options.state) || '{ "data": {}, "configuration": {} }';
 
@@ -86,6 +86,9 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // Override some options after the command has been parsed
   opts.path = expressionPath;
   opts.repoDir = options.repoDir;
+  if (options.outputPath) {
+    opts.outputPath ??= options.outputPath;
+  }
 
   opts.log = { default: 'none' };
   opts.skipAdaptorValidation = true;
@@ -164,7 +167,6 @@ test.serial('run an execution plan', async (t) => {
   };
 
   const options = {
-    outputPath: 'output.json',
     expressionPath: 'wf.json', // just to fool the test
   };
 
@@ -192,7 +194,6 @@ test.serial('run an execution plan with start', async (t) => {
   };
 
   const options = {
-    outputPath: 'output.json',
     expressionPath: 'wf.json', // just to fool the test
   };
 
@@ -264,7 +265,6 @@ test.serial('run a workflow', async (t) => {
   };
 
   const options = {
-    outputPath: 'output.json',
     expressionPath: 'wf.json', // just to fool the test
   };
 
@@ -286,7 +286,6 @@ test.serial('run a workflow with config as an object', async (t) => {
   };
 
   const options = {
-    outputPath: 'output.json',
     expressionPath: 'wf.json', // just to fool the test
   };
   const result = await run('openfn wf.json', JSON.stringify(workflow), options);
@@ -309,7 +308,6 @@ test.serial('run a workflow with config as a path', async (t) => {
   };
 
   const options = {
-    outputPath: 'output.json',
     expressionPath: 'wf.json', // just to fool the test
     mockfs: {
       '/config.json': JSON.stringify({ y: 0 }),
