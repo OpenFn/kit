@@ -176,7 +176,6 @@ const redirectTov2 = async (
   const workspace = options.workspace || process.cwd();
   const legacy = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
   const checkout = loadCheckoutFile(workspace, options.branch, legacy?.project);
-  console.log({ checkout, branch: options.branch });
 
   const endpoint = options.endpoint ?? checkout?.endpoint ?? config.endpoint;
 
