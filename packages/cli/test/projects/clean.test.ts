@@ -43,18 +43,9 @@ test.beforeEach(() => {
       'old-job.js': 'fn(s => s)',
     },
     '/ws/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'my-project',
-      },
-      workspace: {
-        workflowRoot: 'workflows',
-        formats: {
-          openfn: 'yaml',
-          project: 'yaml',
-          workflow: 'yaml',
-        },
-      },
+      formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
     }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({ id: 'my-project' }),
     '/ws/.projects/project@app.openfn.org.yaml': projectStateFile,
   });
 });
