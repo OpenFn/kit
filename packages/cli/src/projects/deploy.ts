@@ -341,9 +341,6 @@ const syncProjects = async (
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {
-  logger.warn(
-    'WARNING: the project deploy command is in BETA and may not be stable. Use cautiously on production projects.'
-  );
   const config = loadAppAuthConfig(options, logger);
 
   // Work out what we're deploying (a local file, or the checked-out
