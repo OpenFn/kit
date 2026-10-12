@@ -263,9 +263,6 @@ test.serial('pull a project', async (t) => {
 test.serial.only(
   'redirect to v2 protocol if openfn.yaml is present',
   async (t) => {
-    delete process.env.OPENFN_API_KEY;
-    delete process.env.OPENFN_ENDPOINT;
-
     const projectId = 'redirect-test-1';
     server.addProject(makeProject(projectId) as any);
 
@@ -275,7 +272,7 @@ test.serial.only(
     const bootstrap = await run(
       `openfn pull ${projectId} --workspace ${tmpDir} --log-json -l debug`
     );
-    console.log(bootstrap.stdout);
+    t.log(bootstrap.stdout);
     t.falsy(bootstrap.stderr);
     assertLog(t, extractLogs(bootstrap.stdout), /Detected openfn.yaml file/i);
 
