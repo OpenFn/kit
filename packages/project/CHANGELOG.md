@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.22.1
+
+### Patch Changes
+
+- ec1ce26: Export loadCheckoutFile util
+
 ## 0.22.0
 
 ### Minor Changes

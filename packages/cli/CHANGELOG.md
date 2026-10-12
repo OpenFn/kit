@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.43.1
+
+### Patch Changes
+
+- e1bf185: Remove beta warning from openfn project deploy
+- cfde1de: In v2 pull and deploy, ensure the checkout file is loaded when redirecting from v1
+- Updated dependencies [ec1ce26]
+  - @openfn/project@0.22.1
+
 ## 1.43.0
 
 ### Minor Changes

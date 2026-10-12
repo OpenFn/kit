@@ -13,20 +13,12 @@ mock({
   '/no-checkout/.projects/main@app.openfn.org.yaml': noCheckoutProject,
   '/no-checkout/.projects/staging@app.openfn.org.yaml': noCheckoutProject,
   '/ws/openfn.yaml': jsonToYaml({
-    project: {
-      id: 'my-project',
-      uuid: '<uuid:main>',
-    },
-    workspace: {
-      dirs: {
-        workflows: 'workflows',
-      },
-      formats: {
-        openfn: 'yaml',
-        project: 'yaml',
-        workflow: 'yaml',
-      },
-    },
+    dirs: { workflows: 'workflows' },
+    formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+  }),
+  '/ws/.openfn/checkout.yaml': jsonToYaml({
+    id: 'my-project',
+    uuid: '<uuid:main>',
   }),
   // This is in the new v2 format!
   '/ws/.projects/main@app.openfn.org.yaml': jsonToYaml({

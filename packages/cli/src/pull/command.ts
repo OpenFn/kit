@@ -21,6 +21,7 @@ export type PullOptions = Required<
     | 'confirm'
     | 'snapshots'
     | 'workspace'
+    | 'branch'
   >
 >;
 
@@ -44,6 +45,7 @@ const options = [
   // The need to be declared here to be initialised and defaulted properly
   override(o.force, { hidden: true }),
   override(po.workspace, { hidden: true }),
+  po.branch,
 ];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {

@@ -10,7 +10,11 @@ import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
 import path from 'node:path';
 import { fileExists } from '../util/file-exists';
-import Project, { detectVersion, yamlToJson } from '@openfn/project';
+import Project, {
+  detectVersion,
+  loadCheckoutFile,
+  yamlToJson,
+} from '@openfn/project';
 import fs from 'node:fs/promises';
 
 export type DeployFn = typeof deploy;
@@ -130,10 +134,20 @@ const redirectTov2 = async (
     'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy). Set PREFER_LEGACY_SYNC to disable this.'
   );
 
-  // default endpoint to one from openfn.yaml
-  const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
-  const endpoint =
-    options.endpoint ?? v2config?.project?.endpoint ?? config.endpoint;
+  // The endpoint comes from the checkout file, or failing that the legacy
+  // project block in openfn.yaml
+  const workspace = options.workspace || process.cwd();
+  const legacy = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+  const checkout = loadCheckoutFile(workspace, options.branch, legacy?.project);
+
+  const endpoint = options.endpoint ?? checkout?.endpoint ?? config.endpoint;
+
+  // config.endpoint could be defaulted by the `getConfig()` call
+  if (!options.endpoint && !checkout?.endpoint) {
+    logger.warn(
+      `No endpoint found in the checkout file or openfn.yaml: falling back to ${endpoint}. Pass --endpoint or run "openfn project checkout" to set it`
+    );
+  }
 
   return betaHandler(
     {

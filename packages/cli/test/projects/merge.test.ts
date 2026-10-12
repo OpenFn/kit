@@ -81,20 +81,12 @@ test.beforeEach(() => {
   mock({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'my-project',
-        name: 'My Project',
-      },
-      workspace: {
-        dirs: {
-          workflows: 'workflows',
-        },
-        formats: {
-          openfn: 'yaml',
-          project: 'yaml',
-          workflow: 'yaml',
-        },
-      },
+      dirs: { workflows: 'workflows' },
+      formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+    }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({
+      id: 'my-project',
+      name: 'My Project',
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml(sandbox),
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml(main),
@@ -214,20 +206,12 @@ test.serial(
 test.serial('Write to JSON using project config', async (t) => {
   mock({
     '/ws/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'my-project',
-        name: 'My Project',
-      },
-      workspace: {
-        dirs: {
-          workflows: 'workflows',
-        },
-        formats: {
-          openfn: 'yaml',
-          project: 'json',
-          workflow: 'yaml',
-        },
-      },
+      dirs: { workflows: 'workflows' },
+      formats: { openfn: 'yaml', project: 'json', workflow: 'yaml' },
+    }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({
+      id: 'my-project',
+      name: 'My Project',
     }),
     '/ws/.projects/staging@app.openfn.org.json': JSON.stringify(sandbox),
     '/ws/.projects/project@app.openfn.org.json': JSON.stringify(main),
@@ -265,20 +249,12 @@ test.serial('Write to JSON using project config', async (t) => {
 test.serial('merge with custom base', async (t) => {
   mock({
     '/ws/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'my-project',
-        name: 'My Project',
-      },
-      workspace: {
-        dirs: {
-          workflows: 'workflows',
-        },
-        formats: {
-          openfn: 'yaml',
-          project: 'yaml',
-          workflow: 'yaml',
-        },
-      },
+      dirs: { workflows: 'workflows' },
+      formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+    }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({
+      id: 'my-project',
+      name: 'My Project',
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml(sandbox),
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml(main),
@@ -361,11 +337,12 @@ const mockMultiWorkflowWorkspace = () => {
   mock({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
-      project: { id: 'my-project', name: 'My Project' },
-      workspace: {
-        dirs: { workflows: 'workflows' },
-        formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
-      },
+      dirs: { workflows: 'workflows' },
+      formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+    }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({
+      id: 'my-project',
+      name: 'My Project',
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml(multiSandbox),
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml(multiMain),

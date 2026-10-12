@@ -9,18 +9,9 @@ test.beforeEach(() => {
   mock({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'my-project',
-      },
-      workspace: {
-        workflowRoot: 'workflows',
-        formats: {
-          openfn: 'yaml',
-          project: 'yaml',
-          workflow: 'yaml',
-        },
-      },
+      formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
     }),
+    '/ws/.openfn/checkout.yaml': jsonToYaml({ id: 'my-project' }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
       id: '<uuid:staging>',
       name: 'My Staging',
@@ -355,21 +346,11 @@ test.serial('respect openfn.yaml settings', async (t) => {
   mock({
     '/ws1/w': {},
     '/ws1/openfn.yaml': jsonToYaml({
-      project: {
-        id: 'main',
-      },
-      workspace: {
-        dirs: {
-          workflows: 'w',
-          projects: 'p',
-        },
-        formats: {
-          openfn: 'yaml', // TODO need to test that this can be JSON too
-          project: 'json',
-          workflow: 'json',
-        },
-      },
+      dirs: { workflows: 'w', projects: 'p' },
+      // TODO need to test that openfn can be JSON too
+      formats: { openfn: 'yaml', project: 'json', workflow: 'json' },
     }),
+    '/ws1/.openfn/checkout.yaml': jsonToYaml({ id: 'main' }),
     '/ws1/p/staging@app.openfn.org.json': JSON.stringify({
       id: '<uuid:staging>',
       name: 'Staging',
@@ -517,7 +498,8 @@ test.serial(
         }),
         'run-job.js': 'fn(state => state)',
       },
-      '/ws3/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws3/openfn.yaml': '',
+      '/ws3/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
       '/ws3/.projects/main-project@server.yaml': jsonToYaml({
         id: '<uuid:main>',
         name: 'Main Project',
@@ -559,7 +541,8 @@ test.serial(
         }),
         'old-step.js': 'fn(state => state)',
       },
-      '/ws4/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws4/openfn.yaml': '',
+      '/ws4/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
       '/ws4/.projects/main-project@server.yaml': jsonToYaml({
         id: '<uuid:main>',
         name: 'Main Project',
@@ -594,9 +577,8 @@ test.serial(
 test.serial('checkout: creates credentials.yaml', async (t) => {
   mock({
     '/ws2/workflows': {},
-    '/ws2/openfn.yaml': jsonToYaml({
-      project: { id: 'main-project' },
-    }),
+    '/ws2/openfn.yaml': '',
+    '/ws2/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
     '/ws2/.projects/main-project@server.yaml': jsonToYaml({
       id: '<uuid:main>',
       name: 'Main Project',
@@ -646,9 +628,8 @@ test.serial('checkout: creates credentials.yaml', async (t) => {
 test.serial('checkout: do not create credentials.yaml', async (t) => {
   mock({
     '/ws2/workflows': {},
-    '/ws2/openfn.yaml': jsonToYaml({
-      project: { id: 'main-project' },
-    }),
+    '/ws2/openfn.yaml': '',
+    '/ws2/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
     '/ws2/.projects/main-project@server.yaml': jsonToYaml({
       id: '<uuid:main>',
       name: 'Main Project',
@@ -705,7 +686,8 @@ test.serial(
       '/ws5/workflows/workflow-b': {
         'workflow-b.yaml': jsonToYaml({ id: 'workflow-b', steps: [] }),
       },
-      '/ws5/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws5/openfn.yaml': '',
+      '/ws5/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
       '/ws5/.projects/main-project@server.yaml': jsonToYaml({
         id: '<uuid:main>',
         name: 'Main Project',
@@ -741,7 +723,8 @@ test.serial(
   async (t) => {
     mock({
       '/ws6/workflows': {},
-      '/ws6/openfn.yaml': jsonToYaml({ project: { id: 'main-project' } }),
+      '/ws6/openfn.yaml': '',
+      '/ws6/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
       '/ws6/.projects/main-project@server.yaml': jsonToYaml({
         id: '<uuid:main>',
         name: 'Main Project',

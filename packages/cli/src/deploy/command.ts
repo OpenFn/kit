@@ -19,6 +19,7 @@ export type DeployOptions = Required<
     | 'projectPath'
     | 'statePath'
     | 'workspace'
+    | 'branch'
   >
 >;
 
@@ -33,6 +34,7 @@ const options = [
   o.statePath,
 
   override(o2.workspace, { hidden: true }),
+  o2.branch,
 ];
 
 const deployCommand: yargs.CommandModule<DeployOptions> = {
