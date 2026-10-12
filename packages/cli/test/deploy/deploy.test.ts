@@ -160,6 +160,57 @@ test.serial(
   }
 );
 
+test.serial(
+  'checkout file endpoint preferred over config.json endpoint',
+  async (t) => {
+    t.plan(1);
+    mockfs({
+      ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
+      ['./project.yaml']: `{"apiKey": "123"}`,
+      ['./openfn.yaml']: '',
+      ['./.openfn/checkout.yaml']: 'endpoint: https://from-checkout.org',
+    });
+
+    await deployHandler(options, logger, mockDeploy, async (args: any) => {
+      t.is(args.endpoint, 'https://from-checkout.org');
+    });
+  }
+);
+
+test.serial('loads the checkout file for the current branch', async (t) => {
+  t.plan(1);
+  mockfs({
+    ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
+    ['./project.yaml']: `{"apiKey": "123"}`,
+    ['./openfn.yaml']: '',
+    ['./.openfn/checkout.yaml']: 'endpoint: https://from-main-checkout.org',
+    ['./.openfn/branches/my-branch/checkout.yaml']:
+      'endpoint: https://from-branch-checkout.org',
+  });
+
+  await deployHandler(
+    { ...options, branch: 'my-branch' } as any,
+    logger,
+    mockDeploy,
+    async (args: any) => {
+      t.is(args.endpoint, 'https://from-branch-checkout.org');
+    }
+  );
+});
+
+test.serial('warns if no endpoint can be found when redirecting', async (t) => {
+  t.plan(1);
+  mockfs({
+    ['./config.json']: `{"apiKey": "123"}`,
+    ['./project.yaml']: `{"apiKey": "123"}`,
+    ['./openfn.yaml']: '',
+  });
+
+  await deployHandler(options, logger, mockDeploy, async () => {
+    t.truthy(logger._find('warn', /No endpoint found/i));
+  });
+});
+
 test.serial('CLI apiKey preferred over config.json apiKey', async (t) => {
   mockfs({
     ['./config.json']: `{"apiKey": "from-config"}`,
