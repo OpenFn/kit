@@ -78,7 +78,7 @@ test.serial('should treat a renamed workflow folder as an alias', async (t) => {
 
   const project = await parseProject({ root: '/ws' });
 
-  const wf = project.getWorkflow('wf')!;
+  const wf = project.findWorkflow('wf')!;
   t.is(wf.id, 'my-long-workflow-name');
   t.is(wf.alias, 'wf');
   t.is(wf.steps[0].expression, 'fn(s => s)');

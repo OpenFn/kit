@@ -119,7 +119,7 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
 
   const activeProject = await workspace.getCheckedOutProject();
   if (options.workflow) {
-    const workflow = activeProject?.getWorkflow(options.workflow);
+    const workflow = activeProject?.findWorkflow(options.workflow);
     if (!workflow) {
       logger.error(`No workflow found with id ${options.workflow}`);
       return;

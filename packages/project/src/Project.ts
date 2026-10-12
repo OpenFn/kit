@@ -24,6 +24,8 @@ import {
 } from '@openfn/lexicon';
 import { parse } from './util/get-credential-name';
 
+export class MultipleMatchingWorkflowsError extends Error {}
+
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
 
@@ -219,14 +221,28 @@ export class Project {
     throw new Error(`Cannot serialize ${type}`);
   }
 
-  // get workflow by name, id or uuid
-  getWorkflow(idOrName: string) {
-    return (
-      this.workflows.find((wf) => wf.id == idOrName) ||
-      this.workflows.find((wf) => wf.alias === idOrName) ||
-      this.workflows.find((wf) => wf.name === idOrName) ||
-      this.workflows.find((wf) => wf.openfn?.uuid === idOrName)
+  // get workflow by id
+  getWorkflow(id: string) {
+    return this.workflows.find((wf) => wf.id === id);
+  }
+
+  // find a workflow by id, alias, name or uuid. Throws if more than one matches
+  findWorkflow(term: string) {
+    const matches = this.workflows.filter(
+      (wf) =>
+        wf.id === term ||
+        wf.alias === term ||
+        wf.name === term ||
+        wf.openfn?.uuid === term
     );
+    if (matches.length > 1) {
+      throw new MultipleMatchingWorkflowsError(
+        `Failed to resolve unique workflow for "${term}", clashes with: ${matches
+          .map((wf) => wf.id)
+          .join(', ')}`
+      );
+    }
+    return matches[0];
   }
 
   /** Returns a fully qualified name for the project, id, alias@domain */
