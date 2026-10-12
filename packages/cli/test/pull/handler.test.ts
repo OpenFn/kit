@@ -14,6 +14,8 @@ const PROJECT_UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
 
 test.beforeEach(() => {
   mockfs.restore();
+
+  process.env.OPENFN_API_KEY = 'fake-api-key';
 });
 
 test.afterEach(() => {
