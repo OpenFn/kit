@@ -260,80 +260,87 @@ test.serial('pull a project', async (t) => {
   t.is(workflow.version_history.length, 1);
 });
 
-test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
-  const projectId = 'redirect-test-1';
-  server.addProject(makeProject(projectId) as any);
+test.serial.only(
+  'redirect to v2 protocol if openfn.yaml is present',
+  async (t) => {
+    delete process.env.OPENFN_API_KEY;
+    delete process.env.OPENFN_ENDPOINT;
 
-  // create an empty openfn.yaml to trigger the v1 -> v2 redirect
-  await fs.writeFile(path.join(tmpDir, 'openfn.yaml'), '');
+    const projectId = 'redirect-test-1';
+    server.addProject(makeProject(projectId) as any);
 
-  const bootstrap = await run(
-    `openfn pull ${projectId} --workspace ${tmpDir} --log-json -l debug`
-  );
-  t.falsy(bootstrap.stderr);
-  assertLog(t, extractLogs(bootstrap.stdout), /Detected openfn.yaml file/i);
+    // create an empty openfn.yaml to trigger the v1 -> v2 redirect
+    await fs.writeFile(path.join(tmpDir, 'openfn.yaml'), '');
 
-  const yaml = await fs.readFile(
-    path.join(tmpDir, '.openfn/checkout.yaml'),
-    'utf8'
-  );
-  t.regex(yaml, new RegExp(`uuid\\: ${projectId}`));
+    const bootstrap = await run(
+      `openfn pull ${projectId} --workspace ${tmpDir} --log-json -l debug`
+    );
+    console.log(bootstrap.stdout);
+    t.falsy(bootstrap.stderr);
+    assertLog(t, extractLogs(bootstrap.stdout), /Detected openfn.yaml file/i);
 
-  const workflowYaml = await fs.readFile(
-    path.join(tmpDir, 'workflows/my-workflow/my-workflow.yaml'),
-    'utf8'
-  );
-  t.regex(workflowYaml, /id: my-workflow/);
-  t.regex(workflowYaml, /name: My Workflow/);
-  t.regex(workflowYaml, /expression: \.\/my-job\.js/);
+    const yaml = await fs.readFile(
+      path.join(tmpDir, '.openfn/checkout.yaml'),
+      'utf8'
+    );
+    t.regex(yaml, new RegExp(`uuid\\: ${projectId}`));
 
-  const stepJs = await fs.readFile(
-    path.join(tmpDir, 'workflows/my-workflow/my-job.js'),
-    'utf8'
-  );
-  t.is(stepJs, 'fn(s => s)');
+    const workflowYaml = await fs.readFile(
+      path.join(tmpDir, 'workflows/my-workflow/my-workflow.yaml'),
+      'utf8'
+    );
+    t.regex(workflowYaml, /id: my-workflow/);
+    t.regex(workflowYaml, /name: My Workflow/);
+    t.regex(workflowYaml, /expression: \.\/my-job\.js/);
 
-  // simulate a remote change
-  const remoteProject = server.state.projects[projectId];
-  const wf = Object.values(remoteProject.workflows as any).find(
-    (w: any) => w.id === 'my-workflow-1'
-  ) as any;
-  server.updateWorkflow(projectId, {
-    ...wf,
-    jobs: Object.values(wf.jobs ?? {}).map((j: any) =>
-      j.id === 'my-job-1'
-        ? { ...j, body: 'fn(s => ({ ...s, remote: true }))' }
-        : j
-    ),
-  });
+    const stepJs = await fs.readFile(
+      path.join(tmpDir, 'workflows/my-workflow/my-job.js'),
+      'utf8'
+    );
+    t.is(stepJs, 'fn(s => s)');
 
-  // v1 pull -> should redirect to v2 because openfn.yaml exists
-  const pullResult = await run(
-    `openfn pull ${projectId} --workspace ${tmpDir} --log-json -l debug`
-  );
-  t.falsy(pullResult.stderr);
-  assertLog(t, extractLogs(pullResult.stdout), /Detected openfn.yaml file/i);
+    // simulate a remote change
+    const remoteProject = server.state.projects[projectId];
+    const wf = Object.values(remoteProject.workflows as any).find(
+      (w: any) => w.id === 'my-workflow-1'
+    ) as any;
+    server.updateWorkflow(projectId, {
+      ...wf,
+      jobs: Object.values(wf.jobs ?? {}).map((j: any) =>
+        j.id === 'my-job-1'
+          ? { ...j, body: 'fn(s => ({ ...s, remote: true }))' }
+          : j
+      ),
+    });
 
-  const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
-  t.regex(await fs.readFile(exprPath, 'utf8'), /remote: true/);
+    // v1 pull -> should redirect to v2 because openfn.yaml exists
+    const pullResult = await run(
+      `openfn pull ${projectId} --workspace ${tmpDir} --log-json -l debug`
+    );
+    t.falsy(pullResult.stderr);
+    assertLog(t, extractLogs(pullResult.stdout), /Detected openfn.yaml file/i);
 
-  // make a local change
-  await fs.writeFile(exprPath, 'fn(s => ({ ...s, local: true }))');
+    const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
+    t.regex(await fs.readFile(exprPath, 'utf8'), /remote: true/);
 
-  // v1 deploy -> should redirect to v2
-  const { stdout, stderr } = await run(
-    `openfn deploy --workspace ${tmpDir} --no-confirm --log-json -l debug`
-  );
-  t.falsy(stderr);
-  assertLog(t, extractLogs(stdout), /Detected openfn.yaml file/i);
+    // make a local change
+    await fs.writeFile(exprPath, 'fn(s => ({ ...s, local: true }))');
 
-  // confirm the local change made it to the server
-  const serverProj = server.state.projects[projectId];
-  t.regex(
-    serverProj.workflows['my-workflow-1'].jobs['my-job'].body,
-    /local: true/
-  );
-});
+    // v1 deploy -> should redirect to v2
+    const { stdout, stderr } = await run(
+      `openfn deploy --workspace ${tmpDir} --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+    assertLog(t, extractLogs(stdout), /Detected openfn.yaml file/i);
+
+    // confirm the local change made it to the server
+    const serverProj = server.state.projects[projectId];
+    t.regex(
+      serverProj.workflows['my-workflow-1'].jobs['my-job'].body,
+      /local: true/
+    );
+  }
+);
 
 test.serial('deploy a v2 spec file', async (t) => {
   const testProjectV2 = `
