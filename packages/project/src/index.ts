@@ -8,6 +8,8 @@ export { Workspace, yamlToJson, jsonToYaml };
 
 export { generateWorkflow, generateProject } from './gen/generator';
 
+export { loadCheckoutFile } from './util/config';
+
 export { diff } from './util/project-diff';
 export type {
   WorkflowDiff,
