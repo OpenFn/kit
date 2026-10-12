@@ -202,7 +202,8 @@ export const branch: CLIOption = {
       'The git branch to track the checked out project against. Detected automatically if not set. Pass --no-branch to ignore git.',
   },
   ensure: (opts: any) => {
-    let value = opts.branch ?? process.env.OPENFN_BRANCH;
+    let value =
+      opts.branch ?? process.env.OPENFN_BRANCH ?? process.env.INPUT_BRANCH;
     if (typeof value === 'string' && /^(false|null)?$/.test(value)) {
       value = false;
     }
