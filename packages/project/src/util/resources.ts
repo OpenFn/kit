@@ -1,6 +1,8 @@
 import type l from '@openfn/lexicon';
 import getCredentialName from './get-credential-name';
 import slugify from './slugify';
+import { jsonToYaml, yamlToJson } from './yaml';
+import type { Project } from '../Project';
 
 // resources.yaml holds server-side resources, keyed by type (channels, ...)
 export const RESOURCES_FILE = 'resources.yaml';
@@ -65,3 +67,57 @@ export const fromResourceChannels = (
       ...(c.credential && { destination_credential_id: c.credential }),
     };
   });
+
+// Collections are keyed by name. The values are empty for now, but this
+// leaves room for per-collection settings later (no uuids: those belong to
+// the server)
+type ResourceCollections = Record<string, Record<string, unknown>>;
+
+export const toResourceCollections = (
+  collections: l.CollectionState[] = []
+): ResourceCollections =>
+  collections.reduce((obj: ResourceCollections, c) => {
+    obj[c.name] = {};
+    return obj;
+  }, {});
+
+// Also accepts a plain list of names, which is how collections used to be
+// written in openfn.yaml
+export const fromResourceCollections = (
+  collections: ResourceCollections | string[] | null | undefined
+): l.CollectionState[] =>
+  (Array.isArray(collections)
+    ? collections
+    : Object.keys(collections ?? {})
+  ).map((name) => ({ name }));
+
+// Build the contents of resources.yaml. Channels and collections are each only
+// written if the project knows about them: a missing key means they are not
+// managed locally
+export const toResources = (project: Project) => {
+  const resources: Record<string, unknown> = {};
+  if (project.channels) {
+    resources.channels = toResourceChannels(
+      project.channels,
+      project.credentials
+    );
+  }
+  if (project.collections) {
+    resources.collections = toResourceCollections(project.collections);
+  }
+  return Object.keys(resources).length ? jsonToYaml(resources) : undefined;
+};
+
+// Merge a project's collections into an existing resources.yaml, leaving
+// everything else in the file (like channels) alone
+export const updateResourceCollections = (
+  project: Project,
+  existing?: string
+) => {
+  if (!project.collections) {
+    return existing;
+  }
+  const resources = (existing && yamlToJson(existing)) || {};
+  resources.collections = toResourceCollections(project.collections);
+  return jsonToYaml(resources);
+};

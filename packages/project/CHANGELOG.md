@@ -1,5 +1,20 @@
 # @openfn/project
 
+## 0.22.0
+
+### Minor Changes
+
+- d3f1a1a: Restructure `openfn.yaml` to make it safer for merging on github.
+
+  Any checkout state (basically anything under the project key) have been moved into a new `.openfn` folder, which should not be tracked.
+
+  `openfn.yaml` now just contains workspace-wide configuration.
+
+### Patch Changes
+
+- e90bfde: Handle multiple local copies of the same project without reporting id conflicts
+- d3f1a1a: Track collections in resources.yaml
+
 ## 0.21.0
 
 ### Minor Changes

@@ -4,6 +4,7 @@ import { Workspace } from '@openfn/project';
 import { build, ensure, override } from '../util/command-builders';
 import { handler as fetch } from './fetch';
 import { handler as checkout } from './checkout';
+import ensureCheckout from './ensure-checkout';
 import * as o from '../options';
 import * as o2 from './options';
 
@@ -25,6 +26,7 @@ export type PullOptions = Pick<
   | 'snapshots'
   | 'force'
   | 'createCredentials'
+  | 'branch'
 >;
 
 const options = [
@@ -33,6 +35,7 @@ const options = [
   o2.alias,
   o2.env,
   o2.workspace,
+  o2.branch,
   o2.creds,
 
   // general options
@@ -65,7 +68,7 @@ export const command: yargs.CommandModule<PullOptions> = {
 
 export async function handler(options: PullOptions, logger: Logger) {
   options.workspace ??= process.cwd();
-  ensureProjectId(options, logger);
+  await ensureProjectId(options, logger);
 
   await fetch(options, logger);
   logger.info(`Downloaded latest project version`);
@@ -74,14 +77,22 @@ export async function handler(options: PullOptions, logger: Logger) {
   logger.success(`Checked out project locally`);
 }
 
-const ensureProjectId = (options: any, logger?: Logger) => {
+const ensureProjectId = async (options: any, logger: Logger) => {
   if (!options.project) {
     logger?.debug(
       'No project ID specified: looking up checked out project in Workspace'
     );
-    const ws = new Workspace(options.workspace);
+    const ws = await ensureCheckout(
+      new Workspace(options.workspace, undefined, true, {
+        branch: options.branch,
+      }),
+      logger
+    );
     if (ws.activeProject) {
-      options.project = ws.activeProject.uuid;
+      // Prefer alias@domain: other local copies may share the uuid
+      options.project =
+        (ws.activeProject.alias && ws.getTrackedProject()?.qname) ||
+        ws.activeProject.uuid;
       logger?.info(
         `Project id not provided: will default to ${options.project}`
       );

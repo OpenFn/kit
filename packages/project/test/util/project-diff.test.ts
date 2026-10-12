@@ -321,3 +321,45 @@ test('diff: should report workflow and channel changes together', (t) => {
   t.is(result.workflows.length, 1);
   t.is(result.resources.channels.length, 1);
 });
+
+const withCollections = (collections?: string[]) =>
+  new Project({
+    name: 'p',
+    workflows: [],
+    collections: collections?.map((name) => ({ name })),
+  });
+
+test('diff: resources.collections is empty for identical collections', (t) => {
+  const a = withCollections(['one']);
+  const b = withCollections(['one']);
+
+  t.deepEqual(diff(a, b).resources.collections, []);
+});
+
+test('diff: should detect added and removed collections', (t) => {
+  const a = withCollections(['keep', 'remove']);
+  const b = withCollections(['keep', 'add']);
+
+  t.deepEqual(diff(a, b).resources.collections, [
+    { name: 'remove', type: 'removed' },
+    { name: 'add', type: 'added' },
+  ]);
+});
+
+test('diff: should report all collections removed when one side is emptied', (t) => {
+  const remote = withCollections(['one', 'two']);
+  const local = withCollections([]);
+
+  t.deepEqual(diff(remote, local).resources.collections, [
+    { name: 'one', type: 'removed' },
+    { name: 'two', type: 'removed' },
+  ]);
+});
+
+test('diff: should ignore collections if either project does not define them', (t) => {
+  const withOne = withCollections(['one']);
+  const none = withCollections(undefined);
+
+  t.deepEqual(diff(withOne, none).resources.collections, []);
+  t.deepEqual(diff(none, withOne).resources.collections, []);
+});

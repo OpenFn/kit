@@ -12,7 +12,8 @@ import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
-import { buildConfig, extractConfig } from './util/config';
+import { buildConfig, extractCheckout, extractConfig } from './util/config';
+import { RESOURCES_FILE, updateResourceCollections } from './util/resources';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import {
   SandboxMeta,
@@ -309,6 +310,24 @@ export class Project {
    */
   generateConfig() {
     return extractConfig(this);
+  }
+
+  /**
+   * Generates the contents of the checkout file, plus its file path
+   */
+  generateCheckout(branch?: string | false | null) {
+    return extractCheckout(this, branch);
+  }
+
+  /**
+   * Generates the contents of resources.yaml with this project's collections
+   * merged into an existing file (other keys are left alone)
+   */
+  generateResources(existing?: string) {
+    return {
+      path: RESOURCES_FILE,
+      content: updateResourceCollections(this, existing),
+    };
   }
 
   clone() {

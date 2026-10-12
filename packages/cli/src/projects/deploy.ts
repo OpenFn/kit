@@ -1,12 +1,13 @@
 import yargs from 'yargs';
 import Project, {
   MergeProjectOptions,
+  RESOURCES_FILE,
   toResourceChannels,
   versionsEqual,
   Workspace,
 } from '@openfn/project';
 import { isEqual } from 'lodash-es';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import * as o from '../options';
@@ -17,12 +18,13 @@ import {
   fetchProject,
   serialize,
   getSerializePath,
-  updateForkedFrom,
+  writeCheckoutFile,
   findLocallyChangedWorkflows,
   AuthOptions,
 } from './util';
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
+import ensureCheckout from './ensure-checkout';
 import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
@@ -43,17 +45,16 @@ export type DeployOptions = Pick<
   | 'logJson'
   | 'confirm'
 > & {
-  // CLI positional args, rather than options
-  project?: string;
-  target?: string;
-
+  project?: string; // this is a CLI positional arg, not an option
   alias?: string;
+  branch?: string | false;
   checkout?: boolean;
   credentials?: CredentialsStrategy;
   dryRun?: boolean;
   jsonDiff?: boolean;
   name?: string;
   new?: boolean;
+  target?: string;
   workflow?: string[];
   workspace?: string;
 };
@@ -62,6 +63,7 @@ const options = [
   // local options
   o2.env,
   o2.workspace,
+  o2.branch,
   o2.dryRun,
   o2.new,
   o2.name,
@@ -152,7 +154,11 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
+// A missing collections key (local.collections undefined) means collections
+// aren't managed locally, so there's nothing to change
 export const collectionsChanged = (local: Project, remote: Project) => {
+  if (!local.collections) return false;
+
   const names = (project: Project) =>
     new Set((project.collections ?? []).map((c) => c.name));
 
@@ -164,11 +170,13 @@ export const collectionsChanged = (local: Project, remote: Project) => {
 };
 
 // Collections dropped from the merged project (ie, removed from
-// openfn.yaml) need an explicit delete entry in the deploy payload
+// resources.yaml) need an explicit delete entry in the deploy payload
 export const deletedCollections = (
   merged: Project,
   remote: Project
 ): Provisioner.Collection[] => {
+  if (!merged.collections) return [];
+
   const keptNames = new Set((merged.collections ?? []).map((c) => c.name));
   return (remote.collections ?? [])
     .filter((c) => !keptNames.has(c.name) && c.uuid)
@@ -393,7 +401,16 @@ export async function handler(options: DeployOptions, logger: Logger) {
     logger.debug('Reading checked-out project from workspace');
     // TODO this is the hard way to load the local alias
     // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-    ws = new Workspace(options.workspace || '.');
+    ws = new Workspace(options.workspace || '.', undefined, true, {
+      branch: options.branch,
+    });
+
+    // We only need to know what's checked out if we're going to write the
+    // checkout back after deploying, and if the user hasn't told us which
+    // project to deploy to
+    if (options.checkout !== false && !targetIdentifier) {
+      ws = await ensureCheckout(ws, logger);
+    }
 
     const active = ws.getTrackedProject();
 
@@ -404,6 +421,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     localProject = await Project.from('fs', {
       root: options.workspace || '.',
       alias,
+      branch: options.branch,
       name: options.name,
     });
   }
@@ -425,13 +443,21 @@ export async function handler(options: DeployOptions, logger: Logger) {
       localProject.alias = alias ?? null;
     }
   } else {
-    ws ??= new Workspace(options.workspace || '.');
-    tracker = ws.get(targetIdentifier ?? localProject.uuid!);
+    ws ??= new Workspace(options.workspace || '.', undefined, true, {
+      branch: options.branch,
+    });
+    if (targetIdentifier) {
+      tracker = ws.get(targetIdentifier);
+    } else if (filePath) {
+      tracker = ws.get(localProject.uuid!);
+    } else {
+      tracker = ws.getTrackedProject();
+    }
 
     // A project loaded from a file already knows which remote it belongs
-    // to, so it can serve as its own deploy destination - we don't need a
-    // locally tracked copy of it to sync against
-    if (!tracker && filePath && localProject.uuid) {
+    // to, so it can serve as its own deploy destination if there's no
+    // locally tracked copy of it
+    if (!tracker && filePath) {
       logger.debug(
         'No locally tracked project found: deploying to the remote named in the file'
       );
@@ -605,16 +631,29 @@ export async function handler(options: DeployOptions, logger: Logger) {
     );
 
     if (options.checkout !== false) {
-      updateForkedFrom(finalProject);
-      const configData = finalProject.generateConfig();
+      const workspacePath = options.workspace ?? process.cwd();
 
-      // Write the updated openfn.yaml
+      // Write the updated openfn.yaml and checkout file
       // TODO: allow us to suppress writing this stuff
       // (useful if posting from spec)
-      await writeFile(
-        path.resolve(options.workspace ?? process.cwd(), configData.path),
-        configData.content
+      const configData = finalProject.generateConfig();
+      const configPath = path.resolve(workspacePath, configData.path);
+      await mkdir(path.dirname(configPath), { recursive: true });
+      await writeFile(configPath, configData.content);
+      await writeCheckoutFile(workspacePath, finalProject, options.branch);
+
+      // Sync collections into resources.yaml (anything else in there is left alone)
+      const resourcesPath = path.resolve(workspacePath, RESOURCES_FILE);
+      const existingResources = await readFile(resourcesPath, 'utf8').catch(
+        (e) => {
+          if (e.code !== 'ENOENT') throw e;
+          return undefined;
+        }
       );
+      const resources = finalProject.generateResources(existingResources);
+      if (resources.content) {
+        await writeFile(resourcesPath, resources.content);
+      }
 
       // TODO if this was marked as new, we probably need to ensure a unique alias here
       const finalOutputPath = getSerializePath(

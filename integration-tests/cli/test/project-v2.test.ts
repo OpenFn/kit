@@ -282,13 +282,12 @@ steps:
     );
 
     // add the credential map to the yaml
+    await writeFile(`${TMP_DIR}/openfn.yaml`, `credentials: creds.yaml`);
+
+    // point the checked out project at the mock server
     await writeFile(
-      `${TMP_DIR}/openfn.yaml`,
-      `
-project:
-  endpoint: http://localhost:1234
-workspace:
-  credentials: creds.yaml`
+      `${TMP_DIR}/.openfn/checkout.yaml`,
+      `endpoint: http://localhost:1234`
     );
 
     // write the credential map

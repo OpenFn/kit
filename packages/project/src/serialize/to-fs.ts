@@ -3,28 +3,32 @@ import { omit } from 'lodash-es';
 
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
-import { extractConfig } from '../util/config';
-import { RESOURCES_FILE, toResourceChannels } from '../util/resources';
+import { extractCheckout, extractConfig } from '../util/config';
+import { RESOURCES_FILE, toResources } from '../util/resources';
 
 const stringify = (json: any) => JSON.stringify(json, null, 2);
 
 type ToFsOptions = {
   // private: stamp schema_version on each workflow file. off by default
   includeSchemaVersion?: boolean;
+  // git branch, used to locate the checkout file
+  branch?: string | false | null;
 };
 
 export default function (project: Project, options: ToFsOptions = {}) {
   const files: Record<string, string> = {};
 
-  const { path, content } = extractConfig(project);
-  files[path] = content;
+  const config = extractConfig(project);
+  files[config.path] = config.content;
 
-  // Only write resources.yaml if the project knows about channels. A missing
-  // file means channels are not managed locally
-  if (project.channels) {
-    files[RESOURCES_FILE] = jsonToYaml({
-      channels: toResourceChannels(project.channels, project.credentials),
-    });
+  const checkout = extractCheckout(project, options.branch);
+  files[checkout.path] = checkout.content;
+
+  // Only write resources.yaml if the project knows about channels or
+  // collections. A missing key means they are not managed locally
+  const resources = toResources(project);
+  if (resources) {
+    files[RESOURCES_FILE] = resources;
   }
 
   for (const wf of project.workflows) {

@@ -215,14 +215,15 @@ export async function tidyWorkflowDir(
   currentProject: Project | undefined,
   incomingProject: Project | undefined,
   dryRun = false,
-  dirPath = '.'
+  dirPath = '.',
+  branch?: string | false
 ) {
   if (!currentProject || !incomingProject) {
     return [];
   }
 
-  const currentFiles = currentProject.serialize('fs');
-  const newFiles = incomingProject.serialize('fs');
+  const currentFiles = currentProject.serialize('fs', { branch });
+  const newFiles = incomingProject.serialize('fs', { branch });
 
   const toRemove: string[] = [];
   // any files not in the new list should be removed
@@ -257,6 +258,23 @@ export const updateForkedFrom = (proj: Project) => {
   }, {});
 
   return proj;
+};
+
+// Set up the checkout file for a project without touching anything else
+// (use this when the workflows are already on disk, like after a git clone)
+export const writeCheckoutFile = async (
+  workspacePath: string,
+  project: Project,
+  branch?: string | false | null
+) => {
+  updateForkedFrom(project);
+
+  const { path: checkoutPath, content } = project.generateCheckout(branch);
+  const filePath = path.resolve(workspacePath, checkoutPath);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, content);
+
+  return filePath;
 };
 
 // Compare a project to its version hashed when forked

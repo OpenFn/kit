@@ -9,35 +9,30 @@ export class MultipleMatchingProjectsError extends Error {}
 const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
   const [searchTerm, domain] = `${name}`.split('@');
 
-  // Collect all matching projects
-  const matchingProjects: Record<string, Project[]> = {};
-  let multipleIdMatches = false;
-
-  // Filter candidates by domain
-  candidates = candidates.filter(
-    (project) => !domain || project.host === domain
+  const re = new RegExp(searchTerm, 'i');
+  const matches = candidates.filter(
+    (project) =>
+      (!domain || project.host === domain) &&
+      (project.id === searchTerm ||
+        project.alias === searchTerm ||
+        (project.uuid && re.test(project.uuid)))
   );
 
-  const re = new RegExp(searchTerm, 'i');
-  for (const project of candidates) {
+  if (matches.length > 1) {
+    // Aliases come from file names, so an exact alias match picks out one
+    // local copy of a project, even if other copies share its id or uuid
+    const aliasMatches = matches.filter((p) => p.alias === searchTerm);
     if (
-      project.id === searchTerm ||
-      project.alias === searchTerm ||
-      (project.uuid && re.test(project.uuid))
+      aliasMatches.length === 1 &&
+      matches.every((p) => p.uuid === aliasMatches[0].uuid)
     ) {
-      matchingProjects[project.id] ??= [];
-      matchingProjects[project.id].push(project);
+      return aliasMatches[0];
     }
-  }
 
-  const matches = Object.values(matchingProjects).flat();
-
-  // Multiple matches - throw error
-  if (multipleIdMatches || matches.length > 1) {
     throw new MultipleMatchingProjectsError(
       `Failed to resolve unique identifier for "${name}", clashes with: ${matches
-        .map((p) => p.id)
-        .join(', ')}`
+        .map((p) => p.qname)
+        .join(', ')}. Use alias@domain or a path instead`
     );
   }
   return matches.length ? matches[0] : null;

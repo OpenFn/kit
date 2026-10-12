@@ -202,11 +202,16 @@ export function merge(
   return merged;
 }
 
+// If the source has no collections defined, they aren't managed locally and
+// the target's are left alone. An empty list means remove them all
 export function mergeCollections(
-  source: CollectionState[] = [],
-  target: CollectionState[] = []
-): CollectionState[] {
-  const targetByName = new Map(target.map((c) => [c.name, c]));
+  source?: CollectionState[],
+  target?: CollectionState[]
+): CollectionState[] | undefined {
+  if (!source) {
+    return target;
+  }
+  const targetByName = new Map((target ?? []).map((c) => [c.name, c]));
   return source.map(({ name }) => ({
     name,
     uuid: targetByName.get(name)?.uuid,

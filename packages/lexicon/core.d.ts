@@ -175,7 +175,8 @@ export interface WorkspaceFileLegacy {
 // Structure of the new openfn.yaml file
 export interface WorkspaceFile {
   workspace: WorkspaceConfig;
-  project: ProjectMeta;
+  // legacy: project meta now lives in .openfn/checkout.yaml
+  project?: ProjectMeta;
 }
 
 export interface WorkspaceConfig {

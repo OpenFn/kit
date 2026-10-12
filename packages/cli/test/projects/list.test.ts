@@ -4,8 +4,14 @@ import { createMockLogger } from '@openfn/logger';
 import mock from 'mock-fs';
 import { jsonToYaml } from '@openfn/project';
 
+// a workspace with several projects but no checkout metadata
+const noCheckoutProject = jsonToYaml({ id: 'my-project', workflows: [] });
+
 mock({
   'no-ws/': { 'some.yaml': 'name: smth' },
+  '/no-checkout/openfn.yaml': '',
+  '/no-checkout/.projects/main@app.openfn.org.yaml': noCheckoutProject,
+  '/no-checkout/.projects/staging@app.openfn.org.yaml': noCheckoutProject,
   '/ws/openfn.yaml': jsonToYaml({
     project: {
       id: 'my-project',
@@ -172,3 +178,23 @@ staging | my-project
     message as string
   );
 });
+
+test.serial(
+  'lists projects without a checkout, without prompting or aborting',
+  async (t) => {
+    const privateLogger = createMockLogger('', { level: 'debug' });
+
+    await list(
+      { command: 'projects', workspace: '/no-checkout' },
+      privateLogger
+    );
+
+    const { message } = privateLogger._find(
+      'always',
+      /available openfn projects/i
+    );
+    t.regex(message as string, /^main \|/m);
+    t.regex(message as string, /^staging \|/m);
+    t.notRegex(message as string, /\(active\)/);
+  }
+);
