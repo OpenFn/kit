@@ -12,7 +12,7 @@ import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import beta from '../projects/pull';
 import { fileExists } from '../util/file-exists';
-import { yamlToJson } from '@openfn/project';
+import { loadCheckoutFile, yamlToJson } from '@openfn/project';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
@@ -171,11 +171,22 @@ const redirectTov2 = async (
     'Detected openfn.yaml file - switching to v2 pull (openfn project pull). Set PREFER_LEGACY_SYNC to disable this.'
   );
 
-  // default endpoint to one from openfn.yaml
-  const v2config = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+  // The endpoint comes from the checkout file, or failing that the legacy
+  // project block in openfn.yaml
+  const workspace = options.workspace || process.cwd();
+  const legacy = yamlToJson(await fs.readFile(v2ConfigPath, 'utf-8'));
+  const checkout = loadCheckoutFile(workspace, options.branch, legacy?.project);
+  console.log({ checkout, branch: options.branch });
 
-  const endpoint =
-    options.endpoint ?? v2config?.project?.endpoint ?? config.endpoint;
+  const endpoint = options.endpoint ?? checkout?.endpoint ?? config.endpoint;
+
+  // config.endpoint could be defaulted by the `getConfig()` call
+  if (!options.endpoint && !checkout?.endpoint) {
+    logger.warn(
+      `No endpoint found in the checkout file or openfn.yaml: falling back to ${endpoint}. Pass --endpoint or run "openfn project checkout" to set it`
+    );
+  }
+
   return beta(
     {
       ...options,

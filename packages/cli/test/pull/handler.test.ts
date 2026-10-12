@@ -6,9 +6,10 @@ import { createMockLogger } from '@openfn/logger';
 
 import pullHandler from '../../src/pull/handler';
 import { PullOptions } from '../../src/pull/command';
+import { Workspace } from '@openfn/project';
 import { myProject_v1 } from '../projects/fixtures';
 
-const ENDPOINT = 'https://app.openfn.org';
+const ENDPOINT = 'https://fake.test.openfn.org';
 const PROJECT_UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
 
 test.beforeEach(() => {
@@ -59,7 +60,7 @@ project:
 
     await pullHandler(options, logger);
 
-    t.true(fs.existsSync('/tmp/.projects/main@app.openfn.org.yaml'));
+    t.true(fs.existsSync('/tmp/.projects/main@fake.test.openfn.org.yaml'));
 
     t.truthy(logger._find('always', /Detected openfn.yaml file/i));
   }
@@ -120,3 +121,47 @@ project:
 
   t.false(fs.existsSync('/tmp/credentials.yaml'));
 });
+
+test.serial(
+  'tracks the pulled project in the workspace when redirecting with legacy config.yaml structure',
+  async (t) => {
+    const logger = createMockLogger('', { level: 'debug' });
+    mockfs({
+      ['/tmp/openfn.yaml']: `
+project:
+  endpoint: ${ENDPOINT}`,
+    });
+
+    await pullHandler(options, logger);
+
+    const ws = new Workspace('/tmp');
+    t.is(ws.activeProject?.uuid, PROJECT_UUID);
+
+    const tracked = ws.getTrackedProject();
+    t.truthy(tracked);
+    t.is(tracked?.openfn?.endpoint, ENDPOINT);
+    t.is(tracked?.openfn?.uuid, PROJECT_UUID);
+  }
+);
+
+test.serial(
+  'tracks the pulled project in the workspace when redirecting with new checkout.yaml file',
+  async (t) => {
+    const logger = createMockLogger('', { level: 'debug' });
+    mockfs({
+      ['/tmp/.openfn/checkout.yaml']: `
+  endpoint: ${ENDPOINT}`,
+      ['/tmp/openfn.yaml']: '',
+    });
+
+    await pullHandler(options, logger);
+
+    const ws = new Workspace('/tmp');
+    t.is(ws.activeProject?.uuid, PROJECT_UUID);
+
+    const tracked = ws.getTrackedProject();
+    t.truthy(tracked);
+    t.is(tracked?.openfn?.endpoint, ENDPOINT);
+    t.is(tracked?.openfn?.uuid, PROJECT_UUID);
+  }
+);
