@@ -1,7 +1,7 @@
 // should parse a project from app state and back again
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
-import { Project } from '../src/Project';
+import { Project, MultipleMatchingWorkflowsError } from '../src/Project';
 import generateWorkflow from '../src/gen/generator';
 import { UnsafeMergeError } from '../src/merge/merge-project';
 
@@ -110,6 +110,51 @@ test('should default alias to "main"', (t) => {
   const project = new Project();
 
   t.is(project.alias, 'main');
+});
+
+const createAliasedProject = () => {
+  const project = new Project({
+    workflows: [
+      {
+        id: 'my-workflow',
+        name: 'My Workflow',
+        openfn: { uuid: '<uuid>' },
+        steps: [],
+      },
+      { id: 'other-workflow', steps: [] },
+    ],
+  });
+  project.workflows[0].alias = 'wf';
+  return project;
+};
+
+test('getWorkflow only matches by id', (t) => {
+  const project = createAliasedProject();
+
+  t.is(project.getWorkflow('my-workflow')!.id, 'my-workflow');
+  t.falsy(project.getWorkflow('wf'));
+  t.falsy(project.getWorkflow('My Workflow'));
+  t.falsy(project.getWorkflow('<uuid>'));
+});
+
+test('findWorkflow matches by id, alias, name or uuid', (t) => {
+  const project = createAliasedProject();
+
+  for (const term of ['my-workflow', 'wf', 'My Workflow', '<uuid>']) {
+    t.is(project.findWorkflow(term)!.id, 'my-workflow');
+  }
+  t.falsy(project.findWorkflow('nope'));
+});
+
+test('findWorkflow throws if more than one workflow matches', (t) => {
+  const project = createAliasedProject();
+  project.workflows[1].name = 'my-workflow';
+
+  t.throws(() => project.findWorkflow('my-workflow'), {
+    instanceOf: MultipleMatchingWorkflowsError,
+    message:
+      'Failed to resolve unique workflow for "my-workflow", clashes with: my-workflow, other-workflow',
+  });
 });
 
 test('should support credentials', (t) => {

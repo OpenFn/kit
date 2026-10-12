@@ -51,7 +51,7 @@ const loadPlan = async (
     const proj = await workspace.getCheckedOutProject();
 
     const name = workflowName || options.workflow!;
-    const workflow = proj?.getWorkflow(name);
+    const workflow = proj?.findWorkflow(name);
     if (!workflow) {
       const e = new Error(`Could not find Workflow "${name}"`);
       delete e.stack;
