@@ -13,7 +13,7 @@ import compile from '../compile/compile';
 import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
-import loadPlan from '../util/load-plan';
+import loadPlan, { DEFAULT_OUTPUT } from '../util/load-plan';
 import assertPath from '../util/assert-path';
 import { clearCache } from '../util/cache';
 import fuzzyMatchStep from '../util/fuzzy-match-step';
@@ -175,6 +175,10 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   try {
     const result = await execute(finalPlan, state, options, logger);
 
+    // Last resort default if loadPlan didn't resolve one
+    if (!options.outputStdout) {
+      options.outputPath ??= DEFAULT_OUTPUT;
+    }
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result?.errors) {
