@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.23.0
+
+### Minor Changes
+
+- 760a984: Add `findWorkflow()` for fuzzy workflow lookups and make `getWorkflow()` match by id only.
+
+  To migrate, replace `getWorkflow(nameOrUuid)` with `findWorkflow(nameOrUuid)`, which throws if more than one workflow matches.
+
+- 760a984: Support workflow aliases: rename a workflow's folder to use it as a shorter name
+
 ## 0.22.1
 
 ### Patch Changes
