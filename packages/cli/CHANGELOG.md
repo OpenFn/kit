@@ -1,5 +1,20 @@
 # @openfn/cli
 
+## 1.44.0
+
+### Minor Changes
+
+- d91fa7c: Update the default output path used by `execute`. Output is now written to `tmp/output.json` relative to the thing that was executed (the workflow yaml or expression js)"
+- d91fa7c: Default `execute` output to `tmp/output.json` relative to the workflow being run.
+- 760a984: Support workflow aliases: rename a workflow's folder to use it as a shorter name
+
+### Patch Changes
+
+- b29758d: Fix an issue where deploying a project and passing a UUID directly, an error would be thrown if a local project file does not exist
+- Updated dependencies [760a984]
+- Updated dependencies [760a984]
+  - @openfn/project@0.23.0
+
 ## 1.43.1
 
 ### Patch Changes

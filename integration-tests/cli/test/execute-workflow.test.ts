@@ -323,7 +323,7 @@ test.serial(
   async (t) => {
     const res = await run(t.title);
     t.falsy(res.err);
-    const out = getJSON();
+    const out = getJSON('tmp/output.json');
     t.deepEqual(out, {
       data: {
         result: 'love-some-suffix',
@@ -332,12 +332,12 @@ test.serial(
   }
 );
 
-test.serial(
+test.serial.only(
   `openfn ${jobsPath}/globals-job.js --globals ${jobsPath}/globals-path-file.js -a common`,
   async (t) => {
     const res = await run(t.title);
     t.falsy(res.err);
-    const out = getJSON();
+    const out = getJSON('tmp/output.json');
     t.deepEqual(out, {
       data: {
         result: 'love-humble-suffix',

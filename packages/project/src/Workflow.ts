@@ -15,6 +15,9 @@ class Workflow {
   openfn?: l.WorkflowMeta;
   options: any; // TODO
 
+  // Local-only alias, taken from the workflow's folder name on disk
+  alias?: string;
+
   constructor(workflow: l.WorkflowState) {
     this.index = {
       steps: {}, // steps by id

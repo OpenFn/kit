@@ -3,7 +3,7 @@ import path from 'node:path';
 
 export const getJSON = (pathToJson?: string) => {
   if (!pathToJson) {
-    pathToJson = path.resolve('test/fixtures', 'output.json');
+    pathToJson = path.resolve('test/fixtures', 'tmp', 'output.json');
   }
   const data = readFileSync(pathToJson, 'utf8');
   return JSON.parse(data);
