@@ -47,19 +47,28 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
   // project, so there's no need to abort if we can't ask which it is
   workspace = await ensureCheckout(workspace, logger, { required: false });
 
+  // Workflow aliases are folder names, so only the checked out project has them
+  const local = await workspace.getCheckedOutProject();
+
   logger.always(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => describeProject(p, p === workspace.getTrackedProject()))
+    .map((p) => {
+      const active = p === workspace.getTrackedProject();
+      return describeProject(p, active, active ? local : undefined);
+    })
     .join('\n\n')}
     `);
 };
 
-function describeProject(project: Project, active = false) {
+function describeProject(project: Project, active = false, local?: Project) {
   // @ts-ignore
   const uuid = project.openfn?.uuid;
   return `${project.alias || '(no alias)'} | ${project.id} ${
     active ? '(active)' : ''
   }\n  ${uuid || '<project-id>'}\n  workflows:\n${project.workflows
-    .map((w) => '    - ' + w.id)
+    .map((w) => {
+      const alias = local?.workflows.find((l) => l.id === w.id)?.alias;
+      return '    - ' + w.id + (alias ? ` (${alias})` : '');
+    })
     .join('\n')}`;
 }

@@ -4,6 +4,7 @@ import { glob } from 'glob';
 import * as l from '@openfn/lexicon';
 
 import { Project } from '../Project';
+import Workflow from '../Workflow';
 import { yamlToJson } from '../util/yaml';
 import {
   buildConfig,
@@ -11,7 +12,7 @@ import {
   findWorkspaceFile,
   loadCheckoutFile,
 } from '../util/config';
-import { omit } from 'lodash-es';
+import { countBy, omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
 import slugify from '../util/slugify';
@@ -137,13 +138,32 @@ export const parseProject = async (options: FromFsConfig) => {
           }
         }
 
-        proj.workflows.push(wf);
+        const workflow = new Workflow(wf);
+        // A workflow folder renamed away from the id is treated as an alias
+        const dir = path.dirname(filePath);
+        const folder = path.basename(dir);
+        if (dir !== path.resolve(root, workflowDir) && folder !== workflow.id) {
+          workflow.alias = folder;
+        }
+        proj.workflows.push(workflow);
       }
     } catch (e) {
       logger?.log(e);
       // not valid json
       // should probably maybe a big deal about this huh?
       continue;
+    }
+  }
+
+  // Aliased workflows would share a folder with a clashing id or alias
+  const ids = new Set(proj.workflows.map((wf: Workflow) => wf.id));
+  const aliases = countBy(proj.workflows, 'alias');
+  for (const wf of proj.workflows as Workflow[]) {
+    if (wf.alias && (ids.has(wf.alias) || aliases[wf.alias] > 1)) {
+      logger?.warn(
+        `Ignoring alias "${wf.alias}" for workflow "${wf.id}": it clashes with another workflow`
+      );
+      delete wf.alias;
     }
   }
 
