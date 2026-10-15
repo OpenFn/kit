@@ -742,6 +742,36 @@ test('a removed workflow becomes a minimal delete: true entry', (t) => {
   });
 });
 
+test('a workflow removed and kept under the same uuid is sent as a change, not a delete', (t) => {
+  // eg, the local id drifted after a rename: the old id is removed, the new one added
+  const data = cloneDeep(removableWorkflowData);
+  // the merge lists the kept workflow before the removed one
+  data.workflows.unshift({ ...cloneDeep(data.workflows[0]), id: 'wf-renamed' });
+  const project = new Project(data);
+  project.getWorkflow('wf')!.remove();
+
+  const state = toAppState(project, { format: 'json' }) as Provisioner.Project;
+
+  t.is(Object.keys(state.workflows).length, 1);
+  t.is(state.workflows['wf'].id, 'wf-uuid');
+  t.falsy(state.workflows['wf'].delete);
+  t.is(state.workflows['wf'].jobs.step.id, 'step-uuid');
+});
+
+test('throws if a removed workflow would overwrite another with the same name', (t) => {
+  const data = cloneDeep(removableWorkflowData);
+  const added = cloneDeep(data.workflows[0]);
+  added.id = 'wf-renamed';
+  delete added.openfn; // never synced, so no uuid
+  data.workflows.push(added);
+  const project = new Project(data);
+  project.getWorkflow('wf')!.remove();
+
+  t.throws(() => toAppState(project, { format: 'json' }), {
+    message: /More than one workflow maps to "wf"/,
+  });
+});
+
 test('should serialize channels to app state', (t) => {
   const channels = [
     {

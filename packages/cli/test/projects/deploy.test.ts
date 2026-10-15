@@ -471,6 +471,78 @@ test.serial('deploy a change to a project', async (t) => {
   t.is(Object.keys(server.state.projects).length, 1);
 });
 
+const renameWorkflow = async (folder: string) => {
+  const wfPath = `/ws/workflows/${folder}/my-workflow.yaml`;
+  const wfYaml = fs.readFileSync(wfPath, 'utf8');
+  await writeFile(
+    wfPath,
+    wfYaml.replace('name: My Workflow', 'name: My Workflow (renamed)')
+  );
+};
+
+const deployOptions = {
+  endpoint: ENDPOINT,
+  apiKey: 'test-api-key',
+  workspace: '/ws',
+  confirm: false,
+} as any;
+
+test.serial(
+  'deploy a renamed workflow, then deploy an edit to it',
+  async (t) => {
+    await setup(projectYaml);
+
+    await renameWorkflow('my-workflow');
+    await deploy(deployOptions, logger);
+
+    // the workflow is checked out under its new id
+    t.false(fs.existsSync('/ws/workflows/my-workflow'));
+    const wfYaml = fs.readFileSync(
+      '/ws/workflows/my-workflow-renamed/my-workflow-renamed.yaml',
+      'utf8'
+    );
+    t.regex(wfYaml, /^id: my-workflow-renamed$/m);
+    t.regex(readCheckout()!, /forked_from:\n  my-workflow-renamed: /);
+
+    await writeFile(
+      '/ws/workflows/my-workflow-renamed/transform-data.js',
+      'log()'
+    );
+    await deploy(deployOptions, logger);
+
+    const workflows = Object.values(
+      server.state.projects[UUID].workflows
+    ) as any[];
+    t.is(workflows.length, 1);
+    t.is(workflows[0].id, '72ca3eb0-042c-47a0-a2a1-a545ed4a8406');
+    t.is(workflows[0].name, 'My Workflow (renamed)');
+    t.is(
+      Object.values<any>(workflows[0].jobs).find(
+        (j) => j.name === 'Transform data'
+      ).body,
+      'log()'
+    );
+  }
+);
+
+test.serial(
+  'deploy a renamed workflow replaces its aliased folder with one named after the new id',
+  async (t) => {
+    await setup(projectYaml);
+    fs.renameSync('/ws/workflows/my-workflow', '/ws/workflows/sample');
+
+    await renameWorkflow('sample');
+    await deploy(deployOptions, logger);
+
+    t.false(fs.existsSync('/ws/workflows/sample'));
+    t.true(
+      fs.existsSync(
+        '/ws/workflows/my-workflow-renamed/my-workflow-renamed.yaml'
+      )
+    );
+  }
+);
+
 test.serial(
   'Error if the remote and local workflows have diverged',
   async (t) => {

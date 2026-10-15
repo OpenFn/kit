@@ -89,10 +89,26 @@ export default function (
     owner: c.owner,
   }));
 
+  // A workflow both removed and kept (eg, its id changed after a rename) is
+  // a change, not a delete: never send a delete for a uuid we're also sending
+  const keptUuids = new Set(
+    project.workflows
+      .filter((w) => !w.isRemoved?.())
+      .map((w) => w.openfn?.uuid)
+      .filter(Boolean)
+  );
   state.workflows = project.workflows
+    .filter((w) => !(w.isRemoved?.() && keptUuids.has(w.openfn?.uuid)))
     .map((w) => mapWorkflow(w, project.credentials))
     .reduce((obj: any, wf) => {
-      obj[slugify(wf.name ?? wf.id)] = wf;
+      const key = slugify(wf.name ?? wf.id);
+      // don't let one workflow (or its delete) silently overwrite another
+      if (key in obj) {
+        throw new Error(
+          `More than one workflow maps to "${key}" - refusing to build a state that would lose one of them`
+        );
+      }
+      obj[key] = wf;
       return obj;
     }, {});
 
