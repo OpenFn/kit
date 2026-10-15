@@ -22,25 +22,42 @@ const parse = (cmd: string) =>
 
 test.serial('checkout defaults to true', (t) => {
   delete process.env[ENV];
-  t.true(parse('deploy').checkout);
+  const options = parse('deploy');
+  t.true(options.checkout);
 });
 
 test.serial('env=true with no flag skips checkout', (t) => {
   process.env[ENV] = 'true';
-  t.false(parse('deploy').checkout);
+  const options = parse('deploy');
+  t.false(options.checkout);
+});
+
+test.serial('env=false with no flag checks out', (t) => {
+  process.env[ENV] = 'false';
+  const options = parse('deploy');
+  t.true(options.checkout);
+});
+
+test.serial('env=1 (truthy but not "true") with no flag checks out', (t) => {
+  process.env[ENV] = '1';
+  const options = parse('deploy');
+  t.true(options.checkout);
 });
 
 test.serial('env=true with --checkout checks out', (t) => {
   process.env[ENV] = 'true';
-  t.true(parse('deploy --checkout').checkout);
+  const options = parse('deploy --checkout');
+  t.true(options.checkout);
 });
 
 test.serial('env=false with --no-checkout skips checkout', (t) => {
   process.env[ENV] = 'false';
-  t.false(parse('deploy --no-checkout').checkout);
+  const options = parse('deploy --no-checkout');
+  t.false(options.checkout);
 });
 
 test.serial('env unset with --no-checkout skips checkout', (t) => {
   delete process.env[ENV];
-  t.false(parse('deploy --no-checkout').checkout);
+  const options = parse('deploy --no-checkout');
+  t.false(options.checkout);
 });
