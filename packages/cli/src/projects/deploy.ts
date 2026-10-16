@@ -25,6 +25,7 @@ import {
 import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
 import ensureCheckout from './ensure-checkout';
+import { handler as checkout } from './checkout';
 import isUuid from '../util/is-uuid';
 import { getCredentialsVisitor, remapCredentials } from './credentials-helpers';
 
@@ -639,28 +640,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
     if (options.checkout !== false) {
       const workspacePath = options.workspace ?? process.cwd();
 
-      // Write the updated openfn.yaml and checkout file
-      // TODO: allow us to suppress writing this stuff
-      // (useful if posting from spec)
-      const configData = finalProject.generateConfig();
-      const configPath = path.resolve(workspacePath, configData.path);
-      await mkdir(path.dirname(configPath), { recursive: true });
-      await writeFile(configPath, configData.content);
-      await writeCheckoutFile(workspacePath, finalProject, options.branch);
-
-      // Sync collections into resources.yaml (anything else in there is left alone)
-      const resourcesPath = path.resolve(workspacePath, RESOURCES_FILE);
-      const existingResources = await readFile(resourcesPath, 'utf8').catch(
-        (e) => {
-          if (e.code !== 'ENOENT') throw e;
-          return undefined;
-        }
-      );
-      const resources = finalProject.generateResources(existingResources);
-      if (resources.content) {
-        await writeFile(resourcesPath, resources.content);
-      }
-
       // TODO if this was marked as new, we probably need to ensure a unique alias here
       const finalOutputPath = getSerializePath(
         finalProject,
@@ -668,6 +647,45 @@ export async function handler(options: DeployOptions, logger: Logger) {
       );
       const fullFinalPath = await serialize(finalProject, finalOutputPath);
       logger.debug('Updated local project at ', fullFinalPath);
+
+      if (filePath || options.workflow?.length) {
+        // workflows/ wasn't (all) deployed: rewriting it could lose local
+        // changes, so just write the updated openfn.yaml and checkout file
+        // TODO: allow us to suppress writing this stuff
+        // (useful if posting from spec)
+        const configData = finalProject.generateConfig();
+        const configPath = path.resolve(workspacePath, configData.path);
+        await mkdir(path.dirname(configPath), { recursive: true });
+        await writeFile(configPath, configData.content);
+        await writeCheckoutFile(workspacePath, finalProject, options.branch);
+
+        // Sync collections into resources.yaml (anything else in there is left alone)
+        const resourcesPath = path.resolve(workspacePath, RESOURCES_FILE);
+        const existingResources = await readFile(resourcesPath, 'utf8').catch(
+          (e) => {
+            if (e.code !== 'ENOENT') throw e;
+            return undefined;
+          }
+        );
+        const resources = finalProject.generateResources(existingResources);
+        if (resources.content) {
+          await writeFile(resourcesPath, resources.content);
+        }
+      } else {
+        // Check out what we just deployed, as pull does, so that workflows/
+        // matches Lightning (eg, a renamed workflow moves to a folder named
+        // after its new id). Everything local has just been deployed, so force
+        await checkout(
+          {
+            project: fullFinalPath,
+            workspace: workspacePath,
+            branch: options.branch,
+            force: true,
+            track: true,
+          } as any,
+          logger
+        );
+      }
     }
 
     if (options.new) {
