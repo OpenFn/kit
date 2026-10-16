@@ -17,6 +17,7 @@ import {
   WORK_AVAILABLE,
 } from './events';
 import destroy from './api/destroy';
+import type { DestroyOptions } from './api/destroy';
 import { Workloop } from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
@@ -87,7 +88,7 @@ export interface ServerApp extends Koa {
   runWorkloopMap: Record<string, Workloop>;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
-  destroy: () => void;
+  destroy: (options?: DestroyOptions) => Promise<void>;
   resumeWorkloop: (workloop?: Workloop) => void;
   pendingClaims: () => number;
 
@@ -469,7 +470,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.pendingClaims = () =>
     app.workloops.reduce((sum, w) => sum + Object.keys(w.openClaims).length, 0);
 
-  app.destroy = () => destroy(app, logger);
+  app.destroy = (options?: DestroyOptions) => destroy(app, logger, options);
 
   app.use(router.routes());
 

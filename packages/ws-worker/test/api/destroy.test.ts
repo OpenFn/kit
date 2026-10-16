@@ -337,3 +337,72 @@ test("don't claim after destroy", async (t) => {
     lightning.enqueueRun(createRun());
   });
 });
+
+test.serial(
+  'immediate destroy does not wait for an outstanding claim',
+  async (t) => {
+    // Delay the claim response so it is still outstanding when destroy returns
+    initLightning({ socketDelay: 200 });
+    await initWorker({ noLoop: true });
+
+    return new Promise<void>((done) => {
+      const doDestroy = async () => {
+        t.is(worker.pendingClaims(), 1);
+
+        await destroy(worker, logger, { immediate: true });
+
+        // A graceful destroy would block until the claim completed
+        t.is(worker.pendingClaims(), 1);
+        t.true(worker.destroyed);
+        t.false(await ping());
+
+        done();
+      };
+
+      worker.events.once(INTERNAL_CLAIM_START, () => {
+        doDestroy();
+      });
+
+      lightning.enqueueRun(createRun());
+      worker.claim().catch(() => {});
+    });
+  }
+);
+
+test.serial(
+  'immediate destroy tells the engine to destroy instantly',
+  async (t) => {
+    initLightning();
+    await initWorker();
+
+    let instant: boolean | undefined;
+    const originalDestroy = worker.engine.destroy;
+    worker.engine.destroy = async (arg?: boolean) => {
+      instant = arg;
+      return originalDestroy(arg);
+    };
+
+    await worker.destroy({ immediate: true });
+
+    t.true(instant);
+  }
+);
+
+test.serial(
+  'a normal destroy does not ask the engine to destroy instantly',
+  async (t) => {
+    initLightning();
+    await initWorker();
+
+    let instant: boolean | undefined = true;
+    const originalDestroy = worker.engine.destroy;
+    worker.engine.destroy = async (arg?: boolean) => {
+      instant = arg;
+      return originalDestroy(arg);
+    };
+
+    await worker.destroy();
+
+    t.falsy(instant);
+  }
+);

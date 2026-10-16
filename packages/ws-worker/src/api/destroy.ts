@@ -3,8 +3,20 @@ import { INTERNAL_CLAIM_COMPLETE, INTERNAL_RUN_COMPLETE } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
-const destroy = async (app: ServerApp, logger: Logger) => {
-  logger.info('Closing server...');
+export type DestroyOptions = {
+  // Tear everything down now: don't wait for active runs or claims to complete
+  immediate?: boolean;
+};
+
+const destroy = async (
+  app: ServerApp,
+  logger: Logger,
+  options: DestroyOptions = {}
+) => {
+  const { immediate = false } = options;
+  logger.info(
+    immediate ? 'Closing server immediately...' : 'Closing server...'
+  );
 
   // Close the server AND wait for runs to complete in parallel
   // The http server can take a moment to close and the two
@@ -22,14 +34,21 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       app.server.close(async () => {
         resolve();
       });
+
+      if (immediate) {
+        // Don't wait for open connections to drain
+        app.server.closeAllConnections?.();
+      }
     }),
     (async () => {
-      // Let any active runs complete
-      await waitForRunsAndClaims(app, logger);
+      if (!immediate) {
+        // Let any active runs complete
+        await waitForRunsAndClaims(app, logger);
+      }
 
       app.queueChannel?.leave();
       // Kill the engine and socket
-      await app.engine.destroy();
+      await app.engine.destroy(immediate);
       app.socket?.disconnect();
     })(),
   ]);

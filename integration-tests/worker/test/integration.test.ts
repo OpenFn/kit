@@ -36,7 +36,7 @@ test.beforeEach(async () => {
 test.afterEach(async () => {
   engineLogger._reset();
   lightning.destroy();
-  await worker.destroy();
+  await worker.destroy({ immediate: true });
 });
 
 const createDummyWorker = () => {
@@ -650,7 +650,7 @@ test.serial('use local adaptor versions from monorepo', (t) => {
 test.serial("Don't send adaptor logs to stdout", (t) => {
   return new Promise(async (done) => {
     // We have to create a new worker with a different repo for this one
-    await worker.destroy();
+    await worker.destroy({ immediate: true });
     ({ worker, engineLogger } = await createDummyWorker());
 
     const message = 've have been expecting you meester bond';
@@ -689,7 +689,7 @@ test.serial(
   (t) => {
     return new Promise(async (done) => {
       // We want to create our own special worker here
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
       ({ worker, engineLogger } = await createDummyWorker());
 
       const attempt1 = {
@@ -736,7 +736,7 @@ test.serial(
 test.serial('worker should exit if it has an invalid key', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     // generate a new, invalid, public key
@@ -789,7 +789,7 @@ test.serial('worker should exit if it has an invalid key', (t) => {
 test.serial('set a default timeout on the worker', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(lightningPort, {
@@ -839,7 +839,7 @@ test.serial('set a default timeout on the worker', (t) => {
 test.serial('set a timeout on a run', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(lightningPort, {
@@ -879,7 +879,7 @@ test.serial('set a timeout on a run', (t) => {
 test.serial('set a default payload limit on the worker', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(
@@ -920,7 +920,7 @@ test.serial('set a default payload limit on the worker', (t) => {
 test.serial('override the worker payload through run options', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(
@@ -962,7 +962,7 @@ test.serial('override the worker payload through run options', (t) => {
 test.serial('Redact logs which exceed the payload limit', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(lightningPort, {
@@ -1003,7 +1003,7 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
 test.serial("Don't return dataclips which exceed the payload limit", (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
     }
 
     ({ worker } = await initWorker(lightningPort, {
@@ -1043,7 +1043,7 @@ test.serial(
   "Don't send job logs to stdout when job_log_level is set to none",
   (t) => {
     return new Promise(async (done) => {
-      await worker.destroy();
+      await worker.destroy({ immediate: true });
       ({ worker, engineLogger } = await createDummyWorker());
 
       const message = 'log that will never exist';
