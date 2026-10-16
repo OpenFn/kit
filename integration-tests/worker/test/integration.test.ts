@@ -12,7 +12,7 @@ let engine;
 let engineLogger;
 let lightningPort;
 
-test.before(async () => {
+test.beforeEach(async () => {
   const keys = await generateKeys();
   lightningPort = nextPort();
   lightning = initLightning(lightningPort, keys.private);
@@ -33,11 +33,8 @@ test.before(async () => {
   ));
 });
 
-test.afterEach(() => {
+test.afterEach(async () => {
   engineLogger._reset();
-});
-
-test.after(async () => {
   lightning.destroy();
   await worker.destroy();
 });
