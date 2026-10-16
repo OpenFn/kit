@@ -4,6 +4,7 @@ import Project, {
   RESOURCES_FILE,
   toResourceChannels,
   versionsEqual,
+  Workflow,
   Workspace,
 } from '@openfn/project';
 import { isEqual } from 'lodash-es';
@@ -22,7 +23,7 @@ import {
   findLocallyChangedWorkflows,
   AuthOptions,
 } from './util';
-import { build, ensure } from '../util/command-builders';
+import { build, ensure, override } from '../util/command-builders';
 import { printRichDiff } from './diff';
 import ensureCheckout from './ensure-checkout';
 import isUuid from '../util/is-uuid';
@@ -55,6 +56,7 @@ export type DeployOptions = Pick<
   jsonDiff?: boolean;
   name?: string;
   new?: boolean;
+  removeUnmapped?: boolean;
   target?: string;
   workflow?: string[];
   workspace?: string;
@@ -73,6 +75,10 @@ const options = [
   o2.workflow,
   o2.credentials,
   o2.checkout,
+  override(o2.removeUnmapped, {
+    description:
+      'Delete workflows on the target project which do not exist in the local project',
+  }),
 
   // general options
   o.apiKey,
@@ -211,7 +217,8 @@ export type SyncResult = {
 // It returns a merged state object
 //
 // skipLocallyChangedCheck: merge every workflow in the source, not just those
-// edited since its own last snapshot (that check is meaningless for a file)
+// edited since its own last snapshot (that check is meaningless for a file, or
+// when deploying to a different project)
 const syncProjects = async (
   options: DeployOptions,
   config: Required<AuthOptions>,
@@ -278,7 +285,16 @@ const syncProjects = async (
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
   const didChannelsChange = channelsChanged(localProject, remoteProject);
-  if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
+  // workflows on the target which don't exist locally at all
+  const unmappedWorkflows = options.removeUnmapped
+    ? remoteProject.workflows.filter((wf) => !localProject.getWorkflow(wf.id))
+    : [];
+  if (
+    !workflowDiffs.length &&
+    !didCollectionsChange &&
+    !didChannelsChange &&
+    !unmappedWorkflows.length
+  ) {
     logger.success('Nothing to deploy');
     return null;
   }
@@ -308,9 +324,13 @@ const syncProjects = async (
         `The following workflows have diverged: ${divergentWorkflows}`
       );
       if (!options.force) {
+        const reason =
+          localProject.uuid === remoteProject.uuid
+            ? 'The remote project has been edited since the local project was branched.'
+            : `The target project ${remoteProject.uuid} is not the project this workspace was synced from (${localProject.uuid}), so its version history can't be compared.`;
         logger.error(`Error: Projects have diverged!
 
-  The remote project has been edited since the local project was branched. Changes may be lost.
+  ${reason} Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
         const e: any = new Error('PROJECTS_DIVERGED');
@@ -345,6 +365,15 @@ const syncProjects = async (
     mergeOptions.onlyUpdated = true;
   }
   const merged = Project.merge(localProject, remoteProject!, mergeOptions);
+
+  // Flag target-only workflows as deleted: just leaving them out of the
+  // payload would not remove them from the app
+  if (unmappedWorkflows.length) {
+    const ids = new Set(unmappedWorkflows.map((wf) => wf.id));
+    merged.workflows = merged.workflows.map((wf) =>
+      ids.has(wf.id) ? new Workflow(wf.toJSON() as any).remove() : wf
+    );
+  }
 
   return { merged, remoteProject, locallyChangedWorkflows: mergeCandidates };
 };
@@ -538,8 +567,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       localProject,
       { uuid: targetUuid!, endpoint },
       logger,
-      // a file's own snapshot tells us nothing about the target
-      !!filePath
+      // a file's own snapshot, or a snapshot of a different project, tells us
+      // nothing about the target
+      !!filePath || localProject.uuid !== targetUuid
     );
     if (!syncResult) {
       return;
