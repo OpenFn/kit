@@ -221,6 +221,45 @@ test.serial('should track forked_from', async (t) => {
   t.falsy(project.openfn!.forked_from);
 });
 
+const checkoutWithWorkflow = (checkout: object) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/.openfn/checkout.yaml', { id: 'my-project', ...checkout });
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    name: 'Workflow 1',
+    steps: [{ id: 'a' }],
+  });
+};
+
+test.serial('should track workflow_uuids from the checkout file', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: { 'workflow-1': 'uuid-1' } });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.deepEqual(project.cli.workflow_uuids, { 'workflow-1': 'uuid-1' });
+  // it's tracking metadata, not project config
+  t.falsy(project.openfn!.workflow_uuids);
+});
+
+test.serial('should load a checkout file with no workflow_uuids', async (t) => {
+  checkoutWithWorkflow({ forked_from: { 'workflow-1': 'abcd' } });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.cli.workflow_uuids, undefined);
+  t.deepEqual(project.cli.forked_from, { 'workflow-1': 'abcd' });
+});
+
+test.serial('should ignore a malformed workflow_uuids', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: 'nope' });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.cli.workflow_uuids, undefined);
+  t.falsy(project.openfn!.workflow_uuids);
+});
+
 test.serial('should load the name from config', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),

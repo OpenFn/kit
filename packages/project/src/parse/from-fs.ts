@@ -12,7 +12,7 @@ import {
   findWorkspaceFile,
   loadCheckoutFile,
 } from '../util/config';
-import { countBy, omit } from 'lodash-es';
+import { countBy, isPlainObject, omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
 import slugify from '../util/slugify';
@@ -48,7 +48,13 @@ export const parseProject = async (options: FromFsConfig) => {
   const proj: any = {
     id: options.name ? slugify(options.name) : checkout.id,
     name: options.name ? slugify(options.name) : checkout.name,
-    openfn: omit(checkout, ['id', 'alias', 'forked_from', 'collections']),
+    openfn: omit(checkout, [
+      'id',
+      'alias',
+      'forked_from',
+      'workflow_uuids',
+      'collections',
+    ]),
 
     // Legacy: collections used to be a list of names in openfn.yaml. A
     // collections key in resources.yaml takes precedence (see below)
@@ -59,6 +65,9 @@ export const parseProject = async (options: FromFsConfig) => {
     workflows: [],
     cli: omitNil({
       forked_from: checkout.forked_from,
+      workflow_uuids: isPlainObject(checkout.workflow_uuids)
+        ? checkout.workflow_uuids
+        : undefined,
     }),
   };
 
