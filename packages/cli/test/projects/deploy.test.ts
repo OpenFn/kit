@@ -471,6 +471,55 @@ test.serial('deploy a change to a project', async (t) => {
   t.is(Object.keys(server.state.projects).length, 1);
 });
 
+// https://github.com/OpenFn/kit/issues/1594
+test.serial(
+  'deploy an edit to a workflow after renaming it: the checkout tracks the local id',
+  async (t) => {
+    await setup(projectYaml);
+    const options = {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      confirm: false,
+    } as any;
+
+    const wfPath = '/ws/workflows/my-workflow/my-workflow.yaml';
+    await writeFile(
+      wfPath,
+      fs
+        .readFileSync(wfPath, 'utf8')
+        .replace('name: My Workflow', 'name: My Workflow (renamed)')
+    );
+    await deploy(options, logger);
+
+    // the files haven't moved, so the checkout file tracks the workflow by its
+    // local id, not the id derived from its new name
+    t.true(fs.existsSync(wfPath));
+    const checkout = yamlToJson(readCheckout()!) as any;
+    t.deepEqual(Object.keys(checkout.forked_from), ['my-workflow']);
+    t.deepEqual(checkout.workflow_uuids, {
+      'my-workflow': '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+    });
+
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+    await deploy(options, logger);
+
+    // the workflow was updated, not deleted
+    const workflows = Object.values(
+      server.state.projects[UUID].workflows
+    ) as any[];
+    t.is(workflows.length, 1);
+    t.is(workflows[0].id, '72ca3eb0-042c-47a0-a2a1-a545ed4a8406');
+    t.is(workflows[0].name, 'My Workflow (renamed)');
+    t.is(
+      Object.values<any>(workflows[0].jobs).find(
+        (j) => j.name === 'Transform data'
+      ).body,
+      'log()'
+    );
+  }
+);
+
 test.serial(
   'Error if the remote and local workflows have diverged',
   async (t) => {
@@ -1090,6 +1139,31 @@ test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
 
   const diverged = hasRemoteDiverged(local, remote);
   t.falsy(diverged);
+});
+
+test('hasRemoteDiverged: finds a renamed workflow in the remote by its uuid', (t) => {
+  const local = new Project({
+    id: 'p',
+    workflows: [
+      { id: 'my-workflow', name: 'Wf', steps: [], openfn: { uuid: 'uuid-1' } },
+    ],
+    cli: { forked_from: { 'my-workflow': 'a' } },
+  } as any);
+  const remote = new Project({
+    id: 'p',
+    workflows: [
+      {
+        id: 'my-workflow-renamed',
+        name: 'Wf (renamed)',
+        steps: [],
+        history: ['a', 'b'],
+        openfn: { uuid: 'uuid-1' },
+      },
+    ],
+  } as any);
+
+  // the remote has moved on since the local was forked
+  t.deepEqual(hasRemoteDiverged(local, remote), ['my-workflow']);
 });
 
 test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {

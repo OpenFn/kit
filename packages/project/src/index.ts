@@ -39,6 +39,9 @@ export { default as detectVersion } from './util/detect-version';
 
 export type { MergeProjectOptions } from './merge/merge-project';
 
+export { default as matchWorkflows } from './merge/match-workflows';
+export { default as relabelWorkflows } from './util/relabel-workflows';
+
 export { mergeCollections } from './merge/merge-project';
 
 export { toResourceChannels } from './util/resources';
