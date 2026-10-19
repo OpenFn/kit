@@ -1097,8 +1097,8 @@ test('id match: same workflow in source and target project', (t) => {
 });
 
 test('no id match: union of both workflow', (t) => {
-  const source = generateWorkflow('@id workflow a-b');
-  const target = generateWorkflow('@id another_workflow a-b');
+  const source = generateWorkflow('@id workflow @name one a-b');
+  const target = generateWorkflow('@id another_workflow @name two a-b');
 
   const source_project = createProject(source);
   const target_project = createProject(target);
@@ -1167,16 +1167,67 @@ test('id match: preserve target uuid', (t) => {
   t.is(result.workflows[0].openfn.uuid, target.openfn.uuid);
 });
 
+test('uuid match: a renamed workflow keeps the source id and the target uuid', (t) => {
+  const source = generateWorkflow('@id local-id @name Wf a-new', {
+    openfnUuid: true,
+  });
+  const target = generateWorkflow('@id remote-id @name Wf a-old', {
+    openfnUuid: true,
+  });
+  // the workflows are linked by uuid
+  source.openfn = { uuid: 'wf-uuid' };
+  target.openfn = { uuid: 'wf-uuid' };
+
+  const result = merge(createProject(source), createProject(target));
+
+  t.is(result.workflows.length, 1);
+  t.is(result.workflows[0].id, 'local-id');
+  t.is(result.workflows[0].openfn?.uuid, 'wf-uuid');
+  t.truthy(result.workflows[0].get('new'));
+});
+
+test('name match: a workflow with a different id but the same name is merged', (t) => {
+  const source = generateWorkflow('@id local-id @name Wf a-new');
+  const target = generateWorkflow('@id remote-id @name Wf a-old');
+
+  const result = merge(createProject(source), createProject(target));
+
+  t.is(result.workflows.length, 1);
+  t.is(result.workflows[0].id, 'local-id');
+  t.truthy(result.workflows[0].get('new'));
+});
+
+test('explicit workflow mappings are not overridden by uuid or name matching', (t) => {
+  const source = generateWorkflow('@id x @name Same a-new');
+  const target1 = generateWorkflow('@id y @name Same a-old');
+  const target2 = generateWorkflow('@id z @name Other a-other');
+  source.openfn = { uuid: 'uuid-1' };
+  target1.openfn = { uuid: 'uuid-1' };
+
+  const result = merge(
+    createProject(source),
+    createProject([target1, target2]),
+    {
+      workflowMappings: { x: 'z' },
+    }
+  );
+
+  // x was merged into z, and y was left alone
+  t.truthy(result.getWorkflow('x')?.get('new'));
+  t.truthy(result.getWorkflow('y')?.get('old'));
+  t.falsy(result.getWorkflow('z'));
+});
+
 test('options: no mappings & removeUnmapped=false', (t) => {
   const source_project = createProject([
     generateWorkflow('@id a a-new'),
     generateWorkflow('@id b b-new'),
-    generateWorkflow('@id c c-new'),
+    generateWorkflow('@id c @name unique-c c-new'),
   ]);
   const target_project = createProject([
     generateWorkflow('@id a a-old'),
     generateWorkflow('@id b b-old'),
-    generateWorkflow('@id d d-old'),
+    generateWorkflow('@id d @name unique-d d-old'),
   ]);
   const result = merge(source_project, target_project);
   // should be the new version of a,b,c
