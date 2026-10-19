@@ -33,8 +33,8 @@ export type FromFsConfig = {
 };
 
 // Parse a single project from a root folder
-// Note that this does NOT attempt to load UUIDS from the project file
-// It just builds the project on disk
+// Workflow uuids are not stored in the workflow files: if a workflow is tracked
+// in the checkout file, its uuid is loaded from there. Other uuids are not loaded
 // I suppose we could take an option?
 export const parseProject = async (options: FromFsConfig) => {
   const { root, logger, alias } = options;
@@ -44,6 +44,10 @@ export const parseProject = async (options: FromFsConfig) => {
   const config = buildConfig(options.config ?? context.workspace);
   const checkout =
     loadCheckoutFile(root, options.branch, context.project) ?? {};
+
+  const workflowUuids = isPlainObject(checkout.workflow_uuids)
+    ? (checkout.workflow_uuids as Record<string, string>)
+    : undefined;
 
   const proj: any = {
     id: options.name ? slugify(options.name) : checkout.id,
@@ -65,9 +69,7 @@ export const parseProject = async (options: FromFsConfig) => {
     workflows: [],
     cli: omitNil({
       forked_from: checkout.forked_from,
-      workflow_uuids: isPlainObject(checkout.workflow_uuids)
-        ? checkout.workflow_uuids
-        : undefined,
+      workflow_uuids: workflowUuids,
     }),
   };
 
@@ -149,6 +151,11 @@ export const parseProject = async (options: FromFsConfig) => {
         }
 
         const workflow = new Workflow(wf);
+        // If the workflow is tracked, we know its uuid
+        const uuid = workflowUuids?.[workflow.id];
+        if (uuid) {
+          workflow.openfn = { ...workflow.openfn, uuid };
+        }
         // A workflow folder renamed away from the id is treated as an alias
         const dir = path.dirname(filePath);
         const folder = path.basename(dir);

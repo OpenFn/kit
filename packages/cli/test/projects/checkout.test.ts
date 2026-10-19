@@ -511,6 +511,8 @@ formats:
 id: staging
 name: Staging
 uuid: <uuid:staging>
+workflow_uuids:
+  simple-workflow: wf1
 `
   );
 

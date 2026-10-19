@@ -240,6 +240,41 @@ test.serial('should track workflow_uuids from the checkout file', async (t) => {
   t.falsy(project.openfn!.workflow_uuids);
 });
 
+test.serial('should set the uuid on a tracked workflow', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: { 'workflow-1': 'uuid-1' } });
+  mockFile('/ws/workflows/workflow-2/workflow-2.yaml', {
+    name: 'Workflow 2',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.getWorkflow('workflow-1')!.openfn?.uuid, 'uuid-1');
+  // untracked workflows have no uuid
+  t.falsy(project.getWorkflow('workflow-2')!.openfn?.uuid);
+});
+
+test.serial(
+  'should find the uuid of a tracked workflow in a renamed folder',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+    mockFile('/ws/.openfn/checkout.yaml', {
+      id: 'my-project',
+      workflow_uuids: { 'workflow-1': 'uuid-1' },
+    });
+    mockFile('/ws/workflows/my-folder/workflow-1.yaml', {
+      name: 'Workflow 1',
+      steps: [{ id: 'a' }],
+    });
+
+    const project = await parseProject({ root: '/ws' });
+
+    const wf = project.getWorkflow('workflow-1')!;
+    t.is(wf.alias, 'my-folder');
+    t.is(wf.openfn?.uuid, 'uuid-1');
+  }
+);
+
 test.serial('should load a checkout file with no workflow_uuids', async (t) => {
   checkoutWithWorkflow({ forked_from: { 'workflow-1': 'abcd' } });
 
