@@ -436,3 +436,35 @@ test.serial('should override the name and id from options', async (t) => {
   t.is(project.name, 'hello-world');
   t.is(project.id, 'hello-world');
 });
+
+test.serial('should take the workflow id from the file name', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  // no id in the file, and a name that would slugify to something else
+  mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+    name: 'My Workflow (renamed)',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  const wf = project.getWorkflow('my-workflow')!;
+  t.is(wf.name, 'My Workflow (renamed)');
+  t.is(wf.alias, undefined);
+});
+
+test.serial('should prefer the file name to an id in the file', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+    id: 'something-else',
+    name: 'My Workflow',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.workflows[0].id, 'my-workflow');
+});

@@ -112,8 +112,9 @@ export const parseProject = async (options: FromFsConfig) => {
         wf = wf.workflow;
       }
 
-      if (wf.id && Array.isArray(wf.steps)) {
-        //logger?.log('Loading workflow at ', filePath); // TODO logger.debug
+      if (Array.isArray(wf.steps)) {
+        wf.id = path.basename(filePath, path.extname(filePath));
+
         for (const step of wf.steps) {
           // This is the saved, remote view of the step
           // TODO if the id has changed, how do we track?

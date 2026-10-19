@@ -69,6 +69,9 @@ export const extractWorkflow = (
 
   const wf = Object.assign(
     {
+      // DEPRECATED: the id is a local artefact and is ignored on load (the file name is used)
+      // It's still written so that older CLI versions can read these files
+      // TODO remove this in the next major
       id: workflow.id,
       name: workflow.name,
       start: workflow.start,
