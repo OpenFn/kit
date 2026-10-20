@@ -6,12 +6,12 @@ import { promisify } from 'node:util';
 const script = path.resolve('test/__esm-hook__/run-job.mjs');
 
 const exec = async (...args: string[]) => {
-  const { stdout } = await promisify(execFile)(
+  const { stdout, stderr } = await promisify(execFile)(
     process.execPath,
     ['--no-warnings', '--experimental-vm-modules', script, ...args],
     { cwd: path.dirname(script) }
   );
-  return JSON.parse(stdout);
+  return { ...JSON.parse(stdout), stderr };
 };
 
 test('a job can use an adaptor that imports an extensionless CJS subpath', async (t) => {
@@ -37,4 +37,16 @@ test('the hook leaves a specifier with an extension alone', async (t) => {
 test('the hook still fails on a subpath that does not exist', async (t) => {
   const { error } = await exec('import', 'cjs-subpaths/missing');
   t.is(error, 'ERR_MODULE_NOT_FOUND');
+});
+
+test('registering the hook again does not add it twice', async (t) => {
+  const { error, stderr } = await exec(
+    'import-after-registering-three-times',
+    'cjs-subpaths/missing'
+  );
+  t.is(error, 'ERR_MODULE_NOT_FOUND');
+  const attempts = stderr
+    .split('\n')
+    .filter((line: string) => line.startsWith('cjs-subpaths/missing'));
+  t.deepEqual(attempts, ['cjs-subpaths/missing', 'cjs-subpaths/missing.js']);
 });

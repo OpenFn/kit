@@ -1,4 +1,5 @@
 // Runs in its own process so that every test starts with no hooks registered
+import module from 'node:module';
 import path from 'node:path';
 import run, { registerEsmHook } from '../../dist/index.js';
 
@@ -28,6 +29,18 @@ const actions = {
     registerEsmHook();
     const m = await import(arg);
     return m.default;
+  },
+  async 'import-after-registering-three-times'() {
+    const counter = new URL('./count-resolves.mjs', import.meta.url);
+    if (module.registerHooks) {
+      module.registerHooks(await import(counter));
+    } else {
+      module.register(counter);
+    }
+    registerEsmHook();
+    registerEsmHook();
+    registerEsmHook();
+    await import(arg);
   },
 };
 
