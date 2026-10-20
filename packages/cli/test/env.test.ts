@@ -70,10 +70,13 @@ test.serial('should use $DOT_ENV_OVERRIDES found', (t) => {
   // don't load .env
   // but set this magic env var instead
   process.env.$DOT_ENV_OVERRIDES = 'FOO,BAR';
+  t.teardown(() => {
+    delete process.env.$DOT_ENV_OVERRIDES;
+  });
 
   report(logger);
 
-  const a = logger._find('always', /imported 1 env vars/i);
+  const a = logger._find('always', /imported 2 env vars/i);
   t.truthy(a);
 
   const b = logger._find('debug', /set from .env:/i);
