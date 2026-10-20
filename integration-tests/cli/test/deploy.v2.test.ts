@@ -131,6 +131,101 @@ test.serial('pull, change and re-deploy twice', async (t) => {
   t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v\: 2/);
 });
 
+test.serial('rename a workflow and deploy', async (t) => {
+  const projectId = 'rename-deploy';
+  server.addProject(makeProject(projectId) as any);
+
+  await run(`openfn project pull ${projectId} --log-json -l debug`);
+
+  // rename the workflow
+  const wfPath = path.join(tmpDir, 'workflows/my-workflow/my-workflow.yaml');
+  const wfYaml = await fs.readFile(wfPath, 'utf8');
+  await fs.writeFile(
+    wfPath,
+    wfYaml.replace('name: My Workflow', 'name: My Workflow (renamed)')
+  );
+
+  const { stdout, stderr } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
+  t.falsy(stderr);
+  assertLog(t, extractLogs(stdout), /Updated project/);
+
+  // the server has the same workflow and steps (by uuid), with the new name
+  const proj = server.state.projects[projectId];
+  t.is(Object.keys(proj.workflows).length, 1);
+  const wf = proj.workflows['my-workflow-1'];
+  t.is(wf.name, 'My Workflow (renamed)');
+  t.is(wf.jobs['my-job'].id, 'my-job-1');
+  t.is(wf.triggers['webhook'].id, 'my-trigger-1');
+
+  // the workflow stays where it was, under the id it had locally
+  t.regex(await fs.readFile(wfPath, 'utf8'), /name: My Workflow \(renamed\)/);
+  await t.throwsAsync(
+    fs.stat(path.join(tmpDir, 'workflows/my-workflow-renamed'))
+  );
+
+  // and the checkout file tracks it by that local id
+  const checkout = await fs.readFile(
+    path.resolve(tmpDir, '.openfn/checkout.yaml'),
+    'utf8'
+  );
+  t.regex(checkout, /forked_from:\n  my-workflow: /);
+  t.regex(checkout, /workflow_uuids:\n  my-workflow: my-workflow-1/);
+  t.notRegex(checkout, /my-workflow-renamed/);
+});
+
+test.serial(
+  'rename a workflow, deploy, then deploy another change',
+  async (t) => {
+    const projectId = 'rename-deploy-twice';
+    server.addProject(makeProject(projectId) as any);
+
+    await run(`openfn project pull ${projectId} --log-json -l debug`);
+
+    // rename the workflow and deploy
+    const wfPath = path.join(tmpDir, 'workflows/my-workflow/my-workflow.yaml');
+    const wfYaml = await fs.readFile(wfPath, 'utf8');
+    await fs.writeFile(
+      wfPath,
+      wfYaml.replace('name: My Workflow', 'name: My Workflow (renamed)')
+    );
+    const first = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(first.stderr);
+    assertLog(t, extractLogs(first.stdout), /Updated project/);
+
+    // now change the code in the renamed workflow and deploy again
+    const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
+    await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 2 }))');
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm --log-json -l debug`
+    );
+    t.falsy(stderr);
+
+    // it's an edit to the workflow, not a new workflow
+    const logs = extractLogs(stdout);
+    assertLog(t, logs, /Updated project/);
+    assertLog(t, logs, /My Workflow \(renamed\): changed/);
+    t.falsy(logs.find((l) => /: (added|deleted)/.test(`${l.message}`)));
+
+    // the server workflow was updated in place
+    const proj = server.state.projects[projectId];
+    t.is(Object.keys(proj.workflows).length, 1);
+    t.is(proj.workflows['my-workflow-1'].name, 'My Workflow (renamed)');
+    t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v: 2/);
+
+    // and the checkout is still tracking the local id
+    const checkout = await fs.readFile(
+      path.resolve(tmpDir, '.openfn/checkout.yaml'),
+      'utf8'
+    );
+    t.regex(checkout, /forked_from:\n  my-workflow: /);
+    t.regex(checkout, /workflow_uuids:\n  my-workflow: my-workflow-1/);
+  }
+);
+
 test.serial('deploy and pull to check version history', async (t) => {
   const projectId = 'cccccccc';
   server.addProject(makeProject(projectId) as any);
