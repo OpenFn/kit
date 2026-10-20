@@ -8,7 +8,6 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist repo",
-    "start": "docker run cli-integration-tests",
     "test": "npx ava -s"
   },
   "dependencies": {
