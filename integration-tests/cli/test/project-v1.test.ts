@@ -1,3 +1,6 @@
+// Tests offline `openfn checkout`, `merge` and `projects` on static legacy v1 project yaml files
+// (no Lightning); see project-v2 for the same commands on v2 files
+
 import test from 'ava';
 import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';

@@ -1,3 +1,6 @@
+// Tests the new v2 sync API: fetch, pull` and checkout. Uses mock Lightning and asserting on what
+// lands on disk (.projects state, checkout.yaml, workflows folder).
+
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs';

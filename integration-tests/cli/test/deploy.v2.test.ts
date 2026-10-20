@@ -1,3 +1,5 @@
+// Tests v2 `openfn project pull` and `openfn project deploy` loop against a mock Lightning
+
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs/promises';

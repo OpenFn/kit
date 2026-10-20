@@ -1,3 +1,5 @@
+// Tests legacy `openfn deploy` and `openfn pull` commands against a mock Lightning
+
 import test from 'ava';
 import path from 'node:path';
 import fs, { rm } from 'node:fs/promises';
