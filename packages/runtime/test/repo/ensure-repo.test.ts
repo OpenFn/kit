@@ -1,19 +1,19 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import { createMockLogger } from '@openfn/logger';
 import { ensureRepo, loadRepoPkg } from '../../src/modules/repo';
 
 const logger = createMockLogger('test', { level: 'debug' });
 
 test.afterEach(() => {
-  mock.restore();
+  restoreFs();
   logger._reset();
 });
 
 const defaultPkg = JSON.stringify({ name: 'test' });
 
 test.serial('return the existing package json', async (t) => {
-  mock({
+  mockFs({
     '/tmp/repo/package.json': defaultPkg,
   });
   const result = await ensureRepo('/tmp/repo', logger);
@@ -22,7 +22,7 @@ test.serial('return the existing package json', async (t) => {
 });
 
 test.serial('do not modify the existing package.json', async (t) => {
-  mock({
+  mockFs({
     '/tmp/repo/package.json': defaultPkg,
   });
   const result = await ensureRepo('/tmp/repo', logger);
@@ -36,7 +36,7 @@ test.serial('do not modify the existing package.json', async (t) => {
 test.serial(
   'create and return a package.json if the repo does not exist',
   async (t) => {
-    mock({});
+    mockFs({});
     const result = await ensureRepo('/tmp/repo', logger);
     t.truthy(result);
     t.is(result.name, 'openfn-repo');
@@ -53,7 +53,7 @@ test.serial(
 test.serial(
   'create and return a package if the repo does not exist at a long path',
   async (t) => {
-    mock({});
+    mockFs({});
     const result = await ensureRepo('/a/b/c/d/repo', logger);
     t.truthy(result);
     t.is(result.name, 'openfn-repo');
@@ -64,7 +64,7 @@ test.serial(
 );
 
 test.serial('log if a repo is created', async (t) => {
-  mock({});
+  mockFs({});
   await ensureRepo('/tmp/repo', logger);
   const { message } = logger._parse(logger._last);
   t.regex(message as string, /Creating new repo/);

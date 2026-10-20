@@ -1,5 +1,5 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from './helpers/memfs';
 import { createMockLogger } from '@openfn/logger';
 
 import load, { report } from '../src/env';
@@ -8,11 +8,11 @@ const logger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
   logger._reset();
-  mock.restore();
+  restoreFs();
 });
 
 test('should load and return values from .env', (t) => {
-  mock({
+  mockFs({
     '/.env': `
       FOO: BAR
     `,
@@ -25,7 +25,7 @@ test('should load and return values from .env', (t) => {
 });
 
 test('should report values loaded from .env', (t) => {
-  mock({
+  mockFs({
     '/.env': `
       FOO: BAR
     `,
@@ -46,14 +46,14 @@ test('should report values loaded from .env', (t) => {
 });
 
 test('should return null if no env is found', (t) => {
-  mock({});
+  mockFs({});
 
   const env = load('/.env');
   t.is(env, null);
 });
 
 test('should log if no env is found', (t) => {
-  mock({});
+  mockFs({});
 
   load('/.env');
 
@@ -64,7 +64,7 @@ test('should log if no env is found', (t) => {
 });
 
 test('should use $DOT_ENV_OVERRIDES found', (t) => {
-  mock({});
+  mockFs({});
 
   // don't load .env
   // but set this magic env var instead

@@ -1,7 +1,7 @@
 import test from 'ava';
+import { mockFs } from '../helpers/memfs';
 import { handler as list } from '../../src/projects/list';
 import { createMockLogger } from '@openfn/logger';
-import mock from 'mock-fs';
 import { jsonToYaml } from '@openfn/project';
 
 // a workspace with several projects but no checkout metadata
@@ -136,7 +136,7 @@ files['/aliased/workflows/sw/simple-workflow.yaml'] = jsonToYaml({
   steps: [],
 });
 
-mock(files);
+mockFs(files);
 
 const logger = createMockLogger('', { level: 'debug' });
 

@@ -1,6 +1,6 @@
 import { createMockLogger, JSONLog } from '@openfn/logger';
 import test from 'ava';
-import mock from 'mock-fs';
+import { loadPath, mockFs } from '../helpers/memfs';
 import path from 'node:path';
 import printVersions from '../../src/util/print-versions';
 
@@ -85,9 +85,9 @@ test('print versions for node, cli and long-form adaptor with version', async (t
 });
 
 test('print version of adaptor with monorepo', async (t) => {
-  mock({
+  mockFs({
     '/repo/http/package.json': '{ "version": "1.0.0" }',
-    [root]: mock.load(root, {}),
+    [root]: loadPath(root),
   });
 
   const logger = createMockLogger('', { level: 'info' });
@@ -103,9 +103,9 @@ test('print version of adaptor with monorepo', async (t) => {
 });
 
 test('print version of adaptor with path', async (t) => {
-  mock({
+  mockFs({
     '/repo/http/package.json': '{ "version": "1.0.0" }',
-    [root]: mock.load(root, {}),
+    [root]: loadPath(root),
   });
 
   const logger = createMockLogger('', { level: 'info' });
@@ -120,9 +120,9 @@ test('print version of adaptor with path', async (t) => {
 });
 
 test('print version of adaptor with path even if monorepo is set', async (t) => {
-  mock({
+  mockFs({
     '/repo/http/package.json': '{ "version": "1.0.0" }',
-    [root]: mock.load(root, {}),
+    [root]: loadPath(root),
   });
 
   const logger = createMockLogger('', { level: 'info' });
@@ -138,9 +138,9 @@ test('print version of adaptor with path even if monorepo is set', async (t) => 
 });
 
 test('print version of adaptor with path and @', async (t) => {
-  mock({
+  mockFs({
     '/repo/node_modules/@openfn/http/package.json': '{ "version": "1.0.0" }',
-    [root]: mock.load(root, {}),
+    [root]: loadPath(root),
   });
 
   const logger = createMockLogger('', { level: 'info' });

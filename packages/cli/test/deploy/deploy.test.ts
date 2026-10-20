@@ -1,7 +1,7 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
-import mockfs from 'mock-fs';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import { Logger, createMockLogger } from '@openfn/logger';
 import deployHandler, {
   DeployFn,
@@ -17,9 +17,9 @@ const logger = createMockLogger();
 const { OPENFN_API_KEY, OPENFN_ENDPOINT, ...originalEnv } = process.env;
 
 test.beforeEach(() => {
-  mockfs.restore();
+  restoreFs();
   logger._reset();
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
   });
@@ -96,7 +96,7 @@ test.serial(
   'redirects to beta handler when openfn.yaml exists in cwd',
   async (t) => {
     t.plan(3);
-    mockfs({
+    mockFs({
       ['./config.json']: `{"apiKey": "123"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
       ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
@@ -112,7 +112,7 @@ test.serial(
 
 test.serial('does not redirect when PREFER_LEGACY_SYNC is set', async (t) => {
   t.plan(1);
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "123", "endpoint": "https://api.example.com"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
     ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
@@ -129,7 +129,7 @@ test.serial('does not redirect when PREFER_LEGACY_SYNC is set', async (t) => {
 
 test.serial('CLI endpoint preferred over openfn.yaml endpoint', async (t) => {
   t.plan(1);
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
     ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
@@ -148,7 +148,7 @@ test.serial('CLI endpoint preferred over openfn.yaml endpoint', async (t) => {
 test.serial(
   'openfn.yaml endpoint preferred over config.json endpoint',
   async (t) => {
-    mockfs({
+    mockFs({
       ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
       ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',
@@ -164,7 +164,7 @@ test.serial(
   'checkout file endpoint preferred over config.json endpoint',
   async (t) => {
     t.plan(1);
-    mockfs({
+    mockFs({
       ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
       ['./openfn.yaml']: '',
@@ -179,7 +179,7 @@ test.serial(
 
 test.serial('loads the checkout file for the current branch', async (t) => {
   t.plan(1);
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
     ['./openfn.yaml']: '',
@@ -200,7 +200,7 @@ test.serial('loads the checkout file for the current branch', async (t) => {
 
 test.serial('warns if no endpoint can be found when redirecting', async (t) => {
   t.plan(1);
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
     ['./openfn.yaml']: '',
@@ -212,7 +212,7 @@ test.serial('warns if no endpoint can be found when redirecting', async (t) => {
 });
 
 test.serial('CLI apiKey preferred over config.json apiKey', async (t) => {
-  mockfs({
+  mockFs({
     ['./config.json']: `{"apiKey": "from-config"}`,
     ['./project.yaml']: `{"apiKey": "from-config"}`,
     ['./openfn.yaml']: 'project:\n  endpoint: https://from-yaml.org',

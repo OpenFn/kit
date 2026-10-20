@@ -1,5 +1,5 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import { createMockLogger } from '@openfn/logger';
 import { omit } from 'lodash-es';
 import type { Job } from '@openfn/runtime';
@@ -27,7 +27,7 @@ const createPlan = (steps: Partial<Job>[] = []) => ({
 });
 
 test.beforeEach(() => {
-  mock({
+  mockFs({
     'test/job.js': 'x',
     'test/collections.js': 'collections.get()',
     'test/wf-old.json': JSON.stringify({
@@ -42,7 +42,7 @@ test.beforeEach(() => {
 
 test.afterEach(() => {
   logger._reset();
-  mock.restore();
+  restoreFs();
 });
 
 // TODO: add some tests for handling yaml stuff
@@ -205,7 +205,7 @@ test.serial('xplan: expand adaptors', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -235,7 +235,7 @@ test.serial('flat xplan: expand adaptors', async (t) => {
       },
     ],
   };
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -263,7 +263,7 @@ test.serial('xplan: do not expand adaptors', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -293,7 +293,7 @@ test.serial('xplan: set timeout from CLI', async (t) => {
   // @ts-ignore
   plan.options.timeout = 1;
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -318,7 +318,7 @@ test.serial('xplan: set start from CLI', async (t) => {
   // @ts-ignore
   plan.options.start = 'a';
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -342,7 +342,7 @@ test.serial('xplan: map to monorepo', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
     '/repo/packages/common': {},
   });
@@ -388,7 +388,7 @@ test.serial('step: allow file paths for state', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/state.json': JSON.stringify({
       data: {
         x: 1,
@@ -422,7 +422,7 @@ test.serial('xplan: support multiple adaptors', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -454,7 +454,7 @@ test.serial('xplan: append collections', async (t) => {
     },
   ]);
 
-  mock({
+  mockFs({
     'test/wf.json': JSON.stringify(plan),
   });
 
@@ -496,7 +496,7 @@ test.serial(
       },
     ]);
 
-    mock({
+    mockFs({
       'test/wf.json': JSON.stringify(plan),
     });
 
@@ -520,7 +520,7 @@ test.serial(
 test.serial(
   'xplan: load a workflow.yaml without top workflow key',
   async (t) => {
-    mock({
+    mockFs({
       'test/wf.yaml': `
 start: a
 steps:
@@ -547,7 +547,7 @@ steps:
 test.serial(
   'xplan: load a workflow.yaml without top workflow key and options',
   async (t) => {
-    mock({
+    mockFs({
       'test/wf.yaml': `
 name: wf
 steps:
@@ -574,7 +574,7 @@ options:
 );
 
 test.serial('xplan: load a workflow.yaml with top workflow key', async (t) => {
-  mock({
+  mockFs({
     'test/wf.yaml': `
 workflow:
   name: wf
@@ -597,7 +597,7 @@ options:
 });
 
 test.serial('xplan: load a workflow through a Workspace', async (t) => {
-  mock({
+  mockFs({
     '/tmp/workflows/wf.yaml': `
 id: wf
 steps:
@@ -629,7 +629,7 @@ dirs:
 });
 
 test.serial('xplan: throw if a named workflow does not exist', async (t) => {
-  mock({
+  mockFs({
     '/tmp/workflows/wf.yaml': `
 id: wf
 steps:
@@ -655,7 +655,7 @@ dirs:
 test.serial(
   'xplan: load a workflow through a project .yaml and apply the credentials map by default',
   async (t) => {
-    mock({
+    mockFs({
       '/tmp/workflows/wf.yaml': `
 id: wf
 steps:

@@ -1,9 +1,9 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import { readFileSync, existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
-import mockfs from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 import docsHandler, { DocGenFn, ensurePath } from '../../src/docgen/handler';
 
@@ -13,9 +13,9 @@ const REPO_PATH = '/tmp/repo';
 const DOCS_PATH = `${REPO_PATH}/docs`;
 
 test.beforeEach(() => {
-  mockfs.restore();
+  restoreFs();
   logger._reset();
-  mockfs({
+  mockFs({
     [DOCS_PATH]: {},
   });
 });
@@ -79,7 +79,7 @@ test.serial('log the result path', async (t) => {
 });
 
 test.serial("ensurePath if there's no repo", (t) => {
-  mockfs({
+  mockFs({
     ['/tmp']: {},
   });
   ensurePath('/tmp/repo/docs/x.json');
@@ -88,7 +88,7 @@ test.serial("ensurePath if there's no repo", (t) => {
 });
 
 test.serial("ensurePath if there's no docs folder", (t) => {
-  mockfs({
+  mockFs({
     ['/tmp/repo']: {},
   });
   ensurePath('/tmp/repo/docs/x.json');
@@ -97,7 +97,7 @@ test.serial("ensurePath if there's no docs folder", (t) => {
 });
 
 test.serial("ensurePath if there's a namespace", (t) => {
-  mockfs({
+  mockFs({
     ['/tmp']: {},
   });
   ensurePath('/tmp/repo/docs/@openfn/language-common.json');
@@ -114,7 +114,7 @@ test.serial.skip('do not generate docs if they already exist', async (t) => {
     return {};
   }) as unknown as DocGenFn;
 
-  mockfs({
+  mockFs({
     [`${DOCS_PATH}/${specifier}.json`]: '{ "name": "test" }',
   });
 
@@ -209,7 +209,7 @@ test.serial.skip("remove the placeholder if there's an error", async (t) => {
 test.serial.skip('wait for docs if a placeholder is present', async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
-  mockfs({
+  mockFs({
     [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
   });
 
@@ -242,7 +242,7 @@ test.serial.skip('wait for docs if a placeholder is present', async (t) => {
 test.serial.skip("throw there's a timeout", async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
-  mockfs({
+  mockFs({
     [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
   });
 
@@ -262,7 +262,7 @@ test.serial.skip(
   async (t) => {
     const path = `${DOCS_PATH}/${specifier}.json`;
 
-    mockfs({
+    mockFs({
       [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
     });
 
@@ -286,7 +286,7 @@ test.serial.skip(
 test.serial.skip("reset the placeholder if it's old", async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
-  mockfs({
+  mockFs({
     [path]: `{ "loading": true, "test", true, "timestamp": ${
       Date.now() - 1001
     } }`,

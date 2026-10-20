@@ -1,5 +1,5 @@
-import mock from 'mock-fs';
 import test from 'ava';
+import { mockFs, restoreFs } from './helpers/memfs';
 import { parseAndValidate } from '../src/validator';
 
 function findError(errors: any[], message: string) {
@@ -7,7 +7,7 @@ function findError(errors: any[], message: string) {
 }
 
 test.after(() => {
-  mock.restore();
+  restoreFs();
 });
 
 test('Workflows must be a map', async (t) => {
@@ -173,7 +173,7 @@ test('parses channels with destination_credential', async (t) => {
 test('adds the file content into the job body from the specified path', async (t) => {
   // Step 1: Create a temporary file that the YAML will reference
   const fileContent = 'fn(state => state.data);';
-  mock({
+  mockFs({
     '/jobBody.js': fileContent,
   });
 

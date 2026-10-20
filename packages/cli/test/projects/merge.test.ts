@@ -1,6 +1,6 @@
 import Project, { jsonToYaml, Workspace } from '@openfn/project';
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs } from '../helpers/memfs';
 import { handler as mergeHandler } from '../../src/projects/merge';
 import { createMockLogger } from '@openfn/logger';
 
@@ -78,7 +78,7 @@ const main = {
 };
 
 test.beforeEach(() => {
-  mock({
+  mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
@@ -204,7 +204,7 @@ test.serial(
 );
 
 test.serial('Write to JSON using project config', async (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
       formats: { openfn: 'yaml', project: 'json', workflow: 'yaml' },
@@ -247,7 +247,7 @@ test.serial('Write to JSON using project config', async (t) => {
 });
 
 test.serial('merge with custom base', async (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
       formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
@@ -334,7 +334,7 @@ const multiMain = {
 };
 
 const mockMultiWorkflowWorkspace = () => {
-  mock({
+  mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },

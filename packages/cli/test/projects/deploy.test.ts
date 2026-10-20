@@ -1,8 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import test from 'ava';
-import mock from 'mock-fs';
-import path from 'node:path';
-import { createRequire } from 'node:module';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import fs from 'node:fs';
 import Project, {
   generateWorkflow,
@@ -44,28 +42,6 @@ const STRICT_ENDPOINT = `http://localhost:${strictPort}`;
 const projectYaml = myProject_yaml.replace('https://app.openfn.org', ENDPOINT);
 const two_workflows_yaml = twowfs.replace('https://app.openfn.org', ENDPOINT);
 
-const require = createRequire(import.meta.url);
-
-const mockFs = (paths: Record<string, string>) => {
-  // ensure this path is available to pnpm (needed by deps for some reason??)
-  // Note: loading all of pnpm takes ~7 seconds per test
-  // this workaround cuts out that delay entirely
-  const iconv = path.resolve(
-    '../../node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite/encodings'
-  );
-  // undici v8 reads its llhttp WASM from disk on the first request, so keep
-  // that dir visible or fetches to the mock server fail with ENOENT
-  const undicihttp = path.join(
-    path.dirname(require.resolve('undici')),
-    'lib/llhttp'
-  );
-  mock({
-    [iconv]: mock.load(iconv, {}),
-    [undicihttp]: mock.load(undicihttp, {}),
-    ...paths,
-  });
-};
-
 // Take a project yaml and expand it
 // This uses checkout to do the heavy lifting
 const setup = async (yaml: string = projectYaml) => {
@@ -92,7 +68,7 @@ test.beforeEach(() => {
   server.reset();
   server.addProject(myProject_v1);
   logger._reset();
-  mock.restore();
+  restoreFs();
 });
 
 test.serial(
@@ -1444,7 +1420,6 @@ test.serial(
 
     // simulate a fresh git clone: the workflows are there, nothing is checked
     // out, and there's more than one tracked project
-    // (fs.rmSync is a no-op under mock-fs, hence rimraf)
     await rimraf('/ws/.openfn');
     t.false(fs.existsSync('/ws/.openfn'));
     fs.writeFileSync('/ws/.projects/other@localhost.yaml', projectYaml);
