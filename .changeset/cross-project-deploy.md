@@ -1,5 +1,6 @@
 ---
-'@openfn/cli': patch
+'@openfn/cli': minor
+'@openfn/project': patch
 ---
 
-Fix deploying a workspace to a different project not sending its workflows
+Deploying a workspace to a different project now makes that project match it

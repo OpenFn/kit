@@ -9,7 +9,7 @@ import Project, {
   Workflow,
   Workspace,
 } from '@openfn/project';
-import { isEqual } from 'lodash-es';
+import { isEqual, uniq } from 'lodash-es';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -27,7 +27,7 @@ import {
   findLocallyChangedWorkflows,
   AuthOptions,
 } from './util';
-import { build, ensure, override } from '../util/command-builders';
+import { build, ensure } from '../util/command-builders';
 import { printRichDiff } from './diff';
 import ensureCheckout from './ensure-checkout';
 import isUuid from '../util/is-uuid';
@@ -60,7 +60,6 @@ export type DeployOptions = Pick<
   jsonDiff?: boolean;
   name?: string;
   new?: boolean;
-  removeUnmapped?: boolean;
   target?: string;
   workflow?: string[];
   workspace?: string;
@@ -79,10 +78,6 @@ const options = [
   o2.workflow,
   o2.credentials,
   o2.checkout,
-  override(o2.removeUnmapped, {
-    description:
-      'Delete workflows on the target project which do not exist in the local project',
-  }),
 
   // general options
   o.apiKey,
@@ -268,6 +263,8 @@ const syncProjects = async (
     // this will actually happen later
   }
 
+  const isOtherProject = localProject.uuid !== remoteProject.uuid;
+
   let mergeCandidates: string[];
   if (options.workflow?.length) {
     const missing = options.workflow.filter(
@@ -284,6 +281,14 @@ const syncProjects = async (
   } else if (skipLocallyChangedCheck) {
     // the source is the spec, so every workflow in it is a candidate
     mergeCandidates = localProject.workflows.map((w) => w.id);
+    if (isOtherProject) {
+      // a different project should end up looking exactly like the source,
+      // so its own workflows are candidates too (to be removed)
+      mergeCandidates = uniq([
+        ...mergeCandidates,
+        ...remoteProject.workflows.map((w) => w.id),
+      ]);
+    }
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
   }
@@ -294,18 +299,29 @@ const syncProjects = async (
     : [];
   const didCollectionsChange = collectionsChanged(localProject, remoteProject);
   const didChannelsChange = channelsChanged(localProject, remoteProject);
-  // workflows on the target which don't exist locally at all
-  const unmappedWorkflows = options.removeUnmapped
-    ? remoteProject.workflows.filter((wf) => !localProject.getWorkflow(wf.id))
-    : [];
-  if (
-    !workflowDiffs.length &&
-    !didCollectionsChange &&
-    !didChannelsChange &&
-    !unmappedWorkflows.length
-  ) {
+  if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
     logger.success('Nothing to deploy');
     return null;
+  }
+
+  const removedWorkflows = isOtherProject
+    ? workflowDiffs.filter((d) => d.type === 'removed').map((d) => d.id)
+    : [];
+  // Without a prompt nobody reviews the removals
+  if (
+    removedWorkflows.length &&
+    !options.confirm &&
+    !options.force &&
+    !options.dryRun
+  ) {
+    logger.error(`Error: Deploying would remove workflows from ${
+      remoteProject.uuid
+    }: ${removedWorkflows.join(', ')}
+
+  The target is a different project, so it will be made to look exactly like the local project.
+
+  Pass --force to remove them anyway, or deploy without --no-confirm to review the changes first.`);
+    throw new Error('REMOVES_WORKFLOWS');
   }
 
   // Ensure there's no divergence
@@ -377,8 +393,8 @@ const syncProjects = async (
 
   // Flag target-only workflows as deleted: just leaving them out of the
   // payload would not remove them from the app
-  if (unmappedWorkflows.length) {
-    const ids = new Set(unmappedWorkflows.map((wf) => wf.id));
+  if (removedWorkflows.length) {
+    const ids = new Set(removedWorkflows);
     merged.workflows = merged.workflows.map((wf) =>
       ids.has(wf.id) ? new Workflow(wf.toJSON() as any).remove() : wf
     );

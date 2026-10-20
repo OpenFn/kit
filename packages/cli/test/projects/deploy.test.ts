@@ -348,6 +348,8 @@ test.serial(
         project: '/ws/.projects/main@localhost.yaml',
         target: 'dev',
         confirm: false,
+        // dev's own workflows get removed, which needs --force without a prompt
+        force: true,
       } as any,
       logger
     );
@@ -1616,7 +1618,7 @@ const findWorkflow = (projectId: string, name: string) =>
   ) as any;
 
 test.serial(
-  'deploy: deploys an unchanged workspace to a different project',
+  'deploy: makes a different project look exactly like the local project',
   async (t) => {
     await server.addProject(two_workflows_yaml);
     await setup(projectYaml);
@@ -1629,72 +1631,48 @@ test.serial(
         project: TWO_WORKFLOWS_UUID,
         checkout: false,
         confirm: false,
-      } as any,
-      logger
-    );
-
-    t.falsy(logger._find('success', /Nothing to deploy/));
-    const added = findWorkflow(TWO_WORKFLOWS_UUID, 'My Workflow');
-    t.is(added.jobs['transform-data'].body, 'fn()');
-    // the target's other workflows are left alone
-    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow A'));
-    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow B'));
-  }
-);
-
-test.serial(
-  'deploy: --remove-unmapped deletes workflows that only exist on a different target project',
-  async (t) => {
-    await server.addProject(two_workflows_yaml);
-    await setup(projectYaml);
-
-    await deploy(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-        project: TWO_WORKFLOWS_UUID,
-        checkout: false,
-        confirm: false,
-        removeUnmapped: true,
+        force: true,
       } as any,
       logger
     );
 
     const workflows = Object.values(
       server.state.projects[TWO_WORKFLOWS_UUID].workflows
-    ).map((wf: any) => wf.name);
-    t.deepEqual(workflows, ['My Workflow']);
+    ) as any[];
+    t.deepEqual(
+      workflows.map((wf) => wf.name),
+      ['My Workflow']
+    );
+    t.is(workflows[0].jobs['transform-data'].body, 'fn()');
   }
 );
 
 test.serial(
-  'deploy: --remove-unmapped deletes a workflow added to the same project remotely',
+  'deploy: refuses to remove workflows from a different project with --no-confirm, unless --force',
   async (t) => {
+    await server.addProject(two_workflows_yaml);
     await setup(projectYaml);
-    server.updateWorkflow(UUID, {
-      id: 'b7d5c1f0-0000-4000-8000-000000000002',
-      name: 'Remote only',
-      jobs: {},
-      triggers: {},
-      edges: {},
-    } as any);
 
-    await deploy(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-        checkout: false,
-        confirm: false,
-        removeUnmapped: true,
-      } as any,
-      logger
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            project: TWO_WORKFLOWS_UUID,
+            checkout: false,
+            confirm: false,
+          } as any,
+          logger
+        ),
+      { message: 'REMOVES_WORKFLOWS' }
     );
 
-    t.falsy(logger._find('success', /Nothing to deploy/));
-    t.truthy(findWorkflow(UUID, 'My Workflow'));
-    t.falsy(findWorkflow(UUID, 'Remote only'));
+    // the target is untouched
+    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow A'));
+    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow B'));
+    t.falsy(findWorkflow(TWO_WORKFLOWS_UUID, 'My Workflow'));
   }
 );
 
