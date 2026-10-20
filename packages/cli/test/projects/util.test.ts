@@ -1,6 +1,6 @@
 import test from 'ava';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import fs from 'node:fs';
-import mock from 'mock-fs';
 import Project, { generateWorkflow, yamlToJson } from '@openfn/project';
 import {
   findLocallyChangedWorkflows,
@@ -9,7 +9,7 @@ import {
 } from '../../src/projects/util';
 
 test.afterEach(() => {
-  mock.restore();
+  restoreFs();
 });
 
 test('tidyWorkflowDir: removes workflows that no longer exist', async (t) => {
@@ -292,7 +292,7 @@ const trackedProject = () =>
 test.serial(
   'writeCheckoutFile: writes the project meta and forked_from to the checkout file',
   async (t) => {
-    mock({ '/ws': {} });
+    mockFs({ '/ws': {} });
 
     const filePath = await writeCheckoutFile('/ws', trackedProject());
 
@@ -311,7 +311,7 @@ test.serial(
 test.serial(
   'writeCheckoutFile: writes to the checkout file for a branch',
   async (t) => {
-    mock({ '/ws': {} });
+    mockFs({ '/ws': {} });
 
     const filePath = await writeCheckoutFile('/ws', trackedProject(), 'dev');
 
@@ -324,7 +324,7 @@ test.serial(
 test.serial(
   'writeCheckoutFile: does not touch the workspace config or workflows',
   async (t) => {
-    mock({
+    mockFs({
       '/ws/openfn.yaml': 'credentials: creds.yaml',
       '/ws/workflows/wf/wf.yaml': 'id: wf',
     });

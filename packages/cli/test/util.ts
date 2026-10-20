@@ -1,26 +1,20 @@
 /*
  * test utils
  */
-import mock from 'mock-fs';
 import path from 'node:path';
+import { loadPath, mockFs as mockMemFs, restoreFs } from './helpers/memfs';
 
 import type { ExecutionPlan, Job, StepEdge } from '@openfn/runtime';
 
 export const mockFs = (files: Record<string, string>) => {
-  // We have to explicitly expose some modules paths so that dependencies can run in the tests
-  const pnpm = path.resolve('../../node_modules/.pnpm');
-  const recastPath = `${pnpm}/recast@0.21.5`;
-  const sourceMapPath = `${pnpm}/source-map@0.7.6`;
-  mock({
-    [recastPath]: mock.load(recastPath, {}),
-    [sourceMapPath]: mock.load(sourceMapPath, {}),
-    '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
+  mockMemFs({
+    '/repo/': loadPath(path.resolve('test/__repo__/')),
     ...files,
   });
 };
 
 export const resetMockFs = () => {
-  mock.restore();
+  restoreFs();
 };
 
 type CreateWorkflowOptions = {

@@ -1,6 +1,6 @@
 import test from 'ava';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import fs from 'node:fs';
-import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 import Project, { Workspace, yamlToJson } from '@openfn/project';
 
@@ -12,7 +12,7 @@ import ensureCheckout, {
 const logger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
-  mock.restore();
+  restoreFs();
   logger._reset();
 });
 
@@ -25,7 +25,7 @@ const projectFile = (id: string) =>
   }).serialize('project', { format: 'yaml' }) as string;
 
 const setup = (ids = ['main', 'staging'], extra = {}) =>
-  mock({
+  mockFs({
     '/ws/openfn.yaml': '',
     '/ws/workflows/wf/wf.yaml': 'id: wf',
     ...Object.fromEntries(

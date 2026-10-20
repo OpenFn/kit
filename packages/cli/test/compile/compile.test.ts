@@ -1,5 +1,5 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { loadPath, mockFs as mockMemFs, restoreFs } from '../helpers/memfs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
@@ -101,7 +101,7 @@ steps:
   const code = await fs.readFile(outPaths[0], 'utf-8');
   t.true(code.includes('export default [x()]'));
 
-  mock.restore();
+  restoreFs();
 });
 
 test.serial(
@@ -132,7 +132,7 @@ steps:
     t.is(outPaths.length, 1);
     t.true(outPaths[0].endsWith('step-a.mjs'));
 
-    mock.restore();
+    restoreFs();
   }
 );
 
@@ -162,7 +162,7 @@ steps:
     t.is(outPaths.length, 1);
     t.true(outPaths[0].startsWith('/proj/build/'));
 
-    mock.restore();
+    restoreFs();
   }
 );
 
@@ -199,7 +199,7 @@ steps:
     t.is(outPaths.length, 1);
     await t.throwsAsync(() => fs.access('/proj/dist/old-workflow/stale.mjs'));
 
-    mock.restore();
+    restoreFs();
   }
 );
 
@@ -226,7 +226,7 @@ steps:
   t.is(outPaths.length, 1);
   t.true(outPaths[0].startsWith('/out/'));
 
-  mock.restore();
+  restoreFs();
 });
 
 test.serial('throw an AbortError if a job is uncompilable', async (t) => {
@@ -314,7 +314,7 @@ test.serial('loadTransformOptions: do nothing', async (t) => {
 test.serial(
   "resolveSpecifierPath: return null if the module can't be resolved locally",
   async (t) => {
-    mock({
+    mockMemFs({
       '/repo': {},
     });
     const path = await resolveSpecifierPath('pkg', '/repo', mockLog);
@@ -360,7 +360,7 @@ test.serial(
 test.serial(
   'resolveSpecifierPath: return a path to the repo if the module is found',
   async (t) => {
-    mock({
+    mockMemFs({
       '/repo/package.json': JSON.stringify({
         name: 'repo',
         dependencies: {
@@ -376,7 +376,7 @@ test.serial(
 test.serial(
   'resolveSpecifierPath: return null if a module is not in the repo',
   async (t) => {
-    mock({
+    mockMemFs({
       '/repo/package.json': JSON.stringify({
         name: 'repo',
         dependencies: {
@@ -392,8 +392,8 @@ test.serial(
 test.serial(
   'loadTransformOptions: describes imports from an explicit path',
   async (t) => {
-    mock({
-      '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+    mockMemFs({
+      '/modules/': loadPath(path.resolve('test/__modules__/')),
     });
     const opts = {
       // This should find the times-two module in test/__modules__
@@ -416,8 +416,8 @@ test.serial(
 test.serial(
   'loadTransformOptions: describes imports from an explicit path and version specifier',
   async (t) => {
-    mock({
-      '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+    mockMemFs({
+      '/modules/': loadPath(path.resolve('test/__modules__/')),
     });
     const opts = {
       adaptors: ['times-two@1.0.0=/modules/times-two'],
@@ -439,8 +439,8 @@ test.serial(
 test.serial(
   'loadTransformOptions: describes imports from a relative path in the repo',
   async (t) => {
-    mock({
-      '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
+    mockMemFs({
+      '/repo/': loadPath(path.resolve('test/__repo__/')),
     });
     const opts = {
       adaptors: ['times-two'],

@@ -1,6 +1,6 @@
-import mock from 'mock-fs';
 import { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
+import { mockFs } from './helpers/memfs';
 
 const gen = (uuid: any, _alias: string, id: string, _domain: string) =>
   jsonToYaml({
@@ -14,7 +14,7 @@ const gen = (uuid: any, _alias: string, id: string, _domain: string) =>
   });
 
 // TODO need a test on the legacy and new yaml formats here
-mock({
+mockFs({
   '/ws/openfn.yaml': jsonToYaml({
     project: {
       id: 'project-1',

@@ -1,19 +1,19 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import { createMockLogger } from '@openfn/logger';
 import { getModulePath } from '../../src/modules/repo';
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  mock.restore();
+  restoreFs();
   logger._reset();
 });
 
 const repoPath = '/tmp/repo/';
 
 const mockPkg = (dependencies: object) => {
-  mock({
+  mockFs({
     [`${repoPath}/package.json`]: JSON.stringify({
       name: 'test',
       private: true,

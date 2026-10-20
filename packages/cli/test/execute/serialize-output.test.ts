@@ -1,5 +1,5 @@
 import test from 'ava';
-import mockfs from 'mock-fs';
+import { mockFs } from '../helpers/memfs';
 import { readFile } from 'node:fs/promises';
 
 import serializeOutput from '../../src/execute/serialize-output';
@@ -118,7 +118,7 @@ test('exclude configuration', async (t) => {
 });
 
 test('output to file', async (t) => {
-  mockfs({
+  mockFs({
     'out.json': '',
   });
 

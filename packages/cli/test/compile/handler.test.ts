@@ -1,10 +1,10 @@
 import test from 'ava';
+import { mockFs, resetMockFs } from '../util';
 import fs from 'node:fs/promises';
 import { createMockLogger } from '@openfn/logger';
 
 import compileHandler from '../../src/compile/handler';
 import { CompileOptions } from '../../src/compile/command';
-import { mockFs, resetMockFs } from '../util';
 
 const logger = createMockLogger();
 

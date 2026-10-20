@@ -1,6 +1,6 @@
 import test from 'ava';
 import fs from 'node:fs';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '../helpers/memfs';
 
 import Project, { yamlToJson } from '@openfn/project';
 
@@ -20,7 +20,7 @@ import {
 
 test.afterEach(() => {
   try {
-    mock.restore();
+    restoreFs();
   } catch {}
 });
 
@@ -151,7 +151,7 @@ test('byCredentialsFile renames a credential per its alias entry', (t) => {
 });
 
 test('loadCredentialsMapFromFile: an entry with no alias just marks inclusion', (t) => {
-  mock({
+  mockFs({
     '/ws/credentials.yaml': `joe@openfn.org|a:
   user: someuser
 `,
@@ -162,7 +162,7 @@ test('loadCredentialsMapFromFile: an entry with no alias just marks inclusion', 
 });
 
 test('loadCredentialsMapFromFile: an entry with an alias carries it through', (t) => {
-  mock({
+  mockFs({
     '/ws/credentials.yaml': `joe@openfn.org|a:
   user: someuser
   alias: other@openfn.org|renamed
@@ -176,7 +176,7 @@ test('loadCredentialsMapFromFile: an entry with an alias carries it through', (t
 });
 
 test('getCredentialsVisitor: a credentials file path syncs only what it lists', (t) => {
-  mock({
+  mockFs({
     '/ws/credentials.yaml': `joe@openfn.org|a:
   user: someuser
 `,
@@ -213,7 +213,7 @@ test('getCredentialsVisitor: throws when the --credentials map names a credentia
 });
 
 test('getCredentialsVisitor: throws when a credentials.yaml file names a credential not in the project', (t) => {
-  mock({
+  mockFs({
     '/ws/credentials.yaml': `joe@openfn.org|not-a-real-credential:
   user: someuser
 `,
@@ -333,7 +333,7 @@ test('findCredentialIds: ignores duplicate references', (t) => {
 });
 
 test('createProjectCredentials: creates credential yaml file', (t) => {
-  mock({ '/ws': {} });
+  mockFs({ '/ws': {} });
 
   const project = new Project(
     {
@@ -353,7 +353,7 @@ test('createProjectCredentials: creates credential yaml file', (t) => {
 });
 
 test('createProjectCredentials: preserves existing credentials and adds missing ones', (t) => {
-  mock({
+  mockFs({
     '/ws': {},
     '/ws/credentials.yaml': `existing:
   password: secret

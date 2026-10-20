@@ -1,4 +1,5 @@
 import test from 'ava';
+import { mockFs, restoreFs } from '../helpers/memfs';
 import {
   extractCheckout,
   extractConfig,
@@ -7,11 +8,10 @@ import {
   findWorkspaceFile,
   loadWorkspaceFile,
 } from '../../src/util/config';
-import mock from 'mock-fs';
 import Project from '../../src';
 
 test.afterEach(() => {
-  mock.restore();
+  restoreFs();
 });
 
 test('load config as yaml', (t) => {
@@ -146,7 +146,7 @@ test('legacy: load empty config', (t) => {
 });
 
 test('find openfn.yaml', (t) => {
-  mock({ '/tmp/openfn.yaml': 'x: 1' });
+  mockFs({ '/tmp/openfn.yaml': 'x: 1' });
 
   const result = findWorkspaceFile('/tmp');
   t.is(result.type, 'yaml');
@@ -154,7 +154,7 @@ test('find openfn.yaml', (t) => {
 });
 
 test('find openfn.json', (t) => {
-  mock({ '/tmp/openfn.json': '{ "x": 1 }' });
+  mockFs({ '/tmp/openfn.json': '{ "x": 1 }' });
 
   const result = findWorkspaceFile('/tmp');
   t.is(result.type, 'json');
@@ -281,19 +281,19 @@ test('include project name', (t) => {
 test.todo('include parent project name');
 
 test('hasCheckoutMeta: false if there is no workspace at all', (t) => {
-  mock({ '/ws': {} });
+  mockFs({ '/ws': {} });
 
   t.false(hasCheckoutMeta('/ws'));
 });
 
 test('hasCheckoutMeta: false if there is a workspace but no checkout file', (t) => {
-  mock({ '/ws/openfn.yaml': 'credentials: creds.yaml' });
+  mockFs({ '/ws/openfn.yaml': 'credentials: creds.yaml' });
 
   t.false(hasCheckoutMeta('/ws'));
 });
 
 test('hasCheckoutMeta: true if there is a checkout file', (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml': 'credentials: creds.yaml',
     '/ws/.openfn/checkout.yaml': 'id: my-project',
   });
@@ -302,7 +302,7 @@ test('hasCheckoutMeta: true if there is a checkout file', (t) => {
 });
 
 test('hasCheckoutMeta: false if the checkout file is empty', (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml': 'credentials: creds.yaml',
     '/ws/.openfn/checkout.yaml': '',
   });
@@ -311,7 +311,7 @@ test('hasCheckoutMeta: false if the checkout file is empty', (t) => {
 });
 
 test('hasCheckoutMeta: true if there is a legacy project block in openfn.yaml', (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml':
       'project:\n  id: my-project\nworkspace:\n  credentials: creds.yaml',
   });
@@ -320,7 +320,7 @@ test('hasCheckoutMeta: true if there is a legacy project block in openfn.yaml', 
 });
 
 test('hasCheckoutMeta: looks for the checkout file for the given branch', (t) => {
-  mock({
+  mockFs({
     '/ws/openfn.yaml': 'credentials: creds.yaml',
     '/ws/.openfn/branches/dev/checkout.yaml': 'id: my-project',
   });

@@ -1,12 +1,12 @@
 import test from 'ava';
+import { mockFs } from '../helpers/memfs';
 import { createMockLogger } from '@openfn/logger';
 import { handler as checkoutHandler } from '../../src/projects/checkout';
-import mock from 'mock-fs';
 import fs from 'fs';
 import { jsonToYaml, Workspace, yamlToJson } from '@openfn/project';
 
 test.beforeEach(() => {
-  mock({
+  mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
       formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
@@ -401,7 +401,7 @@ test.serial.skip('checkout: switch with alias and domain', async (t) => {
 });
 
 test.serial('respect openfn.yaml settings', async (t) => {
-  mock({
+  mockFs({
     '/ws1/w': {},
     '/ws1/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'w', projects: 'p' },
@@ -548,7 +548,7 @@ uuid: <uuid:staging>
 test.serial(
   'checkout: removes old workflow directory when workflow is renamed on server',
   async (t) => {
-    mock({
+    mockFs({
       '/ws3/workflows/old-workflow': {
         'old-workflow.yaml': jsonToYaml({
           id: 'old-workflow',
@@ -591,7 +591,7 @@ test.serial(
 test.serial(
   'checkout: removes old step file when step is renamed on server',
   async (t) => {
-    mock({
+    mockFs({
       '/ws4/workflows/my-workflow': {
         'my-workflow.yaml': jsonToYaml({
           id: 'my-workflow',
@@ -633,7 +633,7 @@ test.serial(
 );
 
 test.serial('checkout: creates credentials.yaml', async (t) => {
-  mock({
+  mockFs({
     '/ws2/workflows': {},
     '/ws2/openfn.yaml': '',
     '/ws2/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
@@ -684,7 +684,7 @@ test.serial('checkout: creates credentials.yaml', async (t) => {
 });
 
 test.serial('checkout: do not create credentials.yaml', async (t) => {
-  mock({
+  mockFs({
     '/ws2/workflows': {},
     '/ws2/openfn.yaml': '',
     '/ws2/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
@@ -733,7 +733,7 @@ test.serial('checkout: do not create credentials.yaml', async (t) => {
 test.serial(
   'checkout: removes workflow directory when workflow is deleted on server',
   async (t) => {
-    mock({
+    mockFs({
       '/ws5/workflows/workflow-a': {
         'workflow-a.yaml': jsonToYaml({
           id: 'workflow-a',
@@ -779,7 +779,7 @@ test.serial(
 test.serial(
   'checkout: writes fetched collections into resources.yaml',
   async (t) => {
-    mock({
+    mockFs({
       '/ws6/workflows': {},
       '/ws6/openfn.yaml': '',
       '/ws6/.openfn/checkout.yaml': jsonToYaml({ id: 'main-project' }),
@@ -951,7 +951,7 @@ workflows:
 test.serial(
   'Checkout unrelated bar from unrelated project foo without divergence warning',
   async (t) => {
-    mock({
+    mockFs({
       '/tmp/openfn.yaml': '',
       '/tmp/.projects/main@server.yaml': foo,
       '/tmp/.projects/staging@server.yaml': bar,
@@ -999,7 +999,7 @@ test.serial(
 test.serial(
   'Checkout unrelated foo from unrelated project bar without divergence warning',
   async (t) => {
-    mock({
+    mockFs({
       '/tmp/openfn.yaml': '',
       '/tmp/.projects/main@server.yaml': foo,
       '/tmp/.projects/staging@server.yaml': bar,
@@ -1047,7 +1047,7 @@ test.serial(
 test.serial(
   'If the checked out project has diverged from the tracked version, show a divergence warning on checkout',
   async (t) => {
-    mock({
+    mockFs({
       '/tmp/openfn.yaml': '',
       '/tmp/.projects/main@server.yaml': foo,
       '/tmp/.projects/staging@server.yaml': bar,

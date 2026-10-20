@@ -3,10 +3,10 @@
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
+import { mockFs, resetMockFs } from '../util';
 import fs from 'node:fs/promises';
 import { ExecuteOptions } from '../../src/execute/command';
 import handler from '../../src/execute/handler';
-import { mockFs, resetMockFs } from '../util';
 
 const logger = createMockLogger(undefined, { level: 'none' });
 

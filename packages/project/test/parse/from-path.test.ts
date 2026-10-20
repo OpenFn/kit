@@ -1,5 +1,5 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs } from '../helpers/memfs';
 
 import { generateProject } from '../../src';
 import fromPath, { extractAliasFromFilename } from '../../src/parse/from-path';
@@ -10,7 +10,7 @@ const proj = generateProject('my-project', ['a-b'], {
 });
 
 test.serial('should load a v1 state json', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.json': JSON.stringify(
       proj.serialize('state', { format: 'json' })
     ),
@@ -26,7 +26,7 @@ test.serial('should load a v1 state json', async (t) => {
 });
 
 test.serial('should load a v1 state yaml', async (t) => {
-  mock({
+  mockFs({
     // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
@@ -41,7 +41,7 @@ test.serial('should load a v1 state yaml', async (t) => {
 });
 
 test.serial('should load a v2 project yaml', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.yaml': v2.yaml,
   });
   const project = await fromPath('/p1/main@openfn.org.yaml');
@@ -52,7 +52,7 @@ test.serial('should load a v2 project yaml', async (t) => {
 });
 
 test.serial('should load a v2 project json', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.json': JSON.stringify(v2.json),
   });
   const project = await fromPath('/p1/main@openfn.org.json');
@@ -63,7 +63,7 @@ test.serial('should load a v2 project json', async (t) => {
 });
 
 test.serial('should use workspace config', async (t) => {
-  mock({
+  mockFs({
     // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
@@ -95,7 +95,7 @@ test.serial('should use workspace config', async (t) => {
 });
 
 test.serial('should apply a name override to a loaded project', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.yaml': v2.yaml,
   });
   const project = await fromPath('/p1/main@openfn.org.yaml', {
