@@ -39,9 +39,9 @@ We use [`pnpm`](https://pnpm.io/installation), a fast, disk space efficient pack
 
 ## Installing
 
-This repo uses node corepack to ensure pnpm v8 is used
+Install pnpm globally. When run inside this repo, pnpm reads the `packageManager` field in `package.json` and switches itself to the pinned version.
 
-- `$ corepack enable`
+- `$ npm install -g pnpm`
 - `$ pnpm install`
 - `$ pnpm build`
 
