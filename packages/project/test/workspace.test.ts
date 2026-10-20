@@ -1,4 +1,4 @@
-import { jsonToYaml, Workspace } from '../src';
+import Project, { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
 import { mockFs } from './helpers/memfs';
 
@@ -31,6 +31,16 @@ mockFs({
       custom: true,
     },
   }),
+  '/ws/workflows/wf-1/wf-1.yaml': jsonToYaml({
+    id: 'wf-1',
+    steps: [{ id: 'a', expression: 'a.js' }],
+  }),
+  '/ws/workflows/wf-1/a.js': 'fn(s => s)',
+  '/ws/workflows/wf-2/wf-2.yaml': jsonToYaml({
+    id: 'wf-2',
+    steps: [{ id: 'b', expression: 'b.js' }],
+  }),
+  '/ws/workflows/wf-2/b.js': 'fn(s => s)',
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
     name: 'Project 1',
     id: '<uuid-1>',
@@ -238,6 +248,11 @@ mockFs({
   '/ws4/.projects/main@somewhere.com.yaml': gen(112, 'main', 'proj-1', 'somewhere.com'),
   // prettier-ignore
   '/ws4/.projects/staging@openfn.org.yaml': gen(113, 'staging', 'proj-1-staging', 'openfn.org'),
+});
+
+test('load the checked out project from the filesystem', async (t) => {
+  const project = await Project.from('fs', { root: '/ws' });
+  t.is(project.workflows.length, 2);
 });
 
 test('workspace-path: valid workspace path', (t) => {
