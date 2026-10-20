@@ -502,7 +502,12 @@ test.serial(
     });
 
     await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+    logger._reset();
     await deploy(options, logger);
+
+    // the summary shows an edit to the existing workflow
+    t.truthy(logger._find('always', /My Workflow \(renamed\): changed/));
+    t.falsy(logger._find('always', /: (added|deleted)/));
 
     // the workflow was updated, not deleted
     const workflows = Object.values(
@@ -1082,8 +1087,8 @@ test('printRichDiff: should report mix of added, changed, and removed workflows'
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2Remote = generateWorkflow('@id b trigger-y');
   const wf2Local = generateWorkflow('@id b trigger-different');
-  const wf3 = generateWorkflow('@id c trigger-z');
-  const wf4 = generateWorkflow('@id d trigger-w');
+  const wf3 = generateWorkflow('@id c @name wf-c trigger-z');
+  const wf4 = generateWorkflow('@id d @name wf-d trigger-w');
 
   const local = new Project({
     name: 'local',

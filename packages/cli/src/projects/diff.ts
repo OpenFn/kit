@@ -131,7 +131,7 @@ export const printRichDiff = (
 
   if (changed.length > 0) {
     for (const diff of changed) {
-      const localWf = local.getWorkflow(diff.id);
+      const localWf = local.getWorkflow(diff.bId ?? diff.id);
       const remoteWf = remote.getWorkflow(diff.id);
       const label = localWf?.name || diff.id;
       logger.always(c.yellow(`${label}: changed`));
