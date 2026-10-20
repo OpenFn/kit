@@ -13,6 +13,9 @@ export const initSentry = () => {
   Sentry.init({
     dsn: 'https://296274784378f87245c369278a62b29a@o55451.ingest.us.sentry.io/4508936084848640',
     transport: sentryTransport,
+    // Dedupe drops an event identical to the previous one, so a test that
+    // repeats an earlier test's error would never see its report
+    integrations: (defaults) => defaults.filter((i) => i.name !== 'Dedupe'),
   });
   return testkit;
 };

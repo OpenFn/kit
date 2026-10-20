@@ -29,7 +29,7 @@
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
-    "@sentry/node": "^10.44.0",
+    "@sentry/node": "^11.8.0",
     "fast-safe-stringify": "^2.1.1",
     "figures": "^5.0.0",
     "human-id": "^4.1.3",
