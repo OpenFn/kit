@@ -3,7 +3,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 COPY . /app
 WORKDIR /app
-RUN npm install -g "$(node -p "require('./package.json').packageManager.split('+')[0]")"
+RUN npm install -g pnpm
 
 # TODO: use prod optimized build? ----------------------------------------------
 # FROM base AS build
