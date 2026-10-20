@@ -9,6 +9,22 @@ commands:
           name: install CLI globally
           command: sudo npm install -g file:dist/openfn-cli.tgz
 
+  check_node_version:
+    parameters:
+      node_version:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Check Node versions match .tool-versions
+          command: scripts/check-node-version.sh << parameters.node_version >>
+
+  install_pnpm:
+    steps:
+      - run:
+          name: Install pnpm
+          command: sudo npm install -g "$(node -p "require('./package.json').packageManager.split('+')[0]")"
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -16,22 +32,24 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - check_node_version
+      - install_pnpm
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
           # https://circleci.com/docs/2.0/configuration-reference/?section=reference#save_cache
           keys:
-            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}-{{checksum ".tool-versions"}}
       - run:
           name: Install
           command: pnpm install --frozen-lockfile
       - save_cache:
-          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}-{{checksum ".tool-versions"}}
           paths:
             - node_modules
       - persist_to_workspace:
@@ -41,11 +59,13 @@ jobs:
 
   build:
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version
+      - install_pnpm
       - run:
           name: Build packages
           command: pnpm build
@@ -56,45 +76,53 @@ jobs:
 
   unit_test:
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     parallelism: 1
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version
+      - install_pnpm
       - run:
           name: Run Tests
           command: pnpm test
 
   format:
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version
+      - install_pnpm
       - run:
           name: Check formatting
           command: pnpm test:format
 
   type_check:
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version
+      - install_pnpm
       - run:
           name: Type check
           command: pnpm test:types
 
   build_openfnx:
     docker:
-      - image: cimg/node:24.18
+      - image: cimg/node:26.12.0
     resource_class: medium
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version
+      - install_pnpm
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
@@ -114,6 +142,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
+      - check_node_version:
+          node_version: << parameters.node_version >>
+      - install_pnpm
       - install_cli_global
       - run:
           name: Check install
@@ -121,6 +152,29 @@ jobs:
       - run:
           name: Run integration test suite
           command: pnpm test:integration
+
+  worker_image:
+    docker:
+      - image: cimg/node:26.12.0
+    resource_class: medium
+    steps:
+      - checkout
+      - check_node_version
+      - setup_remote_docker
+      - run:
+          name: Build worker image
+          command: docker build -t ws-worker-ci .
+      - run:
+          name: Check Node in the image matches .tool-versions
+          command: docker run --rm ws-worker-ci /app/scripts/check-node-version.sh
+      - run:
+          name: Install and load motherduck as user node
+          command: |
+            docker run --rm --user node ws-worker-ci sh -c '
+              mkdir -p /tmp/repo && cd /tmp/repo &&
+              npm install --no-audit --no-fund --no-package-lock --ignore-scripts @openfn/language-motherduck@latest &&
+              node -e "require(\"@openfn/language-motherduck\")"
+            '
 
   # This ensures that we can run a v1 CLI deploy in node 18,
   # which is important for GH sync
@@ -165,9 +219,14 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ['22.20', '24.18.1', '26.5.1']
+              node_version: ['24.22.0', '26.12.0']
           requires:
             - build_openfnx
       - legacy_test:
           requires:
             - build_openfnx
+      - worker_image:
+          filters:
+            branches:
+              ignore:
+                - main
