@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs';
 import { createMockLogger } from '@openfn/logger';
 import Project, { Workspace, yamlToJson } from '@openfn/project';
@@ -9,10 +9,11 @@ import ensureCheckout, {
   getDefaultProject,
 } from '../../src/projects/ensure-checkout';
 
+test.afterEach(restoreFs);
+
 const logger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
-  restoreFs();
   logger._reset();
 });
 
@@ -258,29 +259,32 @@ test.serial('still prompts if interactive, even if not required', async (t) => {
 const projects = (aliases: string[]) =>
   aliases.map((alias) => ({ alias })) as unknown as Project[];
 
-test('getDefaultProject: prefers the alias matching the branch', (t) => {
+test.serial('getDefaultProject: prefers the alias matching the branch', (t) => {
   const result = getDefaultProject(projects(['main', 'staging']), 'staging');
   t.is(result.alias, 'staging');
 });
 
-test('getDefaultProject: defaults to main if there is no branch', (t) => {
-  t.is(getDefaultProject(projects(['a', 'main', 'b'])).alias, 'main');
-});
+test.serial(
+  'getDefaultProject: defaults to main if there is no branch',
+  (t) => {
+    t.is(getDefaultProject(projects(['a', 'main', 'b'])).alias, 'main');
+  }
+);
 
-test('getDefaultProject: falls back to the first project', (t) => {
+test.serial('getDefaultProject: falls back to the first project', (t) => {
   t.is(getDefaultProject(projects(['a', 'b']), 'feature').alias, 'a');
 });
 
 const described = (props: object) => describeProject(props as Project);
 
-test('describeProject: alias with id and uuid', (t) => {
+test.serial('describeProject: alias with id and uuid', (t) => {
   t.is(
     described({ alias: 'staging', id: 'my-project', openfn: { uuid: 'abcd' } }),
     'staging (my-project | abcd)'
   );
 });
 
-test('describeProject: copes with a missing uuid or id', (t) => {
+test.serial('describeProject: copes with a missing uuid or id', (t) => {
   t.is(
     described({ alias: 'staging', id: 'my-project' }),
     'staging (my-project)'
@@ -291,10 +295,13 @@ test('describeProject: copes with a missing uuid or id', (t) => {
   );
 });
 
-test('describeProject: just the alias if there is no id or uuid', (t) => {
-  t.is(described({ alias: 'staging' }), 'staging');
-});
+test.serial(
+  'describeProject: just the alias if there is no id or uuid',
+  (t) => {
+    t.is(described({ alias: 'staging' }), 'staging');
+  }
+);
 
-test('describeProject: copes with a missing alias', (t) => {
+test.serial('describeProject: copes with a missing alias', (t) => {
   t.is(described({ id: 'my-project' }), '(no alias) (my-project)');
 });

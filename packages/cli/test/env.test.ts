@@ -1,17 +1,18 @@
 import test from 'ava';
-import { mockFs, restoreFs } from './helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 
 import load, { report } from '../src/env';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
   logger._reset();
-  restoreFs();
 });
 
-test('should load and return values from .env', (t) => {
+test.serial('should load and return values from .env', (t) => {
   mockFs({
     '/.env': `
       FOO: BAR
@@ -24,7 +25,7 @@ test('should load and return values from .env', (t) => {
   });
 });
 
-test('should report values loaded from .env', (t) => {
+test.serial('should report values loaded from .env', (t) => {
   mockFs({
     '/.env': `
       FOO: BAR
@@ -45,14 +46,14 @@ test('should report values loaded from .env', (t) => {
   t.truthy(c);
 });
 
-test('should return null if no env is found', (t) => {
+test.serial('should return null if no env is found', (t) => {
   mockFs({});
 
   const env = load('/.env');
   t.is(env, null);
 });
 
-test('should log if no env is found', (t) => {
+test.serial('should log if no env is found', (t) => {
   mockFs({});
 
   load('/.env');
@@ -63,7 +64,7 @@ test('should log if no env is found', (t) => {
   t.truthy(a);
 });
 
-test('should use $DOT_ENV_OVERRIDES found', (t) => {
+test.serial('should use $DOT_ENV_OVERRIDES found', (t) => {
   mockFs({});
 
   // don't load .env

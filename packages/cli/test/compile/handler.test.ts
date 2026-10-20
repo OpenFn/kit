@@ -1,18 +1,18 @@
 import test from 'ava';
-import { mockFs, resetMockFs } from '../util';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs/promises';
 import { createMockLogger } from '@openfn/logger';
 
 import compileHandler from '../../src/compile/handler';
 import { CompileOptions } from '../../src/compile/command';
 
+test.afterEach(restoreFs);
+
 const logger = createMockLogger();
 
 test.afterEach(() => {
   logger._reset();
 });
-
-test.after(resetMockFs);
 
 test.serial('compile an expression file to stdout', async (t) => {
   mockFs({

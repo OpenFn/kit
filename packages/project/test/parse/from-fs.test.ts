@@ -1,12 +1,13 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { parseProject } from '../../src/parse/from-fs';
 import { jsonToYaml, yamlToJson } from '../../src/util/yaml';
 import { buildConfig } from '../../src/util/config';
 
+test.afterEach(restoreFs);
+
 test.afterEach(() => {
   files = {};
-  restoreFs();
 });
 
 let files: Record<string, string> = {};
@@ -20,6 +21,7 @@ function mockFile(path: string, content: string | object) {
 
   // @ts-ignore
   files[path] = content;
+  restoreFs();
   mockFs(files);
 }
 

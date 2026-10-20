@@ -1,6 +1,6 @@
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
-import { loadPath, mockFs, restoreFs } from './helpers/memfs';
+import { loadPath, mockFs, restoreFs } from '@openfn/test-helpers';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -11,6 +11,8 @@ import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
 
+test.afterEach(restoreFs);
+
 // These CLI tests take quite a while to run, mostly I think
 // because of all the FS mocking
 // To make them more robust in CI, all the tests in this file need
@@ -20,7 +22,6 @@ const TIMEOUT = 1000 * 30;
 const logger = createMockLogger('', { level: 'debug' });
 
 test.afterEach(() => {
-  restoreFs();
   logger._reset();
 });
 
@@ -69,7 +70,6 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       '/modules/': loadPath(path.resolve('test/__modules__/')),
       '/repo/': loadPath(path.resolve('test/__repo__/')),
       '/monorepo/': loadPath(path.resolve('test/__monorepo__/')),
-      //'node_modules': loadPath(path.resolve('node_modules/')),
       [pkgPath]: loadPath(pkgPath),
       ...(options.mockfs ?? {}),
     });

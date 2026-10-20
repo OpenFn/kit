@@ -1,6 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 
 import mapAdaptorsToMonorepo, {
@@ -8,6 +8,8 @@ import mapAdaptorsToMonorepo, {
   updatePath,
 } from '../../src/util/map-adaptors-to-monorepo';
 import { ExecutionPlan } from '@openfn/runtime';
+
+test.afterEach(restoreFs);
 
 // Paths are resolved to absolute in the option's ensure block, so the util
 // always receives absolute roots
@@ -18,7 +20,6 @@ const logger = createMockLogger();
 
 test.afterEach(() => {
   logger._reset();
-  restoreFs();
 });
 
 test.serial('updatePath: common', (t) => {
@@ -55,7 +56,7 @@ test.serial('updatePath: common@1.2.3 (with warning)', (t) => {
   t.regex(message as string, /ignoring version specifier/i);
 });
 
-test('updatePath: common=x/y/z', (t) => {
+test.serial('updatePath: common=x/y/z', (t) => {
   const result = updatePath('common=x/y/z', [REPO_PATH], logger);
 
   t.is(result, `common=x/y/z`);

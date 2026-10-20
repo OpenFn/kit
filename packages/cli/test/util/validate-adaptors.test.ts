@@ -1,13 +1,11 @@
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
-import { restoreFs } from '../helpers/memfs';
 import validateAdaptors from '../../src/util/validate-adaptors';
 
 const logger = createMockLogger('', { level: 'default' });
 
 test.afterEach(() => {
   logger._reset();
-  restoreFs();
 });
 
 test.serial('should warn if expression passed with no adaptor', async (t) => {

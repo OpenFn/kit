@@ -1,9 +1,11 @@
 import test from 'ava';
-import { mockFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 
 import { generateProject } from '../../src';
 import fromPath, { extractAliasFromFilename } from '../../src/parse/from-path';
 import * as v2 from '../fixtures/sample-v2-project';
+
+test.afterEach(restoreFs);
 
 const proj = generateProject('my-project', ['a-b'], {
   openfnUuid: true,
@@ -105,27 +107,36 @@ test.serial('should apply a name override to a loaded project', async (t) => {
   t.is(project.name, 'My Duplicate');
 });
 
-test('extractAliasFromFilename: should extract alias from alias@domain.yaml format', (t) => {
-  const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
-  t.is(alias, 'main');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from alias@domain.yaml format',
+  (t) => {
+    const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
+    t.is(alias, 'main');
+  }
+);
 
-test('extractAliasFromFilename: should extract alias from alias@domain.json format', (t) => {
-  const alias = extractAliasFromFilename('staging@localhost.json');
-  t.is(alias, 'staging');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from alias@domain.json format',
+  (t) => {
+    const alias = extractAliasFromFilename('staging@localhost.json');
+    t.is(alias, 'staging');
+  }
+);
 
-test('extractAliasFromFilename: should extract alias from simple filename', (t) => {
-  const alias = extractAliasFromFilename('production.yaml');
-  t.is(alias, 'production');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from simple filename',
+  (t) => {
+    const alias = extractAliasFromFilename('production.yaml');
+    t.is(alias, 'production');
+  }
+);
 
-test('extractAliasFromFilename: should handle full paths', (t) => {
+test.serial('extractAliasFromFilename: should handle full paths', (t) => {
   const alias = extractAliasFromFilename('/path/to/dev@app.openfn.org.yaml');
   t.is(alias, 'dev');
 });
 
-test('extractAliasFromFilename: should handle complex aliases', (t) => {
+test.serial('extractAliasFromFilename: should handle complex aliases', (t) => {
   const alias = extractAliasFromFilename(
     'my-project-staging@app.openfn.org.yaml'
   );

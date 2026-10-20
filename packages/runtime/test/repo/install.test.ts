@@ -3,15 +3,16 @@
  * Testing with actual installs is left as an exercise for integration testing
  */
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 import { install, loadRepoPkg } from '../../src';
 import exec from '../../src/util/exec';
 
+test.afterEach(restoreFs);
+
 const mockLogger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
-  restoreFs();
   mockLogger._reset();
 });
 
@@ -139,6 +140,7 @@ test.serial('install with the correct alias', async (t) => {
 
 test.serial('do nothing if the package is already installed', async (t) => {
   const exec = mockExec();
+  restoreFs();
   mockFs({
     '/tmp/repo/package.json': JSON.stringify({
       name: 'test',

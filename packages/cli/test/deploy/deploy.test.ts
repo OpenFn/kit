@@ -1,7 +1,7 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { Logger, createMockLogger } from '@openfn/logger';
 import deployHandler, {
   DeployFn,
@@ -12,13 +12,15 @@ import { yamlToJson } from '@openfn/project';
 import { DeployError, type DeployConfig } from '@openfn/deploy';
 import { DeployOptions } from '../../src/deploy/command';
 
+test.afterEach(restoreFs);
+
 const logger = createMockLogger();
 
 const { OPENFN_API_KEY, OPENFN_ENDPOINT, ...originalEnv } = process.env;
 
 test.beforeEach(() => {
-  restoreFs();
   logger._reset();
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
@@ -96,6 +98,7 @@ test.serial(
   'redirects to beta handler when openfn.yaml exists in cwd',
   async (t) => {
     t.plan(3);
+    restoreFs();
     mockFs({
       ['./config.json']: `{"apiKey": "123"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
@@ -112,6 +115,7 @@ test.serial(
 
 test.serial('does not redirect when PREFER_LEGACY_SYNC is set', async (t) => {
   t.plan(1);
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "123", "endpoint": "https://api.example.com"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
@@ -129,6 +133,7 @@ test.serial('does not redirect when PREFER_LEGACY_SYNC is set', async (t) => {
 
 test.serial('CLI endpoint preferred over openfn.yaml endpoint', async (t) => {
   t.plan(1);
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
@@ -148,6 +153,7 @@ test.serial('CLI endpoint preferred over openfn.yaml endpoint', async (t) => {
 test.serial(
   'openfn.yaml endpoint preferred over config.json endpoint',
   async (t) => {
+    restoreFs();
     mockFs({
       ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
@@ -164,6 +170,7 @@ test.serial(
   'checkout file endpoint preferred over config.json endpoint',
   async (t) => {
     t.plan(1);
+    restoreFs();
     mockFs({
       ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
       ['./project.yaml']: `{"apiKey": "123"}`,
@@ -179,6 +186,7 @@ test.serial(
 
 test.serial('loads the checkout file for the current branch', async (t) => {
   t.plan(1);
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "123", "endpoint": "https://from-config.org"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
@@ -200,6 +208,7 @@ test.serial('loads the checkout file for the current branch', async (t) => {
 
 test.serial('warns if no endpoint can be found when redirecting', async (t) => {
   t.plan(1);
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "123"}`,
     ['./project.yaml']: `{"apiKey": "123"}`,
@@ -212,6 +221,7 @@ test.serial('warns if no endpoint can be found when redirecting', async (t) => {
 });
 
 test.serial('CLI apiKey preferred over config.json apiKey', async (t) => {
+  restoreFs();
   mockFs({
     ['./config.json']: `{"apiKey": "from-config"}`,
     ['./project.yaml']: `{"apiKey": "from-config"}`,
@@ -290,12 +300,12 @@ workflows:
         configuration: super@openfn.org|http1
 `;
 
-test('maybeConvertV2spec: returns v1 yaml unchanged', async (t) => {
+test.serial('maybeConvertV2spec: returns v1 yaml unchanged', async (t) => {
   const result = await maybeConvertV2spec(v1Yaml);
   t.is(result, v1Yaml);
 });
 
-test('maybeConvertV2spec: converts v2 to v1', async (t) => {
+test.serial('maybeConvertV2spec: converts v2 to v1', async (t) => {
   const result = await maybeConvertV2spec(v2Yaml);
   const json = yamlToJson(result) as any;
 
@@ -319,7 +329,7 @@ test('maybeConvertV2spec: converts v2 to v1', async (t) => {
   t.falsy(json.schema_version);
 });
 
-test('maybeConvertV2spec: converts with credentials', async (t) => {
+test.serial('maybeConvertV2spec: converts with credentials', async (t) => {
   const result = await maybeConvertV2spec(v2Yaml);
   const json = yamlToJson(result) as any;
 
@@ -333,26 +343,31 @@ test('maybeConvertV2spec: converts with credentials', async (t) => {
   );
 });
 
-test('maybeConvertV2spec: converted edges use key references, not UUIDs', async (t) => {
-  const result = await maybeConvertV2spec(v2Yaml);
-  const json = yamlToJson(result) as any;
+test.serial(
+  'maybeConvertV2spec: converted edges use key references, not UUIDs',
+  async (t) => {
+    const result = await maybeConvertV2spec(v2Yaml);
+    const json = yamlToJson(result) as any;
 
-  const workflow = Object.values(json.workflows)[0] as any;
-  const edge = Object.values(workflow.edges)[0] as any;
+    const workflow = Object.values(json.workflows)[0] as any;
+    const edge = Object.values(workflow.edges)[0] as any;
 
-  // edge must use spec format (key references) so mergeSpecIntoState can resolve them
-  t.truthy(edge.source_trigger);
-  t.truthy(edge.target_job);
-  t.falsy(edge.source_trigger_id);
-  t.falsy(edge.target_job_id);
+    // edge must use spec format (key references) so mergeSpecIntoState can resolve them
+    t.truthy(edge.source_trigger);
+    t.truthy(edge.target_job);
+    t.falsy(edge.source_trigger_id);
+    t.falsy(edge.target_job_id);
 
-  // source_trigger must match a trigger key; target_job must match a job key
-  t.truthy(workflow.triggers[edge.source_trigger]);
-  t.truthy(workflow.jobs[edge.target_job]);
-});
+    // source_trigger must match a trigger key; target_job must match a job key
+    t.truthy(workflow.triggers[edge.source_trigger]);
+    t.truthy(workflow.jobs[edge.target_job]);
+  }
+);
 
-test('maybeConvertV2spec: converts legacy v2 (cli.version: 2) to v1', async (t) => {
-  const legacyV2Yaml = `id: my-project
+test.serial(
+  'maybeConvertV2spec: converts legacy v2 (cli.version: 2) to v1',
+  async (t) => {
+    const legacyV2Yaml = `id: my-project
 name: My Project
 cli:
   version: 2
@@ -365,9 +380,10 @@ workflows:
         type: webhook
         enabled: true
 `;
-  const result = await maybeConvertV2spec(legacyV2Yaml);
-  const json = yamlToJson(result) as any;
+    const result = await maybeConvertV2spec(legacyV2Yaml);
+    const json = yamlToJson(result) as any;
 
-  t.is(typeof json.workflows, 'object');
-  t.false(Array.isArray(json.workflows));
-});
+    t.is(typeof json.workflows, 'object');
+    t.false(Array.isArray(json.workflows));
+  }
+);

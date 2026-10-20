@@ -1,21 +1,7 @@
 /*
  * test utils
  */
-import path from 'node:path';
-import { loadPath, mockFs as mockMemFs, restoreFs } from './helpers/memfs';
-
 import type { ExecutionPlan, Job, StepEdge } from '@openfn/runtime';
-
-export const mockFs = (files: Record<string, string>) => {
-  mockMemFs({
-    '/repo/': loadPath(path.resolve('test/__repo__/')),
-    ...files,
-  });
-};
-
-export const resetMockFs = () => {
-  restoreFs();
-};
 
 type CreateWorkflowOptions = {
   id?: string;

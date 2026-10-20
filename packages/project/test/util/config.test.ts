@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import {
   extractCheckout,
   extractConfig,
@@ -10,11 +10,9 @@ import {
 } from '../../src/util/config';
 import Project from '../../src';
 
-test.afterEach(() => {
-  restoreFs();
-});
+test.afterEach(restoreFs);
 
-test('load config as yaml', (t) => {
+test.serial('load config as yaml', (t) => {
   const yaml = `
 workspace:
   dirs:
@@ -65,7 +63,7 @@ project:
 test.todo('load config as json');
 
 // Note that the legacy format is the old 0.6 version of openfn.yaml
-test('legacy: load config as yaml', (t) => {
+test.serial('legacy: load config as yaml', (t) => {
   const yaml = `
 name: joe-sandbox-testing
 workflowRoot: workflows
@@ -100,7 +98,7 @@ project:
   });
 });
 
-test('legacy: load config as json', (t) => {
+test.serial('legacy: load config as json', (t) => {
   const json = JSON.stringify({
     name: 'joe-sandbox-testing',
     workflowRoot: 'workflows',
@@ -137,7 +135,7 @@ test('legacy: load config as json', (t) => {
   });
 });
 
-test('legacy: load empty config', (t) => {
+test.serial('legacy: load empty config', (t) => {
   const yaml = ``;
   const result = loadWorkspaceFile(yaml);
 
@@ -145,7 +143,7 @@ test('legacy: load empty config', (t) => {
   t.deepEqual(result.project, {});
 });
 
-test('find openfn.yaml', (t) => {
+test.serial('find openfn.yaml', (t) => {
   mockFs({ '/tmp/openfn.yaml': 'x: 1' });
 
   const result = findWorkspaceFile('/tmp');
@@ -153,7 +151,7 @@ test('find openfn.yaml', (t) => {
   t.is(result.content, 'x: 1');
 });
 
-test('find openfn.json', (t) => {
+test.serial('find openfn.json', (t) => {
   mockFs({ '/tmp/openfn.json': '{ "x": 1 }' });
 
   const result = findWorkspaceFile('/tmp');
@@ -161,7 +159,7 @@ test('find openfn.json', (t) => {
   t.deepEqual(result.content, { x: 1 });
 });
 
-test('generate openfn.yaml (workspace config only)', (t) => {
+test.serial('generate openfn.yaml (workspace config only)', (t) => {
   const proj = new Project(
     {
       id: 'my-project',
@@ -196,7 +194,7 @@ formats:
   );
 });
 
-test('generate openfn.yaml does not include collections', (t) => {
+test.serial('generate openfn.yaml does not include collections', (t) => {
   const proj = new Project({
     id: 'my-project',
     collections: [{ uuid: 'remote-uuid', name: 'my-collection' }],
@@ -205,7 +203,7 @@ test('generate openfn.yaml does not include collections', (t) => {
   t.false(result.content.includes('collections'));
 });
 
-test('generate checkout file with forked_from', (t) => {
+test.serial('generate checkout file with forked_from', (t) => {
   const proj = new Project({
     id: 'my-project',
     name: 'My Project',
@@ -229,7 +227,7 @@ uuid: 1234
   );
 });
 
-test('getCheckoutPath: default and per-branch', (t) => {
+test.serial('getCheckoutPath: default and per-branch', (t) => {
   t.is(getCheckoutPath(), '.openfn/checkout.yaml');
   t.is(getCheckoutPath(false), '.openfn/checkout.yaml');
   t.is(getCheckoutPath('dev'), '.openfn/branches/dev/checkout.yaml');
@@ -239,7 +237,7 @@ test('getCheckoutPath: default and per-branch', (t) => {
   );
 });
 
-test("checkout file excludes forked_from if it's not set", (t) => {
+test.serial("checkout file excludes forked_from if it's not set", (t) => {
   const proj = new Project(
     {
       id: 'my-project',
@@ -269,7 +267,7 @@ uuid: 1234
 
 test.todo('generate openfn.json');
 
-test('include project name', (t) => {
+test.serial('include project name', (t) => {
   const proj = new Project({
     id: 'my-project',
     name: 'My Project',
@@ -280,19 +278,22 @@ test('include project name', (t) => {
 
 test.todo('include parent project name');
 
-test('hasCheckoutMeta: false if there is no workspace at all', (t) => {
+test.serial('hasCheckoutMeta: false if there is no workspace at all', (t) => {
   mockFs({ '/ws': {} });
 
   t.false(hasCheckoutMeta('/ws'));
 });
 
-test('hasCheckoutMeta: false if there is a workspace but no checkout file', (t) => {
-  mockFs({ '/ws/openfn.yaml': 'credentials: creds.yaml' });
+test.serial(
+  'hasCheckoutMeta: false if there is a workspace but no checkout file',
+  (t) => {
+    mockFs({ '/ws/openfn.yaml': 'credentials: creds.yaml' });
 
-  t.false(hasCheckoutMeta('/ws'));
-});
+    t.false(hasCheckoutMeta('/ws'));
+  }
+);
 
-test('hasCheckoutMeta: true if there is a checkout file', (t) => {
+test.serial('hasCheckoutMeta: true if there is a checkout file', (t) => {
   mockFs({
     '/ws/openfn.yaml': 'credentials: creds.yaml',
     '/ws/.openfn/checkout.yaml': 'id: my-project',
@@ -301,7 +302,7 @@ test('hasCheckoutMeta: true if there is a checkout file', (t) => {
   t.true(hasCheckoutMeta('/ws'));
 });
 
-test('hasCheckoutMeta: false if the checkout file is empty', (t) => {
+test.serial('hasCheckoutMeta: false if the checkout file is empty', (t) => {
   mockFs({
     '/ws/openfn.yaml': 'credentials: creds.yaml',
     '/ws/.openfn/checkout.yaml': '',
@@ -310,23 +311,29 @@ test('hasCheckoutMeta: false if the checkout file is empty', (t) => {
   t.false(hasCheckoutMeta('/ws'));
 });
 
-test('hasCheckoutMeta: true if there is a legacy project block in openfn.yaml', (t) => {
-  mockFs({
-    '/ws/openfn.yaml':
-      'project:\n  id: my-project\nworkspace:\n  credentials: creds.yaml',
-  });
+test.serial(
+  'hasCheckoutMeta: true if there is a legacy project block in openfn.yaml',
+  (t) => {
+    mockFs({
+      '/ws/openfn.yaml':
+        'project:\n  id: my-project\nworkspace:\n  credentials: creds.yaml',
+    });
 
-  t.true(hasCheckoutMeta('/ws'));
-});
+    t.true(hasCheckoutMeta('/ws'));
+  }
+);
 
-test('hasCheckoutMeta: looks for the checkout file for the given branch', (t) => {
-  mockFs({
-    '/ws/openfn.yaml': 'credentials: creds.yaml',
-    '/ws/.openfn/branches/dev/checkout.yaml': 'id: my-project',
-  });
+test.serial(
+  'hasCheckoutMeta: looks for the checkout file for the given branch',
+  (t) => {
+    mockFs({
+      '/ws/openfn.yaml': 'credentials: creds.yaml',
+      '/ws/.openfn/branches/dev/checkout.yaml': 'id: my-project',
+    });
 
-  t.true(hasCheckoutMeta('/ws', 'dev'));
-  // other branches, and no branch, don't have any
-  t.false(hasCheckoutMeta('/ws', 'main'));
-  t.false(hasCheckoutMeta('/ws'));
-});
+    t.true(hasCheckoutMeta('/ws', 'dev'));
+    // other branches, and no branch, don't have any
+    t.false(hasCheckoutMeta('/ws', 'main'));
+    t.false(hasCheckoutMeta('/ws'));
+  }
+);

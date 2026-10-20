@@ -1,16 +1,14 @@
 import test from 'ava';
-import { mockFs, restoreFs } from './helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { parseAndValidate } from '../src/validator';
+
+test.afterEach(restoreFs);
 
 function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
 }
 
-test.after(() => {
-  restoreFs();
-});
-
-test('Workflows must be a map', async (t) => {
+test.serial('Workflows must be a map', async (t) => {
   const doc = `
     name: project-name
     workflows:
@@ -26,7 +24,7 @@ test('Workflows must be a map', async (t) => {
   t.is(err.path, 'workflows');
 });
 
-test('Workflows must have unique ids', async (t) => {
+test.serial('Workflows must have unique ids', async (t) => {
   const doc = `
     name: project-name
     workflows:
@@ -45,7 +43,7 @@ test('Workflows must have unique ids', async (t) => {
   t.is(err.path, 'workflow-one');
 });
 
-test('Jobs must have unique ids within a workflow', async (t) => {
+test.serial('Jobs must have unique ids within a workflow', async (t) => {
   const doc = `
     name: project-name
     workflows:
@@ -64,7 +62,7 @@ test('Jobs must have unique ids within a workflow', async (t) => {
   t.truthy(err);
 });
 
-test('Job ids can duplicate across workflows', async (t) => {
+test.serial('Job ids can duplicate across workflows', async (t) => {
   const doc = `
     name: project-name
     workflows:
@@ -83,7 +81,7 @@ test('Job ids can duplicate across workflows', async (t) => {
   t.is(results.errors.length, 0);
 });
 
-test('Workflow edges are parsed correctly', async (t) => {
+test.serial('Workflow edges are parsed correctly', async (t) => {
   const doc = `
     name: project-name
     workflows:
@@ -115,7 +113,7 @@ test('Workflow edges are parsed correctly', async (t) => {
   );
 });
 
-test('allow empty workflows', async (t) => {
+test.serial('allow empty workflows', async (t) => {
   let doc = `
     name: project-name
   `;
@@ -130,7 +128,7 @@ test('allow empty workflows', async (t) => {
   });
 });
 
-test('allows null channels by converting to empty map', async (t) => {
+test.serial('allows null channels by converting to empty map', async (t) => {
   const doc = `
     name: project-name
     channels:
@@ -145,7 +143,7 @@ test('allows null channels by converting to empty map', async (t) => {
   t.deepEqual(result.doc.channels, {});
 });
 
-test('parses channels with destination_credential', async (t) => {
+test.serial('parses channels with destination_credential', async (t) => {
   const doc = `
     name: project-name
     channels:
@@ -170,15 +168,17 @@ test('parses channels with destination_credential', async (t) => {
   });
 });
 
-test('adds the file content into the job body from the specified path', async (t) => {
-  // Step 1: Create a temporary file that the YAML will reference
-  const fileContent = 'fn(state => state.data);';
-  mockFs({
-    '/jobBody.js': fileContent,
-  });
+test.serial(
+  'adds the file content into the job body from the specified path',
+  async (t) => {
+    // Step 1: Create a temporary file that the YAML will reference
+    const fileContent = 'fn(state => state.data);';
+    mockFs({
+      '/jobBody.js': fileContent,
+    });
 
-  // Step 2: YAML document that references the file
-  const doc = `
+    // Step 2: YAML document that references the file
+    const doc = `
     name: project-name
     workflows:
       workflow-one:
@@ -191,11 +191,12 @@ test('adds the file content into the job body from the specified path', async (t
               path: /jobBody.js
   `;
 
-  // Step 3: Run the parseAndValidate function
-  const results = await parseAndValidate(doc, 'spec.yaml');
+    // Step 3: Run the parseAndValidate function
+    const results = await parseAndValidate(doc, 'spec.yaml');
 
-  // Step 4: Assert that the content from the file was merged into the spec
-  const jobBody = results.doc.workflows['workflow-one'].jobs!['job-one'].body;
+    // Step 4: Assert that the content from the file was merged into the spec
+    const jobBody = results.doc.workflows['workflow-one'].jobs!['job-one'].body;
 
-  t.is(jobBody.content, fileContent);
-});
+    t.is(jobBody.content, fileContent);
+  }
+);

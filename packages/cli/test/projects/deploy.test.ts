@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs';
 import Project, {
   generateWorkflow,
@@ -29,6 +29,8 @@ import {
 } from './fixtures';
 import { checkout } from '../../src/projects';
 import { rimraf } from 'rimraf';
+
+test.afterEach(restoreFs);
 
 let server: any;
 let strictServer: any;
@@ -68,7 +70,6 @@ test.beforeEach(() => {
   server.reset();
   server.addProject(myProject_v1);
   logger._reset();
-  restoreFs();
 });
 
 test.serial(
@@ -921,28 +922,31 @@ test.serial(
   }
 );
 
-test('printRichDiff: should report no changes for identical projects', (t) => {
-  const wf = generateWorkflow('@id a trigger-x');
+test.serial(
+  'printRichDiff: should report no changes for identical projects',
+  (t) => {
+    const wf = generateWorkflow('@id a trigger-x');
 
-  const local = new Project({
-    name: 'local',
-    workflows: [wf],
-  });
+    const local = new Project({
+      name: 'local',
+      workflows: [wf],
+    });
 
-  const remote = new Project({
-    name: 'remote',
-    workflows: [wf],
-  });
+    const remote = new Project({
+      name: 'remote',
+      workflows: [wf],
+    });
 
-  const diffs = printRichDiff(local, remote, [], logger);
-  t.is(diffs.length, 0);
+    const diffs = printRichDiff(local, remote, [], logger);
+    t.is(diffs.length, 0);
 
-  const { message, level } = logger._parse(logger._last);
-  t.is(level, 'info');
-  t.is(message, 'No workflow changes detected');
-});
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'info');
+    t.is(message, 'No workflow changes detected');
+  }
+);
 
-test('printRichDiff: should report changed workflow', (t) => {
+test.serial('printRichDiff: should report changed workflow', (t) => {
   const wfRemote = generateWorkflow('@id a trigger-x');
   const wfLocal = generateWorkflow('@id a trigger-y');
 
@@ -963,7 +967,7 @@ test('printRichDiff: should report changed workflow', (t) => {
   t.truthy(logger._find('always', /: changed/i));
 });
 
-test('printRichDiff: should report added workflow', (t) => {
+test.serial('printRichDiff: should report added workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
@@ -984,7 +988,7 @@ test('printRichDiff: should report added workflow', (t) => {
   t.truthy(logger._find('always', /: added/i));
 });
 
-test('printRichDiff: should report removed workflow', (t) => {
+test.serial('printRichDiff: should report removed workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
@@ -1005,45 +1009,48 @@ test('printRichDiff: should report removed workflow', (t) => {
   t.truthy(logger._find('always', /: deleted/i));
 });
 
-test('printRichDiff: should report mix of added, changed, and removed workflows', (t) => {
-  const wf1 = generateWorkflow('@id a trigger-x');
-  const wf2Remote = generateWorkflow('@id b trigger-y');
-  const wf2Local = generateWorkflow('@id b trigger-different');
-  const wf3 = generateWorkflow('@id c trigger-z');
-  const wf4 = generateWorkflow('@id d trigger-w');
+test.serial(
+  'printRichDiff: should report mix of added, changed, and removed workflows',
+  (t) => {
+    const wf1 = generateWorkflow('@id a trigger-x');
+    const wf2Remote = generateWorkflow('@id b trigger-y');
+    const wf2Local = generateWorkflow('@id b trigger-different');
+    const wf3 = generateWorkflow('@id c trigger-z');
+    const wf4 = generateWorkflow('@id d trigger-w');
 
-  const local = new Project({
-    name: 'local',
-    workflows: [wf1, wf2Local, wf4], // has a, b (changed), d (new)
-  });
+    const local = new Project({
+      name: 'local',
+      workflows: [wf1, wf2Local, wf4], // has a, b (changed), d (new)
+    });
 
-  const remote = new Project({
-    name: 'remote',
-    workflows: [wf1, wf2Remote, wf3], // has a, b, c
-  });
+    const remote = new Project({
+      name: 'remote',
+      workflows: [wf1, wf2Remote, wf3], // has a, b, c
+    });
 
-  const diffs = printRichDiff(local, remote, [], logger);
-  t.is(diffs.length, 3);
+    const diffs = printRichDiff(local, remote, [], logger);
+    t.is(diffs.length, 3);
 
-  t.deepEqual(
-    diffs.find((d) => d.id === 'b'),
-    { id: 'b', type: 'changed' }
-  );
-  t.deepEqual(
-    diffs.find((d) => d.id === 'c'),
-    { id: 'c', type: 'removed' }
-  );
-  t.deepEqual(
-    diffs.find((d) => d.id === 'd'),
-    { id: 'd', type: 'added' }
-  );
+    t.deepEqual(
+      diffs.find((d) => d.id === 'b'),
+      { id: 'b', type: 'changed' }
+    );
+    t.deepEqual(
+      diffs.find((d) => d.id === 'c'),
+      { id: 'c', type: 'removed' }
+    );
+    t.deepEqual(
+      diffs.find((d) => d.id === 'd'),
+      { id: 'd', type: 'added' }
+    );
 
-  t.truthy(logger._find('always', /: added/i));
-  t.truthy(logger._find('always', /: changed/i));
-  t.truthy(logger._find('always', /: deleted/i));
-});
+    t.truthy(logger._find('always', /: added/i));
+    t.truthy(logger._find('always', /: changed/i));
+    t.truthy(logger._find('always', /: deleted/i));
+  }
+);
 
-test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
+test.serial('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
   const local = {
     workflows: [
       {
@@ -1068,7 +1075,7 @@ test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
   t.falsy(diverged);
 });
 
-test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
+test.serial('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
   const local = {
     workflows: [
       {
@@ -1093,21 +1100,24 @@ test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
   t.deepEqual(diverged, ['w']);
 });
 
-test('collectionsChanged: false when the same names are on both sides', (t) => {
-  const local = {
-    collections: [{ name: 'a' }, { name: 'b' }],
-  } as unknown as Project;
-  const remote = {
-    collections: [
-      { uuid: 'uuid-a', name: 'a' },
-      { uuid: 'uuid-b', name: 'b' },
-    ],
-  } as unknown as Project;
+test.serial(
+  'collectionsChanged: false when the same names are on both sides',
+  (t) => {
+    const local = {
+      collections: [{ name: 'a' }, { name: 'b' }],
+    } as unknown as Project;
+    const remote = {
+      collections: [
+        { uuid: 'uuid-a', name: 'a' },
+        { uuid: 'uuid-b', name: 'b' },
+      ],
+    } as unknown as Project;
 
-  t.false(collectionsChanged(local, remote));
-});
+    t.false(collectionsChanged(local, remote));
+  }
+);
 
-test('collectionsChanged: true when a name was added locally', (t) => {
+test.serial('collectionsChanged: true when a name was added locally', (t) => {
   const local = {
     collections: [{ name: 'a' }, { name: 'b' }],
   } as unknown as Project;
@@ -1118,7 +1128,7 @@ test('collectionsChanged: true when a name was added locally', (t) => {
   t.true(collectionsChanged(local, remote));
 });
 
-test('collectionsChanged: true when a name was removed locally', (t) => {
+test.serial('collectionsChanged: true when a name was removed locally', (t) => {
   const local = {
     collections: [{ name: 'a' }],
   } as unknown as Project;
@@ -1132,63 +1142,78 @@ test('collectionsChanged: true when a name was removed locally', (t) => {
   t.true(collectionsChanged(local, remote));
 });
 
-test('collectionsChanged: false when collections are not managed locally', (t) => {
-  // undefined means "leave alone", unlike an empty list
-  const local = {} as unknown as Project;
-  const remote = {
-    collections: [{ uuid: 'uuid-a', name: 'a' }],
-  } as unknown as Project;
+test.serial(
+  'collectionsChanged: false when collections are not managed locally',
+  (t) => {
+    // undefined means "leave alone", unlike an empty list
+    const local = {} as unknown as Project;
+    const remote = {
+      collections: [{ uuid: 'uuid-a', name: 'a' }],
+    } as unknown as Project;
 
-  t.false(collectionsChanged(local, remote));
-});
+    t.false(collectionsChanged(local, remote));
+  }
+);
 
-test('collectionsChanged: true when every collection was removed locally', (t) => {
-  const local = { collections: [] } as unknown as Project;
-  const remote = {
-    collections: [{ uuid: 'uuid-a', name: 'a' }],
-  } as unknown as Project;
+test.serial(
+  'collectionsChanged: true when every collection was removed locally',
+  (t) => {
+    const local = { collections: [] } as unknown as Project;
+    const remote = {
+      collections: [{ uuid: 'uuid-a', name: 'a' }],
+    } as unknown as Project;
 
-  t.true(collectionsChanged(local, remote));
-});
+    t.true(collectionsChanged(local, remote));
+  }
+);
 
-test('deletedCollections: nothing to delete when collections are not managed locally', (t) => {
-  const merged = {} as unknown as Project;
-  const remote = {
-    collections: [{ uuid: 'uuid-a', name: 'a' }],
-  } as unknown as Project;
+test.serial(
+  'deletedCollections: nothing to delete when collections are not managed locally',
+  (t) => {
+    const merged = {} as unknown as Project;
+    const remote = {
+      collections: [{ uuid: 'uuid-a', name: 'a' }],
+    } as unknown as Project;
 
-  t.deepEqual(deletedCollections(merged, remote), []);
-});
+    t.deepEqual(deletedCollections(merged, remote), []);
+  }
+);
 
-test('deletedCollections: flags a remote name missing from the merged project', (t) => {
-  const merged = {
-    collections: [{ name: 'keep-me' }],
-  } as unknown as Project;
-  const remote = {
-    collections: [
-      { uuid: 'uuid-keep', name: 'keep-me' },
-      { uuid: 'uuid-remove', name: 'remove-me' },
-    ],
-  } as unknown as Project;
+test.serial(
+  'deletedCollections: flags a remote name missing from the merged project',
+  (t) => {
+    const merged = {
+      collections: [{ name: 'keep-me' }],
+    } as unknown as Project;
+    const remote = {
+      collections: [
+        { uuid: 'uuid-keep', name: 'keep-me' },
+        { uuid: 'uuid-remove', name: 'remove-me' },
+      ],
+    } as unknown as Project;
 
-  t.deepEqual(deletedCollections(merged, remote), [
-    { id: 'uuid-remove', name: 'remove-me', delete: true },
-  ]);
-});
+    t.deepEqual(deletedCollections(merged, remote), [
+      { id: 'uuid-remove', name: 'remove-me', delete: true },
+    ]);
+  }
+);
 
-test('deletedCollections: nothing to delete when every remote name survives', (t) => {
-  const merged = {
-    collections: [{ name: 'a' }, { name: 'b' }],
-  } as unknown as Project;
-  const remote = {
-    collections: [
-      { uuid: 'uuid-a', name: 'a' },
-      { uuid: 'uuid-b', name: 'b' },
-    ],
-  } as unknown as Project;
+test.serial(
+  'deletedCollections: nothing to delete when every remote name survives',
+  (t) => {
+    const merged = {
+      collections: [{ name: 'a' }, { name: 'b' }],
+    } as unknown as Project;
+    const remote = {
+      collections: [
+        { uuid: 'uuid-a', name: 'a' },
+        { uuid: 'uuid-b', name: 'b' },
+      ],
+    } as unknown as Project;
 
-  t.deepEqual(deletedCollections(merged, remote), []);
-});
+    t.deepEqual(deletedCollections(merged, remote), []);
+  }
+);
 
 const channel = {
   name: 'my-channel',
@@ -1196,16 +1221,19 @@ const channel = {
   enabled: true,
 };
 
-test('channelsChanged: false when there is no local resources.yaml', (t) => {
-  const local = { channels: undefined } as unknown as Project;
-  const remote = {
-    channels: [{ ...channel, id: 'chan-1' }],
-  } as unknown as Project;
+test.serial(
+  'channelsChanged: false when there is no local resources.yaml',
+  (t) => {
+    const local = { channels: undefined } as unknown as Project;
+    const remote = {
+      channels: [{ ...channel, id: 'chan-1' }],
+    } as unknown as Project;
 
-  t.false(channelsChanged(local, remote));
-});
+    t.false(channelsChanged(local, remote));
+  }
+);
 
-test('channelsChanged: true when a channel is edited locally', (t) => {
+test.serial('channelsChanged: true when a channel is edited locally', (t) => {
   const local = {
     channels: [{ ...channel, enabled: false }],
   } as unknown as Project;
@@ -1216,19 +1244,26 @@ test('channelsChanged: true when a channel is edited locally', (t) => {
   t.true(channelsChanged(local, remote));
 });
 
-test('channelsChanged: false when a credential name matches the remote uuid', (t) => {
-  const local = {
-    channels: [{ ...channel, destination_credential_id: 'me@openfn.org|cred' }],
-  } as unknown as Project;
-  const remote = {
-    credentials: [{ uuid: 'cred-uuid', name: 'cred', owner: 'me@openfn.org' }],
-    channels: [
-      { ...channel, id: 'chan-1', destination_credential_id: 'cred-uuid' },
-    ],
-  } as unknown as Project;
+test.serial(
+  'channelsChanged: false when a credential name matches the remote uuid',
+  (t) => {
+    const local = {
+      channels: [
+        { ...channel, destination_credential_id: 'me@openfn.org|cred' },
+      ],
+    } as unknown as Project;
+    const remote = {
+      credentials: [
+        { uuid: 'cred-uuid', name: 'cred', owner: 'me@openfn.org' },
+      ],
+      channels: [
+        { ...channel, id: 'chan-1', destination_credential_id: 'cred-uuid' },
+      ],
+    } as unknown as Project;
 
-  t.false(channelsChanged(local, remote));
-});
+    t.false(channelsChanged(local, remote));
+  }
+);
 
 const diffChannel = (name: string, extra = {}) => ({
   name,
@@ -1237,7 +1272,7 @@ const diffChannel = (name: string, extra = {}) => ({
   ...extra,
 });
 
-test('printRichDiff: should report a channel-only change', (t) => {
+test.serial('printRichDiff: should report a channel-only change', (t) => {
   const local = new Project({
     name: 'local',
     workflows: [],
@@ -1252,7 +1287,7 @@ test('printRichDiff: should report a channel-only change', (t) => {
   t.truthy(logger._find('always', /one: added/));
 });
 
-test('printRichDiff: should report removed channels', (t) => {
+test.serial('printRichDiff: should report removed channels', (t) => {
   const local = new Project({ name: 'local', workflows: [], channels: [] });
   const remote = new Project({
     name: 'remote',
@@ -1265,63 +1300,76 @@ test('printRichDiff: should report removed channels', (t) => {
   t.truthy(logger._find('always', /one: removed/));
 });
 
-test('printRichDiff: should report added and removed collections', (t) => {
-  const local = new Project({
-    name: 'local',
-    workflows: [],
-    collections: [{ name: 'keep-me' }, { name: 'new-one' }],
-  });
-  const remote = new Project({
-    name: 'remote',
-    workflows: [],
-    collections: [
-      { uuid: 'a', name: 'keep-me' },
-      { uuid: 'b', name: 'old-one' },
-    ],
-  });
+test.serial(
+  'printRichDiff: should report added and removed collections',
+  (t) => {
+    const local = new Project({
+      name: 'local',
+      workflows: [],
+      collections: [{ name: 'keep-me' }, { name: 'new-one' }],
+    });
+    const remote = new Project({
+      name: 'remote',
+      workflows: [],
+      collections: [
+        { uuid: 'a', name: 'keep-me' },
+        { uuid: 'b', name: 'old-one' },
+      ],
+    });
 
-  printRichDiff(local, remote, [], logger);
+    printRichDiff(local, remote, [], logger);
 
-  t.truthy(logger._find('always', /following changes to the remote project/));
-  t.truthy(logger._find('always', /Collections:/));
-  t.truthy(logger._find('always', /new-one: added/));
-  t.truthy(logger._find('always', /old-one: removed/));
-});
+    t.truthy(logger._find('always', /following changes to the remote project/));
+    t.truthy(logger._find('always', /Collections:/));
+    t.truthy(logger._find('always', /new-one: added/));
+    t.truthy(logger._find('always', /old-one: removed/));
+  }
+);
 
-test('printRichDiff: should show every collection as removed when all are deleted', (t) => {
-  const local = new Project({ name: 'local', workflows: [], collections: [] });
-  const remote = new Project({
-    name: 'remote',
-    workflows: [],
-    collections: [
-      { uuid: 'a', name: 'one' },
-      { uuid: 'b', name: 'two' },
-    ],
-  });
+test.serial(
+  'printRichDiff: should show every collection as removed when all are deleted',
+  (t) => {
+    const local = new Project({
+      name: 'local',
+      workflows: [],
+      collections: [],
+    });
+    const remote = new Project({
+      name: 'remote',
+      workflows: [],
+      collections: [
+        { uuid: 'a', name: 'one' },
+        { uuid: 'b', name: 'two' },
+      ],
+    });
 
-  printRichDiff(local, remote, [], logger);
+    printRichDiff(local, remote, [], logger);
 
-  t.truthy(logger._find('always', /one: removed/));
-  t.truthy(logger._find('always', /two: removed/));
-});
+    t.truthy(logger._find('always', /one: removed/));
+    t.truthy(logger._find('always', /two: removed/));
+  }
+);
 
-test('printRichDiff: should not report collections that are not managed locally', (t) => {
-  const local = new Project({ name: 'local', workflows: [] });
-  const remote = new Project({
-    name: 'remote',
-    workflows: [],
-    collections: [{ uuid: 'a', name: 'one' }],
-  });
+test.serial(
+  'printRichDiff: should not report collections that are not managed locally',
+  (t) => {
+    const local = new Project({ name: 'local', workflows: [] });
+    const remote = new Project({
+      name: 'remote',
+      workflows: [],
+      collections: [{ uuid: 'a', name: 'one' }],
+    });
 
-  // use a private logger: an absence check isn't safe on the shared one
-  const privateLogger = createMockLogger(undefined, { level: 'debug' });
-  printRichDiff(local, remote, [], privateLogger);
+    // use a private logger: an absence check isn't safe on the shared one
+    const privateLogger = createMockLogger(undefined, { level: 'debug' });
+    printRichDiff(local, remote, [], privateLogger);
 
-  t.falsy(privateLogger._find('always', /Collections:/));
-  t.truthy(privateLogger._find('info', /No workflow changes detected/));
-});
+    t.falsy(privateLogger._find('always', /Collections:/));
+    t.truthy(privateLogger._find('info', /No workflow changes detected/));
+  }
+);
 
-test('printRichDiff: should list changed channel fields', (t) => {
+test.serial('printRichDiff: should list changed channel fields', (t) => {
   const local = new Project({
     name: 'local',
     workflows: [],

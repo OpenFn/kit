@@ -1,17 +1,17 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
-import path from 'node:path';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 import { getModuleEntryPoint } from '../../src/modules/repo';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  restoreFs();
   logger._reset();
 });
 
-const repoPath = path.resolve('test/__repo__');
+const repoPath = '/repo';
 
 const mockRepo = (pkg: object) => {
   mockFs({

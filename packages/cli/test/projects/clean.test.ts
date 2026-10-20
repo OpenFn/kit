@@ -1,9 +1,11 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 import { handler as cleanHandler } from '../../src/projects/clean';
 import fs from 'fs';
 import { jsonToYaml } from '@openfn/project';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -51,7 +53,6 @@ test.beforeEach(() => {
 });
 
 test.afterEach(() => {
-  restoreFs();
   logger._reset();
 });
 
@@ -94,6 +95,7 @@ test.serial('clean: aborts if user declines confirmation', async (t) => {
 test.serial(
   'clean: throws if no active project found in workspace',
   async (t) => {
+    restoreFs();
     mockFs({ '/ws/workflows': {} });
 
     await t.throwsAsync(
@@ -111,6 +113,7 @@ test.serial(
   'does not delete anything if it is not known which project is checked out',
   async (t) => {
     // two tracked projects, but no checkout metadata anywhere
+    restoreFs();
     mockFs({
       '/ws/workflows/old-workflow': { 'old-job.js': 'fn(s => s)' },
       '/ws/openfn.yaml': '',
@@ -133,6 +136,7 @@ test.serial(
   'does not delete anything if there is no active project to restore',
   async (t) => {
     // a workspace with no projects and no checkout metadata at all
+    restoreFs();
     mockFs({
       '/ws/workflows/old-workflow': { 'old-job.js': 'fn(s => s)' },
       '/ws/openfn.yaml': '',

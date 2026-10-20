@@ -1,9 +1,11 @@
 import Project, { jsonToYaml, Workspace } from '@openfn/project';
 import test from 'ava';
-import { mockFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { handler as mergeHandler } from '../../src/projects/merge';
 import { createMockLogger } from '@openfn/logger';
 import { handler as checkoutHandler } from '../../src/projects/checkout';
+
+test.afterEach(restoreFs);
 
 const sandbox = {
   id: '<uuid:sandbox>',
@@ -216,6 +218,7 @@ test.serial(
 );
 
 test.serial('Write to JSON using project config', async (t) => {
+  restoreFs();
   mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
@@ -259,6 +262,7 @@ test.serial('Write to JSON using project config', async (t) => {
 });
 
 test.serial('merge with custom base', async (t) => {
+  restoreFs();
   mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
@@ -346,6 +350,7 @@ const multiMain = {
 };
 
 const mockMultiWorkflowWorkspace = () => {
+  restoreFs();
   mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({

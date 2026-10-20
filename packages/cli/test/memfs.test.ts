@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { createRequire } from 'node:module';
-import { mockFs, restoreFs } from './helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 
 const require = createRequire(import.meta.url);
 
@@ -31,6 +31,13 @@ test.serial('copyFileSync from node_modules writes into memfs', (t) => {
     restoreFs();
     fs.rmSync(dest, { force: true });
   }
+});
+
+test.serial('renameSync from node_modules into memfs throws EXDEV', (t) => {
+  mockFs();
+  t.throws(() => fs.renameSync(realModule, '/moved.js'), { code: 'EXDEV' });
+  restoreFs();
+  t.true(fs.existsSync(realModule));
 });
 
 test.serial('fstatSync works on stdout while mocked', (t) => {

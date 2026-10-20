@@ -1,12 +1,13 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 import { ensureRepo, loadRepoPkg } from '../../src/modules/repo';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger('test', { level: 'debug' });
 
 test.afterEach(() => {
-  restoreFs();
   logger._reset();
 });
 

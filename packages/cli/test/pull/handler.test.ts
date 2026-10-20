@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockFs, restoreFs } from '../helpers/memfs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs';
 import { MockAgent, setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
@@ -9,17 +9,13 @@ import { PullOptions } from '../../src/pull/command';
 import { Workspace } from '@openfn/project';
 import { myProject_v1 } from '../projects/fixtures';
 
+test.afterEach(restoreFs);
+
 const ENDPOINT = 'https://fake.test.openfn.org';
 const PROJECT_UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
 
 test.beforeEach(() => {
-  restoreFs();
-
   process.env.OPENFN_API_KEY = 'fake-api-key';
-});
-
-test.afterEach(() => {
-  restoreFs();
 });
 
 let mockAgent = new MockAgent();
