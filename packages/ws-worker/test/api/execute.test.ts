@@ -72,6 +72,12 @@ test('send event should throw if an event errors', async (t) => {
   await t.throwsAsync(() => sendEvent(context, 'throw', 22), {
     message: '[throw] Error: err',
   });
+
+  const report = await waitForSentryReport(
+    testkit,
+    (r: any) => r.tags.lightning_event === 'throw'
+  );
+  t.is(report.error.message, '[throw] Error: err');
 });
 
 test('jobLog should send a log event outside a run', async (t) => {
@@ -300,12 +306,12 @@ test('loadDataclip report to sentry on fail', async (t) => {
     await loadDataclip(context, 'xyz');
   } catch (e) {}
 
-  const reports = await waitForSentryReport(testkit);
-  const dataclip_report = reports.find((r: any) =>
-    /fetch\:dataclip.+not_found/i.test(r.error.message)
+  const report = await waitForSentryReport(
+    testkit,
+    (r: any) => r.tags.lightning_event === GET_DATACLIP
   );
-  t.truthy(dataclip_report);
-  t.is(dataclip_report.error.name, 'LightningSocketError');
+  t.regex(report.error.message, /fetch\:dataclip.+not_found/i);
+  t.is(report.error.name, 'LightningSocketError');
 });
 
 test('loadCredential should fetch a credential', async (t) => {
@@ -333,9 +339,11 @@ test('loadCredential report to sentry on fail', async (t) => {
     await loadCredential(context, 'abc');
   } catch (e) {}
 
-  const reports = await waitForSentryReport(testkit);
-  t.is(reports.length, 1);
-  t.is(reports[0].error.name, 'LightningSocketError');
+  const isCredentialReport = (r: any) =>
+    r.tags.lightning_event === GET_CREDENTIAL;
+  const report = await waitForSentryReport(testkit, isCredentialReport);
+  t.is(testkit.reports().filter(isCredentialReport).length, 1);
+  t.is(report.error.name, 'LightningSocketError');
 });
 
 test('execute should pass the final result to onFinish', async (t) => {
