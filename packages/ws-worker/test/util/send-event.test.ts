@@ -250,7 +250,7 @@ test.serial('should log if the event is rejected', async (t) => {
 });
 
 test.serial('should report to sentry if the event is rejected', async (t) => {
-  const EVENT_NAME = 'test';
+  const EVENT_NAME = 'rejected';
   const channel = mockChannel({
     [EVENT_NAME]: () => {
       throw new Error('err');
@@ -273,12 +273,15 @@ test.serial('should report to sentry if the event is rejected', async (t) => {
     t.true(e.reportedToSentry);
   }
 
-  const reports = await waitForSentryReport(testkit);
-  t.is(reports[0].error?.name, 'LightningSocketError');
+  const report = await waitForSentryReport(
+    testkit,
+    (r: any) => r.tags.lightning_event === EVENT_NAME
+  );
+  t.is(report.error?.name, 'LightningSocketError');
 });
 
 test.serial('should report to sentry if the event timesout', async (t) => {
-  const EVENT_NAME = 'test';
+  const EVENT_NAME = 'timesout';
   const channel = mockChannel({});
 
   const context = {
@@ -296,13 +299,16 @@ test.serial('should report to sentry if the event timesout', async (t) => {
   } catch (e: any) {
     t.true(e.reportedToSentry);
   }
-  const reports = await waitForSentryReport(testkit);
-  t.is(reports[0].error?.name, 'LightningTimeoutError');
+  const report = await waitForSentryReport(
+    testkit,
+    (r: any) => r.tags.lightning_event === EVENT_NAME
+  );
+  t.is(report.error?.name, 'LightningTimeoutError');
 
   // Tags are indexed (unlike the run context below), so these are what make
   // it possible to ask sentry "is it only step:complete that times out?"
-  t.is(reports[0].tags.run_id, 'x');
-  t.is(reports[0].tags.lightning_event, EVENT_NAME);
+  t.is(report.tags.run_id, 'x');
+  t.is(report.tags.lightning_event, EVENT_NAME);
 });
 
 test.serial(
@@ -320,9 +326,12 @@ test.serial(
       sendEvent({ id: 'x', channel, logger, options: {} }, 'step:complete', {})
     );
 
-    const reports = await waitForSentryReport(testkit);
-    t.is(reports[0].extra?.channel_state, 'errored');
-    t.is(reports[0].extra?.socket_state, 'connecting');
+    const report = await waitForSentryReport(
+      testkit,
+      (r: any) => r.tags.lightning_event === 'step:complete'
+    );
+    t.is(report.extra?.channel_state, 'errored');
+    t.is(report.extra?.socket_state, 'connecting');
   }
 );
 
@@ -337,14 +346,17 @@ test.serial('should report to sentry against the run scope', async (t) => {
   await t.throwsAsync(() => sendEvent(context, 'step:complete', {}));
   stop();
 
-  const reports = await waitForSentryReport(testkit);
-  t.is(reports[0].error?.name, 'LightningSocketError');
-  t.is(reports[0].tags.run_id, 'run-1');
+  const report = await waitForSentryReport(
+    testkit,
+    (r: any) => r.tags.run_id === 'run-1'
+  );
+  t.is(report.error?.name, 'LightningSocketError');
+  t.is(report.tags.run_id, 'run-1');
 
   // The run's breadcrumb trail must survive too - this is why the capture
   // re-enters the scope rather than passing it to captureException, which
   // merges tags but drops breadcrumbs
-  const trail = reports[0].originalReport?.breadcrumbs ?? [];
+  const trail = report.originalReport?.breadcrumbs ?? [];
   t.true(trail.some((b: any) => b.message === 'job-complete'));
 });
 
@@ -353,10 +365,7 @@ test.serial(
   async (t) => {
     // Without this, every timeout for every event collapses into one sentry
     // issue - this is the change that would have made the step:complete
-    // pattern visible without digging through raw events. Each event is
-    // checked against a fresh testkit so the two reports cannot be confused
-    // with each other or raced against waitForSentryReport's "at least one"
-    // polling.
+    // pattern visible without digging through raw events.
     const channelA = mockChannel({});
     await t.throwsAsync(() =>
       sendEvent(
@@ -365,13 +374,14 @@ test.serial(
         {}
       )
     );
-    const [stepReport] = await waitForSentryReport(testkit);
+    const stepReport = await waitForSentryReport(
+      testkit,
+      (r: any) => r.tags.lightning_event === 'step:complete'
+    );
     t.deepEqual(stepReport.originalReport.fingerprint, [
       'LightningTimeoutError',
       'step:complete',
     ]);
-
-    testkit.reset();
 
     const channelB = mockChannel({});
     await t.throwsAsync(() =>
@@ -381,7 +391,10 @@ test.serial(
         {}
       )
     );
-    const [runReport] = await waitForSentryReport(testkit);
+    const runReport = await waitForSentryReport(
+      testkit,
+      (r: any) => r.tags.lightning_event === 'run:complete'
+    );
     t.deepEqual(runReport.originalReport.fingerprint, [
       'LightningTimeoutError',
       'run:complete',
@@ -392,7 +405,7 @@ test.serial(
 test.serial(
   'should report caller-supplied sentryExtras alongside a failed event',
   async (t) => {
-    const EVENT_NAME = 'test';
+    const EVENT_NAME = 'extras';
     const channel = { ...mockChannel({}), state: 'joined' };
 
     const context = { id: 'x', channel, logger, options: {} };
@@ -406,9 +419,21 @@ test.serial(
       )
     );
 
-    const reports = await waitForSentryReport(testkit);
-    t.is(reports[0].extra?.payloadSize_b, 1536);
+    const report = await waitForSentryReport(
+      testkit,
+      (r: any) => r.tags.lightning_event === EVENT_NAME
+    );
+    t.is(report.extra?.payloadSize_b, 1536);
     // sentryExtras must not crowd out the fields send-event already reports
-    t.is(reports[0].extra?.channel_state, 'joined');
+    t.is(report.extra?.channel_state, 'joined');
+  }
+);
+
+test.serial(
+  'waitForSentryReport should throw if no report matches in time',
+  async (t) => {
+    await t.throwsAsync(() => waitForSentryReport(testkit, () => false, 5), {
+      message: 'SENTRY_REPORT_TIMEOUT',
+    });
   }
 );

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 
 import mapAdaptorsToMonorepo, {
@@ -8,6 +8,8 @@ import mapAdaptorsToMonorepo, {
   updatePath,
 } from '../../src/util/map-adaptors-to-monorepo';
 import { ExecutionPlan } from '@openfn/runtime';
+
+test.afterEach(restoreFs);
 
 // Paths are resolved to absolute in the option's ensure block, so the util
 // always receives absolute roots
@@ -18,11 +20,10 @@ const logger = createMockLogger();
 
 test.afterEach(() => {
   logger._reset();
-  mock.restore();
 });
 
 test.serial('updatePath: common', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
   });
 
@@ -32,7 +33,7 @@ test.serial('updatePath: common', (t) => {
 });
 
 test.serial('updatePath: @openfn/language-common', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
   });
 
@@ -42,7 +43,7 @@ test.serial('updatePath: @openfn/language-common', (t) => {
 });
 
 test.serial('updatePath: common@1.2.3 (with warning)', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
   });
 
@@ -55,14 +56,14 @@ test.serial('updatePath: common@1.2.3 (with warning)', (t) => {
   t.regex(message as string, /ignoring version specifier/i);
 });
 
-test('updatePath: common=x/y/z', (t) => {
+test.serial('updatePath: common=x/y/z', (t) => {
   const result = updatePath('common=x/y/z', [REPO_PATH], logger);
 
   t.is(result, `common=x/y/z`);
 });
 
 test.serial('updatePath: prefer the root which has the adaptor', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH_2}/packages/common`]: {},
   });
 
@@ -73,7 +74,7 @@ test.serial('updatePath: prefer the root which has the adaptor', (t) => {
 });
 
 test.serial('updatePath: earlier root wins when both have the adaptor', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
     [`${REPO_PATH_2}/packages/common`]: {},
   });
@@ -84,7 +85,7 @@ test.serial('updatePath: earlier root wins when both have the adaptor', (t) => {
 });
 
 test.serial('updatePath: throw if not found in the single root', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages`]: {},
   });
 
@@ -94,7 +95,7 @@ test.serial('updatePath: throw if not found in the single root', (t) => {
 });
 
 test.serial('updatePath: throw if not found in any root', (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages`]: {},
     [`${REPO_PATH_2}/packages`]: {},
   });
@@ -106,7 +107,7 @@ test.serial('updatePath: throw if not found in any root', (t) => {
 
 // TODO can't test this in ava, have to use an integration test
 test.skip('validate monorepo: log and exit early if repo not found', async (t) => {
-  mock({
+  mockFs({
     a: {},
   });
 
@@ -119,7 +120,7 @@ test.skip('validate monorepo: log and exit early if repo not found', async (t) =
 });
 
 test.serial('validate monorepo: all OK', async (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages`]: {},
   });
 
@@ -127,7 +128,7 @@ test.serial('validate monorepo: all OK', async (t) => {
 });
 
 test.serial('validate monorepo: all OK with multiple paths', async (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages`]: {},
     [`${REPO_PATH_2}/packages`]: {},
   });
@@ -138,7 +139,7 @@ test.serial('validate monorepo: all OK with multiple paths', async (t) => {
 });
 
 test.serial('mapAdaptorsToMonorepo: map adaptors', async (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
   });
 
@@ -149,7 +150,7 @@ test.serial('mapAdaptorsToMonorepo: map adaptors', async (t) => {
 test.serial(
   'mapAdaptorsToMonorepo: map adaptors across multiple roots',
   async (t) => {
-    mock({
+    mockFs({
       [`${REPO_PATH}/packages/http`]: {},
       [`${REPO_PATH_2}/packages/common`]: {},
     });
@@ -167,7 +168,7 @@ test.serial(
 );
 
 test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
-  mock({
+  mockFs({
     [`${REPO_PATH}/packages/common`]: {},
   });
 

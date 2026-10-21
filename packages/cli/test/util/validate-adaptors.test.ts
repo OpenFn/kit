@@ -1,13 +1,11 @@
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
-import mockfs from 'mock-fs';
 import validateAdaptors from '../../src/util/validate-adaptors';
 
 const logger = createMockLogger('', { level: 'default' });
 
 test.afterEach(() => {
   logger._reset();
-  mockfs.restore();
 });
 
 test.serial('should warn if expression passed with no adaptor', async (t) => {

@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockFs, resetMockFs } from '../util';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 
 import { get, set, remove } from '../../src/collections/handler';
 
@@ -9,6 +9,8 @@ import { setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
 import { collections } from '@openfn/language-collections';
 import { readFile } from 'fs/promises';
+
+test.afterEach(restoreFs);
 
 // Log as json to make testing easier
 const logger = createMockLogger('default', { level: 'debug', json: true });
@@ -49,8 +51,6 @@ test.beforeEach(() => {
     x: {},
     y: {},
   });
-
-  resetMockFs();
 });
 
 const createOptions = (opts = {}) => ({

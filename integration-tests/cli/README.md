@@ -2,18 +2,13 @@
 
 This package contains a set of integration tests against `openfn` CLI.
 
-The test suite is designed to be run in CircleCI, but can run locally or in a local docker image.
+The test suite is designed to be run in CircleCI, but can also run locally.
 
 ## Running Tests
 
 During development, you can run the unit tests against a local build (ie, `packages/cli/dist`):
 
 `pnpm test:dev`
-
-You can run the test in isolation with a docker build. This can be useful while developing for CI, or if a test passes locally but fails in CI.
-
-`pnpm run build`
-`pnpm run start`
 
 ## Architecture
 
@@ -29,6 +24,6 @@ How it works:
 
 ## Creating tarballs
 
-From this folder, run `build:pack` to create a bunch of tarballs from your built packages. Tarballs will be built to `dist`.
+From the repo root, run `pnpm pack:local integration-tests/cli/dist --no-version` to create a bunch of tarballs from your built packages. Tarballs will be built to `dist`.
 
-You can install the tarballs locally with `npm install -g dist openfn-cli.tgz.`
+From this folder, install the CLI from the tarballs with `npm install -g ./dist/openfn-cli.tgz`.

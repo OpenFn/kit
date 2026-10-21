@@ -21,7 +21,7 @@
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --project tsconfig.test.json",
     "test:memory": "pnpm ava --config memtest.ava.config.cjs",
-    "build": "tsup --config ../../tsup.config.js src/index.ts src/modules/esm-resolve-hook.js",
+    "build": "tsup --config ../../tsup.config.js --no-splitting src/index.ts src/modules/esm-resolve-hook.js",
     "build:watch": "pnpm build --watch",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
@@ -32,11 +32,10 @@
     "@openfn/compiler": "workspace:^",
     "@openfn/language-common": "3.2.3",
     "@openfn/lexicon": "workspace:^",
-    "@types/mock-fs": "^4.13.4",
+    "@openfn/test-helpers": "workspace:*",
     "@types/node": "^18.19.130",
     "@types/semver": "^7.7.1",
     "ava": "5.3.1",
-    "mock-fs": "^5.5.0",
     "recast": "^0.21.5",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
@@ -48,7 +47,6 @@
     "dist/index.d.ts",
     "dist/modules/esm-resolve-hook.js",
     "dist/modules/esm-resolve-hook.d.ts",
-    "dist/esm-resolve-hook.js",
     "README.md"
   ],
   "dependencies": {

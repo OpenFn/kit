@@ -1,9 +1,11 @@
 import test from 'ava';
-import mockfs from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { readFile } from 'node:fs/promises';
 
 import serializeOutput from '../../src/execute/serialize-output';
 import { createMockLogger } from '@openfn/logger';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -13,7 +15,7 @@ test.beforeEach(() => {
 
 const toString = (obj: object) => JSON.stringify(obj, null, 2);
 
-test('output true', async (t) => {
+test.serial('output true', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -24,7 +26,7 @@ test('output true', async (t) => {
   t.is(result, 'true');
 });
 
-test('output false', async (t) => {
+test.serial('output false', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -35,7 +37,7 @@ test('output false', async (t) => {
   t.is(result, 'false');
 });
 
-test('output a number', async (t) => {
+test.serial('output a number', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -46,7 +48,7 @@ test('output a number', async (t) => {
   t.is(result, '42');
 });
 
-test('output null', async (t) => {
+test.serial('output null', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -57,7 +59,7 @@ test('output null', async (t) => {
   t.is(result, 'null');
 });
 
-test('output undefined as an empty string', async (t) => {
+test.serial('output undefined as an empty string', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -68,7 +70,7 @@ test('output undefined as an empty string', async (t) => {
   t.is(result, '');
 });
 
-test('output a string', async (t) => {
+test.serial('output a string', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -79,7 +81,7 @@ test('output a string', async (t) => {
   t.is(result, '"ok"');
 });
 
-test('output an array', async (t) => {
+test.serial('output an array', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -90,7 +92,7 @@ test('output an array', async (t) => {
   t.is(result, toString(['ok']));
 });
 
-test('output an object', async (t) => {
+test.serial('output an object', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -101,7 +103,7 @@ test('output an object', async (t) => {
   t.is(result, '{}');
 });
 
-test('exclude configuration', async (t) => {
+test.serial('exclude configuration', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -117,8 +119,8 @@ test('exclude configuration', async (t) => {
   t.is(result, toString({ data: {}, foo: 'bar', _secret: true }));
 });
 
-test('output to file', async (t) => {
-  mockfs({
+test.serial('output to file', async (t) => {
+  mockFs({
     'out.json': '',
   });
 

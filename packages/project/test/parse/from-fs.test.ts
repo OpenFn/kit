@@ -1,12 +1,13 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { parseProject } from '../../src/parse/from-fs';
 import { jsonToYaml, yamlToJson } from '../../src/util/yaml';
 import { buildConfig } from '../../src/util/config';
 
+test.afterEach(restoreFs);
+
 test.afterEach(() => {
   files = {};
-  mock.restore();
 });
 
 let files: Record<string, string> = {};
@@ -20,7 +21,8 @@ function mockFile(path: string, content: string | object) {
 
   // @ts-ignore
   files[path] = content;
-  mock(files);
+  restoreFs();
+  mockFs(files);
 }
 
 test.serial('should include multiple workflows (legacy format)', async (t) => {

@@ -1,8 +1,10 @@
 import test from 'ava';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { handler as list } from '../../src/projects/list';
 import { createMockLogger } from '@openfn/logger';
-import mock from 'mock-fs';
 import { jsonToYaml } from '@openfn/project';
+
+test.afterEach(restoreFs);
 
 // a workspace with several projects but no checkout metadata
 const noCheckoutProject = jsonToYaml({ id: 'my-project', workflows: [] });
@@ -136,11 +138,11 @@ files['/aliased/workflows/sw/simple-workflow.yaml'] = jsonToYaml({
   steps: [],
 });
 
-mock(files);
+test.beforeEach(() => mockFs(files));
 
 const logger = createMockLogger('', { level: 'debug' });
 
-test('throw for invalid workspace directory', async (t) => {
+test.serial('throw for invalid workspace directory', async (t) => {
   await t.throwsAsync(
     () => list({ command: 'projects', workspace: '/invalid' }, logger),
     {
@@ -151,7 +153,7 @@ test('throw for invalid workspace directory', async (t) => {
   // t.is(message, 'Command was run in an invalid openfn workspace');
 });
 
-test('throw if dir is not a workspace', async (t) => {
+test.serial('throw if dir is not a workspace', async (t) => {
   await t.throwsAsync(
     () => list({ command: 'projects', workspace: '/no-ws' }, logger),
     {
@@ -160,7 +162,7 @@ test('throw if dir is not a workspace', async (t) => {
   );
 });
 
-test('valid workspace', async (t) => {
+test.serial('valid workspace', async (t) => {
   await list({ command: 'projects', workspace: '/ws' }, logger);
 
   const { message } = logger._find('always', /available openfn projects/i);
@@ -182,7 +184,7 @@ staging | my-project
   );
 });
 
-test('shows workflow aliases on the active project', async (t) => {
+test.serial('shows workflow aliases on the active project', async (t) => {
   const privateLogger = createMockLogger('', { level: 'debug' });
   await list({ command: 'projects', workspace: '/aliased' }, privateLogger);
 

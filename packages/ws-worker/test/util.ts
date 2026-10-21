@@ -13,23 +13,28 @@ export const initSentry = () => {
   Sentry.init({
     dsn: 'https://296274784378f87245c369278a62b29a@o55451.ingest.us.sentry.io/4508936084848640',
     transport: sentryTransport,
+    // Dedupe drops an event identical to the previous one, so a test that
+    // repeats an earlier test's error would never see its report
+    integrations: (defaults) => defaults.filter((i) => i.name !== 'Dedupe'),
   });
   return testkit;
 };
 
-// Telemetry will asynchronously submit the report in the background
-// We have to wait for it here in this nasty loop :(
-export const waitForSentryReport = async (testkit: any, max = 500) => {
+// Sentry submits reports in the background, and a capture from an earlier
+// test can land after the testkit is reset, so poll for the report you expect
+export const waitForSentryReport = async (
+  testkit: any,
+  match: (report: any) => boolean,
+  max = 500
+) => {
   for (let i = 0; i < max; i++) {
-    if (i >= max) {
-      throw new Error('SENTRY_REPORT_TIMEOUT');
-    }
-    const reports = testkit.reports();
-    if (reports.length) {
-      return reports;
+    const report = testkit.reports().find(match);
+    if (report) {
+      return report;
     }
     await sleep(1);
   }
+  throw new Error('SENTRY_REPORT_TIMEOUT');
 };
 
 export const wait = (fn: () => any, maxRuns = 100) =>

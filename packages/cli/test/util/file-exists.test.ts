@@ -1,22 +1,20 @@
 import test from 'ava';
-import mockfs from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { fileExists } from '../../src/util/file-exists';
 
-test.afterEach(() => {
-  mockfs.restore();
-});
+test.afterEach(restoreFs);
 
-test('returns true for an existing file', async (t) => {
-  mockfs({ './test.txt': 'content' });
+test.serial('returns true for an existing file', async (t) => {
+  mockFs({ './test.txt': 'content' });
   t.true(await fileExists('./test.txt'));
 });
 
-test('returns false for a non-existent path', async (t) => {
-  mockfs({});
+test.serial('returns false for a non-existent path', async (t) => {
+  mockFs({});
   t.false(await fileExists('./nonexistent.txt'));
 });
 
-test('returns false for a directory', async (t) => {
-  mockfs({ './mydir': {} });
+test.serial('returns false for a directory', async (t) => {
+  mockFs({ './mydir': {} });
   t.false(await fileExists('./mydir'));
 });

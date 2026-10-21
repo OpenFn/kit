@@ -3,10 +3,12 @@
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs/promises';
 import { ExecuteOptions } from '../../src/execute/command';
 import handler from '../../src/execute/handler';
-import { mockFs, resetMockFs } from '../util';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger(undefined, { level: 'none' });
 
@@ -27,8 +29,6 @@ const defaultOptions = {
 
 const fn = `const fn = (fn) => (s) => fn(s);
 `;
-
-test.after(resetMockFs);
 
 test.serial('run a simple job', async (t) => {
   const job = `${fn}fn(() => ({ data: 42 }));`;

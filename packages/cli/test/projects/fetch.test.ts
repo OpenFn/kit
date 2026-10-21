@@ -1,11 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { MockAgent, setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
 
 import { handler as fetchHandler } from '../../src/projects/fetch';
 import { myProject_v1, myProject_yaml } from './fixtures';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -39,15 +41,11 @@ test.before(() => {
 });
 
 test.beforeEach(() => {
-  mock({
+  mockFs({
     '/ws/.projects': {},
     '/ws/openfn.yaml': '',
   });
   logger._reset();
-});
-
-test.afterEach(() => {
-  mock.restore();
 });
 
 test.serial('fetch by UUID to default new alias', async (t) => {
@@ -483,7 +481,8 @@ test.serial(
       .replace(' - a', ' - z'); // change the local history to be incompatible
 
     // Make it look like we've checked out the project
-    mock({
+    restoreFs();
+    mockFs({
       '/ws/.projects': {},
       '/ws/openfn.yaml': '',
       '/ws/.projects/project@app.openfn.org.yaml': modified,
@@ -515,7 +514,8 @@ test.serial('force merge a diverged project', async (t) => {
   // Change project.yaml
   const modified = myProject_yaml.replace('fn()', 'fn(x)');
 
-  mock({
+  restoreFs();
+  mockFs({
     '/ws/.projects': {},
     '/ws/openfn.yaml': '',
     '/ws/.projects/project@app.openfn.org.yaml': modified,
@@ -544,7 +544,8 @@ test.serial('force merge a diverged project', async (t) => {
 test.serial(
   'fetch by UUID to an output path when local copies share the UUID',
   async (t) => {
-    mock({
+    restoreFs();
+    mockFs({
       '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
       '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
       '/ws/openfn.yaml': '',
@@ -570,7 +571,8 @@ test.serial(
 test.serial(
   'error: fetch by UUID to an output path without an endpoint when local copies share the UUID',
   async (t) => {
-    mock({
+    restoreFs();
+    mockFs({
       '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
       '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
       '/ws/openfn.yaml': '',
@@ -596,7 +598,8 @@ test.serial(
 test.serial(
   'error: fetch by UUID without an output path when local copies share the UUID',
   async (t) => {
-    mock({
+    restoreFs();
+    mockFs({
       '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
       '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
       '/ws/openfn.yaml': '',
@@ -620,7 +623,8 @@ test.serial(
 );
 
 test.serial('fetch by alias when local copies share the UUID', async (t) => {
-  mock({
+  restoreFs();
+  mockFs({
     '/ws/.projects/jam@app.openfn.org.yaml': yaml_v1,
     '/ws/.projects/jam-backup@app.openfn.org.yaml': yaml_v1,
     '/ws/openfn.yaml': '',

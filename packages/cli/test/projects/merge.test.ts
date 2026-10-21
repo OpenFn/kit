@@ -1,8 +1,11 @@
 import Project, { jsonToYaml, Workspace } from '@openfn/project';
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { handler as mergeHandler } from '../../src/projects/merge';
 import { createMockLogger } from '@openfn/logger';
+import { handler as checkoutHandler } from '../../src/projects/checkout';
+
+test.afterEach(restoreFs);
 
 const sandbox = {
   id: '<uuid:sandbox>',
@@ -78,7 +81,7 @@ const main = {
 };
 
 test.beforeEach(() => {
-  mock({
+  mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
@@ -94,6 +97,17 @@ test.beforeEach(() => {
 });
 
 const logger = createMockLogger('', { level: 'debug' });
+
+test.serial('checkout finds the project workflows on disk', async (t) => {
+  await checkoutHandler(
+    { command: 'project-checkout', project: 'my-sandbox', workspace: '/ws' },
+    logger
+  );
+
+  const project = await Project.from('fs', { root: '/ws' });
+  t.is(project.workflows.length, 1);
+  t.is(project.workflows[0].steps.length, 3);
+});
 
 test.serial('merging into the same project', async (t) => {
   await mergeHandler(
@@ -204,7 +218,8 @@ test.serial(
 );
 
 test.serial('Write to JSON using project config', async (t) => {
-  mock({
+  restoreFs();
+  mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
       formats: { openfn: 'yaml', project: 'json', workflow: 'yaml' },
@@ -247,7 +262,8 @@ test.serial('Write to JSON using project config', async (t) => {
 });
 
 test.serial('merge with custom base', async (t) => {
-  mock({
+  restoreFs();
+  mockFs({
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },
       formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
@@ -334,7 +350,8 @@ const multiMain = {
 };
 
 const mockMultiWorkflowWorkspace = () => {
-  mock({
+  restoreFs();
+  mockFs({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
       dirs: { workflows: 'workflows' },

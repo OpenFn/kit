@@ -1,16 +1,18 @@
 import test from 'ava';
-import mock from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 
 import { generateProject } from '../../src';
 import fromPath, { extractAliasFromFilename } from '../../src/parse/from-path';
 import * as v2 from '../fixtures/sample-v2-project';
+
+test.afterEach(restoreFs);
 
 const proj = generateProject('my-project', ['a-b'], {
   openfnUuid: true,
 });
 
 test.serial('should load a v1 state json', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.json': JSON.stringify(
       proj.serialize('state', { format: 'json' })
     ),
@@ -26,7 +28,7 @@ test.serial('should load a v1 state json', async (t) => {
 });
 
 test.serial('should load a v1 state yaml', async (t) => {
-  mock({
+  mockFs({
     // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
@@ -41,7 +43,7 @@ test.serial('should load a v1 state yaml', async (t) => {
 });
 
 test.serial('should load a v2 project yaml', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.yaml': v2.yaml,
   });
   const project = await fromPath('/p1/main@openfn.org.yaml');
@@ -52,7 +54,7 @@ test.serial('should load a v2 project yaml', async (t) => {
 });
 
 test.serial('should load a v2 project json', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.json': JSON.stringify(v2.json),
   });
   const project = await fromPath('/p1/main@openfn.org.json');
@@ -63,7 +65,7 @@ test.serial('should load a v2 project json', async (t) => {
 });
 
 test.serial('should use workspace config', async (t) => {
-  mock({
+  mockFs({
     // @ts-ignore
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });
@@ -95,7 +97,7 @@ test.serial('should use workspace config', async (t) => {
 });
 
 test.serial('should apply a name override to a loaded project', async (t) => {
-  mock({
+  mockFs({
     '/p1/main@openfn.org.yaml': v2.yaml,
   });
   const project = await fromPath('/p1/main@openfn.org.yaml', {
@@ -105,27 +107,36 @@ test.serial('should apply a name override to a loaded project', async (t) => {
   t.is(project.name, 'My Duplicate');
 });
 
-test('extractAliasFromFilename: should extract alias from alias@domain.yaml format', (t) => {
-  const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
-  t.is(alias, 'main');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from alias@domain.yaml format',
+  (t) => {
+    const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
+    t.is(alias, 'main');
+  }
+);
 
-test('extractAliasFromFilename: should extract alias from alias@domain.json format', (t) => {
-  const alias = extractAliasFromFilename('staging@localhost.json');
-  t.is(alias, 'staging');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from alias@domain.json format',
+  (t) => {
+    const alias = extractAliasFromFilename('staging@localhost.json');
+    t.is(alias, 'staging');
+  }
+);
 
-test('extractAliasFromFilename: should extract alias from simple filename', (t) => {
-  const alias = extractAliasFromFilename('production.yaml');
-  t.is(alias, 'production');
-});
+test.serial(
+  'extractAliasFromFilename: should extract alias from simple filename',
+  (t) => {
+    const alias = extractAliasFromFilename('production.yaml');
+    t.is(alias, 'production');
+  }
+);
 
-test('extractAliasFromFilename: should handle full paths', (t) => {
+test.serial('extractAliasFromFilename: should handle full paths', (t) => {
   const alias = extractAliasFromFilename('/path/to/dev@app.openfn.org.yaml');
   t.is(alias, 'dev');
 });
 
-test('extractAliasFromFilename: should handle complex aliases', (t) => {
+test.serial('extractAliasFromFilename: should handle complex aliases', (t) => {
   const alias = extractAliasFromFilename(
     'my-project-staging@app.openfn.org.yaml'
   );

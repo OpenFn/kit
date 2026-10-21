@@ -1,6 +1,8 @@
-import mock from 'mock-fs';
-import { jsonToYaml, Workspace } from '../src';
+import Project, { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
+
+test.afterEach(restoreFs);
 
 const gen = (uuid: any, _alias: string, id: string, _domain: string) =>
   jsonToYaml({
@@ -14,240 +16,257 @@ const gen = (uuid: any, _alias: string, id: string, _domain: string) =>
   });
 
 // TODO need a test on the legacy and new yaml formats here
-mock({
-  '/ws/openfn.yaml': jsonToYaml({
-    project: {
-      id: 'project-1',
-      uuid: '1234',
-    },
-    workspace: {
-      formats: {
-        openfn: 'yaml',
-        project: 'yaml',
-        workflow: 'yaml',
-        custom: true, // Note that this will be excluded
+test.beforeEach(() => {
+  mockFs({
+    '/ws/openfn.yaml': jsonToYaml({
+      project: {
+        id: 'project-1',
+        uuid: '1234',
       },
-      // deliberately exclude dirs
-      custom: true,
-    },
-  }),
-  '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-    name: 'Project 1',
-    id: '<uuid-1>',
-    workflows: [
-      {
-        name: 'simple-workflow', // TODO clean up
-        id: 'wf-id', // TODO clean up
-        jobs: [
-          {
-            name: 'Transform data to FHIR standard',
-            body: ' fn(state => state); // sdfl',
-            adaptor: '@openfn/language-http@latest',
-            id: 'job-a',
-          },
-        ],
-        triggers: [
-          {
-            type: 'webhook',
-            enabled: true,
-            id: 'trigger-id',
-          },
-        ],
-        edges: [
-          {
-            id: 'edge-id',
-            target_job_id: 'job-a',
-            enabled: true,
-            source_trigger_id: 'trigger-id',
-            condition_type: 'always',
-          },
-        ],
+      workspace: {
+        formats: {
+          openfn: 'yaml',
+          project: 'yaml',
+          workflow: 'yaml',
+          custom: true, // Note that this will be excluded
+        },
+        // deliberately exclude dirs
+        custom: true,
       },
-      {
-        name: 'another-workflow',
-        id: 'another-id',
-        jobs: [
-          {
-            name: 'Transform data to FHIR standard',
-            body: ' fn(state => state); // sdfl',
-            adaptor: '@openfn/language-http@latest',
-            id: 'job-b',
-          },
-        ],
-        triggers: [
-          {
-            type: 'webhook',
-            enabled: true,
-            id: 'trigger-id',
-          },
-        ],
-        edges: [
-          {
-            id: 'edge-id',
-            target_job_id: 'job-b',
-            enabled: true,
-            source_trigger_id: 'trigger-id',
-            condition_type: 'always',
-          },
-        ],
-      },
-    ],
-  }),
+    }),
+    '/ws/workflows/wf-1/wf-1.yaml': jsonToYaml({
+      id: 'wf-1',
+      steps: [{ id: 'a', expression: 'a.js' }],
+    }),
+    '/ws/workflows/wf-1/a.js': 'fn(s => s)',
+    '/ws/workflows/wf-2/wf-2.yaml': jsonToYaml({
+      id: 'wf-2',
+      steps: [{ id: 'b', expression: 'b.js' }],
+    }),
+    '/ws/workflows/wf-2/b.js': 'fn(s => s)',
+    '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
+      name: 'Project 1',
+      id: '<uuid-1>',
+      workflows: [
+        {
+          name: 'simple-workflow', // TODO clean up
+          id: 'wf-id', // TODO clean up
+          jobs: [
+            {
+              name: 'Transform data to FHIR standard',
+              body: ' fn(state => state); // sdfl',
+              adaptor: '@openfn/language-http@latest',
+              id: 'job-a',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'job-a',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+        {
+          name: 'another-workflow',
+          id: 'another-id',
+          jobs: [
+            {
+              name: 'Transform data to FHIR standard',
+              body: ' fn(state => state); // sdfl',
+              adaptor: '@openfn/language-http@latest',
+              id: 'job-b',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'job-b',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+      ],
+    }),
 
-  // json format
-  '/ws2/openfn.yaml': jsonToYaml({
-    project: {
-      id: 'project-2',
-      uuid: '<uuid-id2>',
-    },
-    workspace: {
-      formats: {
-        openfn: 'yaml',
-        project: 'json',
-        workflow: 'yaml',
+    // json format
+    '/ws2/openfn.yaml': jsonToYaml({
+      project: {
+        id: 'project-2',
+        uuid: '<uuid-id2>',
       },
-    },
-  }),
-  '/ws2/.projects/staging@app.openfn.org.json': JSON.stringify({
-    name: 'Project 2',
-    id: '<uuid-2>',
-    workflows: [
-      {
-        name: 'Simple Workflow',
-        id: '<uuid>',
-        jobs: [
-          {
-            name: 'X',
-            body: '.',
-            adaptor: '@openfn/language-http@latest',
-            id: 'a',
-          },
-        ],
-        triggers: [
-          {
-            type: 'webhook',
-            enabled: true,
-            id: 'trigger-id',
-          },
-        ],
-        edges: [
-          {
-            id: 'edge-id',
-            target_job_id: 'a',
-            enabled: true,
-            source_trigger_id: 'trigger-id',
-            condition_type: 'always',
-          },
-        ],
+      workspace: {
+        formats: {
+          openfn: 'yaml',
+          project: 'json',
+          workflow: 'yaml',
+        },
       },
-    ],
-  }),
+    }),
+    '/ws2/.projects/staging@app.openfn.org.json': JSON.stringify({
+      name: 'Project 2',
+      id: '<uuid-2>',
+      workflows: [
+        {
+          name: 'Simple Workflow',
+          id: '<uuid>',
+          jobs: [
+            {
+              name: 'X',
+              body: '.',
+              adaptor: '@openfn/language-http@latest',
+              id: 'a',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'a',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+      ],
+    }),
 
-  // custom paths
-  '/ws3/openfn.yaml': jsonToYaml({
-    project: {
-      id: 'project-3',
-      uuid: '<uuid-3>',
-    },
-    workspace: {
-      dirs: {
-        projects: 'p',
+    // custom paths
+    '/ws3/openfn.yaml': jsonToYaml({
+      project: {
+        id: 'project-3',
+        uuid: '<uuid-3>',
       },
-    },
-  }),
-  '/ws3/p/project@app.openfn.org.yaml': jsonToYaml({
-    name: 'Project 3',
-    id: '<uuid-3>',
-    workflows: [
-      {
-        name: 'Simple Workflow',
-        id: '<uuid>',
-        jobs: [
-          {
-            name: 'X',
-            body: '.',
-            adaptor: '@openfn/language-http@latest',
-            id: 'a',
-          },
-        ],
-        triggers: [
-          {
-            type: 'webhook',
-            enabled: true,
-            id: 'trigger-id',
-          },
-        ],
-        edges: [
-          {
-            id: 'edge-id',
-            target_job_id: 'a',
-            enabled: true,
-            source_trigger_id: 'trigger-id',
-            condition_type: 'always',
-          },
-        ],
+      workspace: {
+        dirs: {
+          projects: 'p',
+        },
       },
-    ],
-  }),
+    }),
+    '/ws3/p/project@app.openfn.org.yaml': jsonToYaml({
+      name: 'Project 3',
+      id: '<uuid-3>',
+      workflows: [
+        {
+          name: 'Simple Workflow',
+          id: '<uuid>',
+          jobs: [
+            {
+              name: 'X',
+              body: '.',
+              adaptor: '@openfn/language-http@latest',
+              id: 'a',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'a',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+      ],
+    }),
 
-  // aliasing
-  // Two local copies of the same project, with "main" checked out
-  '/ws5/openfn.yaml': jsonToYaml({
-    project: { id: 'proj-1', uuid: '111', alias: 'main' },
-  }),
-  '/ws5/.projects/main@openfn.org.yaml': gen(
-    111,
-    'main',
-    'proj-1',
-    'openfn.org'
-  ),
-  '/ws5/.projects/backup@openfn.org.yaml': gen(
-    111,
-    'backup',
-    'proj-1',
-    'openfn.org'
-  ),
-  // Two copies on different ports of the same host
-  '/ws6/openfn.yaml': '',
-  '/ws6/.openfn/checkout.yaml': jsonToYaml({
-    id: 'proj-1',
-    uuid: '222',
-    alias: 'local',
-    endpoint: 'http://localhost:5000',
-  }),
-  '/ws6/.projects/local@localhost.yaml': jsonToYaml({
-    id: 'proj-1',
-    version: 2,
-    openfn: { uuid: '111', endpoint: 'http://localhost:4000' },
-    workflows: [],
-  }),
-  '/ws6/.projects/other@localhost.yaml': jsonToYaml({
-    id: 'proj-1',
-    version: 2,
-    openfn: { uuid: '222', endpoint: 'http://localhost:5000' },
-    workflows: [],
-  }),
-  '/ws4/openfn.yaml': '',
-  '/ws4/.projects/main@openfn.org.yaml': gen(
-    111,
-    'main',
-    'proj-1',
-    'openfn.org'
-  ),
-  // prettier-ignore
-  '/ws4/.projects/main@somewhere.com.yaml': gen(112, 'main', 'proj-1', 'somewhere.com'),
-  // prettier-ignore
-  '/ws4/.projects/staging@openfn.org.yaml': gen(113, 'staging', 'proj-1-staging', 'openfn.org'),
+    // aliasing
+    // Two local copies of the same project, with "main" checked out
+    '/ws5/openfn.yaml': jsonToYaml({
+      project: { id: 'proj-1', uuid: '111', alias: 'main' },
+    }),
+    '/ws5/.projects/main@openfn.org.yaml': gen(
+      111,
+      'main',
+      'proj-1',
+      'openfn.org'
+    ),
+    '/ws5/.projects/backup@openfn.org.yaml': gen(
+      111,
+      'backup',
+      'proj-1',
+      'openfn.org'
+    ),
+    // Two copies on different ports of the same host
+    '/ws6/openfn.yaml': '',
+    '/ws6/.openfn/checkout.yaml': jsonToYaml({
+      id: 'proj-1',
+      uuid: '222',
+      alias: 'local',
+      endpoint: 'http://localhost:5000',
+    }),
+    '/ws6/.projects/local@localhost.yaml': jsonToYaml({
+      id: 'proj-1',
+      version: 2,
+      openfn: { uuid: '111', endpoint: 'http://localhost:4000' },
+      workflows: [],
+    }),
+    '/ws6/.projects/other@localhost.yaml': jsonToYaml({
+      id: 'proj-1',
+      version: 2,
+      openfn: { uuid: '222', endpoint: 'http://localhost:5000' },
+      workflows: [],
+    }),
+    '/ws4/openfn.yaml': '',
+    '/ws4/.projects/main@openfn.org.yaml': gen(
+      111,
+      'main',
+      'proj-1',
+      'openfn.org'
+    ),
+    // prettier-ignore
+    '/ws4/.projects/main@somewhere.com.yaml': gen(112, 'main', 'proj-1', 'somewhere.com'),
+    // prettier-ignore
+    '/ws4/.projects/staging@openfn.org.yaml': gen(113, 'staging', 'proj-1-staging', 'openfn.org'),
+  });
 });
 
-test('workspace-path: valid workspace path', (t) => {
+test.serial('load the checked out project from the filesystem', async (t) => {
+  const project = await Project.from('fs', { root: '/ws' });
+  t.is(project.workflows.length, 2);
+});
+
+test.serial('workspace-path: valid workspace path', (t) => {
   const ws = new Workspace('/ws');
   t.is(ws.valid, true);
 
   t.truthy(ws.config);
 });
 
-test('workspace-path: invalid workspace path', (t) => {
+test.serial('workspace-path: invalid workspace path', (t) => {
   const ws = new Workspace('/invalid');
   t.is(ws.valid, false);
 
@@ -257,7 +276,7 @@ test('workspace-path: invalid workspace path', (t) => {
   t.truthy(ws.config.formats);
 });
 
-test('workspace-list: list projects in the workspace', (t) => {
+test.serial('workspace-list: list projects in the workspace', (t) => {
   const ws = new Workspace('/ws');
   const result = ws.list();
 
@@ -268,7 +287,7 @@ test('workspace-list: list projects in the workspace', (t) => {
   );
 });
 
-test('workspace-get: get projects in the workspace', (t) => {
+test.serial('workspace-get: get projects in the workspace', (t) => {
   const ws = new Workspace('/ws');
   const found = ws.get('project-1');
   t.truthy(found);
@@ -279,7 +298,7 @@ test('workspace-get: get projects in the workspace', (t) => {
   );
 });
 
-test('load JSON files', (t) => {
+test.serial('load JSON files', (t) => {
   const ws = new Workspace('/ws2');
   const proj = ws.get('project-2');
   t.truthy(proj);
@@ -287,7 +306,7 @@ test('load JSON files', (t) => {
   t.is(proj?.workflows[0].id, 'simple-workflow');
 });
 
-test('load from custom path', (t) => {
+test.serial('load from custom path', (t) => {
   const ws = new Workspace('/ws3');
   const proj = ws.get('project-3');
   t.truthy(proj);
@@ -295,7 +314,7 @@ test('load from custom path', (t) => {
   t.is(proj?.workflows[0].id, 'simple-workflow');
 });
 
-test('load config', (t) => {
+test.serial('load config', (t) => {
   const ws = new Workspace('/ws');
   t.deepEqual(ws.config, {
     credentials: 'credentials.yaml',
@@ -312,7 +331,7 @@ test('load config', (t) => {
   });
 });
 
-test('load project meta', (t) => {
+test.serial('load project meta', (t) => {
   const ws = new Workspace('/ws');
   t.deepEqual(ws.activeProject, {
     uuid: '1234',
@@ -320,14 +339,14 @@ test('load project meta', (t) => {
   });
 });
 
-test('load v2 projects with multiple matching ids', (t) => {
+test.serial('load v2 projects with multiple matching ids', (t) => {
   const ws = new Workspace('/ws4');
 
   // @ts-ignore
   t.is(ws.projects.length, 3);
 });
 
-test('get project by id', (t) => {
+test.serial('get project by id', (t) => {
   const ws = new Workspace('/ws4');
   const project = ws.get('proj-1-staging');
 
@@ -335,7 +354,7 @@ test('get project by id', (t) => {
   t.is(project?.id, 'proj-1-staging');
 });
 
-test('get project by partial uuid', (t) => {
+test.serial('get project by partial uuid', (t) => {
   const ws = new Workspace('/ws4');
   const project = ws.get('3');
 
@@ -343,14 +362,14 @@ test('get project by partial uuid', (t) => {
   t.is(project?.uuid, '113');
 });
 
-test('get project returns null when not found', (t) => {
+test.serial('get project returns null when not found', (t) => {
   const ws = new Workspace('/ws4');
   const project = ws.get('non-existent');
 
   t.is(project, null);
 });
 
-test('get project throws on ambiguous match', (t) => {
+test.serial('get project throws on ambiguous match', (t) => {
   const ws = new Workspace('/ws4');
   const error = t.throws(() => ws.get('main'));
 
@@ -358,7 +377,7 @@ test('get project throws on ambiguous match', (t) => {
   t.regex(error!.message, /Failed to resolve unique identifier/);
 });
 
-test('get a duplicated project by uuid throws', (t) => {
+test.serial('get a duplicated project by uuid throws', (t) => {
   const ws = new Workspace('/ws5');
 
   t.throws(() => ws.get('111'), {
@@ -366,19 +385,22 @@ test('get a duplicated project by uuid throws', (t) => {
   });
 });
 
-test('getTrackedProject returns the checked out copy by alias', (t) => {
+test.serial('getTrackedProject returns the checked out copy by alias', (t) => {
   const ws = new Workspace('/ws5');
 
   t.is(ws.getTrackedProject()?.alias, 'main');
 });
 
-test('getTrackedProject matches the alias on the same port only', (t) => {
-  const ws = new Workspace('/ws6');
+test.serial(
+  'getTrackedProject matches the alias on the same port only',
+  (t) => {
+    const ws = new Workspace('/ws6');
 
-  t.is(ws.getTrackedProject()?.alias, 'other');
-});
+    t.is(ws.getTrackedProject()?.alias, 'other');
+  }
+);
 
-test('getProjectPath returns the file for each copy', (t) => {
+test.serial('getProjectPath returns the file for each copy', (t) => {
   const ws = new Workspace('/ws5');
 
   t.is(

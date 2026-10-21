@@ -1,20 +1,20 @@
 import test from 'ava';
-import mock from 'mock-fs';
-import path from 'node:path';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import { createMockLogger } from '@openfn/logger';
 import { getModuleEntryPoint } from '../../src/modules/repo';
+
+test.afterEach(restoreFs);
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  mock.restore();
   logger._reset();
 });
 
-const repoPath = path.resolve('test/__repo__');
+const repoPath = '/repo';
 
 const mockRepo = (pkg: object) => {
-  mock({
+  mockFs({
     // Mock a repo with one module installed
     [`${repoPath}/package.json`]: JSON.stringify({
       name: 'test',

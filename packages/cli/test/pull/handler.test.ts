@@ -1,5 +1,5 @@
 import test from 'ava';
-import mockfs from 'mock-fs';
+import { mockFs, restoreFs } from '@openfn/test-helpers';
 import fs from 'node:fs';
 import { MockAgent, setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
@@ -9,17 +9,13 @@ import { PullOptions } from '../../src/pull/command';
 import { Workspace } from '@openfn/project';
 import { myProject_v1 } from '../projects/fixtures';
 
+test.afterEach(restoreFs);
+
 const ENDPOINT = 'https://fake.test.openfn.org';
 const PROJECT_UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
 
 test.beforeEach(() => {
-  mockfs.restore();
-
   process.env.OPENFN_API_KEY = 'fake-api-key';
-});
-
-test.afterEach(() => {
-  mockfs.restore();
 });
 
 let mockAgent = new MockAgent();
@@ -53,7 +49,7 @@ test.serial(
   'redirects to beta handler when openfn.yaml exists in cwd',
   async (t) => {
     const logger = createMockLogger('', { level: 'debug' });
-    mockfs({
+    mockFs({
       ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "${ENDPOINT}"}`,
       ['/tmp/openfn.yaml']: `
 project:
@@ -72,7 +68,7 @@ test.serial(
   'openfn yaml endpoint preferred to config.json endpoint',
   async (t) => {
     const logger = createMockLogger('', { level: 'debug' });
-    mockfs({
+    mockFs({
       ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "DOES_NOT_EXIST"}`,
       ['/tmp/openfn.yaml']: `
 project:
@@ -90,7 +86,7 @@ test.serial(
   'CLI endpoint preferred to openfn.yaml and config.json endpoints',
   async (t) => {
     const logger = createMockLogger('', { level: 'debug' });
-    mockfs({
+    mockFs({
       ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "DOES_NOT_EXIST"}`,
       ['/tmp/openfn.yaml']: `
 project:
@@ -112,7 +108,7 @@ project:
 
 test.serial('does not create credentials.yaml when redirecting', async (t) => {
   const logger = createMockLogger('', { level: 'debug' });
-  mockfs({
+  mockFs({
     ['/tmp/config.json']: `{"apiKey": "123", "endpoint": "${ENDPOINT}"}`,
     ['/tmp/openfn.yaml']: `
 project:
@@ -128,7 +124,7 @@ test.serial(
   'tracks the pulled project in the workspace when redirecting with legacy config.yaml structure',
   async (t) => {
     const logger = createMockLogger('', { level: 'debug' });
-    mockfs({
+    mockFs({
       ['/tmp/openfn.yaml']: `
 project:
   endpoint: ${ENDPOINT}`,
@@ -150,7 +146,7 @@ test.serial(
   'tracks the pulled project in the workspace when redirecting with new checkout.yaml file',
   async (t) => {
     const logger = createMockLogger('', { level: 'debug' });
-    mockfs({
+    mockFs({
       ['/tmp/.openfn/checkout.yaml']: `
   endpoint: ${ENDPOINT}`,
       ['/tmp/openfn.yaml']: '',

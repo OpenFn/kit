@@ -1,6 +1,6 @@
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
-import mock from 'mock-fs';
+import { loadPath, mockFs, restoreFs } from '@openfn/test-helpers';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -11,6 +11,8 @@ import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
 
+test.afterEach(restoreFs);
+
 // These CLI tests take quite a while to run, mostly I think
 // because of all the FS mocking
 // To make them more robust in CI, all the tests in this file need
@@ -20,7 +22,6 @@ const TIMEOUT = 1000 * 30;
 const logger = createMockLogger('', { level: 'debug' });
 
 test.afterEach(() => {
-  mock.restore();
   logger._reset();
 });
 
@@ -58,26 +59,18 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   const state =
     JSON.stringify(options.state) || '{ "data": {}, "configuration": {} }';
 
-  // Ensure that pnpm is not mocked out
-  // This is needed to ensure that pnpm dependencies can be dynamically loaded
-  // (for recast in particular)
-  const pnpm = path.resolve('../../node_modules/.pnpm');
-
   const pkgPath = path.resolve('./package.json');
-  const recastPath = `${pnpm}/recast@0.21.5`;
   // Mock the file system in-memory
   if (!options.disableMock) {
-    mock({
+    mockFs({
       [expressionPath]: job,
       [statePath]: state,
       [outputPath]: '{}',
-      [recastPath]: mock.load(recastPath, {}),
       // enable us to load test modules through the mock
-      '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
-      '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
-      '/monorepo/': mock.load(path.resolve('test/__monorepo__/'), {}),
-      //'node_modules': mock.load(path.resolve('node_modules/'), {}),
-      [pkgPath]: mock.load(pkgPath),
+      '/modules/': loadPath(path.resolve('test/__modules__/')),
+      '/repo/': loadPath(path.resolve('test/__repo__/')),
+      '/monorepo/': loadPath(path.resolve('test/__monorepo__/')),
+      [pkgPath]: loadPath(pkgPath),
       ...(options.mockfs ?? {}),
     });
   }
@@ -732,7 +725,7 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
 
 test.serial('docs should print documentation with full names', async (t) => {
   t.timeout(TIMEOUT);
-  mock({
+  mockFs({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
       functions: [
@@ -764,8 +757,8 @@ test.serial('docs should print documentation with full names', async (t) => {
 test.serial('docs adaptor should list operations', async (t) => {
   t.timeout(TIMEOUT);
   const pkgPath = path.resolve('./package.json');
-  mock({
-    [pkgPath]: mock.load(pkgPath),
+  mockFs({
+    [pkgPath]: loadPath(pkgPath),
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
       version: '1.0.0',
@@ -794,7 +787,7 @@ test.serial(
   'docs adaptor + operation should print documentation with shorthand names',
   async (t) => {
     t.timeout(TIMEOUT);
-    mock({
+    mockFs({
       '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
         name: 'test',
         functions: [
