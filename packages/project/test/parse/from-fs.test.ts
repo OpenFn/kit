@@ -221,6 +221,80 @@ test.serial('should track forked_from', async (t) => {
   t.falsy(project.openfn!.forked_from);
 });
 
+const checkoutWithWorkflow = (checkout: object) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+  mockFile('/ws/.openfn/checkout.yaml', { id: 'my-project', ...checkout });
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    name: 'Workflow 1',
+    steps: [{ id: 'a' }],
+  });
+};
+
+test.serial('should track workflow_uuids from the checkout file', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: { 'workflow-1': 'uuid-1' } });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.deepEqual(project.cli.workflow_uuids, { 'workflow-1': 'uuid-1' });
+  // it's tracking metadata, not project config
+  t.falsy(project.openfn!.workflow_uuids);
+});
+
+test.serial('should set the uuid on a tracked workflow', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: { 'workflow-1': 'uuid-1' } });
+  mockFile('/ws/workflows/workflow-2/workflow-2.yaml', {
+    name: 'Workflow 2',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.getWorkflow('workflow-1')!.openfn?.uuid, 'uuid-1');
+  // untracked workflows have no uuid
+  t.falsy(project.getWorkflow('workflow-2')!.openfn?.uuid);
+});
+
+test.serial(
+  'should find the uuid of a tracked workflow in a renamed folder',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+    mockFile('/ws/.openfn/checkout.yaml', {
+      id: 'my-project',
+      workflow_uuids: { 'workflow-1': 'uuid-1' },
+    });
+    mockFile('/ws/workflows/my-folder/workflow-1.yaml', {
+      name: 'Workflow 1',
+      steps: [{ id: 'a' }],
+    });
+
+    const project = await parseProject({ root: '/ws' });
+
+    const wf = project.getWorkflow('workflow-1')!;
+    t.is(wf.alias, 'my-folder');
+    t.is(wf.openfn?.uuid, 'uuid-1');
+  }
+);
+
+test.serial('should load a checkout file with no workflow_uuids', async (t) => {
+  checkoutWithWorkflow({ forked_from: { 'workflow-1': 'abcd' } });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.cli.workflow_uuids, undefined);
+  t.deepEqual(project.cli.forked_from, { 'workflow-1': 'abcd' });
+});
+
+test.serial('should ignore a malformed workflow_uuids', async (t) => {
+  checkoutWithWorkflow({ workflow_uuids: 'nope' });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.cli.workflow_uuids, undefined);
+  t.falsy(project.openfn!.workflow_uuids);
+});
+
 test.serial('should load the name from config', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),
@@ -435,4 +509,36 @@ test.serial('should override the name and id from options', async (t) => {
   const project = await parseProject({ root: '/ws', name: 'Hello World' });
   t.is(project.name, 'hello-world');
   t.is(project.id, 'hello-world');
+});
+
+test.serial('should take the workflow id from the file name', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  // no id in the file, and a name that would slugify to something else
+  mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+    name: 'My Workflow (renamed)',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  const wf = project.getWorkflow('my-workflow')!;
+  t.is(wf.name, 'My Workflow (renamed)');
+  t.is(wf.alias, undefined);
+});
+
+test.serial('should prefer the file name to an id in the file', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+    id: 'something-else',
+    name: 'My Workflow',
+    steps: [{ id: 'a' }],
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.workflows[0].id, 'my-workflow');
 });

@@ -1,12 +1,16 @@
 import { isEqual } from 'lodash-es';
 import { Project } from '../Project';
 import { toResourceChannels } from './resources';
+import matchWorkflows from '../merge/match-workflows';
 
 export type DiffType = 'added' | 'changed' | 'removed';
 
 export type WorkflowDiff = {
+  // The workflow id in A (or in B, if the workflow was added)
   id: string;
   type: DiffType;
+  // The workflow id in B, if it differs from the id in A (ie, it was renamed)
+  bId?: string;
 };
 
 export type ChannelDiff = {
@@ -34,7 +38,9 @@ export type ProjectDiff = {
  * Compare two projects and return the changes showing how
  * project B has diverged from project A.
  *
- * Workflows are identified by their ID and compared using version hashes.
+ * Workflows are paired up by uuid, then id, then name (see matchWorkflows) and
+ * compared using version hashes. A workflow with a different id in each project
+ * is reported with its id in A, and its id in B as `bId`.
  *
  * @param a - The baseline project (e.g., main branch)
  * @param b - The comparison project (e.g., staging branch)
@@ -47,6 +53,9 @@ export type ProjectDiff = {
  *   - 'added': workflow exists in B but not in A
  *   - 'removed': workflow exists in A but not in B
  *   - 'changed': workflow exists in both but has different version hashes
+ *
+ * If a workflow list is passed, a workflow is only considered if the list
+ * includes its id in A or in B.
  *
  * @example
  * ```typescript
@@ -64,30 +73,39 @@ export function diff(
 ): ProjectDiff {
   const diffs: WorkflowDiff[] = [];
 
+  const inScope = (...ids: Array<string | undefined>) =>
+    !workflows?.length || ids.some((id) => id && workflows.includes(id));
+
+  // B's workflow id -> A's workflow id
+  const matches = matchWorkflows(b.workflows, a.workflows);
+  const matchedInB = Object.fromEntries(
+    Object.entries(matches).map(([idB, idA]) => [idA, idB])
+  );
+
   // Check all of project A's workflows
   for (const workflowA of a.workflows) {
-    if (workflows?.length && !workflows.includes(workflowA.id)) {
+    const workflowB = b.getWorkflow(matchedInB[workflowA.id]);
+
+    if (!inScope(workflowA.id, workflowB?.id)) {
       continue;
     }
-
-    const workflowB = b.getWorkflow(workflowA.id);
 
     if (!workflowB) {
       // workflow exists in A but not in B = removed
       diffs.push({ id: workflowA.id, type: 'removed' });
     } else if (workflowA.getVersionHash() !== workflowB.getVersionHash()) {
       // workflow exists in both but with different content = changed
-      diffs.push({ id: workflowA.id, type: 'changed' });
+      diffs.push({
+        id: workflowA.id,
+        type: 'changed',
+        ...(workflowB.id !== workflowA.id && { bId: workflowB.id }),
+      });
     }
   }
 
   // Check for workflows that were added in B
   for (const workflowB of b.workflows) {
-    if (workflows?.length && !workflows.includes(workflowB.id)) {
-      continue;
-    }
-
-    if (!a.getWorkflow(workflowB.id)) {
+    if (!(workflowB.id in matches) && inScope(workflowB.id)) {
       // workflow exists in B but not in A = added
       diffs.push({ id: workflowB.id, type: 'added' });
     }

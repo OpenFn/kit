@@ -8,6 +8,7 @@ import {
   loadWorkspaceFile,
 } from '../../src/util/config';
 import mock from 'mock-fs';
+import { yamlToJson } from '../../src/util/yaml';
 import Project from '../../src';
 
 test.afterEach(() => {
@@ -329,4 +330,42 @@ test('hasCheckoutMeta: looks for the checkout file for the given branch', (t) =>
   // other branches, and no branch, don't have any
   t.false(hasCheckoutMeta('/ws', 'main'));
   t.false(hasCheckoutMeta('/ws'));
+});
+
+test('generate checkout file with workflow_uuids, keyed by workflow id', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    workflows: [
+      { id: 'wf-a', name: 'A', steps: [], openfn: { uuid: 'uuid-a' } },
+      { id: 'wf-b', name: 'B', steps: [], openfn: { uuid: 'uuid-b' } },
+    ],
+  });
+  const result = extractCheckout(proj);
+  t.deepEqual(yamlToJson(result.content).workflow_uuids, {
+    'wf-a': 'uuid-a',
+    'wf-b': 'uuid-b',
+  });
+});
+
+test('checkout file workflow_uuids skips workflows with no uuid', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    workflows: [
+      { id: 'wf-a', name: 'A', steps: [], openfn: { uuid: 'uuid-a' } },
+      { id: 'wf-b', name: 'B', steps: [] },
+    ],
+  });
+  const result = extractCheckout(proj);
+  t.deepEqual(yamlToJson(result.content).workflow_uuids, {
+    'wf-a': 'uuid-a',
+  });
+});
+
+test("checkout file excludes workflow_uuids if there aren't any", (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    workflows: [{ id: 'wf-b', name: 'B', steps: [] }],
+  });
+  const result = extractCheckout(proj);
+  t.false(result.content.includes('workflow_uuids'));
 });

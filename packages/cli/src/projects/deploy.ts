@@ -1,6 +1,8 @@
 import yargs from 'yargs';
 import Project, {
+  matchWorkflows,
   MergeProjectOptions,
+  relabelWorkflows,
   RESOURCES_FILE,
   toResourceChannels,
   versionsEqual,
@@ -19,6 +21,8 @@ import {
   serialize,
   getSerializePath,
   writeCheckoutFile,
+  updateForkedFrom,
+  invertMatches,
   findLocallyChangedWorkflows,
   AuthOptions,
 } from './util';
@@ -129,6 +133,9 @@ export const hasRemoteDiverged = (
 
   const refs = local.cli.forked_from ?? {};
 
+  // The remote id of a workflow can differ from the local one (eg, after a rename)
+  const matches = matchWorkflows(local.workflows, remote.workflows ?? []);
+
   const filteredWorkflows = workflows.length
     ? local.workflows.filter((w) => workflows.includes(w.id))
     : local.workflows;
@@ -137,7 +144,9 @@ export const hasRemoteDiverged = (
   for (const wf of filteredWorkflows) {
     if (wf.id in refs) {
       const forkedVersion = refs[wf.id];
-      const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
+      const remoteVersion = remote
+        .getWorkflow(matches[wf.id] ?? wf.id)
+        ?.history.at(-1);
       if (remoteVersion) {
         if (!versionsEqual(forkedVersion, remoteVersion!)) {
           diverged ??= [];
@@ -646,7 +655,24 @@ export async function handler(options: DeployOptions, logger: Logger) {
       const configPath = path.resolve(workspacePath, configData.path);
       await mkdir(path.dirname(configPath), { recursive: true });
       await writeFile(configPath, configData.content);
-      await writeCheckoutFile(workspacePath, finalProject, options.branch);
+
+      // The fetched project derives its workflow ids from their names, which
+      // can differ from the ids we use locally (eg, after a rename). The
+      // checkout file tracks workflows by their local ids, so it matches the
+      // workflows on disk
+      const localIds = invertMatches(
+        matchWorkflows(
+          merged.workflows.filter((wf) => !wf.isRemoved()),
+          finalProject.workflows
+        )
+      );
+      // (the tracked project state keeps the ids it was fetched with)
+      updateForkedFrom(finalProject);
+      await writeCheckoutFile(
+        workspacePath,
+        relabelWorkflows(finalProject, localIds),
+        options.branch
+      );
 
       // Sync collections into resources.yaml (anything else in there is left alone)
       const resourcesPath = path.resolve(workspacePath, RESOURCES_FILE);

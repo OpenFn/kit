@@ -6,6 +6,7 @@ import {
 } from '@openfn/lexicon';
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
+import matchWorkflows from './match-workflows';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
@@ -94,11 +95,19 @@ export function merge(
     );
   }
 
+  // Explicit mappings win. Otherwise, match source to target workflows
+  // by uuid, then id, then name
+  const workflowMappings = noMappings
+    ? matchWorkflows(sourceWorkflows, target.workflows)
+    : options.workflowMappings;
+  const getTargetWorkflow = (sourceWorkflow: Workflow) => {
+    const targetId = workflowMappings[sourceWorkflow.id];
+    return targetId ? target.getWorkflow(targetId) : undefined;
+  };
+
   const potentialConflicts: Record<string, string> = {};
   for (const sourceWorkflow of sourceWorkflows) {
-    const targetId =
-      options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
-    const targetWorkflow = target.getWorkflow(targetId);
+    const targetWorkflow = getTargetWorkflow(sourceWorkflow);
     if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
       potentialConflicts[sourceWorkflow.id] = targetWorkflow?.id;
     }
@@ -115,9 +124,7 @@ export function merge(
   }
 
   for (const sourceWorkflow of sourceWorkflows) {
-    const targetId =
-      options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
-    const targetWorkflow = target.getWorkflow(targetId);
+    const targetWorkflow = getTargetWorkflow(sourceWorkflow);
 
     if (targetWorkflow) {
       usedTargetIds.add(targetWorkflow.id);

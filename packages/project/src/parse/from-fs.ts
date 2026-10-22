@@ -12,7 +12,7 @@ import {
   findWorkspaceFile,
   loadCheckoutFile,
 } from '../util/config';
-import { countBy, omit } from 'lodash-es';
+import { countBy, isPlainObject, omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
 import slugify from '../util/slugify';
@@ -33,8 +33,8 @@ export type FromFsConfig = {
 };
 
 // Parse a single project from a root folder
-// Note that this does NOT attempt to load UUIDS from the project file
-// It just builds the project on disk
+// Workflow uuids are not stored in the workflow files: if a workflow is tracked
+// in the checkout file, its uuid is loaded from there. Other uuids are not loaded
 // I suppose we could take an option?
 export const parseProject = async (options: FromFsConfig) => {
   const { root, logger, alias } = options;
@@ -45,10 +45,20 @@ export const parseProject = async (options: FromFsConfig) => {
   const checkout =
     loadCheckoutFile(root, options.branch, context.project) ?? {};
 
+  const workflowUuids = isPlainObject(checkout.workflow_uuids)
+    ? (checkout.workflow_uuids as Record<string, string>)
+    : undefined;
+
   const proj: any = {
     id: options.name ? slugify(options.name) : checkout.id,
     name: options.name ? slugify(options.name) : checkout.name,
-    openfn: omit(checkout, ['id', 'alias', 'forked_from', 'collections']),
+    openfn: omit(checkout, [
+      'id',
+      'alias',
+      'forked_from',
+      'workflow_uuids',
+      'collections',
+    ]),
 
     // Legacy: collections used to be a list of names in openfn.yaml. A
     // collections key in resources.yaml takes precedence (see below)
@@ -59,6 +69,7 @@ export const parseProject = async (options: FromFsConfig) => {
     workflows: [],
     cli: omitNil({
       forked_from: checkout.forked_from,
+      workflow_uuids: workflowUuids,
     }),
   };
 
@@ -112,8 +123,9 @@ export const parseProject = async (options: FromFsConfig) => {
         wf = wf.workflow;
       }
 
-      if (wf.id && Array.isArray(wf.steps)) {
-        //logger?.log('Loading workflow at ', filePath); // TODO logger.debug
+      if (Array.isArray(wf.steps)) {
+        wf.id = path.basename(filePath, path.extname(filePath));
+
         for (const step of wf.steps) {
           // This is the saved, remote view of the step
           // TODO if the id has changed, how do we track?
@@ -139,6 +151,11 @@ export const parseProject = async (options: FromFsConfig) => {
         }
 
         const workflow = new Workflow(wf);
+        // If the workflow is tracked, we know its uuid
+        const uuid = workflowUuids?.[workflow.id];
+        if (uuid) {
+          workflow.openfn = { ...workflow.openfn, uuid };
+        }
         // A workflow folder renamed away from the id is treated as an alias
         const dir = path.dirname(filePath);
         const folder = path.basename(dir);

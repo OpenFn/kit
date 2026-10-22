@@ -1,3 +1,6 @@
+// Tests offline `openfn checkout`, `merge` and `projects` on static v2 project yaml files,
+// plus executing a workflow from the checked out project; see project-v1 for the legacy format
+
 import test from 'ava';
 import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';

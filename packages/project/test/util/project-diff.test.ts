@@ -150,8 +150,8 @@ test('diff: should only consider removed workflows from a filter list', (t) => {
 test('diff: should detect multiple changes at once', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
-  const wf3 = generateWorkflow('@id c trigger-z');
-  const wf4 = generateWorkflow('@id d trigger-w');
+  const wf3 = generateWorkflow('@id c @name wf-c trigger-z');
+  const wf4 = generateWorkflow('@id d @name wf-d trigger-w');
 
   // wf2 will be changed in projectB
   const wf2Changed = generateWorkflow('@id b trigger-different');
@@ -241,6 +241,74 @@ const channel = (name: string, extra = {}) => ({
 
 const withChannels = (channels?: any[]) =>
   new Project({ name: 'p', workflows: [], channels });
+
+const withUuid = (wf: any, uuid: string) => {
+  wf.openfn = { uuid };
+  return wf;
+};
+
+test('diff: a workflow with a different id but the same uuid is changed, not added and removed', (t) => {
+  const wfA = withUuid(generateWorkflow('@id old-id @name Wf trigger-x'), 'u1');
+  const wfB = withUuid(generateWorkflow('@id new-id @name Wf trigger-y'), 'u1');
+
+  const projectA = new Project({ name: 'a', workflows: [wfA] });
+  const projectB = new Project({ name: 'b', workflows: [wfB] });
+
+  const { workflows: diffs } = diff(projectA, projectB);
+
+  t.deepEqual(diffs, [{ id: 'old-id', type: 'changed', bId: 'new-id' }]);
+});
+
+test('diff: a workflow with a different id but the same name is changed', (t) => {
+  const wfA = generateWorkflow('@id old-id @name Wf trigger-x');
+  const wfB = generateWorkflow('@id new-id @name Wf trigger-y');
+
+  const projectA = new Project({ name: 'a', workflows: [wfA] });
+  const projectB = new Project({ name: 'b', workflows: [wfB] });
+
+  const { workflows: diffs } = diff(projectA, projectB);
+
+  t.deepEqual(diffs, [{ id: 'old-id', type: 'changed', bId: 'new-id' }]);
+});
+
+test('diff: a workflow with only a different id and identical content has no diff', (t) => {
+  const wfA = withUuid(generateWorkflow('@id old-id @name Wf trigger-x'), 'u1');
+  const wfB = withUuid(generateWorkflow('@id new-id @name Wf trigger-x'), 'u1');
+
+  const projectA = new Project({ name: 'a', workflows: [wfA] });
+  const projectB = new Project({ name: 'b', workflows: [wfB] });
+
+  const { workflows: diffs } = diff(projectA, projectB);
+
+  t.is(diffs.length, 0);
+});
+
+test('diff: a renamed workflow is considered if the filter list has its id in either project', (t) => {
+  const wfA = withUuid(generateWorkflow('@id old-id @name Wf trigger-x'), 'u1');
+  const wfB = withUuid(generateWorkflow('@id new-id @name Wf trigger-y'), 'u1');
+
+  const projectA = new Project({ name: 'a', workflows: [wfA] });
+  const projectB = new Project({ name: 'b', workflows: [wfB] });
+
+  t.is(diff(projectA, projectB, ['new-id']).workflows.length, 1);
+  t.is(diff(projectA, projectB, ['old-id']).workflows.length, 1);
+  t.is(diff(projectA, projectB, ['other']).workflows.length, 0);
+});
+
+test('diff: workflows with no uuid, id or name in common are still added and removed', (t) => {
+  const wfA = generateWorkflow('@id a @name wf-a trigger-x');
+  const wfB = generateWorkflow('@id b @name wf-b trigger-x');
+
+  const projectA = new Project({ name: 'a', workflows: [wfA] });
+  const projectB = new Project({ name: 'b', workflows: [wfB] });
+
+  const { workflows: diffs } = diff(projectA, projectB);
+
+  t.deepEqual(diffs, [
+    { id: 'a', type: 'removed' },
+    { id: 'b', type: 'added' },
+  ]);
+});
 
 test('diff: resources.channels is empty for identical channels', (t) => {
   const a = withChannels([channel('one')]);
