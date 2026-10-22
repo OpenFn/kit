@@ -539,3 +539,32 @@ test('rename a workflow locally, deploy, then pull', async (t) => {
     /name: Renamed/
   );
 });
+
+// (--force is needed because a rename also trips a false divergence warning: a separate known issue)
+test('rename an aliased workflow in the app, then pull', async (t) => {
+  const { workspace, read, run } = initWorkspace(t);
+  const project = gen();
+
+  await run(`openfn project pull ${project.openfn.uuid}`);
+
+  // alias the workflow, by renaming its folder
+  fs.renameSync(
+    path.join(workspace, 'workflows/workflow'),
+    path.join(workspace, 'workflows/wf')
+  );
+
+  // rename the workflow in the app
+  project.workflows[0].name = 'Renamed';
+  project.workflows[0].workflow.name = 'Renamed';
+  lightning.addProject(project.serialize('state', { format: 'json' }));
+
+  await run(`openfn project pull ${project.openfn.uuid} --force`);
+
+  // the rename is applied, and the alias is preserved
+  t.deepEqual(fs.readdirSync(path.join(workspace, 'workflows')), ['wf']);
+  t.regex(read('workflows/wf/workflow.yaml'), /name: Renamed/);
+  t.true(fs.existsSync(path.join(workspace, 'workflows/wf/job.js')));
+
+  // and the checkout still tracks the workflow by its local id
+  t.regex(read('.openfn/checkout.yaml'), /forked_from:\n  workflow: /);
+});
