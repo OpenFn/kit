@@ -263,7 +263,7 @@ const syncProjects = async (
     // this will actually happen later
   }
 
-  const isOtherProject = localProject.uuid !== remoteProject.uuid;
+  const isCrossProjectDeploy = localProject.uuid !== remoteProject.uuid;
 
   let mergeCandidates: string[];
   if (options.workflow?.length) {
@@ -281,7 +281,7 @@ const syncProjects = async (
   } else if (skipLocallyChangedCheck) {
     // the source is the spec, so every workflow in it is a candidate
     mergeCandidates = localProject.workflows.map((w) => w.id);
-    if (isOtherProject) {
+    if (isCrossProjectDeploy) {
       // a different project should end up looking exactly like the source,
       // so its own workflows are candidates too (to be removed)
       mergeCandidates = uniq([
@@ -304,7 +304,7 @@ const syncProjects = async (
     return null;
   }
 
-  const removedWorkflows = isOtherProject
+  const removedWorkflows = isCrossProjectDeploy
     ? workflowDiffs.filter((d) => d.type === 'removed').map((d) => d.id)
     : [];
   // Without a prompt nobody reviews the removals
