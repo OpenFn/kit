@@ -4,23 +4,16 @@
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs';
-import run from '../../src/run';
 import { setup } from './helpers';
 
-const { lightning, endpoint, initWorkspace, gen } = setup(test, 'rename', 5356);
+const { lightning, initWorkspace, gen } = setup(test, 'rename', 5356);
 
 test('rename a workflow and deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
 
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
@@ -37,13 +30,7 @@ test('rename a workflow and deploy', async (t) => {
     )
   );
 
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // the server has the same workflow and steps (by uuid), with the new name
   const workflows = Object.values(
@@ -76,28 +63,16 @@ test('rename a workflow and deploy', async (t) => {
   t.notRegex(checkout, /renamed/);
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename a workflow, deploy, then edit and deploy again', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -109,23 +84,11 @@ test('rename a workflow, deploy, then edit and deploy again', async (t) => {
       'name: Renamed'
     )
   );
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // now change the code in the renamed workflow and deploy again
   fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
 
   // it's an edit to the workflow, not a new workflow
   t.regex(stdout, /Renamed: changed/);
@@ -146,28 +109,16 @@ test('rename a workflow, deploy, then edit and deploy again', async (t) => {
   t.regex(checkout, new RegExp(`workflow_uuids:\n  workflow: ${before.id}`));
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename and edit a workflow in the same deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -181,13 +132,7 @@ test('rename and edit a workflow in the same deploy', async (t) => {
   );
   fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
 
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Renamed: changed/);
   t.notRegex(stdout, /: (added|deleted)/);
 
@@ -203,30 +148,18 @@ test('rename and edit a workflow in the same deploy', async (t) => {
   t.regex(checkout, new RegExp(`workflow_uuids:\n  workflow: ${before.id}`));
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename two workflows, edit each, and deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen('patients', [
     '@name Alpha trigger-job(expression="fn()")',
     '@name Beta trigger-job(expression="fn()")',
   ]);
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const uuids: Record<string, string> = {};
   for (const wf of Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
@@ -252,13 +185,7 @@ test('rename two workflows, edit each, and deploy', async (t) => {
     );
   }
 
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // each workflow keeps its own uuid, with its own new name and code
   const workflows = Object.values(
@@ -282,30 +209,18 @@ test('rename two workflows, edit each, and deploy', async (t) => {
   );
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('remove one workflow and rename another in the same deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen('patients', [
     '@name Alpha trigger-job(expression="fn()")',
     '@name Beta trigger-job(expression="fn()")',
   ]);
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const alphaBefore = (
     Object.values(
       lightning.state.projects[project.openfn.uuid].workflows
@@ -318,13 +233,7 @@ test('remove one workflow and rename another in the same deploy', async (t) => {
     read('workflows/alpha/alpha.yaml').replace('name: Alpha', 'name: Alpha 2')
   );
 
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Beta: deleted/);
   t.regex(stdout, /Alpha 2: changed/);
 
@@ -345,28 +254,16 @@ test('remove one workflow and rename another in the same deploy', async (t) => {
   t.notRegex(checkout, /beta/);
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename a step and deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -387,13 +284,7 @@ test('rename a step and deploy', async (t) => {
     )
   );
 
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // the server has the same steps and edge (by uuid), with the new name
   const workflows = Object.values(
@@ -421,13 +312,7 @@ test('rename a step and deploy', async (t) => {
   t.is(read('workflows/workflow/job.js'), 'fn()');
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
@@ -436,17 +321,11 @@ test('rename a step and deploy', async (t) => {
 // (renamed-job), but the workspace still has job. The next deploy sees job removed and
 // renamed-job added, so the step is replaced and gets a new uuid
 test.skip('rename a step, deploy, then edit and deploy again', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -461,23 +340,11 @@ test.skip('rename a step, deploy, then edit and deploy again', async (t) => {
       '    name: Renamed job\n'
     )
   );
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // now change the code in the renamed step and deploy again
   fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Workflow: changed/);
   t.notRegex(stdout, /: (added|deleted)/);
 
@@ -492,28 +359,16 @@ test.skip('rename a step, deploy, then edit and deploy again', async (t) => {
   t.is(Object.keys(workflows[0].jobs).length, 2);
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename and edit a step in the same deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -530,13 +385,7 @@ test('rename and edit a step in the same deploy', async (t) => {
   );
   fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
 
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Workflow: changed/);
   t.notRegex(stdout, /: (added|deleted)/);
 
@@ -550,28 +399,16 @@ test('rename and edit a step in the same deploy', async (t) => {
   t.is(Object.keys(workflows[0].jobs).length, 2);
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('rename a workflow and one of its steps in the same deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
   const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [before] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -586,13 +423,7 @@ test('rename a workflow and one of its steps in the same deploy', async (t) => {
       .replace('    name: job\n', '    name: Renamed job\n')
   );
 
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // the same workflow and step (by uuid), with new names
   const workflows = Object.values(
@@ -614,12 +445,6 @@ test('rename a workflow and one of its steps in the same deploy', async (t) => {
   );
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });

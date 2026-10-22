@@ -4,24 +4,17 @@
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs';
-import run from '../../src/run';
 import { setup } from './helpers';
 
-const { lightning, endpoint, initWorkspace, gen } = setup(test, 'edit', 5355);
+const { lightning, initWorkspace, gen } = setup(test, 'edit', 5355);
 
 test('add a workflow and deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen('patients', [
     '@name Alpha trigger-job(expression="fn()")',
   ]);
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const [alphaBefore] = Object.values(
     lightning.state.projects[project.openfn.uuid].workflows
   ) as any[];
@@ -36,13 +29,7 @@ test('add a workflow and deploy', async (t) => {
   );
   fs.writeFileSync(path.join(workspace, 'workflows/beta/job.js'), 'fn(beta)');
 
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Beta: added/);
 
   // the server has both workflows: the existing one is untouched, the new one has a uuid
@@ -65,30 +52,18 @@ test('add a workflow and deploy', async (t) => {
   );
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
 
 test('remove a workflow and deploy', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen('patients', [
     '@name Alpha trigger-job(expression="fn()")',
     '@name Beta trigger-job(expression="fn()")',
   ]);
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const alphaBefore = (
     Object.values(
       lightning.state.projects[project.openfn.uuid].workflows
@@ -97,13 +72,7 @@ test('remove a workflow and deploy', async (t) => {
 
   fs.rmSync(path.join(workspace, 'workflows/beta'), { recursive: true });
 
-  const { stdout } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout } = await run('openfn project deploy');
   t.regex(stdout, /Beta: deleted/);
 
   // the workflow is gone from the server, and the other is untouched
@@ -123,12 +92,6 @@ test('remove a workflow and deploy', async (t) => {
   t.notRegex(checkout, /beta/);
 
   // everything is now in sync, so there is nothing left to deploy
-  const { stdout: again } = await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });

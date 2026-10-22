@@ -9,6 +9,7 @@ import type { ExecutionContext, TestFn } from 'ava';
 import { generateProject } from '@openfn/project';
 import createLightningServer from '@openfn/lightning-mock';
 import { rimraf } from 'rimraf';
+import run from '../../src/run';
 
 export const setup = (test: TestFn, name: string, port: number) => {
   const root = path.resolve('tmp/sync', name);
@@ -29,6 +30,17 @@ export const setup = (test: TestFn, name: string, port: number) => {
       workspace,
       read: (filePath: string) => {
         return fs.readFileSync(path.resolve(workspace, filePath), 'utf8');
+      },
+      // run a command against this workspace and server (and log it to the test output), without passing
+      // --workspace, --endpoint or --api-key (the env is set for this command only)
+      run: (cmd: string) => {
+        t.log(`$ ${cmd}`);
+        return run(cmd, {
+          OPENFN_WORKSPACE: workspace,
+          OPENFN_ENDPOINT: endpoint,
+          OPENFN_API_KEY: 'abc',
+          IGNORE_DOT_ENV: 'true',
+        });
       },
     };
   };

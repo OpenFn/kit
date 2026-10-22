@@ -73,7 +73,7 @@ test.serial('pull, change and re-deploy', async (t) => {
 
   // deploy
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -101,9 +101,7 @@ test.serial('pull, change and re-deploy twice', async (t) => {
 
   // first deploy
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
-  const first = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
-  );
+  const first = await run(`openfn project deploy --log-json -l debug`);
   t.falsy(first.stderr);
   assertLog(t, extractLogs(first.stdout), /Updated project/);
 
@@ -114,7 +112,7 @@ test.serial('pull, change and re-deploy twice', async (t) => {
   // second deploy after another update
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 2 }))');
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
   const logs = extractLogs(stdout);
@@ -142,9 +140,7 @@ test.serial('deploy and pull to check version history', async (t) => {
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
 
   // deploy then pull
-  const { stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
-  );
+  const { stderr } = await run(`openfn project deploy --log-json -l debug`);
   t.falsy(stderr);
   await run(`openfn project pull ${projectId} --log-json -l debug`);
 
@@ -176,7 +172,7 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
 
   // deploy
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
   const logs = extractLogs(stdout);
@@ -217,7 +213,7 @@ test.serial('Remove a whole workflow', async (t) => {
 
   // deploy
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -264,7 +260,7 @@ steps:
   await rimraf(path.join(tmpDir, 'workflows/my-workflow/my-job.js'));
 
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -319,7 +315,7 @@ steps:
   );
 
   const { stdout, stderr } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -374,9 +370,7 @@ test.serial.skip(
     await fs.writeFile(exprPath, "post('http://success.org')");
 
     // deploy
-    const { stdout, stderr } = await run(
-      `openfn project deploy --no-confirm  -l debug`
-    );
+    const { stdout, stderr } = await run(`openfn project deploy  -l debug`);
     console.log(stdout);
     t.falsy(stderr);
     const logs = extractLogs(stdout);
@@ -402,9 +396,7 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
   // base
   await run(`openfn project pull ${projectId} --log-json -l debug`);
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
-  const firstDeploy = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
-  );
+  const firstDeploy = await run(`openfn project deploy --log-json -l debug`);
   assertLog(t, extractLogs(firstDeploy.stdout), /Updated project/);
 
   // remote changed from base
@@ -426,7 +418,7 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
 
   // deploy with divergence
   const { stdout, err } = await run(
-    `openfn project deploy --no-confirm --log-json -l debug`
+    `openfn project deploy --log-json -l debug`
   );
   t.truthy(err);
   const logs = extractLogs(stdout);
@@ -450,7 +442,7 @@ test.serial('deploy a pulled v2 state file as a new project', async (t) => {
 
   // deploy that exact file back as a duplicate
   const { stdout, stderr } = await run(
-    `openfn project deploy ${pulledPath} --new --name my-duplicate --no-confirm --log-json -l debug`
+    `openfn project deploy ${pulledPath} --new --name my-duplicate --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -508,7 +500,7 @@ test.serial(
 
     // deploy main's pulled file, but target staging instead of main
     const { stdout, stderr } = await run(
-      `openfn project deploy ${mainPath} staging --no-confirm --log-json -l debug`
+      `openfn project deploy ${mainPath} staging --log-json -l debug`
     );
     t.falsy(stderr);
     assertLog(t, extractLogs(stdout), /Updated project/);
@@ -555,7 +547,7 @@ test.serial(
     await fs.writeFile(resourcesPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(
-      `openfn project deploy --no-confirm --log-json -l debug`
+      `openfn project deploy --log-json -l debug`
     );
     t.falsy(stderr);
 
@@ -598,7 +590,7 @@ workflows:
   await fs.writeFile(exportedPath, specYaml);
 
   const { stdout, stderr } = await run(
-    `openfn project deploy ${exportedPath} --name my-duplicate --no-confirm --log-json -l debug`
+    `openfn project deploy ${exportedPath} --name my-duplicate --log-json -l debug`
   );
   t.falsy(stderr);
 
@@ -661,7 +653,7 @@ test.serial(
     await fs.writeFile(resourcesPath, jsonToYaml(before));
 
     const { stdout, stderr } = await run(
-      `openfn project deploy --no-confirm --log-json -l debug`
+      `openfn project deploy --log-json -l debug`
     );
     t.falsy(stderr);
 

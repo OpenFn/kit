@@ -4,36 +4,19 @@
 import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs';
-import run from '../../src/run';
 import { setup } from './helpers';
 
-const { lightning, endpoint, initWorkspace, gen } = setup(
-  test,
-  'roundtrip',
-  5354
-);
+const { lightning, initWorkspace, gen } = setup(test, 'roundtrip', 5354);
 
 test('pull, edit, deploy, then pull again', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
 
   fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
 
-  await run(
-    `openfn project deploy \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       --no-confirm`
-  );
+  await run('openfn project deploy');
 
   // the server has the edit
   const [workflow] = Object.values(
@@ -46,13 +29,7 @@ test('pull, edit, deploy, then pull again', async (t) => {
   t.regex(checkoutAfterDeploy, /forked_from:\n  workflow: /);
   t.regex(checkoutAfterDeploy, /workflow_uuids:\n  workflow: /);
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
 
   // pulling what we just deployed changes nothing
   t.is(read('workflows/workflow/job.js'), 'fn(x)');
@@ -65,16 +42,10 @@ test('pull, edit, deploy, then pull again', async (t) => {
 });
 
 test('fetch only updates the tracked project', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+  const { workspace, read, run } = initWorkspace(t);
   const project = gen();
 
-  await run(
-    `openfn project pull \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project pull ${project.openfn.uuid}`);
   const checkoutBefore = read('.openfn/checkout.yaml');
 
   // Make a local change
@@ -88,13 +59,7 @@ test('fetch only updates the tracked project', async (t) => {
   lightning.addProject(project.serialize('state', { format: 'json' }));
 
   // Now fetch
-  await run(
-    `openfn project fetch \
-       --workspace ${workspace} \
-       --endpoint ${endpoint} \
-       --api-key abc \
-       ${project.openfn.uuid}`
-  );
+  await run(`openfn project fetch ${project.openfn.uuid}`);
 
   // the tracked project has the remote change
   t.regex(read('.projects/main@localhost.yaml'), /fn\(remote\)/);
