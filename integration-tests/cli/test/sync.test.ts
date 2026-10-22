@@ -1,4 +1,4 @@
-// Tests the new v2 sync API: fetch, pull` and checkout. Uses mock Lightning and asserting on what
+// Tests the new v2 sync API: fetch, pull, checkout and deploy. Uses mock Lightning and asserting on what
 // lands on disk (.projects state, checkout.yaml, workflows folder).
 
 import test from 'ava';
@@ -288,6 +288,97 @@ test('checkout by alias', async (t) => {
 
   job = read('workflows/workflow/job.js');
   t.is(job, 'fn(x)');
+});
+
+test('pull, edit, deploy, then pull again', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+
+  fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
+
+  await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+
+  // the server has the edit
+  const [workflow] = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  t.is(Object.values<any>(workflow.jobs)[0].body, 'fn(x)');
+
+  // the deploy updates the checkout, tracking the workflow as it is on disk
+  const checkoutAfterDeploy = read('.openfn/checkout.yaml');
+  t.regex(checkoutAfterDeploy, /forked_from:\n  workflow: /);
+  t.regex(checkoutAfterDeploy, /workflow_uuids:\n  workflow: /);
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+
+  // pulling what we just deployed changes nothing
+  t.is(read('workflows/workflow/job.js'), 'fn(x)');
+  t.deepEqual(fs.readdirSync(path.join(workspace, 'workflows')), ['workflow']);
+  t.deepEqual(
+    fs.readdirSync(path.join(workspace, 'workflows/workflow')).sort(),
+    ['job.js', 'workflow.yaml']
+  );
+  t.is(read('.openfn/checkout.yaml'), checkoutAfterDeploy);
+});
+
+test('fetch only updates the tracked project', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+  const checkoutBefore = read('.openfn/checkout.yaml');
+
+  // Make a local change
+  fs.writeFileSync(
+    path.join(workspace, 'workflows/workflow/job.js'),
+    'fn(local)'
+  );
+
+  // And a contrasting remote change
+  project.workflows[0].steps[0].expression = 'fn(remote)';
+  lightning.addProject(project.serialize('state', { format: 'json' }));
+
+  // Now fetch
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+
+  // the tracked project has the remote change
+  t.regex(read('.projects/main@localhost.yaml'), /fn\(remote\)/);
+
+  // but the workspace is untouched
+  t.is(read('workflows/workflow/job.js'), 'fn(local)');
+  t.is(read('.openfn/checkout.yaml'), checkoutBefore);
 });
 
 test.todo('merge by alias');
