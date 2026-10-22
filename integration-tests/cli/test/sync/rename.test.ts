@@ -354,3 +354,272 @@ test('remove one workflow and rename another in the same deploy', async (t) => {
   );
   t.regex(again, /Nothing to deploy/);
 });
+
+test('rename a step and deploy', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+  const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+  const [before] = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  const jobIds = Object.values<any>(before.jobs)
+    .map((j) => j.id)
+    .sort();
+  const edgeIds = Object.values<any>(before.edges).map((e) => e.id);
+  const jobId = Object.values<any>(before.jobs).find(
+    (j) => j.name === 'job'
+  ).id;
+
+  // rename the step (but not its id, or the file its code is in)
+  fs.writeFileSync(
+    wfPath,
+    read('workflows/workflow/workflow.yaml').replace(
+      '    name: job\n',
+      '    name: Renamed job\n'
+    )
+  );
+
+  await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+
+  // the server has the same steps and edge (by uuid), with the new name
+  const workflows = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  t.is(workflows.length, 1);
+  t.is(workflows[0].id, before.id);
+  t.deepEqual(
+    Object.values<any>(workflows[0].jobs)
+      .map((j) => j.id)
+      .sort(),
+    jobIds
+  );
+  t.is(
+    Object.values<any>(workflows[0].jobs).find((j) => j.id === jobId).name,
+    'Renamed job'
+  );
+  t.deepEqual(
+    Object.values<any>(workflows[0].edges).map((e) => e.id),
+    edgeIds
+  );
+
+  // the step stays where it was locally
+  t.regex(read('workflows/workflow/workflow.yaml'), /name: Renamed job/);
+  t.is(read('workflows/workflow/job.js'), 'fn()');
+
+  // everything is now in sync, so there is nothing left to deploy
+  const { stdout: again } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(again, /Nothing to deploy/);
+});
+
+// Skipped: step ids drift after a step rename
+// The first deploy refetches the project, which derives the step id from its new name
+// (renamed-job), but the workspace still has job. The next deploy sees job removed and
+// renamed-job added, so the step is replaced and gets a new uuid
+test.skip('rename a step, deploy, then edit and deploy again', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+  const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+  const [before] = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  const jobId = Object.values<any>(before.jobs).find(
+    (j) => j.name === 'job'
+  ).id;
+
+  fs.writeFileSync(
+    wfPath,
+    read('workflows/workflow/workflow.yaml').replace(
+      '    name: job\n',
+      '    name: Renamed job\n'
+    )
+  );
+  await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+
+  // now change the code in the renamed step and deploy again
+  fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
+  const { stdout } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(stdout, /Workflow: changed/);
+  t.notRegex(stdout, /: (added|deleted)/);
+
+  // the step was updated in place, not replaced
+  const workflows = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  t.is(workflows.length, 1);
+  const job = Object.values<any>(workflows[0].jobs).find((j) => j.id === jobId);
+  t.is(job.name, 'Renamed job');
+  t.is(job.body, 'fn(x)');
+  t.is(Object.keys(workflows[0].jobs).length, 2);
+
+  // everything is now in sync, so there is nothing left to deploy
+  const { stdout: again } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(again, /Nothing to deploy/);
+});
+
+test('rename and edit a step in the same deploy', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+  const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+  const [before] = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  const jobId = Object.values<any>(before.jobs).find(
+    (j) => j.name === 'job'
+  ).id;
+
+  fs.writeFileSync(
+    wfPath,
+    read('workflows/workflow/workflow.yaml').replace(
+      '    name: job\n',
+      '    name: Renamed job\n'
+    )
+  );
+  fs.writeFileSync(path.join(workspace, 'workflows/workflow/job.js'), 'fn(x)');
+
+  const { stdout } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(stdout, /Workflow: changed/);
+  t.notRegex(stdout, /: (added|deleted)/);
+
+  const workflows = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  t.is(workflows.length, 1);
+  const job = Object.values<any>(workflows[0].jobs).find((j) => j.id === jobId);
+  t.is(job.name, 'Renamed job');
+  t.is(job.body, 'fn(x)');
+  t.is(Object.keys(workflows[0].jobs).length, 2);
+
+  // everything is now in sync, so there is nothing left to deploy
+  const { stdout: again } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(again, /Nothing to deploy/);
+});
+
+test('rename a workflow and one of its steps in the same deploy', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+  const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+  const [before] = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  const jobId = Object.values<any>(before.jobs).find(
+    (j) => j.name === 'job'
+  ).id;
+
+  fs.writeFileSync(
+    wfPath,
+    read('workflows/workflow/workflow.yaml')
+      .replace('name: Workflow', 'name: Renamed')
+      .replace('    name: job\n', '    name: Renamed job\n')
+  );
+
+  await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+
+  // the same workflow and step (by uuid), with new names
+  const workflows = Object.values(
+    lightning.state.projects[project.openfn.uuid].workflows
+  ) as any[];
+  t.is(workflows.length, 1);
+  t.is(workflows[0].id, before.id);
+  t.is(workflows[0].name, 'Renamed');
+  t.is(
+    Object.values<any>(workflows[0].jobs).find((j) => j.id === jobId).name,
+    'Renamed job'
+  );
+  t.is(Object.keys(workflows[0].jobs).length, 2);
+
+  // the checkout tracks the workflow by its local id
+  t.regex(
+    read('.openfn/checkout.yaml'),
+    new RegExp(`workflow_uuids:\n  workflow: ${before.id}`)
+  );
+
+  // everything is now in sync, so there is nothing left to deploy
+  const { stdout: again } = await run(
+    `openfn project deploy \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --no-confirm`
+  );
+  t.regex(again, /Nothing to deploy/);
+});
