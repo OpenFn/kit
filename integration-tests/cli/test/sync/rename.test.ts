@@ -448,3 +448,94 @@ test('rename a workflow and one of its steps in the same deploy', async (t) => {
   const { stdout: again } = await run('openfn project deploy');
   t.regex(again, /Nothing to deploy/);
 });
+
+test('rename a workflow in the app, then pull', async (t) => {
+  const { workspace, read, run } = initWorkspace(t);
+  const project = gen();
+
+  await run(`openfn project pull ${project.openfn.uuid}`);
+
+  // a file of the user's, next to the workflow
+  fs.writeFileSync(
+    path.join(workspace, 'workflows/workflow/notes.md'),
+    'my notes'
+  );
+
+  // rename the workflow in the app
+  project.workflows[0].name = 'Renamed';
+  project.workflows[0].workflow.name = 'Renamed';
+  lightning.addProject(project.serialize('state', { format: 'json' }));
+
+  // --force is needed because a rename also trips a false divergence warning
+  await run(`openfn project pull ${project.openfn.uuid} --force`);
+
+  // there is one workflow, with its new name and the user's file alongside it
+  const folders = fs.readdirSync(path.join(workspace, 'workflows'));
+  const workflowFolders = folders.filter((folder) =>
+    fs
+      .readdirSync(path.join(workspace, 'workflows', folder))
+      .some((file) => file.endsWith('.yaml'))
+  );
+  t.is(workflowFolders.length, 1);
+  const files = fs.readdirSync(
+    path.join(workspace, 'workflows', workflowFolders[0])
+  );
+  t.true(files.includes('notes.md'));
+  t.true(files.includes('job.js'));
+  t.regex(
+    read(
+      `workflows/${workflowFolders[0]}/${files.find((f) =>
+        f.endsWith('.yaml')
+      )}`
+    ),
+    /name: Renamed/
+  );
+});
+
+test('rename a workflow locally, deploy, then pull', async (t) => {
+  const { workspace, read, run } = initWorkspace(t);
+  const project = gen();
+  const wfPath = path.join(workspace, 'workflows/workflow/workflow.yaml');
+
+  await run(`openfn project pull ${project.openfn.uuid}`);
+
+  // a file of the user's, next to the workflow
+  fs.writeFileSync(
+    path.join(workspace, 'workflows/workflow/notes.md'),
+    'my notes'
+  );
+
+  fs.writeFileSync(
+    wfPath,
+    read('workflows/workflow/workflow.yaml').replace(
+      'name: Workflow',
+      'name: Renamed'
+    )
+  );
+  await run('openfn project deploy');
+
+  // --force is needed because a rename also trips a false divergence warning
+  await run(`openfn project pull ${project.openfn.uuid} --force`);
+
+  // there is one workflow, with its new name and the user's file alongside it
+  const folders = fs.readdirSync(path.join(workspace, 'workflows'));
+  const workflowFolders = folders.filter((folder) =>
+    fs
+      .readdirSync(path.join(workspace, 'workflows', folder))
+      .some((file) => file.endsWith('.yaml'))
+  );
+  t.is(workflowFolders.length, 1);
+  const files = fs.readdirSync(
+    path.join(workspace, 'workflows', workflowFolders[0])
+  );
+  t.true(files.includes('notes.md'));
+  t.true(files.includes('job.js'));
+  t.regex(
+    read(
+      `workflows/${workflowFolders[0]}/${files.find((f) =>
+        f.endsWith('.yaml')
+      )}`
+    ),
+    /name: Renamed/
+  );
+});
