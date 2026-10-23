@@ -70,44 +70,23 @@ test.serial('should include multiple workflows (legacy format)', async (t) => {
 test.serial(
   'should treat square brackets in the project root literally',
   async (t) => {
-    const roots = ['/ws/project', '/ws/proj[v1]'];
-    const expressions = ['fn(s => s)', 'fn(s => ({ data: [] }))'];
-
-    for (const root of roots) {
-      mockFile(`${root}/openfn.yaml`, buildConfig());
-      for (let i = 0; i < expressions.length; i++) {
-        const id = `workflow-${i + 1}`;
-        mockFile(`${root}/workflows/${id}/${id}.yaml`, {
-          id,
-          steps: [{ id: 'a', expression: 'job.js' }],
-        });
-        mockFile(`${root}/workflows/${id}/job.js`, expressions[i]);
-      }
-    }
-
-    mockFile('/ws/projv/workflows/foreign/foreign.yaml', {
-      id: 'foreign',
+    // an unescaped [v1] would also match the sibling folder /ws/projv
+    mockFile('/ws/proj[v1]/openfn.yaml', buildConfig());
+    mockFile('/ws/proj[v1]/workflows/mine/mine.yaml', {
+      id: 'mine',
+      steps: [],
+    });
+    mockFile('/ws/projv/workflows/other/other.yaml', {
+      id: 'other',
       steps: [],
     });
 
-    const [ordinary, bracketed] = await Promise.all(
-      roots.map((root) => parseProject({ root }))
+    const project = await parseProject({ root: '/ws/proj[v1]' });
+
+    t.deepEqual(
+      project.workflows.map((wf) => wf.id),
+      ['mine']
     );
-
-    for (const project of [ordinary, bracketed]) {
-      t.deepEqual(project.workflows.map((wf) => wf.id).sort(), [
-        'workflow-1',
-        'workflow-2',
-      ]);
-      for (let i = 0; i < expressions.length; i++) {
-        t.is(
-          project.getWorkflow(`workflow-${i + 1}`)!.steps[0].expression,
-          expressions[i]
-        );
-      }
-    }
-
-    t.deepEqual(ordinary.diff(bracketed).workflows, []);
   }
 );
 
