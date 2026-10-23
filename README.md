@@ -39,9 +39,9 @@ We use [`pnpm`](https://pnpm.io/installation), a fast, disk space efficient pack
 
 ## Installing
 
-This repo uses node corepack to ensure pnpm v8 is used
+Install pnpm globally. When run inside this repo, pnpm reads the `packageManager` field in `package.json` and switches itself to the pinned version.
 
-- `$ corepack enable`
+- `$ npm install -g pnpm`
 - `$ pnpm install`
 - `$ pnpm build`
 
@@ -127,7 +127,7 @@ This repo uses `typesync` to ensure that all packages have an appropriate `@type
 
 This must be run MANUALLY (See https://github.com/OpenFn/kit/issues/333)
 
-On every add, update and remove. you should do `pnpm run typesync` from the repo root.
+On every add, update and remove. you should do `pnpm _typesync` from the repo root.
 
 Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the version number of the actual types package.
 

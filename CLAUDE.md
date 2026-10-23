@@ -1,165 +1,78 @@
-# OpenFn Kit
+# CLAUDE.md
 
-This monorepo contains the core packages that power OpenFn's workflow automation platform. OpenFn is a Digital Public Good trusted by NGOs and governments in 40+ countries to automate data integration workflows.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Architecture
+OpenFn kit is the pnpm monorepo behind OpenFn's workflow automation: the CLI, the Runtime that executes jobs, and the Worker that runs jobs in production for Lightning (OpenFn's web platform).
 
-The repository has three main packages: **CLI**, **Runtime**, and **Worker**. The CLI and Worker are both frontends for executing workflows - the CLI for local development, the Worker for production execution via Lightning (the web platform). Both wrap the Runtime as their execution engine. The Worker uses engine-multi to wrap the Runtime for multi-process execution.
+## How the pieces fit
 
-## Core Packages
+- **@openfn/runtime** executes a workflow plan in a sandboxed Node VM. A workflow is a graph of steps (jobs) joined by conditional edges. A job is an array of operations, each a function from state to state. State is never mutated between jobs.
+- **@openfn/compiler** turns job DSL into a standard ES module that imports from its adaptor (an npm package such as `@openfn/language-http`) and exports the operations array.
+- **@openfn/cli** is the local frontend. It compiles jobs itself and calls the runtime in-process.
+- **@openfn/ws-worker** is the production frontend. It is stateless: it claims runs from Lightning over websockets and reports events back, and Lightning owns all persistence. It never imports the compiler. It hands plans to **@openfn/engine-multi**, which compiles and runs each one in a worker thread inside a child process.
+- **@openfn/project** models local projects and workspaces (`Workspace`, `Project`, YAML parsing, diffs, version hashes). The CLI's `project` handlers in `packages/cli/src/projects/` are thin layers over it, and this is the most actively developed area of the repo. Sync with Lightning uses its v2 endpoint.
+- Supporting: `lexicon` (shared types), `logger`, `lightning-mock` (fake Lightning for worker tests), `deploy` and `describe-package` (both being phased out).
 
-- **[@openfn/cli](packages/cli)** - Command-line interface for local development. Run, test, compile, and deploy workflows.
-- **[@openfn/runtime](packages/runtime)** - Core execution engine. Safely executes jobs in a sandboxed VM environment.
-- **[@openfn/ws-worker](packages/ws-worker)** - WebSocket worker connecting Lightning to the Runtime. Stateless server that pulls runs from Lightning's queue. See [.claude/event-processor.md](.claude/event-processor.md) for event processing details.
-- **[@openfn/engine-multi](packages/engine-multi)** - Multi-process runtime wrapper used by ws-worker for concurrent workflow execution.
-- **[@openfn/compiler](packages/compiler)** - Transforms OpenFn job DSL into executable JavaScript modules.
+Every internal dependency is `workspace:*` and resolves to the dependency's built `dist/`, not its `src/`. engine-multi also runs its worker processes from `dist/`.
 
-## Supporting Packages
+## Commands
 
-- **@openfn/lexicon** - Shared TypeScript types
-- **@openfn/logger** - Structured logging utilities
-- **@openfn/describe-package** - TypeScript analysis for adaptor docs (to be phased out)
-- **@openfn/deploy** - Deployment logic for Lightning (soon to be deprecated)
-- **@openfn/project** - Models and understands local OpenFn projects
-- **@openfn/lightning-mock** - Mock Lightning server for testing
-
-## AI Assistant
-
-- Keep responses terse and do not over-explain. Users will ask for more guidance if they need it.
-- Always present users a short action plan and ask for confirmation before doing it
-- Keep the human in the loop at all times. Stop regularly and check for guidance.
-
-## Key Concepts
-
-**Workflows** are sequences of **jobs** that process data through steps. Each **job** is an array of **operations** (functions that transform state). State flows between jobs based on conditional edges.
-
-**Adaptors** are npm packages (e.g., `@openfn/language-http`) providing operations for specific systems. The CLI auto-installs them as needed.
-
-The **Compiler** transforms job DSL code into standard ES modules with imports and operation arrays.
-
-## Working with Projects
-
-A **workspace** holds one or more local **projects** that sync with Lightning. The CLI `project` subcommand (package: `@openfn/project`) is the most actively-developed area of the repo; handlers live in `packages/cli/src/projects/`. Sync uses Lightning's v2 endpoint.
+Node is pinned in `.tool-versions` (use `asdf`), and pnpm switches itself to the version pinned in `packageManager` (install any pnpm with `npm install -g pnpm`; corepack no longer ships with Node).
 
 ```bash
-openfn project list                # List projects in the current workspace
-openfn project pull [project]      # Pull from Lightning to the filesystem (fetch + checkout)
-openfn project fetch [project]     # Download project state without expanding it
-openfn project checkout <project>  # Switch the active project in the workspace
-openfn project deploy [project]    # Deploy the checked-out project to Lightning
-openfn project clean               # Delete the workflows folder and re-checkout the active project
-openfn project version [workflow]  # Show the version hash of a workflow
+pnpm install
+pnpm build                      # all packages
+pnpm --filter @openfn/cli build # one package
+pnpm test                       # all package tests
+pnpm test:types                 # tsc per package
+pnpm format / pnpm test:format  # prettier write / check (there is no eslint)
+pnpm _typesync                  # after changing dependencies
 ```
 
-New subcommands follow the existing pattern in `packages/cli/src/projects/` (`list.ts` is the simplest reference).
-
-## Development Setup
-
-### Prerequisites
-
-- Node.js 24 (pinned in `.tool-versions`; `package.json` engines still allows `>=18`). Use `asdf`.
-- pnpm (enable with `corepack enable`)
-
-### Common Commands
+Tests use ava with the shared root `ava.config.js`, which runs `test/**/*test.ts` straight from `src/` via `@swc-node/register`. Because workspace deps come from `dist/`, run `pnpm build` first when a test crosses packages or uses engine-multi. When unsure, build.
 
 ```bash
-# Root
-pnpm install             # Install dependencies
-pnpm build              # Build all packages
-pnpm test               # Run all tests
-pnpm format             # Format all packages with Prettier
-pnpm changeset          # Add a changeset for your PR
-
-# CLI
-cd packages/cli
-pnpm openfn test        # Run from source
-pnpm install:global     # Install as 'openfnx' for testing
-
-# Worker
-cd packages/ws-worker
-pnpm start              # Connect to localhost:4000
-pnpm start -l mock      # Use mock Lightning
-pnpm start --no-loop    # Disable auto-fetch
-curl -X POST http://localhost:2222/claim  # Manual claim
+cd packages/project
+pnpm ava test/util/config.test.ts            # one file
+pnpm ava test/util/config.test.ts -m "name*" # tests matching a title
 ```
 
-### Environment Variables
+ws-worker and engine-multi run with `--serial`; keep new tests there compatible with that.
 
-**CLI:**
-- `OPENFN_REPO_DIR` - CLI adaptor storage
-- `OPENFN_ADAPTORS_REPO` - Local adaptors monorepo path
-- `OPENFN_API_KEY` - API key for Lightning deployment
-- `OPENFN_ENDPOINT` - Lightning URL (default: app.openfn.org)
+### Running things locally
 
-**Worker:**
-- `WORKER_SECRET` - Worker authentication secret
-- Many other `WORKER_*` vars (capacity, port, backoff, max payload, Sentry DSN, …) — see `packages/ws-worker/src/util/cli.ts`.
+- **CLI**: `cd packages/cli && pnpm openfn <command>` runs the built `dist/`, so rebuild (or `pnpm build:watch`) after changes. `pnpm install:global` from root installs a global `openfnx` for testing; remove it with `npm uninstall -g @openfn/clix`.
+- **Worker**: `cd packages/ws-worker && pnpm start` connects to Lightning at `localhost:4000`. `-l mock` uses the mock Lightning, `--mock` uses a mock engine, and `--no-loop` stops auto-claiming so you can trigger claims with `curl -X POST http://localhost:2222/claim`. Options and their `WORKER_*` env vars are in `packages/ws-worker/src/util/cli.ts`.
+- CLI env vars (`OPENFN_API_KEY`, `OPENFN_ENDPOINT`, `OPENFN_REPO_DIR`, `OPENFN_ADAPTORS_REPO`, and others) are defined in `packages/cli/src/options.ts` and `packages/cli/src/projects/options.ts`.
 
-## Repository Structure
+### Integration tests
 
-```
-packages/
-├── cli/          # CLI entry: cli.ts, commands.ts, projects/, options.ts
-├── runtime/      # Runtime entry: index.ts, runtime.ts, modules/linker
-├── ws-worker/    # Worker entry: start.ts, server.ts, api/, events/
-├── compiler/     # Job DSL compiler
-├── engine-multi/ # Multi-process wrapper
-├── lexicon/      # Shared TypeScript types
-└── logger/       # Logging utilities
-```
+These live in `integration-tests/` (`cli`, `execute`, `worker`, `legacy-deploy`) and run against built packages. Always `pnpm build` first.
 
-## Testing & Releases
+- `pnpm test:integration` from root runs them all.
+- In `integration-tests/cli`, `pnpm test:dev` uses the local `packages/cli/dist`. Plain `pnpm test` expects a globally installed `openfn`, which is how CI runs it: `pnpm pack:local` then install the tarball globally.
 
-```bash
-pnpm test                  # All tests
-pnpm test:types           # Type checking
-pnpm test:integration     # Integration tests
-cd packages/cli && pnpm test:watch  # Watch mode
-```
+## Adding a CLI command
 
-## Testing Best Practice
+Commands are yargs modules registered in `packages/cli/src/cli.ts`. Each module calls `ensure('<command-name>', ...)` (`util/command-builders.ts`) to set `argv.command`, and `packages/cli/src/commands.ts` dispatches that string to a handler. A new `project` subcommand needs all three of:
 
-- Ensure tests are valuable before generating them. Focus on what's important.
-- Treat tests as documentation: they should show how the function is expected to work
-- Keep tests focuses: test one thing in each test
-- This repo contains extensive testing: check for similar patterns in the same package before improvising
+1. a yargs module added in `packages/cli/src/projects/command.ts`;
+2. the handler exported from `packages/cli/src/projects/index.ts`;
+3. an entry in the `handlers` map and the `CommandList` union in `commands.ts`.
 
-## Additional Documentation
+`packages/cli/src/projects/list.ts` is the simplest example to copy.
 
-**Changesets**: Run `pnpm changeset` when submitting PRs. Releases publish automatically to npm on merge to main.
+## Changesets and releases
 
-Changeset release notes must be a **single, short, high-level sentence** - vague is fine (e.g. `added new "compile-test" command to the CLI` or `Tighten guards against shell injection vectors`). Do not list files, functions, or implementation detail. For breaking changes only, you may add a short migration guide after the sentence. See the package `CHANGELOG.md` files for the house style.
+Every PR that changes a published package needs a changeset (`pnpm changeset`). The release note is a **single, short, high-level sentence**, and vague is fine (e.g. `added new "compile-test" command to the CLI`). Leave out files, functions and implementation detail. Breaking changes may add a short migration guide after the sentence. The package `CHANGELOG.md` files show the house style.
 
-The [.claude](.claude) folder contains detailed guides:
+Releases are prepared by hand on a release branch: run `pnpm changeset version`, check the changelogs, run `pnpm install`, and commit. Merging to main then publishes to npm and builds the worker Docker image. A brand-new package must be published once first with `pnpm publish:new`; see `README.md`.
 
-- **[event-processor.md](.claude/event-processor.md)** - Worker event processing deep-dive (ordering, batching) — companion to `packages/ws-worker/CLAUDE.md`
-- **[yaml-formats.md](.claude/yaml-formats.md)** - v1 vs v2 project YAML formats: structure, detection logic, and conversion paths
-- **[unit-testing-jobs.md](.claude/unit-testing-jobs.md)** - How to compile job for unit-testing
+## Further guides
 
-Key packages also carry their own `CLAUDE.md` (runtime, engine-multi, ws-worker), auto-loaded when you work in them.
+Read these before working in the matching area:
 
-## Code Standards
-
-- **Formatting**: Use Prettier (`pnpm format`)
-- **TypeScript**: Required for all new code
-- **TypeSync**: Run `pnpm _typesync` after modifying dependencies
-- **Tests**: Each package's tests run against its own `src/` via `@swc-node/register` (no build of the package under test needed). BUT workspace `@openfn/*` deps resolve to their built `dist/`, and `engine-multi` runs its worker processes from `dist/` — so run `pnpm build` first when tests cross packages or use the engine. When unsure, build.
-- **Independence**: Keep packages loosely coupled where possible
-
-## Architecture Principles
-
-- **Separation of Concerns**: CLI and Worker are frontends; Runtime is the shared execution backend
-- **Sandboxing**: Runtime uses Node's VM module for isolation
-- **State Immutability**: State cannot be mutated between jobs
-- **Portability**: Compiled jobs are standard ES modules
-- **Zero Persistence (Worker)**: Worker is stateless; Lightning handles persistence
-- **Multi-Process Isolation**: Worker uses engine-multi for concurrent workflow execution
-
-## Contributing
-
-1. Make changes
-2. Run `pnpm test`
-3. Add changeset: `pnpm changeset`
-4. Open PR at https://github.com/openfn/kit
-
-**Resources**: [docs.openfn.org](https://docs.openfn.org) | [app.openfn.org](https://app.openfn.org) | [github.com/openfn/kit](https://github.com/openfn/kit)
+- [.claude/event-processor.md](.claude/event-processor.md): how the worker orders and batches events sent to Lightning.
+- [.claude/yaml-formats.md](.claude/yaml-formats.md): v1 vs v2 project YAML, how each is detected, and how they convert.
+- [.claude/unit-testing-jobs.md](.claude/unit-testing-jobs.md): compiling a job so it can be unit tested.
+- `packages/runtime`, `packages/engine-multi` and `packages/ws-worker` each have their own `CLAUDE.md`, loaded automatically when you work there.
