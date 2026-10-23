@@ -3,7 +3,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 COPY . /app
 WORKDIR /app
-RUN npm install -g pnpm
+RUN npx get-pnpm
 
 # TODO: use prod optimized build? ----------------------------------------------
 # FROM base AS build
