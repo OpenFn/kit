@@ -6,9 +6,10 @@ import Project, {
   RESOURCES_FILE,
   toResourceChannels,
   versionsEqual,
+  Workflow,
   Workspace,
 } from '@openfn/project';
-import { isEqual } from 'lodash-es';
+import { isEqual, uniq } from 'lodash-es';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -220,7 +221,8 @@ export type SyncResult = {
 // It returns a merged state object
 //
 // skipLocallyChangedCheck: merge every workflow in the source, not just those
-// edited since its own last snapshot (that check is meaningless for a file)
+// edited since its own last snapshot (that check is meaningless for a file, or
+// when deploying to a different project)
 const syncProjects = async (
   options: DeployOptions,
   config: Required<AuthOptions>,
@@ -261,6 +263,8 @@ const syncProjects = async (
     // this will actually happen later
   }
 
+  const isCrossProjectDeploy = localProject.uuid !== remoteProject.uuid;
+
   let mergeCandidates: string[];
   if (options.workflow?.length) {
     const missing = options.workflow.filter(
@@ -277,6 +281,14 @@ const syncProjects = async (
   } else if (skipLocallyChangedCheck) {
     // the source is the spec, so every workflow in it is a candidate
     mergeCandidates = localProject.workflows.map((w) => w.id);
+    if (isCrossProjectDeploy) {
+      // a different project should end up looking exactly like the source,
+      // so its own workflows are candidates too (to be removed)
+      mergeCandidates = uniq([
+        ...mergeCandidates,
+        ...remoteProject.workflows.map((w) => w.id),
+      ]);
+    }
   } else {
     mergeCandidates = await findLocallyChangedWorkflows(ws, localProject);
   }
@@ -290,6 +302,26 @@ const syncProjects = async (
   if (!workflowDiffs.length && !didCollectionsChange && !didChannelsChange) {
     logger.success('Nothing to deploy');
     return null;
+  }
+
+  const removedWorkflows = isCrossProjectDeploy
+    ? workflowDiffs.filter((d) => d.type === 'removed').map((d) => d.id)
+    : [];
+  // Without a prompt nobody reviews the removals
+  if (
+    removedWorkflows.length &&
+    !options.confirm &&
+    !options.force &&
+    !options.dryRun
+  ) {
+    logger.error(`Error: Deploying would remove workflows from ${
+      remoteProject.uuid
+    }: ${removedWorkflows.join(', ')}
+
+  The target is a different project, so it will be made to look exactly like the local project.
+
+  Pass --force to remove them anyway, or deploy without --no-confirm to review the changes first.`);
+    throw new Error('REMOVES_WORKFLOWS');
   }
 
   // Ensure there's no divergence
@@ -317,9 +349,13 @@ const syncProjects = async (
         `The following workflows have diverged: ${divergentWorkflows}`
       );
       if (!options.force) {
+        const reason =
+          localProject.uuid === remoteProject.uuid
+            ? 'The remote project has been edited since the local project was branched.'
+            : `The target project ${remoteProject.uuid} is not the project this workspace was synced from (${localProject.uuid}), so its version history can't be compared.`;
         logger.error(`Error: Projects have diverged!
 
-  The remote project has been edited since the local project was branched. Changes may be lost.
+  ${reason} Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
         const e: any = new Error('PROJECTS_DIVERGED');
@@ -354,6 +390,15 @@ const syncProjects = async (
     mergeOptions.onlyUpdated = true;
   }
   const merged = Project.merge(localProject, remoteProject!, mergeOptions);
+
+  // Flag target-only workflows as deleted: just leaving them out of the
+  // payload would not remove them from the app
+  if (removedWorkflows.length) {
+    const ids = new Set(removedWorkflows);
+    merged.workflows = merged.workflows.map((wf) =>
+      ids.has(wf.id) ? new Workflow(wf.toJSON() as any).remove() : wf
+    );
+  }
 
   return { merged, remoteProject, locallyChangedWorkflows: mergeCandidates };
 };
@@ -547,8 +592,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
       localProject,
       { uuid: targetUuid!, endpoint },
       logger,
-      // a file's own snapshot tells us nothing about the target
-      !!filePath
+      // a file's own snapshot, or a snapshot of a different project, tells us
+      // nothing about the target
+      !!filePath || localProject.uuid !== targetUuid
     );
     if (!syncResult) {
       return;

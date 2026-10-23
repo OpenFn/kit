@@ -1,10 +1,17 @@
 import { Project, MultipleMatchingWorkflowsError } from './Project';
 import { Workspace } from './Workspace';
+import Workflow from './Workflow';
 import { yamlToJson, jsonToYaml } from './util/yaml';
 
 export default Project;
 
-export { Workspace, yamlToJson, jsonToYaml, MultipleMatchingWorkflowsError };
+export {
+  Workspace,
+  Workflow,
+  yamlToJson,
+  jsonToYaml,
+  MultipleMatchingWorkflowsError,
+};
 
 export { generateWorkflow, generateProject } from './gen/generator';
 
