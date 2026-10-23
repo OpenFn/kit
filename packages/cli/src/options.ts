@@ -245,10 +245,18 @@ export const confirm: CLIOption = {
   yargs: {
     alias: ['y'],
     boolean: true,
-    description: "Skip confirmation prompts (e.g. 'Are you sure?')",
+    description:
+      "Skip confirmation prompts (e.g. 'Are you sure?'). Use --no-confirm or OPENFN_NO_CONFIRM=true to skip",
   },
   ensure: (opts) => {
     if ((opts as any).y) {
+      opts.confirm = false;
+    }
+    // An explicit --confirm or --no-confirm always beats the env var
+    if (
+      opts.confirm === undefined &&
+      process.env.OPENFN_NO_CONFIRM === 'true'
+    ) {
       opts.confirm = false;
     }
     setDefaultValue(opts, 'confirm', true);

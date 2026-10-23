@@ -257,6 +257,66 @@ test.serial(
 );
 
 test.serial(
+  'checkout: a workflow renamed in the tracked project keeps its folder and id',
+  async (t) => {
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+      logger
+    );
+    // a file of the user's, next to the workflow
+    fs.writeFileSync('/ws/workflows/simple-workflow-main/notes.md', 'my notes');
+
+    // the workflow is renamed (but has the same uuid) in the tracked project
+    const trackedPath = '/ws/.projects/project@app.openfn.org.yaml';
+    const tracked = yamlToJson(fs.readFileSync(trackedPath, 'utf8'));
+    tracked.workflows[0].name = 'Renamed workflow';
+    fs.writeFileSync(trackedPath, jsonToYaml(tracked));
+
+    // (force: a rename also trips a false divergence warning, which is a separate issue)
+    await checkoutHandler(
+      {
+        command: 'project-checkout',
+        project: 'my-project',
+        workspace: '/ws',
+        force: true,
+      },
+      logger
+    );
+
+    // the workflow stays where it was, under the id it had, with the new name
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows').sort(),
+      ['another-workflow-main', 'simple-workflow-main'].sort()
+    );
+    t.deepEqual(
+      fs.readdirSync('/ws/workflows/simple-workflow-main').sort(),
+      [
+        'notes.md',
+        'simple-workflow-main.yaml',
+        'transform-data-to-fhir-standard.js',
+      ].sort()
+    );
+    t.regex(
+      fs.readFileSync(
+        '/ws/workflows/simple-workflow-main/simple-workflow-main.yaml',
+        'utf8'
+      ),
+      /name: Renamed workflow/
+    );
+
+    // and the checkout file tracks it by that id
+    const checkout = yamlToJson(
+      fs.readFileSync('/ws/.openfn/checkout.yaml', 'utf8')
+    );
+    t.deepEqual(Object.keys(checkout.forked_from).sort(), [
+      'another-workflow-main',
+      'simple-workflow-main',
+    ]);
+    t.is(checkout.workflow_uuids['simple-workflow-main'], 'wf-id-main');
+  }
+);
+
+test.serial(
   'checkout: drops an alias that clashes with an incoming workflow id',
   async (t) => {
     await checkoutHandler(
@@ -511,6 +571,8 @@ formats:
 id: staging
 name: Staging
 uuid: <uuid:staging>
+workflow_uuids:
+  simple-workflow: wf1
 `
   );
 

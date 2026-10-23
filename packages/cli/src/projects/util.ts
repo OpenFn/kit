@@ -260,6 +260,10 @@ export const updateForkedFrom = (proj: Project) => {
   return proj;
 };
 
+// Swap the keys and values of a workflow id mapping (eg, from matchWorkflows)
+export const invertMatches = (matches: Record<string, string>) =>
+  Object.fromEntries(Object.entries(matches).map(([a, b]) => [b, a]));
+
 // Set up the checkout file for a project without touching anything else
 // (use this when the workflows are already on disk, like after a git clone)
 export const writeCheckoutFile = async (

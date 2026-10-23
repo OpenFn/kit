@@ -1,47 +1,15 @@
+// The v2 sync commands (fetch, pull and checkout) against a mock Lightning,
+// asserting on what lands on disk (.projects state, checkout.yaml, workflows folder)
+
 import test from 'ava';
-import path from 'node:path';
-import fs from 'node:fs';
-import run from '../src/run';
-import { generateProject } from '@openfn/project';
-import createLightningServer from '@openfn/lightning-mock';
-import { rimraf } from 'rimraf';
+import run from '../../src/run';
+import { setup } from './helpers';
 
-let PORT = 5353;
-let lightning;
-const endpoint = `http://localhost:${PORT}/api/provision`;
-
-test.before(async () => {
-  await rimraf('tmp/sync');
-
-  lightning = createLightningServer({
-    port: PORT,
-  });
-});
-
-const initWorkspace = (t: any) => {
-  const id = t.title.replaceAll(' ', '_').toLowerCase();
-  const p = path.resolve('tmp/sync', id);
-
-  return {
-    workspace: p,
-    read: (filePath: string) => {
-      return fs.readFileSync(path.resolve(p, filePath), 'utf8');
-    },
-  };
-};
-
-const gen = (
-  name = 'patients',
-  workflows = ['trigger-job(expression="fn()")']
-) => {
-  // generate a project
-  const project = generateProject(name, workflows, {
-    openfnUuid: true,
-  });
-  const state = project.serialize('state', { format: 'json' });
-  lightning.addProject(state);
-  return project;
-};
+const { lightning, endpoint, initWorkspace, gen } = setup(
+  test,
+  'commands',
+  5353
+);
 
 test('fetch a new project', async (t) => {
   const { workspace, read } = initWorkspace(t);

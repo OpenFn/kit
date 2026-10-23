@@ -1,3 +1,5 @@
+// Tests legacy `openfn deploy` and `openfn pull` commands against a mock Lightning
+
 import test from 'ava';
 import path from 'node:path';
 import fs, { rm } from 'node:fs/promises';
@@ -157,7 +159,6 @@ test.serial('deploy a local project', async (t) => {
     `openfn deploy \
       --project-path ${tmpDir}/project.yaml \
       --state-path ${tmpDir}/.state.json \
-      --no-confirm \
       --log-json \
       -l debug`
   );
@@ -188,7 +189,6 @@ test.serial('Update a project', async (t) => {
   const deployCmd = `openfn deploy \
       --project-path ${projectPath} \
       --state-path ${statePath} \
-      --no-confirm \
       --log-json -l debug`;
   const first = await run(deployCmd);
   t.falsy(first.stderr);
@@ -230,7 +230,6 @@ test.serial('pull a project', async (t) => {
   const deployCmd = `openfn deploy \
     --project-path ${projectPath} \
     --state-path ${statePath} \
-    --no-confirm \
     --log-json -l debug`;
 
   await run(deployCmd);
@@ -323,7 +322,7 @@ test.serial('redirect to v2 protocol if openfn.yaml is present', async (t) => {
 
   // v1 deploy -> should redirect to v2
   const { stdout, stderr } = await run(
-    `openfn deploy --workspace ${tmpDir} --no-confirm --log-json -l debug`
+    `openfn deploy --workspace ${tmpDir} --log-json -l debug`
   );
   t.falsy(stderr);
   assertLog(t, extractLogs(stdout), /Detected openfn.yaml file/i);
@@ -364,7 +363,6 @@ workflows:
     `openfn deploy \
       --project-path ${tmpDir}/project.yaml \
       --state-path ${tmpDir}/.state.json \
-      --no-confirm \
       --log-json \
       -l debug`
   );
@@ -397,7 +395,6 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
   const deployCmd = `openfn deploy \
       --project-path ${projectPath} \
       --state-path ${statePath} \
-      --no-confirm \
       --log debug \
       --log-json`;
   await run(deployCmd);
@@ -451,7 +448,6 @@ test.serial('deploy a v2 project.yaml', async (t) => {
     `openfn deploy \
       --project-path ${tmpDir}/project.yaml \
       --state-path ${tmpDir}/.state.json \
-      --no-confirm \
       --log-json \
       -l debug`
   );
@@ -481,7 +477,6 @@ test.serial('deploy a new v2 project.yaml with credentials', async (t) => {
   const { stdout, stderr } = await run(
     `openfn deploy \
       --project-path ${tmpDir}/project.yaml \
-      --no-confirm \
       --log-json \
       -l debug`
   );
@@ -526,7 +521,6 @@ collections:
   const deployCmd = `openfn deploy \
     --project-path ${projectPath} \
     --state-path ${statePath} \
-    --no-confirm \
     --log-json -l debug`;
 
   // first deploy - no collections yet
@@ -573,7 +567,6 @@ ${collectionsWorkflow}
   const deployCmd = `openfn deploy \
     --project-path ${projectPath} \
     --state-path ${statePath} \
-    --no-confirm \
     --log-json -l debug`;
 
   // first deploy - creates the collection

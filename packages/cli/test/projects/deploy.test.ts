@@ -348,6 +348,8 @@ test.serial(
         project: '/ws/.projects/main@localhost.yaml',
         target: 'dev',
         confirm: false,
+        // dev's own workflows get removed, which needs --force without a prompt
+        force: true,
       } as any,
       logger
     );
@@ -470,6 +472,60 @@ test.serial('deploy a change to a project', async (t) => {
   t.truthy(server.state.projects[UUID]);
   t.is(Object.keys(server.state.projects).length, 1);
 });
+
+// https://github.com/OpenFn/kit/issues/1594
+test.serial(
+  'deploy an edit to a workflow after renaming it: the checkout tracks the local id',
+  async (t) => {
+    await setup(projectYaml);
+    const options = {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      confirm: false,
+    } as any;
+
+    const wfPath = '/ws/workflows/my-workflow/my-workflow.yaml';
+    await writeFile(
+      wfPath,
+      fs
+        .readFileSync(wfPath, 'utf8')
+        .replace('name: My Workflow', 'name: My Workflow (renamed)')
+    );
+    await deploy(options, logger);
+
+    // the files haven't moved, so the checkout file tracks the workflow by its
+    // local id, not the id derived from its new name
+    t.true(fs.existsSync(wfPath));
+    const checkout = yamlToJson(readCheckout()!) as any;
+    t.deepEqual(Object.keys(checkout.forked_from), ['my-workflow']);
+    t.deepEqual(checkout.workflow_uuids, {
+      'my-workflow': '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+    });
+
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+    logger._reset();
+    await deploy(options, logger);
+
+    // the summary shows an edit to the existing workflow
+    t.truthy(logger._find('always', /My Workflow \(renamed\): changed/));
+    t.falsy(logger._find('always', /: (added|deleted)/));
+
+    // the workflow was updated, not deleted
+    const workflows = Object.values(
+      server.state.projects[UUID].workflows
+    ) as any[];
+    t.is(workflows.length, 1);
+    t.is(workflows[0].id, '72ca3eb0-042c-47a0-a2a1-a545ed4a8406');
+    t.is(workflows[0].name, 'My Workflow (renamed)');
+    t.is(
+      Object.values<any>(workflows[0].jobs).find(
+        (j) => j.name === 'Transform data'
+      ).body,
+      'log()'
+    );
+  }
+);
 
 test.serial(
   'Error if the remote and local workflows have diverged',
@@ -1033,8 +1089,8 @@ test('printRichDiff: should report mix of added, changed, and removed workflows'
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2Remote = generateWorkflow('@id b trigger-y');
   const wf2Local = generateWorkflow('@id b trigger-different');
-  const wf3 = generateWorkflow('@id c trigger-z');
-  const wf4 = generateWorkflow('@id d trigger-w');
+  const wf3 = generateWorkflow('@id c @name wf-c trigger-z');
+  const wf4 = generateWorkflow('@id d @name wf-d trigger-w');
 
   const local = new Project({
     name: 'local',
@@ -1090,6 +1146,31 @@ test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
 
   const diverged = hasRemoteDiverged(local, remote);
   t.falsy(diverged);
+});
+
+test('hasRemoteDiverged: finds a renamed workflow in the remote by its uuid', (t) => {
+  const local = new Project({
+    id: 'p',
+    workflows: [
+      { id: 'my-workflow', name: 'Wf', steps: [], openfn: { uuid: 'uuid-1' } },
+    ],
+    cli: { forked_from: { 'my-workflow': 'a' } },
+  } as any);
+  const remote = new Project({
+    id: 'p',
+    workflows: [
+      {
+        id: 'my-workflow-renamed',
+        name: 'Wf (renamed)',
+        steps: [],
+        history: ['a', 'b'],
+        openfn: { uuid: 'uuid-1' },
+      },
+    ],
+  } as any);
+
+  // the remote has moved on since the local was forked
+  t.deepEqual(hasRemoteDiverged(local, remote), ['my-workflow']);
 });
 
 test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
@@ -1528,6 +1609,109 @@ test.serial(
     t.is(body(OTHER_UUID), 'log()');
     // the project we deployed from is untouched
     t.is(body(UUID), 'fn()');
+  }
+);
+
+const findWorkflow = (projectId: string, name: string) =>
+  Object.values(server.state.projects[projectId].workflows).find(
+    (wf: any) => wf.name === name
+  ) as any;
+
+test.serial(
+  'deploy: makes a different project look exactly like the local project',
+  async (t) => {
+    await server.addProject(two_workflows_yaml);
+    await setup(projectYaml);
+
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        project: TWO_WORKFLOWS_UUID,
+        checkout: false,
+        confirm: false,
+        force: true,
+      } as any,
+      logger
+    );
+
+    const workflows = Object.values(
+      server.state.projects[TWO_WORKFLOWS_UUID].workflows
+    ) as any[];
+    t.deepEqual(
+      workflows.map((wf) => wf.name),
+      ['My Workflow']
+    );
+    t.is(workflows[0].jobs['transform-data'].body, 'fn()');
+  }
+);
+
+test.serial(
+  'deploy: refuses to remove workflows from a different project with --no-confirm, unless --force',
+  async (t) => {
+    await server.addProject(two_workflows_yaml);
+    await setup(projectYaml);
+
+    await t.throwsAsync(
+      () =>
+        deploy(
+          {
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+            project: TWO_WORKFLOWS_UUID,
+            checkout: false,
+            confirm: false,
+          } as any,
+          logger
+        ),
+      { message: 'REMOVES_WORKFLOWS' }
+    );
+
+    // the target is untouched
+    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow A'));
+    t.truthy(findWorkflow(TWO_WORKFLOWS_UUID, 'Workflow B'));
+    t.falsy(findWorkflow(TWO_WORKFLOWS_UUID, 'My Workflow'));
+  }
+);
+
+test.serial(
+  'deploy: errors when a different target project has the same workflow, unless --force',
+  async (t) => {
+    const OTHER_UUID = 'a1b2c3d4-0000-4000-8000-000000000001';
+    server.addProject({ ...myProject_v1, id: OTHER_UUID });
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[OTHER_UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(OTHER_UUID, modified);
+
+    await setup(projectYaml);
+
+    const options = {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      project: OTHER_UUID,
+      checkout: false,
+      confirm: false,
+    } as any;
+
+    await t.throwsAsync(() => deploy(options, logger), {
+      message: /PROJECTS_DIVERGED/,
+    });
+    t.truthy(
+      logger._find('error', /not the project this workspace was synced from/)
+    );
+
+    await deploy({ ...options, force: true }, logger);
+    t.is(
+      server.state.projects[OTHER_UUID].workflows['my-workflow'].jobs[
+        'transform-data'
+      ].body,
+      'fn()'
+    );
   }
 );
 

@@ -53,7 +53,7 @@ export const initWorker = async (
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
     collectionsVersion: '1.0.0',
-    messageTimeoutSeconds: 0.01,
+    messageTimeoutSeconds: 0.1,
     batchLogs: true,
     ...workerArgs,
   });

@@ -65,13 +65,13 @@ export const checkout: CLIOption = {
   name: 'checkout',
   yargs: {
     boolean: true,
-    default: true,
     description:
       'Checkout the project after deploying. Use --no-checkout or OPENFN_NO_CHECKOUT_AFTER_DEPLOY=true to skip',
   },
   ensure: (opts: any) => {
-    if (process.env.OPENFN_NO_CHECKOUT_AFTER_DEPLOY === 'true') {
-      opts.checkout = false;
+    // An explicit --checkout or --no-checkout always beats the env var
+    if (opts.checkout === undefined) {
+      opts.checkout = process.env.OPENFN_NO_CHECKOUT_AFTER_DEPLOY !== 'true';
     }
   },
 };

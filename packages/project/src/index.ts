@@ -1,10 +1,17 @@
 import { Project, MultipleMatchingWorkflowsError } from './Project';
 import { Workspace } from './Workspace';
+import Workflow from './Workflow';
 import { yamlToJson, jsonToYaml } from './util/yaml';
 
 export default Project;
 
-export { Workspace, yamlToJson, jsonToYaml, MultipleMatchingWorkflowsError };
+export {
+  Workspace,
+  Workflow,
+  yamlToJson,
+  jsonToYaml,
+  MultipleMatchingWorkflowsError,
+};
 
 export { generateWorkflow, generateProject } from './gen/generator';
 
@@ -38,6 +45,9 @@ export { mapWorkflow } from './parse/from-app-state';
 export { default as detectVersion } from './util/detect-version';
 
 export type { MergeProjectOptions } from './merge/merge-project';
+
+export { default as matchWorkflows } from './merge/match-workflows';
+export { default as relabelWorkflows } from './util/relabel-workflows';
 
 export { mergeCollections } from './merge/merge-project';
 

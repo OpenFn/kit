@@ -1,5 +1,9 @@
 import yargs from 'yargs';
-import Project, { Workspace } from '@openfn/project';
+import Project, {
+  matchWorkflows,
+  relabelWorkflows,
+  Workspace,
+} from '@openfn/project';
 import type l from '@openfn/lexicon';
 import path from 'path';
 import fs from 'fs';
@@ -172,6 +176,21 @@ export const handler = async (options: CheckoutOptions, logger?: Logger) => {
       logger?.info('Checkout cancelled: nothing has been changed');
       return;
     }
+  }
+
+  // The incoming project derives workflow ids from their names, so a workflow
+  // renamed elsewhere arrives with a new id. When checking out the project that is
+  // already checked out, keep the ids the workspace has (matched by uuid, id or
+  // name) so that a renamed workflow stays in its folder, with its files
+  if (
+    localProject?.workflows.length &&
+    tracked &&
+    isSameProject(tracked, switchProject)
+  ) {
+    switchProject = relabelWorkflows(
+      switchProject,
+      matchWorkflows(switchProject.workflows, localProject.workflows)
+    );
   }
 
   // Workflow aliases are just folder names, so carry them over from the

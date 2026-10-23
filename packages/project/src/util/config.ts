@@ -71,6 +71,18 @@ export const extractCheckout = (
     project.forked_from = source.cli.forked_from;
   }
 
+  // Track the uuid of each workflow, by local id
+  // This is recorded for future use and isn't read by anything yet
+  const workflowUuids = source.workflows.reduce((obj: any, wf) => {
+    if (wf.openfn?.uuid) {
+      obj[wf.id] = wf.openfn.uuid;
+    }
+    return obj;
+  }, {});
+  if (Object.keys(workflowUuids).length) {
+    project.workflow_uuids = workflowUuids;
+  }
+
   return {
     path: getCheckoutPath(branch),
     content: jsonToYaml(sortKeys(project)),

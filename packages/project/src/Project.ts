@@ -42,6 +42,8 @@ type CLIMeta = {
   version?: number;
   alias?: string | null;
   forked_from?: Record<string, string>;
+  // uuid of each workflow, by local id. Tracked but not used
+  workflow_uuids?: Record<string, string>;
 };
 
 export class Project {
