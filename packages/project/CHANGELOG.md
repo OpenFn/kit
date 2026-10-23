@@ -1,5 +1,17 @@
 # @openfn/project
 
+## 0.23.1
+
+### Patch Changes
+
+- 5f265bb: Track workflow uuids in the checkout file, and load them onto workflows
+- acb7b26: Deploying a workspace to a different project now makes that project match it
+- 5f265bb: Fix deploying an edit to a renamed workflow deleting it from Lightning
+- 5f265bb: Show a renamed workflow as changed, not added and removed, in project diffs
+- d52a52c: Fix workflow discovery for project directories containing square brackets.
+- 5f265bb: Match workflows by uuid, then id, then name when merging projects
+- 5f265bb: Workflow ids in workflow.yaml files are now ignored on load: the file name is used instead
+
 ## 0.23.0
 
 ### Minor Changes

@@ -1,5 +1,26 @@
 # @openfn/cli
 
+## 1.45.0
+
+### Minor Changes
+
+- acb7b26: Deploying a workspace to a different project now makes that project match it
+
+### Patch Changes
+
+- 1f74134: An explicit `--checkout` or `--no-checkout` on `project deploy` now overrides `OPENFN_NO_CHECKOUT_AFTER_DEPLOY`
+- 5f265bb: Fix deploying an edit to a renamed workflow deleting it from Lightning
+- 5f265bb: Show a renamed workflow as changed, not added and removed, in project diffs
+- 5f265bb: Add OPENFN_NO_CONFIRM env var
+- Updated dependencies [5f265bb]
+- Updated dependencies [acb7b26]
+- Updated dependencies [5f265bb]
+- Updated dependencies [5f265bb]
+- Updated dependencies [d52a52c]
+- Updated dependencies [5f265bb]
+- Updated dependencies [5f265bb]
+  - @openfn/project@0.23.1
+
 ## 1.44.0
 
 ### Minor Changes

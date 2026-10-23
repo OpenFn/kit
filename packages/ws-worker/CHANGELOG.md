@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.30.0
+
+### Minor Changes
+
+- aaaed2e: Add an `immediate` option to worker destroy to tear down without waiting for runs
+
 ## 1.29.6
 
 ### Patch Changes
