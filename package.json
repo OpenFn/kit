@@ -3,18 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Packages to support OpenFn v2",
-  "devEngines": {
-    "runtime": {
-      "name": "node",
-      "version": "26.x",
-      "onFail": "warn"
-    },
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.14.0",
-      "onFail": "download"
-    }
-  },
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
     "clean:local": "rimraf dist/**/*",
