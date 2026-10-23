@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.29.6
+
+### Patch Changes
+
+- Update node version in docker image to 24.22.1
+
 ## 1.29.5
 
 ### Patch Changes
