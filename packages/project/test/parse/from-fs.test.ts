@@ -67,6 +67,50 @@ test.serial('should include multiple workflows (legacy format)', async (t) => {
   t.is(wf2.name, 'Workflow 2');
 });
 
+test.serial(
+  'should treat square brackets in the project root literally',
+  async (t) => {
+    const roots = ['/ws/project', '/ws/proj[v1]'];
+    const expressions = ['fn(s => s)', 'fn(s => ({ data: [] }))'];
+
+    for (const root of roots) {
+      mockFile(`${root}/openfn.yaml`, buildConfig());
+      for (let i = 0; i < expressions.length; i++) {
+        const id = `workflow-${i + 1}`;
+        mockFile(`${root}/workflows/${id}/${id}.yaml`, {
+          id,
+          steps: [{ id: 'a', expression: 'job.js' }],
+        });
+        mockFile(`${root}/workflows/${id}/job.js`, expressions[i]);
+      }
+    }
+
+    mockFile('/ws/projv/workflows/foreign/foreign.yaml', {
+      id: 'foreign',
+      steps: [],
+    });
+
+    const [ordinary, bracketed] = await Promise.all(
+      roots.map((root) => parseProject({ root }))
+    );
+
+    for (const project of [ordinary, bracketed]) {
+      t.deepEqual(project.workflows.map((wf) => wf.id).sort(), [
+        'workflow-1',
+        'workflow-2',
+      ]);
+      for (let i = 0; i < expressions.length; i++) {
+        t.is(
+          project.getWorkflow(`workflow-${i + 1}`)!.steps[0].expression,
+          expressions[i]
+        );
+      }
+    }
+
+    t.deepEqual(ordinary.diff(bracketed).workflows, []);
+  }
+);
+
 test.serial('should treat a renamed workflow folder as an alias', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 

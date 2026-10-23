@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { glob } from 'glob';
+import { escape, glob } from 'glob';
 import * as l from '@openfn/lexicon';
 
 import { Project } from '../Project';
@@ -97,7 +97,7 @@ export const parseProject = async (options: FromFsConfig) => {
   const workflowDir =
     (config as any).workflowRoot ?? config.dirs?.workflows ?? 'workflows';
   const fileType = config.formats?.workflow ?? 'yaml';
-  const pattern = path.resolve(root, workflowDir) + `/**/*.${fileType}`;
+  const pattern = escape(path.resolve(root, workflowDir)) + `/**/*.${fileType}`;
   const candidateWfs = await glob(pattern, {
     ignore: ['**node_modules/**', '**tmp**'],
   });
