@@ -565,3 +565,19 @@ test.serial('should prefer the file name to an id in the file', async (t) => {
   t.is(project.workflows.length, 1);
   t.is(project.workflows[0].id, 'my-workflow');
 });
+
+test.serial('should set the id on a tracked channel', async (t) => {
+  checkoutWithWorkflow({ channel_uuids: { 'my-channel': 'chan-1' } });
+  mockFile('/ws/resources.yaml', {
+    channels: {
+      'my-channel': { name: 'My Channel', destination_url: 'https://a.com' },
+      other: { name: 'Other', destination_url: 'https://b.com' },
+    },
+  });
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.channels![0].id, 'chan-1');
+  t.falsy(project.channels![1].id);
+  t.falsy(project.openfn!.channel_uuids);
+});

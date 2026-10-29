@@ -282,6 +282,53 @@ test('replace mode: target channels missing from source are flagged as removed',
   t.deepEqual(result.removedChannels, [removed]);
 });
 
+test('replace mode: a channel is matched by its tracked id before its key', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const channel = { destination_url: 'https://example.com', enabled: true };
+
+  // the key no longer matches the remote name (eg the slug rules changed),
+  // but the id from the checkout file does
+  const target = createProject(wf, 'a', {
+    channels: [{ ...channel, id: 'chan-1', name: 'My Channel (v2)' }],
+  });
+  const source = createProject(wf, 'b', {
+    channels: [
+      { ...channel, id: 'chan-1', key: 'my-channel-v2', name: 'Renamed' },
+    ],
+  });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.is(result.channels![0].id, 'chan-1');
+  t.deepEqual(result.removedChannels, []);
+});
+
+test('replace mode: an untracked channel whose key changed is matched by name', (t) => {
+  const wf = assignUUIDs({
+    steps: [
+      { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
+    ],
+  });
+  const channel = { destination_url: 'https://example.com', enabled: true };
+
+  const target = createProject(wf, 'a', {
+    channels: [{ ...channel, id: 'chan-1', name: 'My Channel (v2)' }],
+  });
+  // key written by an older CLI, which stripped punctuation
+  const source = createProject(wf, 'b', {
+    channels: [{ ...channel, key: 'my-channel-v2', name: 'My Channel (v2)' }],
+  });
+
+  const result = merge(source, target, { mode: REPLACE_MERGE });
+
+  t.is(result.channels![0].id, 'chan-1');
+  t.deepEqual(result.removedChannels, []);
+});
+
 test('replace mode: renaming a channel keeps its id', (t) => {
   const wf = assignUUIDs({
     steps: [

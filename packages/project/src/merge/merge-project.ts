@@ -201,10 +201,10 @@ export function merge(
     baseMerge(target, source, ['channels'], assigns as any)
   );
 
-  // target channels with an id that the source dropped have been removed
-  const kept = new Set(source.channels?.map(channelKey));
+  // target channels whose id didn't match any source channel have been removed
+  const kept = new Set(merged.channels?.map((c) => c.id));
   merged.removedChannels = source.channels
-    ? (target.channels ?? []).filter((c) => c.id && !kept.has(channelKey(c)))
+    ? (target.channels ?? []).filter((c) => c.id && !kept.has(c.id))
     : [];
   return merged;
 }
@@ -225,8 +225,9 @@ export function mergeCollections(
   }));
 }
 
-// Source channels win, but keep the target's id on a key match. Matching on the
-// key rather than the name means renaming a channel keeps its id
+// Source channels win, but keep the target's id on a match. Like workflows,
+// a channel is matched by id (from the checkout file), then key, then name.
+// Matching on the id or key means renaming a channel keeps its id
 // If the source has no channels at all (no resources.yaml), keep the target's
 export function mergeChannels(
   source: ChannelState[] | undefined,
@@ -239,11 +240,25 @@ export function mergeChannels(
   if (!source) {
     return target;
   }
-  const targetByKey = new Map((target ?? []).map((c) => [channelKey(c), c]));
-  return source.map((c) => ({
-    ...c,
-    id: targetByKey.get(channelKey(c))?.id,
-  }));
+  const available = [...(target ?? [])];
+  const claim = (match?: ChannelState) => {
+    if (match) available.splice(available.indexOf(match), 1);
+    return match;
+  };
+  const matches = new Map<ChannelState, ChannelState | undefined>();
+  const passes = [
+    (s: ChannelState, t: ChannelState) => !!s.id && s.id === t.id,
+    (s: ChannelState, t: ChannelState) => channelKey(s) === channelKey(t),
+    (s: ChannelState, t: ChannelState) => s.name === t.name,
+  ];
+  for (const pass of passes) {
+    for (const s of source) {
+      if (!matches.get(s)) {
+        matches.set(s, claim(available.find((t) => pass(s, t))));
+      }
+    }
+  }
+  return source.map((c) => ({ ...c, id: matches.get(c)?.id }));
 }
 
 export const replaceCredentials = (

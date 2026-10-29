@@ -48,6 +48,9 @@ export const parseProject = async (options: FromFsConfig) => {
   const workflowUuids = isPlainObject(checkout.workflow_uuids)
     ? (checkout.workflow_uuids as Record<string, string>)
     : undefined;
+  const channelUuids = isPlainObject(checkout.channel_uuids)
+    ? (checkout.channel_uuids as Record<string, string>)
+    : {};
 
   const proj: any = {
     id: options.name ? slugify(options.name) : checkout.id,
@@ -57,6 +60,7 @@ export const parseProject = async (options: FromFsConfig) => {
       'alias',
       'forked_from',
       'workflow_uuids',
+      'channel_uuids',
       'collections',
     ]),
 
@@ -83,7 +87,10 @@ export const parseProject = async (options: FromFsConfig) => {
     });
   const parsed = resources ? yamlToJson(resources) : undefined;
   if (parsed?.channels) {
-    proj.channels = fromResourceChannels(parsed.channels);
+    // If the channel is tracked, we know its id
+    proj.channels = fromResourceChannels(parsed.channels).map((c) =>
+      channelUuids[c.key!] ? { ...c, id: channelUuids[c.key!] } : c
+    );
   }
   if (parsed && 'collections' in parsed) {
     // an empty key means no collections (not the same as no key!)

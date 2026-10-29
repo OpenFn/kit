@@ -4,6 +4,7 @@ import path from 'node:path';
 import { pickBy, isNil } from 'lodash-es';
 import { yamlToJson, jsonToYaml } from './yaml';
 import Project from '../Project';
+import { channelKey } from './resources';
 
 // Recursively sort object keys so that config files serialize stably
 const sortKeys = (value: any): any => {
@@ -72,7 +73,6 @@ export const extractCheckout = (
   }
 
   // Track the uuid of each workflow, by local id
-  // This is recorded for future use and isn't read by anything yet
   const workflowUuids = source.workflows.reduce((obj: any, wf) => {
     if (wf.openfn?.uuid) {
       obj[wf.id] = wf.openfn.uuid;
@@ -81,6 +81,17 @@ export const extractCheckout = (
   }, {});
   if (Object.keys(workflowUuids).length) {
     project.workflow_uuids = workflowUuids;
+  }
+
+  // And the id of each channel, by its key in resources.yaml
+  const channelUuids = (source.channels ?? []).reduce((obj: any, c) => {
+    if (c.id) {
+      obj[channelKey(c)] = c.id;
+    }
+    return obj;
+  }, {});
+  if (Object.keys(channelUuids).length) {
+    project.channel_uuids = channelUuids;
   }
 
   return {
