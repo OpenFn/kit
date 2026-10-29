@@ -67,3 +67,5 @@ jobs:
           tags: |
             openfn/ws-worker:latest
             openfn/ws-worker:v${{ needs.check-tag.outputs.docker_tag }}
+          labels: |
+            org.opencontainers.image.version=v${{ needs.check-tag.outputs.docker_tag }}
