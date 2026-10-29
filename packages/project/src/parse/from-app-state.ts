@@ -109,7 +109,33 @@ export default (
     return workflow;
   }) as unknown as l.WorkflowState[];
 
+  assertUniqueIds(
+    Object.values(stateJson.workflows).filter((w) => !w.delete),
+    'workflow names'
+  );
+
+  assertUniqueIds(channels ?? [], 'channel names');
+
   return new Project(proj as l.ProjectState, config);
+};
+
+// Ids are derived from names, so names that differ only by case or by
+// space vs hyphen (eg "Foo Bar" and "foo-bar") share an id and would overwrite
+// each other. Lightning's own export rejects these pairs too
+const assertUniqueIds = (items: Array<{ name: string }>, what: string) => {
+  const byId: Record<string, string[]> = {};
+  for (const { name } of items) {
+    (byId[slugify(name)] ??= []).push(name);
+  }
+  const dupes = Object.entries(byId).filter(([, names]) => names.length > 1);
+  if (dupes.length) {
+    const list = dupes
+      .map(([id, names]) => `${names.map((n) => `"${n}"`).join(', ')} -> ${id}`)
+      .join('\n  ');
+    throw new Error(
+      `These ${what} differ only by case or spaces vs hyphens, so they resolve to the same id:\n  ${list}\nRename one of them in Lightning so each has a unique id.`
+    );
+  }
 };
 
 // TODO maybe this is a util and moved out of this file
@@ -155,6 +181,11 @@ export const mapWorkflow = (
   if (workflow.name) {
     mapped.id = slugify(workflow.name);
   }
+
+  assertUniqueIds(
+    Object.values(jobs).filter((j) => !j.delete),
+    `step names in workflow "${workflow.name}"`
+  );
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?

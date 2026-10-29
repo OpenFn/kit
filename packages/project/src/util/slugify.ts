@@ -1,5 +1,10 @@
 export default function slugify(text: string) {
   return (
-    text?.replace(/\W/g, ' ').trim().replace(/\s+/g, '-').toLowerCase() ?? ''
+    text
+      ?.normalize('NFC')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s/\\:*?"<>|]/g, '-')
+      .replace(/^\./, '-') ?? ''
   );
 }

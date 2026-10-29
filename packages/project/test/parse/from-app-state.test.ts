@@ -107,6 +107,74 @@ test('should load a workflow flagged delete: true and flag it removed', (t) => {
   t.true(project.workflows[0].isRemoved());
 });
 
+test('should throw if two workflow names resolve to the same id', (t) => {
+  const s: any = cloneDeep(state);
+  s.workflows['cron-workflow'].name = 'webhook-workflow';
+
+  t.throws(() => fromAppState(s, meta), {
+    message: /"Webhook Workflow", "webhook-workflow" -> webhook-workflow/,
+  });
+});
+
+test('should not throw if a colliding workflow is flagged delete', (t) => {
+  const s: any = cloneDeep(state);
+  s.workflows['cron-workflow'].name = 'webhook-workflow';
+  s.workflows['cron-workflow'].delete = true;
+
+  t.notThrows(() => fromAppState(s, meta));
+});
+
+test('should throw if two step names resolve to the same id', (t) => {
+  const s: any = cloneDeep(state);
+  const wf = s.workflows['webhook-workflow'];
+  wf.jobs.other = {
+    ...wf.jobs['transform-data'],
+    id: 'x',
+    name: 'transform data',
+  };
+
+  t.throws(() => fromAppState(s, meta), {
+    message:
+      /in workflow "Webhook Workflow"[\s\S]*"Transform data", "transform data" -> transform-data/,
+  });
+});
+
+test('should keep non-ascii and punctuation in step and workflow ids', (t) => {
+  const s: any = cloneDeep(state);
+  const wf = s.workflows['webhook-workflow'];
+  wf.name = 'Flujo de atención (v2.0)';
+  wf.jobs['transform-data'].name = '患者確認';
+  wf.jobs.other = { ...wf.jobs['transform-data'], id: 'x', name: 'فحص المريض' };
+
+  const [workflow] = fromAppState(s, meta).workflows;
+  t.is(workflow.id, 'flujo-de-atención-(v2.0)');
+  t.deepEqual(
+    workflow.steps.map((s) => s.id),
+    ['webhook', '患者確認', 'فحص-المريض']
+  );
+  t.deepEqual(Object.keys(workflow.steps[0].next!), ['患者確認']);
+});
+
+test('should replace file-unsafe characters in ids', (t) => {
+  const s: any = cloneDeep(state);
+  s.workflows['webhook-workflow'].name = '..Q3/Q4 "Data:Sync"';
+
+  const [workflow] = fromAppState(s, meta).workflows;
+  t.is(workflow.id, '-.q3-q4--data-sync-');
+});
+
+test('should throw if two channel names resolve to the same id', (t) => {
+  const s: any = cloneDeep(state);
+  s.channels = [
+    { id: 'c1', name: 'My Channel', destination_url: 'https://a.com' },
+    { id: 'c2', name: 'my-channel', destination_url: 'https://b.com' },
+  ];
+
+  t.throws(() => fromAppState(s, meta), {
+    message: /"My Channel", "my-channel" -> my-channel/,
+  });
+});
+
 test('should load a job flagged delete: true and flag it removed', (t) => {
   const stateWithDeletedJob: any = cloneDeep(state);
   stateWithDeletedJob.workflows['webhook-workflow'].jobs[
