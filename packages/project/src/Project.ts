@@ -42,7 +42,7 @@ type CLIMeta = {
   version?: number;
   alias?: string | null;
   forked_from?: Record<string, string>;
-  // uuid of each workflow, by local id. Tracked but not used
+  // uuid of each workflow, by local id
   workflow_uuids?: Record<string, string>;
 };
 
@@ -54,7 +54,7 @@ export class Project {
   /** Human readable project name. This corresponds to the label in Lightning */
   name?: string;
 
-  /** Project id. Must be url safe. May be derived from the name. NOT a UUID */
+  /** Project id. Must be file safe. May be derived from the name. NOT a UUID */
   id: string;
 
   description?: string;
