@@ -170,7 +170,7 @@ export function merge(
             source.credentials,
             target.credentials
           ),
-          collections: source.collections,
+          collections: mergeCollections(source.collections, target.collections),
           channels: mergeChannels(source.channels, target.channels),
         }
       : {
