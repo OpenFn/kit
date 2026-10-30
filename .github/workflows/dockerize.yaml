@@ -27,7 +27,7 @@ jobs:
           if [ "$EVENT_NAME" = "push" ]; then
             GIT_TAG=$REF_NAME
           else
-            GIT_TAG=$(git tag --points-at HEAD --list "@openfn/ws-worker@*" | sort -V | tail -n 1)
+            GIT_TAG=$(git tag --points-at HEAD --list "@openfn/ws-worker@[0-9]*" | sort -V | tail -n 1)
           fi
           echo Git Tag: $GIT_TAG
 
@@ -81,10 +81,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: openfn/ws-worker
-          flavor: latest=false
           tags: |
             type=semver,pattern={{version}},value=${{ needs.check-tag.outputs.version }}
-            type=raw,value=latest
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
