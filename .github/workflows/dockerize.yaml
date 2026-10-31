@@ -11,31 +11,43 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
-      docker_tag: ${{ steps.extract.outputs.docker_tag }}
+      version: ${{ steps.extract.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Extract Docker tag
+      - name: Find worker release tag
         id: extract
         run: |
-          SOURCE_TAG=$(git tag --sort=-creatordate --list "@openfn/ws-worker@*" | head -n 1)
-          echo Source Tag: $SOURCE_TAG
+          # The worker release tag on the commit being built. This covers a
+          # pushed tag and a call from the publish workflow, where github.ref
+          # is main, not the tag.
+          GIT_TAG=$(git tag --points-at HEAD --list "@openfn/ws-worker@[0-9]*" | sort -V | tail -n 1)
+          echo Git Tag: $GIT_TAG
 
-          VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
-          echo Version Tag: $VERSION_TAG
+          if [ -z "$GIT_TAG" ]; then
+            echo "No ws-worker release tag on this commit, skipping build"
+            exit 0
+          fi
 
-          DOCKER_TAG=${VERSION_TAG#@}
-          echo Docker Tag: $DOCKER_TAG
+          VERSION=${GIT_TAG#@openfn/ws-worker@}
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Can't read a version from tag $GIT_TAG"
+            exit 1
+          fi
+          echo Version: $VERSION
 
-          echo "docker_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Check if Docker tag exists
         id: check
+        if: steps.extract.outputs.version != ''
+        env:
+          VERSION: ${{ steps.extract.outputs.version }}
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            https://hub.docker.com/v2/repositories/openfn/ws-worker/tags/v${{ steps.extract.outputs.docker_tag }}/)
+            https://hub.docker.com/v2/repositories/openfn/ws-worker/tags/$VERSION/)
           if [ "$STATUS" = "200" ]; then
-            echo "Tag v${{ steps.extract.outputs.docker_tag }} already exists on Docker Hub, skipping build"
+            echo "Tag $VERSION already exists on Docker Hub, skipping build"
             echo "should_build=false" >> $GITHUB_OUTPUT
           else
             echo "should_build=true" >> $GITHUB_OUTPUT
@@ -58,12 +70,18 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: openfn/ws-worker
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.check-tag.outputs.version }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           target: ws-worker
-          tags: |
-            openfn/ws-worker:latest
-            openfn/ws-worker:v${{ needs.check-tag.outputs.docker_tag }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
