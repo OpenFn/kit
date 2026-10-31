@@ -18,17 +18,11 @@ jobs:
           fetch-depth: 0
       - name: Find worker release tag
         id: extract
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_NAME: ${{ github.ref_name }}
         run: |
-          # Use the tag that triggered this build, or the worker tag on the
-          # commit being built when called from the publish workflow
-          if [ "$EVENT_NAME" = "push" ]; then
-            GIT_TAG=$REF_NAME
-          else
-            GIT_TAG=$(git tag --points-at HEAD --list "@openfn/ws-worker@[0-9]*" | sort -V | tail -n 1)
-          fi
+          # The worker release tag on the commit being built. This covers a
+          # pushed tag and a call from the publish workflow, where github.ref
+          # is main, not the tag.
+          GIT_TAG=$(git tag --points-at HEAD --list "@openfn/ws-worker@[0-9]*" | sort -V | tail -n 1)
           echo Git Tag: $GIT_TAG
 
           if [ -z "$GIT_TAG" ]; then
