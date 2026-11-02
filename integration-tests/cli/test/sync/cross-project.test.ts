@@ -135,6 +135,41 @@ test('a collection deployed to a different project keeps the target uuid', async
   t.deepEqual(collectionUuids(lightning, cloud), cloudUuids);
 });
 
+test('a collection the workspace does not have is removed from the target on deploy', async (t) => {
+  const { run } = initWorkspace(t);
+
+  const cloud = generateProject(
+    'cloud',
+    ['@name Alpha trigger-job(expression="fn(a)")'],
+    { openfnUuid: true }
+  );
+  cloud.collections = [{ uuid: randomUUID(), name: 'patients' }];
+  lightning.addProject(cloud.serialize('state', { format: 'json' }));
+
+  // prod has a collection of its own, which the workspace doesn't know about
+  const prod = generateProject(
+    'prod',
+    ['@name Alpha trigger-job(expression="fn(old)")'],
+    { openfnUuid: true }
+  );
+  prod.collections = [
+    { uuid: randomUUID(), name: 'patients' },
+    { uuid: randomUUID(), name: 'legacy' },
+  ];
+  lightning.addProject(prod.serialize('state', { format: 'json' }));
+
+  const cloudUuids = collectionUuids(lightning, cloud);
+
+  await run(`openfn project pull ${cloud.openfn.uuid}`);
+  await run(`openfn project deploy ${prod.openfn.uuid} --force`);
+
+  // The legacy collection should now be removed from prod
+  t.deepEqual(Object.keys(collectionUuids(lightning, prod)), ['patients']);
+
+  // and cloud is untouched
+  t.deepEqual(collectionUuids(lightning, cloud), cloudUuids);
+});
+
 test('deploy to a different project without a prompt will not remove workflows unless forced', async (t) => {
   const { run } = initWorkspace(t);
   const { cloud, prod } = genProjects();
