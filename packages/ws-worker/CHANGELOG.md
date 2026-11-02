@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.30.1
+
+### Patch Changes
+
+- Docker images are now tagged without a `v` prefix (e.g. `openfn/ws-worker:1.31.0`), only full releases move `latest`, and images carry standard OCI labels
+
 ## 1.30.0
 
 ### Minor Changes
