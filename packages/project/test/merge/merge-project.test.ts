@@ -384,7 +384,7 @@ test('replace mode: undefined local collections leave the target collections alo
   t.deepEqual(result.collections, targetCollections);
 });
 
-test('sandbox mode: source collections fully replace target collections', (t) => {
+test('sandbox mode: source collections replace target collections, keeping target uuid on a name match', (t) => {
   const wf = {
     steps: [
       { id: 'x', name: 'X', adaptor: 'common', expression: 'fn(s => s)' },
@@ -395,17 +395,25 @@ test('sandbox mode: source collections fully replace target collections', (t) =>
 
   const targetCollections = [
     { uuid: 'remote-uuid-1', name: 'target-collection' },
+    { uuid: 'remote-uuid-2', name: 'shared-collection' },
   ];
-  const sourceCollections = [{ name: 'source-collection' }];
+  // the source's own uuids belong to a different project
+  const sourceCollections = [
+    { name: 'source-collection' },
+    { uuid: 'source-uuid', name: 'shared-collection' },
+  ];
 
   const target = createProject(wf_a, 'a', { collections: targetCollections });
   const source = createProject(wf_b, 'b', { collections: sourceCollections });
 
   const result = merge(source, target, { mode: SANDBOX_MERGE });
 
-  // b's collections are wholly replaced by a's - sandbox mode does a raw
-  // swap here, unlike replace mode's name-matching mergeCollections
-  t.deepEqual(result.collections, sourceCollections);
+  // a shared collection must keep the target's uuid, or the deploy tries to
+  // create a duplicate and Lightning rejects it
+  t.deepEqual(result.collections, [
+    { name: 'source-collection', uuid: undefined },
+    { name: 'shared-collection', uuid: 'remote-uuid-2' },
+  ]);
 });
 
 test('sandbox mode: target channels are preserved when source has none', (t) => {

@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.45.1
+
+### Patch Changes
+
+- f1e8d71: Fix deploying to a different project failing once that project has collections
+- Updated dependencies [f1e8d71]
+  - @openfn/project@0.23.2
+
 ## 1.45.0
 
 ### Minor Changes

@@ -3,6 +3,7 @@
 // the target is made to look exactly like the workspace
 
 import test from 'ava';
+import { randomUUID } from 'node:crypto';
 import { generateProject } from '@openfn/project';
 import createLightningServer from '@openfn/lightning-mock';
 import { setup } from './helpers';
@@ -27,7 +28,7 @@ const code = (server: any, project: any) =>
     ])
   );
 
-// a project's workflows on a server, as { name: uuid }
+// get a project's workflows on a server, as { name: uuid }
 const uuids = (server: any, project: any) =>
   Object.fromEntries(
     (
@@ -35,6 +36,14 @@ const uuids = (server: any, project: any) =>
         server.state.projects[project.openfn.uuid].workflows
       ) as any[]
     ).map((wf) => [wf.name, wf.id])
+  );
+
+// get a project's collections on a server, as { name: uuid }
+const collectionUuids = (server: any, project: any) =>
+  Object.fromEntries(
+    (server.state.projects[project.openfn.uuid].collections as any[]).map(
+      (c) => [c.name, c.id]
+    )
   );
 
 // The workspace is pulled from cloud (Alpha and Beta). Prod has its own version of
@@ -90,6 +99,75 @@ test('workflows deployed to a different project get new uuids', async (t) => {
   t.truthy(prodUuids.Beta);
   t.not(prodUuids.Beta, cloudUuids.Beta);
   t.not(prodUuids.Alpha, cloudUuids.Alpha);
+});
+
+test('a collection deployed to a different project keeps the target uuid', async (t) => {
+  const { run } = initWorkspace(t);
+
+  // both projects have a "patients" collection, each with its own uuid
+  const cloud = generateProject(
+    'cloud',
+    ['@name Alpha trigger-job(expression="fn(a)")'],
+    { openfnUuid: true }
+  );
+  cloud.collections = [{ uuid: randomUUID(), name: 'patients' }];
+  lightning.addProject(cloud.serialize('state', { format: 'json' }));
+
+  const prod = generateProject(
+    'prod',
+    ['@name Alpha trigger-job(expression="fn(old)")'],
+    { openfnUuid: true }
+  );
+  prod.collections = [{ uuid: randomUUID(), name: 'patients' }];
+  lightning.addProject(prod.serialize('state', { format: 'json' }));
+
+  const cloudUuids = collectionUuids(lightning, cloud);
+  const prodPatients = collectionUuids(lightning, prod).patients;
+  t.not(cloudUuids.patients, prodPatients);
+
+  await run(`openfn project pull ${cloud.openfn.uuid}`);
+  await run(`openfn project deploy ${prod.openfn.uuid} --force`);
+
+  // matched by name, so prod keeps its own uuid rather than taking cloud's
+  t.deepEqual(collectionUuids(lightning, prod), { patients: prodPatients });
+
+  // and cloud is untouched
+  t.deepEqual(collectionUuids(lightning, cloud), cloudUuids);
+});
+
+test('a collection the workspace does not have is removed from the target on deploy', async (t) => {
+  const { run } = initWorkspace(t);
+
+  const cloud = generateProject(
+    'cloud',
+    ['@name Alpha trigger-job(expression="fn(a)")'],
+    { openfnUuid: true }
+  );
+  cloud.collections = [{ uuid: randomUUID(), name: 'patients' }];
+  lightning.addProject(cloud.serialize('state', { format: 'json' }));
+
+  // prod has a collection of its own, which the workspace doesn't know about
+  const prod = generateProject(
+    'prod',
+    ['@name Alpha trigger-job(expression="fn(old)")'],
+    { openfnUuid: true }
+  );
+  prod.collections = [
+    { uuid: randomUUID(), name: 'patients' },
+    { uuid: randomUUID(), name: 'legacy' },
+  ];
+  lightning.addProject(prod.serialize('state', { format: 'json' }));
+
+  const cloudUuids = collectionUuids(lightning, cloud);
+
+  await run(`openfn project pull ${cloud.openfn.uuid}`);
+  await run(`openfn project deploy ${prod.openfn.uuid} --force`);
+
+  // The legacy collection should now be removed from prod
+  t.deepEqual(Object.keys(collectionUuids(lightning, prod)), ['patients']);
+
+  // and cloud is untouched
+  t.deepEqual(collectionUuids(lightning, cloud), cloudUuids);
 });
 
 test('deploy to a different project without a prompt will not remove workflows unless forced', async (t) => {

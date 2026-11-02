@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.23.2
+
+### Patch Changes
+
+- f1e8d71: Fix deploying to a different project failing once that project has collections
+
 ## 0.23.1
 
 ### Patch Changes
