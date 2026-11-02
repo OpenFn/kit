@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.30.2
+
+### Patch Changes
+
+- fixes the failing worker Docker build by swapping npx get-pnpm for npm install -g pnpm: get-pnpm tries to set up a shell profile, which a Docker build doesn't have, while a plain npm install skips that step and pnpm still switches itself to the 12.14.0 pinned in package.json
+
 ## 1.30.1
 
 ### Patch Changes
