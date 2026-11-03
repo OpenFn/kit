@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.45.2
+
+### Patch Changes
+
+- 82a0cae: Channels are now tracked by their Lightning id, so changing a channel's key in resources.yaml no longer deletes and recreates it on deploy.
+- 82a0cae: Workflow, step and channel ids now keep non-ASCII letters and punctuation from their names, matching Lightning. Names with these characters get new ids, so their folders and resources.yaml keys change on the next pull.
+- 222473d: When fetching a sandbox, only use the id as an alias if there isn't already an existing alias
+- Updated dependencies [82a0cae]
+- Updated dependencies [82a0cae]
+  - @openfn/project@0.24.0
+
 ## 1.45.1
 
 ### Patch Changes

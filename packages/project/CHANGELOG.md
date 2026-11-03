@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.24.0
+
+### Minor Changes
+
+- 82a0cae: Workflow, step and channel ids now keep non-ASCII letters and punctuation from their names, matching Lightning. Names with these characters get new ids, so their folders and resources.yaml keys change on the next pull.
+
+### Patch Changes
+
+- 82a0cae: Channels are now tracked by their Lightning id, so changing a channel's key in resources.yaml no longer deletes and recreates it on deploy.
+
 ## 0.23.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @openfn/integration-tests-cli
 
+## 1.0.40
+
+### Patch Changes
+
+- Updated dependencies [82a0cae]
+- Updated dependencies [82a0cae]
+  - @openfn/project@0.24.0
+  - @openfn/lightning-mock@2.5.10
+
 ## 1.0.39
 
 ### Patch Changes

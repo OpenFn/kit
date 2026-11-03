@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import { MockAgent, setGlobalDispatcher } from 'undici';
@@ -646,3 +646,46 @@ test.serial('fetch by alias when local copies share the UUID', async (t) => {
   const main = await readFile('/ws/.projects/jam@app.openfn.org.yaml', 'utf-8');
   t.is(main, yaml_v1);
 });
+
+test.serial(
+  'fetch a sandbox by UUID, reusing the local alias if there is one',
+  async (t) => {
+    const SANDBOX_UUID = 'b2f1c8a4-5d3e-4c1a-9b7e-0a1d2c3e4f50';
+    const sandbox = {
+      ...myProject_v1,
+      id: SANDBOX_UUID,
+      name: 'My Sandbox',
+      parent_id: PROJECT_UUID,
+    };
+
+    mockAgent
+      .get(ENDPOINT)
+      .intercept({ path: `/api/provision/${SANDBOX_UUID}?`, method: 'GET' })
+      .reply(200, { data: sandbox })
+      .times(2);
+
+    const options = {
+      project: SANDBOX_UUID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    };
+
+    // First fetch with an explicit alias
+    await fetchHandler({ ...options, alias: 'staging' } as any, logger);
+    t.truthy(await readFile(getYamlPath('staging'), 'utf-8'));
+
+    // Ensure the sandbox is not used
+    await t.throwsAsync(() => readFile(getYamlPath('my-sandbox'), 'utf-8'));
+
+    // Now fetch again by UUID, with no alias. This should update the
+    // existing local project rather than defaulting the alias to the sandbox id
+    await t.notThrowsAsync(() => fetchHandler(options as any, logger));
+
+    // Ensure the sandbox is not used
+    await t.throwsAsync(() => readFile(getYamlPath('my-sandbox'), 'utf-8'));
+
+    const files = await readdir('/ws/.projects');
+    t.deepEqual(files, ['staging@app.openfn.org.yaml']);
+  }
+);

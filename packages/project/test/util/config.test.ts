@@ -369,3 +369,22 @@ test("checkout file excludes workflow_uuids if there aren't any", (t) => {
   const result = extractCheckout(proj);
   t.false(result.content.includes('workflow_uuids'));
 });
+
+test('generate checkout file with channel_uuids, keyed by resources key', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    channels: [
+      // remote channel: keyed by its slugified name
+      { id: 'chan-1', name: 'My Channel (v2)' } as any,
+      // local channel: keeps its key
+      { id: 'chan-2', key: 'local', name: 'Other' } as any,
+      // not yet deployed
+      { key: 'new', name: 'New' } as any,
+    ],
+  });
+  const result = extractCheckout(proj);
+  t.deepEqual(yamlToJson(result.content).channel_uuids, {
+    'my-channel-(v2)': 'chan-1',
+    local: 'chan-2',
+  });
+});

@@ -2,6 +2,8 @@
 // asserting on what lands on disk (.projects state, checkout.yaml, workflows folder)
 
 import test from 'ava';
+import fs from 'node:fs';
+import path from 'node:path';
 import run from '../../src/run';
 import { setup } from './helpers';
 
@@ -256,3 +258,37 @@ test('checkout by alias', async (t) => {
 });
 
 test.todo('merge by alias');
+
+test('pull a sandbox by UUID, reusing the local alias if there is one', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  // make the remote project a sandbox
+  lightning.state.projects[project.openfn.uuid].parent_id =
+    '6a8a6c6e-5c1d-4b0e-8d52-0d4c4f2f9a11';
+
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --alias staging \
+       ${project.openfn.uuid}`
+  );
+  t.truthy(read('.projects/staging@localhost.yaml'));
+
+  // pull again with no alias. The existing alias should be re-used
+  // rather than defaulting to the sandbox id
+  await run(
+    `openfn project pull \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       ${project.openfn.uuid}`
+  );
+
+  t.deepEqual(fs.readdirSync(path.resolve(workspace, '.projects')), [
+    'staging@localhost.yaml',
+  ]);
+  t.regex(read('.openfn/checkout.yaml'), new RegExp(project.openfn.uuid));
+});
