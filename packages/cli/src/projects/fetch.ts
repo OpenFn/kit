@@ -136,7 +136,15 @@ export const fetchV2 = async (options: FetchOptions, logger: Logger) => {
   const remoteProject = await fetchRemoteProject(workspace, options, logger);
 
   // if there's no alias, and this is a sandbox, set the alias
-  if (!options.alias && remoteProject.sandbox?.parentId) {
+  if (
+    // If the user doesn't set an alias...
+    !options.alias &&
+    // And we're pulling a sandbox...
+    remoteProject.sandbox?.parentId &&
+    // And the local project doesn't already have an alias set...
+    !remoteProject.cli?.alias
+  ) {
+    // ...Use the sandbox id as the alias
     options.alias = remoteProject.id;
     remoteProject.cli.alias = options.alias;
     logger.debug('Defaulting alias to sandbox id', options.alias);
